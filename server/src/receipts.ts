@@ -7,6 +7,7 @@ import type { AiEvidence } from "./ai.js";
 import type { CheckResult } from "./checks.js";
 import type { Action } from "./parse.js";
 import type { Decision } from "./near.js";
+import type { SwapQuote, TokenCheck } from "./intents.js";
 
 export interface Receipt {
   id: string;
@@ -18,8 +19,15 @@ export interface Receipt {
   checks?: CheckResult;
   /** The leash's answer, straight from the chain. */
   decision?: Decision;
-  /** Shown to the person: allow (mint), warn (amber), block (red), or info. */
-  outcome: "paid" | "approval" | "blocked" | "not-sent";
+  /** A swap: the token checks, the NEAR Intents quote, and the leash caps it was held to. */
+  swap?: {
+    from: TokenCheck;
+    to: TokenCheck;
+    quote?: SwapQuote;
+    leash?: { agent: string; valueNear: string; perPaymentCap: string; leftToday: string; within: boolean };
+  };
+  /** Shown to the person: allow (mint), warn (amber), block (red), quote, or info. */
+  outcome: "paid" | "approval" | "blocked" | "quoted" | "not-sent";
   message: string;
   tx?: { hash: string; url: string };
   events?: unknown[];

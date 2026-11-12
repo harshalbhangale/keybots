@@ -5,6 +5,7 @@ import { readWithNearAi } from "./ai.js";
 import { judge } from "./checks.js";
 import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
+import type { IntentsClient } from "./intents.js";
 import { parse, resolveReceiver, toYocto, type Action } from "./parse.js";
 import type { Receipt, ReceiptStore } from "./receipts.js";
 
@@ -13,6 +14,7 @@ export interface Deps {
   chain: Chain;
   receipts: ReceiptStore;
   readAi?: typeof readWithNearAi;
+  intents?: IntentsClient;
 }
 
 export async function runCommand(deps: Deps, text: string, source: "typed" | "pasted"): Promise<Receipt> {
@@ -39,9 +41,7 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
   };
 
   if (action.kind === "unknown") return done({ outcome: "not-sent", message: action.reason });
-  if (action.kind === "swap") {
-    return done({ outcome: "not-sent", message: `Swap ${action.amount} ${action.from} → ${action.to}: swaps through NEAR Intents aren't built yet.` });
-  }
+  if (action.kind === "swap") return swap(deps, action, source, done);
 
   // 2. Who is it for?
   const to = resolveReceiver(action.receiver, cfg.contacts, cfg.network);
@@ -96,5 +96,70 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
     decision,
     tx,
     events,
+  });
+}
+
+const nearToYocto = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 18n;
+const yoctoToNear = (y: bigint) => (Number(y / 10n ** 18n) / 1e6).toString();
+
+/** Swaps: check both tokens against NEAR Intents, get a dry-run quote, and hold its value to the leash's caps. */
+async function swap(
+  deps: Deps,
+  action: Extract<Action, { kind: "swap" }>,
+  source: "typed" | "pasted",
+  done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+): Promise<Receipt> {
+  const label = `${action.amount} ${action.from} → ${action.to}`;
+  if (source === "pasted") {
+    return done({ outcome: "blocked", message: `Swaps only run from what you type. The Inbox Agent can't trade (${label}).` });
+  }
+  if (!deps.intents) return done({ outcome: "not-sent", message: `Swaps aren't set up on this server (${label}).` });
+
+  const [from, to] = await Promise.all([deps.intents.pick(action.from, "from"), deps.intents.pick(action.to, "to")]);
+  if (!from.verified || !to.verified) {
+    const bad = !from.verified ? from : to;
+    return done({ outcome: "blocked", message: `Token check failed: ${bad.reason}.`, swap: { from, to } });
+  }
+
+  let quote;
+  try {
+    quote = await deps.intents.quote(from.token!, to.token!, action.amount);
+  } catch (e) {
+    return done({ outcome: "not-sent", message: `NEAR Intents couldn't quote ${label}: ${(e as Error).message}`, swap: { from, to } });
+  }
+
+  // What it's worth in NEAR, held to the trusted agent's caps as the leash has them on chain.
+  const nearPrice = (await deps.intents.tokens()).find((t) => t.assetId === "nep141:wrap.near")?.price;
+  const usd = Number(quote.amountInUsd ?? 0);
+  const agent = deps.cfg.agents.trusted;
+  let leash: NonNullable<Receipt["swap"]>["leash"];
+  if (nearPrice && usd > 0) {
+    const state = await deps.chain.state();
+    const a = state.agents.find((x) => x.account === agent)?.agent;
+    if (a) {
+      const value = nearToYocto(usd / nearPrice);
+      const left = BigInt(a.daily_cap) - BigInt(a.spent_today);
+      const within = !state.paused && value <= BigInt(a.per_payment_cap) && value <= left;
+      leash = { agent, valueNear: yoctoToNear(value), perPaymentCap: a.per_payment_cap, leftToday: (left > 0n ? left : 0n).toString(), within };
+      if (!within) {
+        const why = state.paused
+          ? "the kill switch is on"
+          : value > BigInt(a.per_payment_cap)
+            ? `it's worth about ${yoctoToNear(value)} NEAR, over the ${yoctoToNear(BigInt(a.per_payment_cap))} NEAR per-payment cap`
+            : `only ${yoctoToNear(left)} NEAR is left today`;
+        return done({
+          outcome: "blocked",
+          message: `Would be blocked by the leash: ${why}. Quote was ${label} = ${quote.amountOutFormatted} ${action.to}.`,
+          agent: { account: agent, tier: "trusted" },
+          swap: { from, to, quote, leash },
+        });
+      }
+    }
+  }
+  return done({
+    outcome: "quoted",
+    message: `Quote: ${action.amount} ${action.from} → ${quote.amountOutFormatted} ${action.to}${quote.amountOutUsd ? ` (~$${Number(quote.amountOutUsd).toFixed(2)})` : ""} via NEAR Intents, ~${quote.timeEstimate ?? "?"}s. Dry run: nothing was sent.`,
+    agent: { account: agent, tier: "trusted" },
+    swap: { from, to, quote, leash },
   });
 }
