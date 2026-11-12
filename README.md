@@ -132,7 +132,7 @@ xcrun simctl launch booted tech.airkey.app
 - **Agents** shows each agent's account, whether it's trusted, today's spend against its daily cap, and its limits.
 - **Leash** is the control panel: stop everything, payments waiting for you, what the leash holds, and the allow and block lists, which you can add to and remove from. Every change there is **signed on the phone**: the server builds the transaction, Face ID unlocks this device's key, the phone signs, the server relays (`server/src/owner.ts`).
 - **Activity** lists every command by day; tap one for its receipt as a timeline: what was said, how it was read, which agent, the checks, and the leash's decision with its transaction.
-- **Settings** shows this device's key. Enroll it once: `cd scripts && npm run add-device -- <owner> <key>`.
+- **Settings** has the keyboard setup steps, the server address and this device's key. Enroll the key once: `cd scripts && npm run add-device -- <owner> <key>`.
 - **The keyboard** (add it in Settings › General › Keyboard, then Allow Full Access): hold **P**, the key with the mint side tab, to run what you typed with the Payment Agent; **Paste & check** sends what you copied to the Inbox Agent; the result shows as a mint, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
 
 Checked on the iPhone Air simulator against testnet: a payment from Home (paid, [8oT7xwJa…](https://testnet.nearblocks.io/txns/8oT7xwJanpgVFkD4np8S4UxGdkShpzTHjo2UtPn4WchN)), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone. The keyboard builds and installs, but hasn't been exercised with Full Access yet.
