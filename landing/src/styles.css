@@ -807,13 +807,16 @@ section {
 /* ---------- leash lab ---------- */
 .lab {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  grid-template-columns: 1.35fr 1fr;
   gap: 20px;
   align-items: stretch;
 }
 .lab-stage {
-  position: relative;
-  min-height: 640px;
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  height: min(720px, calc(100vh - 120px));
+  min-height: 520px;
   overflow: hidden;
   padding: 0;
 }
@@ -1612,7 +1615,10 @@ footer.foot a:hover {
     grid-template-columns: repeat(2, 1fr);
   }
   .lab-stage {
-    min-height: 460px;
+    position: relative;
+    top: 0;
+    height: 460px;
+    min-height: 0;
   }
   .chat-stage {
     height: 460px;
