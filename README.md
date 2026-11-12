@@ -140,6 +140,19 @@ xcrun simctl launch booted tech.airkey.app
 - **Settings** has the keyboard setup steps, the server address and this device's key. Enroll the key once: `cd scripts && npm run add-device -- <owner> <key>`.
 - **The keyboard** (turn it on in Settings › Apps › AIRKEY › Keyboards, then Allow Full Access) follows the light or dark look of the app you're typing in. As you type, the bar above the keys shows what your words would do ("Pay 0.2 NEAR to harshal") with a **Run** button; holding **P**, the key with the lime side tab, runs it too. **Check copied** sends what you copied to the Inbox Agent. The outcome shows as a lime, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
 
+**What the bar above the keys shows as you type** (one thing at a time):
+
+| You type | The bar shows | Where it comes from |
+|---|---|---|
+| `pay harshal 0.2 for dinner` | Pay 0.2 NEAR to harshal · **Run** | read on the phone, then the leash decides |
+| `$near` | NEAR $3.39 · **Buy** | NEAR Intents' token list (`GET /v1/price/:symbol`) |
+| `buy $2 of near`, `sell 1 near` | Buy $2 of NEAR · **Run** | only for tokens NEAR Intents lists; the Trading Agent quotes it |
+| `sell 1 near if it drops below 2` | Sell 1 NEAR for USDC · runs when the price is below $2 | left with the server's price watcher |
+| `18% of 2450`, `236 for 4 of us` | = 441, 59 each · **Insert** | worked out on the phone, no network |
+| `100 usd to inr` | ₹9,385.16 · **Insert** | today's rate (`GET /v1/fx`) |
+
+Once a command has run, the keyboard takes it out of the message box, so it isn't sent to the person you're chatting with. A blocked one stays so you can fix it.
+
 Checked on the iPhone Air simulator (iOS 27) against testnet:
 
 - From the app: a payment from the command bar (paid), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone.
