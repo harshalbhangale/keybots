@@ -128,13 +128,14 @@ async function swap(
     return done({ outcome: "not-sent", message: `NEAR Intents couldn't quote ${label}: ${(e as Error).message}`, swap: { from, to } });
   }
 
-  // What it's worth in NEAR, held to the trusted agent's caps as the leash has them on chain.
+  // What it's worth in NEAR, held to the Trading Agent's caps as the leash has them on chain.
+  // A deployment without a Trading Agent falls back to the Payment Agent's caps.
   const nearPrice = (await deps.intents.tokens()).find((t) => t.assetId === "nep141:wrap.near")?.price;
   const usd = Number(quote.amountInUsd ?? 0);
-  const agent = deps.cfg.agents.trusted;
+  const state = await deps.chain.state();
+  const agent = state.agents.some((x) => x.account === deps.cfg.agents.trade) ? deps.cfg.agents.trade : deps.cfg.agents.trusted;
   let leash: NonNullable<Receipt["swap"]>["leash"];
   if (nearPrice && usd > 0) {
-    const state = await deps.chain.state();
     const a = state.agents.find((x) => x.account === agent)?.agent;
     if (a) {
       const value = nearToYocto(usd / nearPrice);
