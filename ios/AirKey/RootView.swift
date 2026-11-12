@@ -18,6 +18,7 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     @State private var tab: Tab = .home
     @State private var showSettings = false
+    @State private var keyboardUp = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -30,8 +31,11 @@ struct RootView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            TabBar(tab: $tab)
+            if !keyboardUp { TabBar(tab: $tab).transition(.opacity) }
         }
+        .animation(.easeOut(duration: 0.15), value: keyboardUp)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
         .background(AK.ink.ignoresSafeArea())
         .task { await model.refresh() }
         .refreshable { await model.refresh() }
