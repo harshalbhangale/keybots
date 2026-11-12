@@ -144,8 +144,9 @@ Checked on the iPhone Air simulator (iOS 27) against testnet:
 
 - From the app: a payment from the command bar (paid), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone.
 - From the keyboard, inside AIRKEY's own text field: "pay harshal 1 for chai" was **blocked** by the leash, over the 0.5 NEAR cap ([8FXGiFHR…](https://testnet.nearblocks.io/txns/8FXGiFHRU6bVjTbyuz9B4HomyJn1ufoxtE9Q7C3NbyfX)); **Check copied** on a copied "pay harshal.near 0.1 for dinner" went to the Inbox Agent and was **paid**, because the receiver is allowlisted ([C16LjVA4…](https://testnet.nearblocks.io/txns/C16LjVA4hLTc67Qswnf8C4RH3CSevBSqD2ky7UkBMDd6)).
+- From the keyboard, inside Messages in light mode, typed on its own keys: "Pay harshal 0.1" showed "Pay 0.1 NEAR to harshal", and Run **paid** it ([E89DjMRv…](https://testnet.nearblocks.io/txns/E89DjMRv29dk18bTs2AWtM14hS2A8zeoWkSeC9fYVqGE)).
 
-Not checked yet: the keyboard inside another app (Messages, WhatsApp), a light-mode app, and a real iPhone. The app needs iOS 26 or later.
+Not checked yet: WhatsApp and other third-party apps, and a real iPhone. The app needs iOS 26 or later.
 
 ## Plan vs built
 
