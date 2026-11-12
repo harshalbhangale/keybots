@@ -7,6 +7,8 @@ import SwiftUI
 final class AppModel {
     var state: LeashState?
     var receipts: [Receipt] = []
+    /// Trades still waiting for their price.
+    var watching: [Order] = []
     var error: String?
     var loading = false
     /// Set while an owner action is waiting for Face ID or the chain.
@@ -31,6 +33,7 @@ final class AppModel {
             async let r = api.receipts()
             (state, receipts) = try await (s, r)
             error = nil
+            watching = ((try? await api.orders()) ?? []).filter { $0.status == "watching" }
             if Tokens.stale, let symbols = try? await api.tokens() { Tokens.save(symbols) }
         } catch {
             self.error = error.localizedDescription
@@ -59,6 +62,15 @@ final class AppModel {
             guard let hash = Data(base64Encoded: prepared.hash) else { throw APIError(message: "Bad transaction from the server.") }
             let sig = try await DeviceKey.sign(hash, reason: reason)
             lastOwnerTx = try await api.submit(tx: prepared.tx, signature: sig.base64EncodedString())
+            await refresh()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func cancel(_ order: Order) async {
+        do {
+            try await api.cancelOrder(order.id)
             await refresh()
         } catch {
             self.error = error.localizedDescription
