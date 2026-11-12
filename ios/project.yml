@@ -1,0 +1,67 @@
+name: AirKey
+options:
+  bundleIdPrefix: tech.airkey
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  AirKey:
+    type: application
+    platform: iOS
+    sources: [AirKey, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: tech.airkey.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+    entitlements:
+      path: AirKey/AirKey.entitlements
+      properties:
+        com.apple.security.application-groups: [group.tech.airkey.shared]
+    info:
+      path: AirKey/Info.plist
+      properties:
+        CFBundleDisplayName: AIRKEY
+        UILaunchScreen:
+          UIColorName: LaunchInk
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSFaceIDUsageDescription: AIRKEY uses Face ID before your key signs an approval or flips the kill switch.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    dependencies:
+      - target: AirKeyKeyboard
+        embed: true
+  AirKeyKeyboard:
+    type: app-extension
+    platform: iOS
+    sources: [AirKeyKeyboard, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: tech.airkey.app.keyboard
+    entitlements:
+      path: AirKeyKeyboard/AirKeyKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups: [group.tech.airkey.shared]
+    info:
+      path: AirKeyKeyboard/Info.plist
+      properties:
+        CFBundleDisplayName: AIRKEY
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+          NSExtensionAttributes:
+            IsASCIICapable: false
+            PrefersRightToLeft: false
+            PrimaryLanguage: en-US
+            RequestsOpenAccess: true
