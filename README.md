@@ -135,7 +135,12 @@ xcrun simctl launch booted tech.airkey.app
 - **Settings** has the keyboard setup steps, the server address and this device's key. Enroll the key once: `cd scripts && npm run add-device -- <owner> <key>`.
 - **The keyboard** (turn it on in Settings › Apps › AIRKEY › Keyboards, then Allow Full Access) follows the light or dark look of the app you're typing in. As you type, the bar above the keys shows what your words would do ("Pay 0.2 NEAR to harshal") with a **Run** button; holding **P**, the key with the lime side tab, runs it too. **Check copied** sends what you copied to the Inbox Agent. The outcome shows as a lime, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
 
-Checked on the iPhone Air simulator against testnet: a payment from Home (paid, [8oT7xwJa…](https://testnet.nearblocks.io/txns/8oT7xwJanpgVFkD4np8S4UxGdkShpzTHjo2UtPn4WchN)), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone. The keyboard builds and installs, but hasn't been exercised with Full Access yet.
+Checked on the iPhone Air simulator (iOS 27) against testnet:
+
+- From the app: a payment from the command bar (paid), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone.
+- From the keyboard, inside AIRKEY's own text field: "pay harshal 1 for chai" was **blocked** by the leash, over the 0.5 NEAR cap ([8FXGiFHR…](https://testnet.nearblocks.io/txns/8FXGiFHRU6bVjTbyuz9B4HomyJn1ufoxtE9Q7C3NbyfX)); **Check copied** on a copied "pay harshal.near 0.1 for dinner" went to the Inbox Agent and was **paid**, because the receiver is allowlisted ([C16LjVA4…](https://testnet.nearblocks.io/txns/C16LjVA4hLTc67Qswnf8C4RH3CSevBSqD2ky7UkBMDd6)).
+
+Not checked yet: the keyboard inside another app (Messages, WhatsApp), a light-mode app, and a real iPhone. The app needs iOS 26 or later.
 
 ## Plan vs built
 
