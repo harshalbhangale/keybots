@@ -127,3 +127,52 @@ describe("runCommand", () => {
     expect(asked).toBe(1);
   });
 });
+
+describe("swaps", () => {
+  const usdc = { assetId: "nep141:usdc", symbol: "USDC", blockchain: "near", decimals: 6, price: 1 };
+  const sol = { assetId: "nep141:sol.omft.near", symbol: "SOL", blockchain: "sol", decimals: 9, price: 81 };
+  const wnear = { assetId: "nep141:wrap.near", symbol: "wNEAR", blockchain: "near", decimals: 24, price: 4 };
+  const fakeIntents = (usdIn: string) => ({
+    tokens: async () => [usdc, sol, wnear],
+    pick: async (asked: string) => {
+      const t = [usdc, sol, wnear].find((x) => x.symbol === asked.toUpperCase());
+      return t ? { asked, verified: true, token: t, alsoOn: [], reason: "listed" } : { asked, verified: false, alsoOn: [], reason: `${asked} isn't on NEAR Intents' list` };
+    },
+    quote: async () => ({ dry: true as const, amountIn: "1", amountInFormatted: "1", amountInUsd: usdIn, amountOut: "1", amountOutFormatted: "0.0123", amountOutUsd: usdIn, timeEstimate: 10 }),
+  });
+  // The trusted agent may spend 0.5 NEAR per payment, 1 a day; NEAR is $4 here.
+  const chainWithCaps = () => {
+    const { chain } = fakeChain();
+    chain.state = async () => ({
+      owner: "o", leash: "l", paused: false, available: "0", allowlist: [], blocklist: [], pending: [],
+      agents: [{ account: "pay.x.testnet", agent: { tier: "trusted", per_payment_cap: "500000000000000000000000", daily_cap: "1000000000000000000000000", spent_today: "0", day: 0 } }],
+    });
+    return chain;
+  };
+
+  it("quotes a swap that fits the leash's caps, and sends nothing", async () => {
+    const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "typed");
+    expect(r.outcome).toBe("quoted");
+    expect(r.message).toMatch(/Dry run: nothing was sent/);
+    expect(r.swap?.leash?.within).toBe(true);
+    expect(r.swap?.leash?.valueNear).toBe("0.25");
+  });
+
+  it("blocks a swap worth more than the per-payment cap", async () => {
+    const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("20.00") as never }, "swap 20 usdc to sol", "typed");
+    expect(r.outcome).toBe("blocked");
+    expect(r.message).toMatch(/about 5 NEAR, over the 0.5 NEAR per-payment cap/);
+  });
+
+  it("never trades from pasted text", async () => {
+    const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "pasted");
+    expect(r.outcome).toBe("blocked");
+    expect(r.message).toMatch(/Inbox Agent can't trade/);
+  });
+
+  it("blocks tokens NEAR Intents doesn't list", async () => {
+    const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to toshi2", "typed");
+    expect(r.outcome).toBe("blocked");
+    expect(r.message).toMatch(/Token check failed/);
+  });
+});
