@@ -47,6 +47,7 @@ struct HomeView: View {
             .padding(.bottom, 110)
         }
         .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.immediately)
         .background(AK.ink.ignoresSafeArea())
     }
 
@@ -102,14 +103,27 @@ struct HomeView: View {
         .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 
+    private func runNow() {
+        let text = command.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty, !running else { return }
+        Task {
+            running = true
+            last = await model.run(text, source: pasted ? "pasted" : "typed")
+            running = false
+        }
+    }
+
     /// Run a command from the app, the same way the keyboard does.
     private var tryIt: some View {
         VStack(alignment: .leading, spacing: 10) {
             Eyebrow("Ask an agent")
-            TextField("", text: $command, prompt: Text("Pay harshal.near 0.2 NEAR for dinner").foregroundStyle(AK.faint), axis: .vertical)
+            TextField("", text: $command, prompt: Text("Pay harshal.near 0.2 NEAR for dinner").foregroundStyle(AK.faint))
                 .font(.system(size: 16))
                 .foregroundStyle(AK.bone)
-                .lineLimit(1...4)
+                .submitLabel(.go)
+                .onSubmit(runNow)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
                 .padding(14)
                 .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
             HStack(spacing: 8) {
@@ -118,13 +132,7 @@ struct HomeView: View {
                     Text("Someone sent it").tag(true)
                 }
                 .pickerStyle(.segmented)
-                Button {
-                    Task {
-                        running = true
-                        last = await model.run(command, source: pasted ? "pasted" : "typed")
-                        running = false
-                    }
-                } label: {
+                Button(action: runNow) {
                     Group { if running { ProgressView().tint(AK.ink) } else { Text("Run").font(.system(size: 15, weight: .semibold)) } }
                         .foregroundStyle(AK.ink).frame(width: 64, height: 32).background(AK.mint, in: Capsule())
                 }
