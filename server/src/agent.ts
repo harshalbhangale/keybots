@@ -101,6 +101,12 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
 
 const nearToYocto = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 18n;
 const yoctoToNear = (y: bigint) => (Number(y / 10n ** 18n) / 1e6).toString();
+/** A number for a sentence: "2.933176326443593989515722" -> "2.933", "0.024441517" -> "0.02444". */
+export const tidy = (n: string | number) => {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return String(n);
+  return String(Number(v.toPrecision(4)));
+};
 
 /** Swaps: check both tokens against NEAR Intents, get a dry-run quote, and hold its value to the leash's caps. */
 async function swap(
@@ -146,11 +152,11 @@ async function swap(
         const why = state.paused
           ? "the kill switch is on"
           : value > BigInt(a.per_payment_cap)
-            ? `it's worth about ${yoctoToNear(value)} NEAR, over the ${yoctoToNear(BigInt(a.per_payment_cap))} NEAR per-payment cap`
-            : `only ${yoctoToNear(left)} NEAR is left today`;
+            ? `it's worth about ${tidy(yoctoToNear(value))} NEAR, over the ${yoctoToNear(BigInt(a.per_payment_cap))} NEAR per-trade cap`
+            : `only ${tidy(yoctoToNear(left > 0n ? left : 0n))} NEAR is left today`;
         return done({
           outcome: "blocked",
-          message: `Would be blocked by the leash: ${why}. Quote was ${label} = ${quote.amountOutFormatted} ${action.to}.`,
+          message: `The leash would block this: ${why}.`,
           agent: { account: agent, tier: "trusted" },
           swap: { from, to, quote, leash },
         });
@@ -159,7 +165,7 @@ async function swap(
   }
   return done({
     outcome: "quoted",
-    message: `Quote: ${action.amount} ${action.from} → ${quote.amountOutFormatted} ${action.to}${quote.amountOutUsd ? ` (~$${Number(quote.amountOutUsd).toFixed(2)})` : ""} via NEAR Intents, ~${quote.timeEstimate ?? "?"}s. Dry run: nothing was sent.`,
+    message: `Quote: ${action.amount} ${action.from} → ${tidy(quote.amountOutFormatted)} ${action.to}${quote.amountOutUsd ? ` (~$${Number(quote.amountOutUsd).toFixed(2)})` : ""} on NEAR Intents. Nothing sent yet.`,
     agent: { account: agent, tier: "trusted" },
     swap: { from, to, quote, leash },
   });
