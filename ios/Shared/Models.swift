@@ -117,6 +117,12 @@ struct Receipt: Decodable, Identifiable {
 
 struct ReceiptList: Decodable { let receipts: [Receipt] }
 
+struct Price: Decodable { let symbol: String; let usd: Double; let blockchain: String }
+
+struct Conversion: Decodable { let amount: Double; let from: String; let to: String; let value: Double; let rate: Double }
+
+struct TokenSymbols: Decodable { let symbols: [String] }
+
 struct Prepared: Decodable { let tx: String; let hash: String; let summary: String }
 
 struct Submitted: Decodable {

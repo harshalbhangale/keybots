@@ -38,6 +38,16 @@ struct API {
         try await post("/v1/command", ["text": text, "source": source])
     }
 
+    /// A token's live price in dollars, from NEAR Intents' list.
+    func price(_ symbol: String) async throws -> Price { try await get("/v1/price/\(symbol)") }
+
+    func fx(amount: String, from: String, to: String) async throws -> Conversion {
+        try await get("/v1/fx?amount=\(amount)&from=\(from)&to=\(to)")
+    }
+
+    /// Every symbol NEAR Intents lists.
+    func tokens() async throws -> [String] { try await (get("/v1/tokens") as TokenSymbols).symbols }
+
     func prepare(method: String, args: [String: any Sendable], publicKey: String) async throws -> Prepared {
         try await post("/v1/owner/prepare", ["method": method, "args": args, "publicKey": publicKey])
     }
