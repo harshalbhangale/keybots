@@ -158,6 +158,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Restricted agent identities (function-call keys only) | **Built**, proven on testnet (steps 6 and 7) |
 | One successful payment, one blocked malicious payment | **Built**, proven on testnet (steps 1 and 3) |
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
+| A Trading Agent with its own identity and limits | **Built**: `trade.<you>` on testnet, function-call key only, its own caps; swaps are held to them (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
 | Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 33 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
