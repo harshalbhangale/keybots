@@ -153,7 +153,7 @@ describe("swaps", () => {
   it("quotes a swap that fits the leash's caps, and sends nothing", async () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "typed");
     expect(r.outcome).toBe("quoted");
-    expect(r.message).toMatch(/Dry run: nothing was sent/);
+    expect(r.message).toMatch(/Nothing sent yet/);
     expect(r.swap?.leash?.within).toBe(true);
     expect(r.swap?.leash?.valueNear).toBe("0.25");
   });
@@ -161,7 +161,7 @@ describe("swaps", () => {
   it("blocks a swap worth more than the per-payment cap", async () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("20.00") as never }, "swap 20 usdc to sol", "typed");
     expect(r.outcome).toBe("blocked");
-    expect(r.message).toMatch(/about 5 NEAR, over the 0.5 NEAR per-payment cap/);
+    expect(r.message).toBe("The leash would block this: it's worth about 5 NEAR, over the 0.5 NEAR per-trade cap.");
   });
 
   it("never trades from pasted text", async () => {
