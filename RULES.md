@@ -43,6 +43,16 @@ Agents can also report an account with evidence (`report(account, evidence)`). A
 
 Every decision is logged as a NEP-297 event (`standard: "airkey"`): `paid`, `pending`, `blocked`, `approved`, `rejected`, `transfer_failed`, `reported`, plus the owner's rule changes. Anyone can read them from the chain.
 
+## Swaps (checked by the server today)
+
+Swaps go through NEAR Intents, which has no testnet, so they are quoted as dry runs for now and these rules run on the server, using the caps the leash holds on chain:
+
+- Only the trusted agent can swap. Anything pasted or forwarded can never trade.
+- Both tokens must be on NEAR Intents' own token list.
+- The swap's value in NEAR must fit the trusted agent's per-payment cap and what's left of its daily cap, and the kill switch must be off.
+
+When swaps execute on mainnet, the leash will hold these rules itself.
+
 ## What the leash does not do
 
 - It does not judge who a new receiver is. Account age, contract code changes and past payments are checked off-chain by the AirKey server before it calls `pay`, and it passes `ask_owner: true` when the check warns.
