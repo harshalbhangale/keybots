@@ -95,6 +95,27 @@ From the last live run:
 | pay designer 0.3 for the logo | typed | pay (trusted) | needs approval (R7: new account, never paid) | [4Zckku5j…](https://testnet.nearblocks.io/txns/4Zckku5jhgyJ48imGbrVeU7XA7ngSAmFiQFXT67jeqJ2) |
 | Swap 20 USDC to SOL | typed | none | not sent (swaps are next) | none |
 
+### 4. The AIRKEY app and keyboard (iOS)
+
+Needs Xcode and [XcodeGen](https://github.com/yonaskolb/XcodeGen). With the server from step 3 running:
+
+```bash
+cd ios && xcodegen generate
+xcodebuild -project AirKey.xcodeproj -scheme AirKey -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone Air' -derivedDataPath build CODE_SIGN_IDENTITY=- build
+xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/AirKey.app
+xcrun simctl launch booted tech.airkey.app
+```
+
+- **Home** shows both agents, today's paid / waiting / blocked counts, and a box to run a command as "I typed it" (trusted) or "Someone sent it" (untrusted).
+- **Agents** shows each agent's account, tier, caps, today's spend and what its key can call.
+- **Leash** is the control panel: kill switch, payments waiting for you, what the leash holds, allow and block lists. Every change there is **signed on the phone**: the server builds the transaction, Face ID unlocks this device's key, the phone signs, the server relays (`server/src/owner.ts`).
+- **Receipts** lists every command; tap one for the steps: what you said, how it was read, which agent, the checks, and the leash's decision with its transaction.
+- **Settings** shows this device's key. Enroll it once: `cd scripts && npm run add-device -- <owner> <key>`.
+- **The keyboard** (add it in Settings › General › Keyboard, then Allow Full Access): hold **P**, the key with the mint side tab, to run what you typed with the Payment Agent; **Paste & check** sends what you copied to the Inbox Agent; the result shows as a mint, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
+
+Checked on the iPhone Air simulator against testnet: a payment from Home (paid, [8oT7xwJa…](https://testnet.nearblocks.io/txns/8oT7xwJanpgVFkD4np8S4UxGdkShpzTHjo2UtPn4WchN)), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone. The keyboard builds and installs, but hasn't been exercised with Full Access yet.
+
 ## Plan vs built
 
 The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
@@ -104,10 +125,11 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Rust Leash contract: per-payment cap, daily cap, allowlist, blocklist, kill switch, events | **Built**, 16 unit tests, live on testnet |
 | Restricted agent identities (function-call keys only) | **Built**, proven on testnet (steps 6 and 7) |
 | One successful payment, one blocked malicious payment | **Built**, proven on testnet (steps 1 and 3) |
-| Approval flow | **Contract side built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject (step 5). The Face ID app flow is *next*. |
+| Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
 | Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 20 tests, live on testnet (table above) |
-| Keyboard, app screens (Home, Agents, Leash, Receipts) | *Next* |
+| App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/`; screens checked on the simulator against testnet; keyboard built, not yet exercised with Full Access |
+| Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | NEAR AI Cloud inference | **Code built, not yet run live** (needs an API key): used only for text the rules can't read; checks each reply's ECDSA response signature against the exact request and response bytes. The attestation report behind the signing key is *not* checked yet, and receipts say so. |
 | NEAR Intents swaps | *Next* |
 | Mainnet | *Next*, after everything passes on testnet |
@@ -115,7 +137,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 ## Next (not built yet)
 
 - **NEAR AI Cloud, live:** run it with a key and record real signed replies.
-- **AIRKEY keyboard and app** (iOS): type a command, see a paid / approve / blocked chip; approve with Face ID in the app, where the owner's full-access key lives. The keyboard never holds a key.
+- **Keyboard on a real phone** with Full Access, and a hosted server so it works off the laptop.
 - **Swaps across chains** through NEAR Intents (1Click).
 - **Mainnet**, once everything above passes on testnet.
 
