@@ -16,7 +16,7 @@ AI agents are about to hold money, and they are easy to fool. A message that say
 
 | Piece | What it does | Where |
 |---|---|---|
-| **Agent accounts** | Each agent is a NEAR sub-account (`pay.<you>`, `inbox.<you>`). Its only key is a function-call key for the leash's `pay` and `report`, so it can't transfer NEAR or add keys. | `scripts/setup-testnet.mjs` |
+| **Agent accounts** | Each agent is a NEAR sub-account (`pay.<you>`, `inbox.<you>`, `trade.<you>`). Its only key is a function-call key for the leash's `pay` and `report`, so it can't transfer NEAR or add keys. | `scripts/setup-testnet.mjs` |
 | **Trust tiers** | `pay` acts on what you typed (trusted). `inbox` acts on text from someone else, such as a pasted message (untrusted). The tier belongs to the agent, not to the request, so a fooled AI can't promote itself. | `RULES.md` |
 | **The leash** | Decides every payment in a fixed order (R1–R7, R0): kill switch, blocklist, per-payment cap, daily cap, allowlist for untrusted agents, owner approval. Every decision is an on-chain event. | `contracts/leash/src/lib.rs` |
 | **The server** | Reads a command (rules first, no AI needed for "pay harshal 0.5 for dinner"), sends typed text to the trusted agent and pasted text to the untrusted one, checks the receiver (exists, blocklisted, allowlisted, account age, contract, paid before), then asks the leash. A warning can only make it stricter: the agent asks the owner (R7). Every command gets a receipt. | `server/src/` |
