@@ -9,7 +9,7 @@ struct AirKeyApp: App {
             RootView()
                 .environment(model)
                 .preferredColorScheme(.dark)
-                .tint(AK.mint)
+                .tint(AK.accent)
         }
     }
 }

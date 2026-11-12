@@ -16,11 +16,11 @@ final class AppModel {
     var api: API { API() }
 
     /// The colour of what's going on: red while everything is stopped, amber
-    /// while something waits for the owner, mint otherwise.
+    /// while something waits for the owner, lime otherwise.
     var mood: Color {
-        guard let state else { return AK.mint }
+        guard let state else { return AK.accent }
         if state.paused { return AK.red }
-        return state.pending.isEmpty ? AK.mint : AK.amber
+        return state.pending.isEmpty ? AK.accent : AK.amber
     }
 
     func refresh() async {

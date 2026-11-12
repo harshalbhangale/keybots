@@ -157,7 +157,7 @@ struct LeashView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let tx = model.lastOwnerTx, let url = URL(string: tx.url) {
                 Link(destination: url) {
-                    Label("Last change you signed: \(tx.method)", systemImage: "checkmark.seal.fill").font(.footnote).foregroundStyle(AK.mint)
+                    Label("Last change you signed: \(tx.method)", systemImage: "checkmark.seal.fill").font(.footnote).foregroundStyle(AK.accent)
                 }
             }
             if let url = URL(string: "\(s.explorer)/address/\(s.leash)") {

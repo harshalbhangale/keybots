@@ -80,7 +80,7 @@ struct CommandSheet: View {
                 }
                 .foregroundStyle(AK.ink)
                 .frame(width: 34, height: 34)
-                .background(trimmed.isEmpty ? AK.raised : AK.mint, in: Circle())
+                .background(trimmed.isEmpty ? AK.raised : AK.accent, in: Circle())
             }
             .buttonStyle(.plain)
             .disabled(trimmed.isEmpty || running)
@@ -129,7 +129,7 @@ struct CommandSheet: View {
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(AK.ink)
                 .frame(width: 28, height: 28)
-                .background(pasted ? AK.amber : AK.mint, in: Circle())
+                .background(pasted ? AK.amber : AK.accent, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(intent.title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
                 Text(pasted ? "The Inbox Agent will ask the leash" : (intent.detail ?? "The leash checks it before anything moves"))

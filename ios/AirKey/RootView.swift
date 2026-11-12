@@ -63,7 +63,7 @@ struct CommandBar: View {
                 KeycapMark(size: 18)
                 Text("Pay, swap, or check a message").font(.subheadline).foregroundStyle(AK.muted).lineLimit(1)
                 Spacer(minLength: 0)
-                Image(systemName: "arrow.up.circle.fill").font(.title3).foregroundStyle(AK.mint)
+                Image(systemName: "arrow.up.circle.fill").font(.title3).foregroundStyle(AK.accent)
             }
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
