@@ -6,6 +6,7 @@ import { judge } from "./checks.js";
 import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
 import type { IntentsClient } from "./intents.js";
+import type { OrderStore } from "./orders.js";
 import { parse, resolveReceiver, toYocto, type Action } from "./parse.js";
 import type { Receipt, ReceiptStore } from "./receipts.js";
 
@@ -15,6 +16,7 @@ export interface Deps {
   receipts: ReceiptStore;
   readAi?: typeof readWithNearAi;
   intents?: IntentsClient;
+  orders?: OrderStore;
 }
 
 export async function runCommand(deps: Deps, text: string, source: "typed" | "pasted"): Promise<Receipt> {
@@ -42,6 +44,7 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
 
   if (action.kind === "unknown") return done({ outcome: "not-sent", message: action.reason });
   if (action.kind === "swap") return swap(deps, action, source, done);
+  if (action.kind === "watch") return watch(deps, action, text, source, done);
 
   // 2. Who is it for?
   const to = resolveReceiver(action.receiver, cfg.contacts, cfg.network);
@@ -168,5 +171,40 @@ async function swap(
     message: `Quote: ${action.amount} ${action.from} → ${tidy(quote.amountOutFormatted)} ${action.to}${quote.amountOutUsd ? ` (~$${Number(quote.amountOutUsd).toFixed(2)})` : ""} on NEAR Intents. Nothing sent yet.`,
     agent: { account: agent, tier: "trusted" },
     swap: { from, to, quote, leash },
+  });
+}
+
+/** A price-triggered order: check the trade and the token now, then leave it with the watcher. */
+async function watch(
+  deps: Deps,
+  action: Extract<Action, { kind: "watch" }>,
+  text: string,
+  source: "typed" | "pasted",
+  done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+): Promise<Receipt> {
+  const what = `${action.command} when ${action.symbol} is ${action.direction} $${action.price}`;
+  if (source === "pasted") {
+    return done({ outcome: "blocked", message: `Orders only come from what you type. The Inbox Agent can't set one (${what}).` });
+  }
+  if (!deps.intents || !deps.orders) return done({ outcome: "not-sent", message: `Orders aren't set up on this server (${what}).` });
+
+  // Both tokens must be real before anything is left waiting.
+  const [from, to] = await Promise.all([deps.intents.pick(action.trade.from, "from"), deps.intents.pick(action.trade.to, "to")]);
+  if (!from.verified || !to.verified) {
+    const bad = !from.verified ? from : to;
+    return done({ outcome: "blocked", message: `Token check failed: ${bad.reason}.`, swap: { from, to } });
+  }
+  const now = await deps.intents.price(action.symbol);
+  if (now === undefined) return done({ outcome: "not-sent", message: `NEAR Intents has no price for ${action.symbol} right now.`, swap: { from, to } });
+
+  const target = Number(action.price);
+  const order = deps.orders.add({ text: text.slice(0, 500), command: action.command, symbol: action.symbol, direction: action.direction, price: target, priceThen: now });
+  const agent = (await deps.chain.state()).agents.some((x) => x.account === deps.cfg.agents.trade) ? deps.cfg.agents.trade : deps.cfg.agents.trusted;
+  return done({
+    outcome: "watching",
+    message: `Watching ${action.symbol} (now $${tidy(now)}). When it's ${action.direction} $${tidy(target)}: ${action.command}.`,
+    agent: { account: agent, tier: "trusted" },
+    swap: { from, to },
+    order: { id: order.id, symbol: order.symbol, direction: order.direction, price: order.price, priceThen: order.priceThen, command: order.command },
   });
 }
