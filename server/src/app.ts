@@ -53,7 +53,9 @@ export function buildApp(deps: Deps) {
     if (!deps.intents) return reply.code(501).send({ error: "Tokens aren't set up on this server" });
     try {
       const list = await deps.intents.tokens();
-      return { symbols: [...new Set(list.map((t) => t.symbol.toUpperCase()))].sort(), source: "NEAR Intents" };
+      const symbols = new Set(list.map((t) => t.symbol.toUpperCase()));
+      if (symbols.has("WNEAR")) symbols.add("NEAR"); // what people type
+      return { symbols: [...symbols].sort(), source: "NEAR Intents" };
     } catch (e) {
       return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
