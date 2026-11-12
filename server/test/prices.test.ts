@@ -46,3 +46,22 @@ describe("GET /v1/tokens", () => {
     expect(r.json().symbols).toEqual(["NEAR", "SOL", "USDC", "WNEAR"]);
   });
 });
+
+describe("GET /v1/fx", () => {
+  const fx = async (q: string) => {
+    const { ratesClient } = await import("../src/rates.js");
+    const fetchImpl = (async () => new Response(JSON.stringify({ result: "success", time_last_update_utc: "today", rates: { USD: 1, INR: 88, EUR: 0.9 } }))) as unknown as typeof fetch;
+    const cfg = loadConfig({ AIRKEY_OWNER: "x.testnet" });
+    return buildApp({ cfg, chain: {} as never, receipts: {} as never, rates: ratesClient({ fetchImpl }) }).inject(`/v1/fx?${q}`);
+  };
+
+  it("converts through the dollar", async () => {
+    expect((await fx("amount=100&from=usd&to=inr")).json()).toMatchObject({ value: 8800, from: "USD", to: "INR" });
+    expect((await fx("amount=90&from=eur&to=inr")).json().value).toBeCloseTo(8800);
+  });
+
+  it("says when it has no rate, and rejects nonsense", async () => {
+    expect((await fx("amount=1&from=usd&to=xyz")).statusCode).toBe(404);
+    expect((await fx("amount=abc&from=usd&to=inr")).statusCode).toBe(400);
+  });
+});
