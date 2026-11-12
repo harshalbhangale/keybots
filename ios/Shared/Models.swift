@@ -53,6 +53,7 @@ struct Receipt: Decodable, Identifiable {
     let receiver: ReceiverRef?
     let checks: Checks?
     let decision: Decision?
+    let swap: Swap?
     let outcome: String
     let message: String
     let tx: Tx?
@@ -86,6 +87,29 @@ struct Receipt: Decodable, Identifiable {
     struct Checks: Decodable { let verdict: String; let reasons: [String] }
     struct Decision: Decodable { let status: String; let rule: String?; let reason: String; let pending_id: Int? }
     struct Tx: Decodable { let hash: String; let url: String }
+    struct Swap: Decodable {
+        let from: TokenCheck
+        let to: TokenCheck
+        let quote: Quote?
+        let leash: SwapLeash?
+    }
+    struct TokenCheck: Decodable {
+        let asked: String
+        let verified: Bool
+        let reason: String
+        let alsoOn: [String]
+        let token: Token?
+        struct Token: Decodable { let assetId: String; let symbol: String; let blockchain: String }
+    }
+    struct Quote: Decodable {
+        let amountInFormatted: String
+        let amountInUsd: String?
+        let amountOutFormatted: String
+        let amountOutUsd: String?
+        let minAmountOut: String?
+        let timeEstimate: Double?
+    }
+    struct SwapLeash: Decodable { let agent: String; let valueNear: String; let perPaymentCap: String; let leftToday: String; let within: Bool }
 
     var signal: Signal { Signal(outcome: outcome) }
     var date: Date? { ISO8601DateFormatter.withFraction.date(from: at) ?? ISO8601DateFormatter().date(from: at) }
