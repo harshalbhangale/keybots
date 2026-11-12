@@ -95,6 +95,26 @@ From the last live run:
 | pay designer 0.3 for the logo | typed | pay (trusted) | needs approval (R7: new account, never paid) | [4Zckku5j…](https://testnet.nearblocks.io/txns/4Zckku5jhgyJ48imGbrVeU7XA7ngSAmFiQFXT67jeqJ2) |
 | Swap 20 USDC to SOL | typed | none | not sent (swaps are next) | none |
 
+### Swaps through NEAR Intents
+
+Type `swap 20 usdc to sol`. The server:
+
+1. **Checks both tokens** against NEAR Intents' own list (`GET /v0/tokens`, 230 assets). You pay from NEAR, where the leash is, and receive on the token's home chain, so "SOL" means SOL on Solana (`nep141:sol.omft.near`), never a look-alike. A symbol that isn't listed is refused.
+2. **Gets a quote from 1Click** as a **dry run** (`"dry": true`): the real route and price, with nothing deposited, signed or sent.
+3. **Holds the swap's value to the leash's caps**, read from the testnet contract: worth more than the trusted agent's per-payment cap or what's left today, and it's blocked.
+4. **Never trades from pasted text**: the untrusted Inbox Agent can't swap at all.
+
+From the last live run (1Click mainnet API, caps from the testnet leash):
+
+| Command | Outcome |
+|---|---|
+| Swap 20 USDC to SOL | blocked: quoted at 0.2454 SOL, but worth ~5.9 NEAR, over the 0.5 NEAR per-payment cap |
+| swap 1 usdc to sol | quoted: 0.01226 SOL (~$1.00), ~12 s, worth 0.296 NEAR, within the caps; dry run |
+| swap 1 usdc to toshi | blocked: TOSHI isn't on NEAR Intents' list of 230 assets |
+| swap 1 usdc to sol (pasted) | blocked: the Inbox Agent can't trade |
+
+**Not built yet:** executing the swap. NEAR Intents has no testnet (hackathon rule Q-007), so that means a mainnet deposit with real funds, and it waits for the owner's explicit go-ahead. Code: `server/src/intents.ts`, tests in `server/test/intents.test.ts` and `server/test/agent.test.ts`.
+
 ### 4. The AIRKEY app and keyboard (iOS)
 
 Needs Xcode and [XcodeGen](https://github.com/yonaskolb/XcodeGen). With the server from step 3 running:
@@ -131,14 +151,14 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/`; screens checked on the simulator against testnet; keyboard built, not yet exercised with Full Access |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | NEAR AI Cloud inference | **Code built, not yet run live** (needs an API key): used only for text the rules can't read; checks each reply's ECDSA response signature against the exact request and response bytes. The attestation report behind the signing key is *not* checked yet, and receipts say so. |
-| NEAR Intents swaps | *Next* |
+| NEAR Intents swaps | **Quotes built**: token check against NEAR Intents' list, dry-run 1Click quotes, leash caps applied, pasted text can't trade. **Execution is next** (mainnet only). |
 | Mainnet | *Next*, after everything passes on testnet |
 
 ## Next (not built yet)
 
 - **NEAR AI Cloud, live:** run it with a key and record real signed replies.
 - **Keyboard on a real phone** with Full Access, and a hosted server so it works off the laptop.
-- **Swaps across chains** through NEAR Intents (1Click).
+- **Executing swaps** through NEAR Intents on mainnet, after the owner's go-ahead.
 - **Mainnet**, once everything above passes on testnet.
 
 ## Disclosures
