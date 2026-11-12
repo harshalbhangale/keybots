@@ -11,6 +11,7 @@ export function buildApp(deps: Deps) {
   app.addHook("onRequest", async (req, reply) => {
     reply.header("access-control-allow-origin", "*");
     reply.header("access-control-allow-headers", "authorization, content-type");
+    reply.header("access-control-allow-methods", "GET, POST, DELETE, OPTIONS");
     if (req.method === "OPTIONS") return reply.code(204).send();
     if (req.url === "/health" || !deps.cfg.apiToken) return;
     if (req.headers.authorization !== `Bearer ${deps.cfg.apiToken}`) return reply.code(401).send({ error: "Missing or wrong token" });
@@ -47,6 +48,21 @@ export function buildApp(deps: Deps) {
     } catch (e) {
       return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
+  });
+
+  /** Price-triggered orders, newest first. */
+  app.get("/v1/orders", async (_req, reply) => {
+    if (!deps.orders) return reply.code(501).send({ error: "Orders aren't set up on this server" });
+    return { orders: deps.orders.list() };
+  });
+
+  /** Stop watching. Only an order that is still waiting can be cancelled. */
+  app.delete<{ Params: { id: string } }>("/v1/orders/:id", async (req, reply) => {
+    if (!deps.orders) return reply.code(501).send({ error: "Orders aren't set up on this server" });
+    const order = deps.orders.list().find((o) => o.id === req.params.id);
+    if (!order) return reply.code(404).send({ error: "No such order" });
+    if (order.status !== "watching") return reply.code(409).send({ error: `That order is already ${order.status}` });
+    return deps.orders.update(order.id, { status: "cancelled" });
   });
 
   /** "100 usd to inr" for the keyboard: today's rate, nothing stored. */
