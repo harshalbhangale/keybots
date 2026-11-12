@@ -45,6 +45,15 @@ struct API {
         try await get("/v1/fx?amount=\(amount)&from=\(from)&to=\(to)")
     }
 
+    /// Trades waiting for a price, newest first.
+    func orders() async throws -> [Order] { try await (get("/v1/orders") as OrderList).orders }
+
+    func cancelOrder(_ id: String) async throws {
+        var r = try request("/v1/orders/\(id)")
+        r.httpMethod = "DELETE"
+        let _: Order = try await send(r)
+    }
+
     /// Every symbol NEAR Intents lists.
     func tokens() async throws -> [String] { try await (get("/v1/tokens") as TokenSymbols).symbols }
 
