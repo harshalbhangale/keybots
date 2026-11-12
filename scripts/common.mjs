@@ -49,7 +49,7 @@ export function newKey() {
 
 export async function exists(accountId) {
   try {
-    await provider.viewAccount({ accountId, finality: "final" });
+    await provider.viewAccount({ accountId, blockQuery: { finality: "final" } });
     return true;
   } catch {
     return false;
@@ -57,7 +57,7 @@ export async function exists(accountId) {
 }
 
 export async function view(contractId, method, args = {}) {
-  return provider.callFunction({ contractId, method, args, finality: "optimistic" });
+  return provider.callFunction({ contractId, method, args, blockQuery: { finality: "optimistic" } });
 }
 
 export const txUrl = (hash) => `${EXPLORER}/txns/${hash}`;
