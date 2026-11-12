@@ -32,6 +32,33 @@ export function buildApp(deps: Deps) {
     }
   });
 
+  /** A token's live price, from NEAR Intents' own list. Unknown or look-alike symbols get 404. */
+  app.get<{ Params: { symbol: string } }>("/v1/price/:symbol", async (req, reply) => {
+    if (!deps.intents) return reply.code(501).send({ error: "Prices aren't set up on this server" });
+    const symbol = req.params.symbol.replace(/^\$/, "").toUpperCase();
+    if (!/^[A-Z][A-Z0-9]{1,9}$/.test(symbol)) return reply.code(400).send({ error: "That isn't a token symbol" });
+    try {
+      const check = await deps.intents.pick(symbol, "to");
+      if (!check.verified || !check.token || typeof check.token.price !== "number") {
+        return reply.code(404).send({ error: check.verified ? `No price for ${symbol} right now` : check.reason });
+      }
+      return { symbol, usd: check.token.price, blockchain: check.token.blockchain, assetId: check.token.assetId, source: "NEAR Intents" };
+    } catch (e) {
+      return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** Every symbol NEAR Intents lists, so the keyboard only offers trades in real tokens. */
+  app.get("/v1/tokens", async (_req, reply) => {
+    if (!deps.intents) return reply.code(501).send({ error: "Tokens aren't set up on this server" });
+    try {
+      const list = await deps.intents.tokens();
+      return { symbols: [...new Set(list.map((t) => t.symbol.toUpperCase()))].sort(), source: "NEAR Intents" };
+    } catch (e) {
+      return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
   app.get<{ Querystring: { limit?: string } }>("/v1/receipts", async (req) => ({
     receipts: deps.receipts.list(Math.min(200, Number(req.query.limit ?? 50) || 50)),
   }));
