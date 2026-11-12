@@ -37,4 +37,30 @@ final class KeyboardViewController: UIInputViewController {
     override func textDidChange(_ textInput: UITextInput?) {
         model.refreshContext()
     }
+
+    override func selectionDidChange(_ textInput: UITextInput?) {
+        model.refreshContext()
+    }
+
+    // Some apps change the text without telling the keyboard (a paste from the
+    // menu, a message sent). Look again a few times a second while it's on screen.
+    private var watcher: Task<Void, Never>?
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        model.refreshContext()
+        watcher?.cancel()
+        watcher = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(400))
+                self?.model.refreshContext()
+            }
+        }
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        watcher?.cancel()
+        watcher = nil
+    }
 }
