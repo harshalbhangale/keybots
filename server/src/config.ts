@@ -10,7 +10,8 @@ export interface Config {
   nearblocksApi: string;
   owner: string;
   leash: string;
-  agents: { trusted: string; untrusted: string };
+  /** trusted: pays for what the owner types. untrusted: reads other people's words. trade: swaps, with its own caps. */
+  agents: { trusted: string; untrusted: string; trade: string };
   keysDir: string;
   dataDir: string;
   /** Address book: name or alias -> NEAR account. */
@@ -44,6 +45,7 @@ export function loadConfig(env = process.env): Config {
     agents: {
       trusted: env.AIRKEY_AGENT_TRUSTED ?? `pay.${owner}`,
       untrusted: env.AIRKEY_AGENT_UNTRUSTED ?? `inbox.${owner}`,
+      trade: env.AIRKEY_AGENT_TRADE ?? `trade.${owner}`,
     },
     keysDir: env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"),
     dataDir: env.AIRKEY_DATA_DIR ?? join(ROOT, "server", "data"),

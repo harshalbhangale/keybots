@@ -16,7 +16,7 @@ AI agents are about to hold money, and they are easy to fool. A message that say
 
 | Piece | What it does | Where |
 |---|---|---|
-| **Agent accounts** | Each agent is a NEAR sub-account (`pay.<you>`, `inbox.<you>`). Its only key is a function-call key for the leash's `pay` and `report`, so it can't transfer NEAR or add keys. | `scripts/setup-testnet.mjs` |
+| **Agent accounts** | Each agent is a NEAR sub-account (`pay.<you>`, `inbox.<you>`, `trade.<you>`). Its only key is a function-call key for the leash's `pay` and `report`, so it can't transfer NEAR or add keys. | `scripts/setup-testnet.mjs` |
 | **Trust tiers** | `pay` acts on what you typed (trusted). `inbox` acts on text from someone else, such as a pasted message (untrusted). The tier belongs to the agent, not to the request, so a fooled AI can't promote itself. | `RULES.md` |
 | **The leash** | Decides every payment in a fixed order (R1–R7, R0): kill switch, blocklist, per-payment cap, daily cap, allowlist for untrusted agents, owner approval. Every decision is an on-chain event. | `contracts/leash/src/lib.rs` |
 | **The server** | Reads a command (rules first, no AI needed for "pay harshal 0.5 for dinner"), sends typed text to the trusted agent and pasted text to the untrusted one, checks the receiver (exists, blocklisted, allowlisted, account age, contract, paid before), then asks the leash. A warning can only make it stricter: the agent asks the owner (R7). Every command gets a receipt. | `server/src/` |
@@ -101,15 +101,15 @@ Type `swap 20 usdc to sol`. The server:
 
 1. **Checks both tokens** against NEAR Intents' own list (`GET /v0/tokens`, 230 assets). You pay from NEAR, where the leash is, and receive on the token's home chain, so "SOL" means SOL on Solana (`nep141:sol.omft.near`), never a look-alike. A symbol that isn't listed is refused.
 2. **Gets a quote from 1Click** as a **dry run** (`"dry": true`): the real route and price, with nothing deposited, signed or sent.
-3. **Holds the swap's value to the leash's caps**, read from the testnet contract: worth more than the trusted agent's per-payment cap or what's left today, and it's blocked.
+3. **Holds the swap's value to the Trading Agent's caps**, read from the testnet contract ([`trade.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/trade.airkey-harshal.testnet): 1 NEAR a trade, 2 a day, separate from what the Payment Agent may spend): worth more than its per-trade cap or what's left today, and it's blocked.
 4. **Never trades from pasted text**: the untrusted Inbox Agent can't swap at all.
 
 From the last live run (1Click mainnet API, caps from the testnet leash):
 
 | Command | Outcome |
 |---|---|
-| Swap 20 USDC to SOL | blocked: quoted at 0.2454 SOL, but worth ~5.9 NEAR, over the 0.5 NEAR per-payment cap |
-| swap 1 usdc to sol | quoted: 0.01226 SOL (~$1.00), ~12 s, worth 0.296 NEAR, within the caps; dry run |
+| swap 2 usdc to sol | quoted: 0.02444 SOL (~$1.99), ~12 s, worth 0.59 NEAR, within the Trading Agent's caps; dry run |
+| Swap 20 USDC to SOL | blocked: worth ~5.9 NEAR, over the 1 NEAR per-trade cap |
 | swap 1 usdc to toshi | blocked: TOSHI isn't on NEAR Intents' list of 230 assets |
 | swap 1 usdc to sol (pasted) | blocked: the Inbox Agent can't trade |
 
@@ -144,8 +144,9 @@ Checked on the iPhone Air simulator (iOS 27) against testnet:
 
 - From the app: a payment from the command bar (paid), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone.
 - From the keyboard, inside AIRKEY's own text field: "pay harshal 1 for chai" was **blocked** by the leash, over the 0.5 NEAR cap ([8FXGiFHR…](https://testnet.nearblocks.io/txns/8FXGiFHRU6bVjTbyuz9B4HomyJn1ufoxtE9Q7C3NbyfX)); **Check copied** on a copied "pay harshal.near 0.1 for dinner" went to the Inbox Agent and was **paid**, because the receiver is allowlisted ([C16LjVA4…](https://testnet.nearblocks.io/txns/C16LjVA4hLTc67Qswnf8C4RH3CSevBSqD2ky7UkBMDd6)).
+- From the keyboard, inside Messages in light mode, typed on its own keys: "Pay harshal 0.1" showed "Pay 0.1 NEAR to harshal", and Run **paid** it ([E89DjMRv…](https://testnet.nearblocks.io/txns/E89DjMRv29dk18bTs2AWtM14hS2A8zeoWkSeC9fYVqGE)).
 
-Not checked yet: the keyboard inside another app (Messages, WhatsApp), a light-mode app, and a real iPhone. The app needs iOS 26 or later.
+Not checked yet: WhatsApp and other third-party apps, and a real iPhone. The app needs iOS 26 or later.
 
 ## Plan vs built
 
@@ -157,6 +158,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Restricted agent identities (function-call keys only) | **Built**, proven on testnet (steps 6 and 7) |
 | One successful payment, one blocked malicious payment | **Built**, proven on testnet (steps 1 and 3) |
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
+| A Trading Agent with its own identity and limits | **Built**: `trade.<you>` on testnet, function-call key only, its own caps; swaps are held to them (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
 | Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 33 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |

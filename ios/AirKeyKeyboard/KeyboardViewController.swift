@@ -61,6 +61,7 @@ final class KeyboardViewController: UIInputViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         model.refreshContext()
+        model.refreshTokens()
         watch()
     }
 
