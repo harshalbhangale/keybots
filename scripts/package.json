@@ -5,7 +5,8 @@
   "scripts": {
     "setup": "node setup-testnet.mjs",
     "deploy": "node deploy-leash.mjs",
-    "e2e": "node e2e-testnet.mjs"
+    "e2e": "node e2e-testnet.mjs",
+    "add-device": "node add-device-key.mjs"
   },
   "dependencies": {
     "near-api-js": "^7.5.3"
