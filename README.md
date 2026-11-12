@@ -71,7 +71,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 33 tests: parser, receiver checks, swaps, the full command flow
+npm test                       # 51 tests: parser, receiver checks, swaps, prices, orders, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
@@ -115,6 +115,12 @@ From the last live run (1Click mainnet API, caps from the testnet leash):
 
 **Not built yet:** executing the swap. NEAR Intents has no testnet (hackathon rule Q-007), so that means a mainnet deposit with real funds, and it waits for the owner's explicit go-ahead. Code: `server/src/intents.ts`, tests in `server/test/intents.test.ts` and `server/test/agent.test.ts`.
 
+### Orders that wait for a price
+
+Type `sell 1 near if it drops below 2` (or `buy $2 of near when it goes above 4`). The server checks both tokens against NEAR Intents' list, notes the price now, and leaves the order with a watcher that looks at NEAR Intents' prices every 15 seconds. When the price crosses, the trade runs exactly like one you typed: same token checks, same Trading Agent caps, its own receipt. Pasted text can never set an order. Home lists what is being watched, with Cancel.
+
+From a live run: "buy $2 of near if it goes above 3" was accepted with NEAR at $3.39, triggered on the next look, and produced the quote "2 USDC → 0.5861 NEAR". Like every swap for now, the triggered trade is a quote; nothing is sent. Code: `server/src/orders.ts`, tests in `server/test/orders.test.ts`.
+
 ### 4. The AIRKEY app and keyboard (iOS)
 
 <p>
@@ -140,13 +146,27 @@ xcrun simctl launch booted tech.airkey.app
 - **Settings** has the keyboard setup steps, the server address and this device's key. Enroll the key once: `cd scripts && npm run add-device -- <owner> <key>`.
 - **The keyboard** (turn it on in Settings › Apps › AIRKEY › Keyboards, then Allow Full Access) follows the light or dark look of the app you're typing in. As you type, the bar above the keys shows what your words would do ("Pay 0.2 NEAR to harshal") with a **Run** button; holding **P**, the key with the lime side tab, runs it too. **Check copied** sends what you copied to the Inbox Agent. The outcome shows as a lime, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
 
+**What the bar above the keys shows as you type** (one thing at a time):
+
+| You type | The bar shows | Where it comes from |
+|---|---|---|
+| `pay harshal 0.2 for dinner` | Pay 0.2 NEAR to harshal · **Run** | read on the phone, then the leash decides |
+| `$near` | NEAR $3.39 · **Buy** | NEAR Intents' token list (`GET /v1/price/:symbol`) |
+| `buy $2 of near`, `sell 1 near` | Buy $2 of NEAR · **Run** | only for tokens NEAR Intents lists; the Trading Agent quotes it |
+| `sell 1 near if it drops below 2` | Sell 1 NEAR for USDC · runs when the price is below $2 | left with the server's price watcher |
+| `18% of 2450`, `236 for 4 of us` | = 441, 59 each · **Insert** | worked out on the phone, no network |
+| `100 usd to inr` | ₹9,385.16 · **Insert** | today's rate (`GET /v1/fx`) |
+
+Once a command has run, the keyboard takes it out of the message box, so it isn't sent to the person you're chatting with. A blocked one stays so you can fix it.
+
 Checked on the iPhone Air simulator (iOS 27) against testnet:
 
 - From the app: a payment from the command bar (paid), and approving a waiting 0.3 NEAR payment from Leash with Face ID, signed on the phone.
 - From the keyboard, inside AIRKEY's own text field: "pay harshal 1 for chai" was **blocked** by the leash, over the 0.5 NEAR cap ([8FXGiFHR…](https://testnet.nearblocks.io/txns/8FXGiFHRU6bVjTbyuz9B4HomyJn1ufoxtE9Q7C3NbyfX)); **Check copied** on a copied "pay harshal.near 0.1 for dinner" went to the Inbox Agent and was **paid**, because the receiver is allowlisted ([C16LjVA4…](https://testnet.nearblocks.io/txns/C16LjVA4hLTc67Qswnf8C4RH3CSevBSqD2ky7UkBMDd6)).
 - From the keyboard, inside Messages in light mode, typed on its own keys: "Pay harshal 0.1" showed "Pay 0.1 NEAR to harshal", and Run **paid** it ([E89DjMRv…](https://testnet.nearblocks.io/txns/E89DjMRv29dk18bTs2AWtM14hS2A8zeoWkSeC9fYVqGE)).
+- From the keyboard in Messages: `$near` showed the live price, **Buy** turned it into a buy command, and Run on "buy $10 of near" was **blocked** by the Trading Agent's 1 NEAR per-trade cap.
 
-Not checked yet: WhatsApp and other third-party apps, and a real iPhone. The app needs iOS 26 or later.
+Not checked yet on a device: the sum, split and currency chips (their rules are tested separately), WhatsApp and other third-party apps, and a real iPhone. The app needs iOS 26 or later.
 
 ## Plan vs built
 
@@ -160,10 +180,12 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
 | A Trading Agent with its own identity and limits | **Built**: `trade.<you>` on testnet, function-call key only, its own caps; swaps are held to them (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
-| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 33 tests, live on testnet (table above) |
+| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 51 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | NEAR AI Cloud inference | **Code built, not yet run live** (needs an API key): used only for text the rules can't read; checks each reply's ECDSA response signature against the exact request and response bytes. The attestation report behind the signing key is *not* checked yet, and receipts say so. |
+| Price chips, buy and sell from the keyboard, sums and currency | **Built**: prices and token list from NEAR Intents; sums and splits on the phone |
+| Price-triggered orders | **Built**: typed orders, a 15-second watcher, cancel from Home; the triggered trade is a quote until swaps execute |
 | NEAR Intents swaps | **Quotes built**: token check against NEAR Intents' list, dry-run 1Click quotes, leash caps applied, pasted text can't trade. **Execution is next** (mainnet only). |
 | Mainnet | *Next*, after everything passes on testnet |
 

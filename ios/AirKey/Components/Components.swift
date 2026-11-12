@@ -65,9 +65,9 @@ struct SignalBadge: View {
     var body: some View {
         Image(systemName: signal.icon)
             .font(.system(size: size * 0.42, weight: .bold))
-            .foregroundStyle(signal == .quote || signal == .neutral ? AK.bone : AK.ink)
+            .foregroundStyle(signal.plain ? AK.bone : AK.ink)
             .frame(width: size, height: size)
-            .background(signal == .quote || signal == .neutral ? AK.raised : signal.color, in: Circle())
+            .background(signal.plain ? AK.raised : signal.color, in: Circle())
             .accessibilityLabel(signal.title)
     }
 }
@@ -82,13 +82,13 @@ struct OutcomeCard: View {
         HStack(alignment: .top, spacing: 14) {
             SignalBadge(signal: signal, size: 36)
             VStack(alignment: .leading, spacing: 4) {
-                Text(signal.title).font(.headline).foregroundStyle(signal == .neutral ? AK.bone : signal.color)
+                Text(signal.title).font(.headline).foregroundStyle(signal.plain ? AK.bone : signal.color)
                 Text(message).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
         .padding(16)
-        .glassEffect(.regular.tint(signal.color.opacity(0.16)), in: .rect(cornerRadius: AK.radius))
+        .glassEffect(signal.plain ? .regular : .regular.tint(signal.color.opacity(0.16)), in: .rect(cornerRadius: AK.radius))
     }
 }
 

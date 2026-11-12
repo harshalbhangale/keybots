@@ -90,8 +90,9 @@ export function intentsClient(opts: { jwt?: string; recipient: string; fetchImpl
   const base = opts.base ?? ONE_CLICK;
   let cache: { at: number; list: IntentsToken[] } | null = null;
 
-  async function tokens(): Promise<IntentsToken[]> {
-    if (cache && Date.now() - cache.at < 5 * 60_000) return cache.list;
+  /** The token list, at most `maxAgeMs` old (five minutes unless said). */
+  async function tokens(maxAgeMs = 5 * 60_000): Promise<IntentsToken[]> {
+    if (cache && Date.now() - cache.at < maxAgeMs) return cache.list;
     const r = await f(`${base}/tokens`, { signal: AbortSignal.timeout(10_000) });
     if (!r.ok) throw new Error(`NEAR Intents token list answered ${r.status}`);
     cache = { at: Date.now(), list: (await r.json()) as IntentsToken[] };
@@ -135,7 +136,13 @@ export function intentsClient(opts: { jwt?: string; recipient: string; fetchImpl
     };
   }
 
-  return { tokens, quote, pick: async (asked: string, side: "from" | "to") => pickToken(await tokens(), asked, side) };
+  /** A token's dollar price on its home chain, or undefined if it isn't listed or has none. */
+  async function price(symbol: string, maxAgeMs?: number): Promise<number | undefined> {
+    const check = pickToken(await tokens(maxAgeMs), symbol, "to");
+    return check.verified ? check.token?.price : undefined;
+  }
+
+  return { tokens, quote, price, pick: async (asked: string, side: "from" | "to") => pickToken(await tokens(), asked, side) };
 }
 
 export type IntentsClient = ReturnType<typeof intentsClient>;
