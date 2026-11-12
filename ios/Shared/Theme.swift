@@ -38,14 +38,14 @@ extension Color {
 
 /// The outcomes, and how each one looks everywhere.
 enum Signal {
-    case allow, warn, block, quote, neutral
+    case allow, warn, block, quote, watch, neutral
 
     var color: Color {
         switch self {
         case .allow: AK.accent
         case .warn: AK.amber
         case .block: AK.red
-        case .quote: AK.bone
+        case .quote, .watch: AK.bone
         case .neutral: AK.muted
         }
     }
@@ -57,6 +57,7 @@ enum Signal {
         case .warn: "APPROVE?"
         case .block: "BLOCKED"
         case .quote: "QUOTE"
+        case .watch: "WATCHING"
         case .neutral: "NOT SENT"
         }
     }
@@ -67,6 +68,7 @@ enum Signal {
         case .warn: "Needs your approval"
         case .block: "Blocked"
         case .quote: "Quote"
+        case .watch: "Watching the price"
         case .neutral: "Not sent"
         }
     }
@@ -77,9 +79,13 @@ enum Signal {
         case .warn: "hand.raised.fill"
         case .block: "xmark"
         case .quote: "arrow.left.arrow.right"
+        case .watch: "eye"
         case .neutral: "minus"
         }
     }
+
+    /// Outcomes that are information, not a verdict: drawn quietly, without a signal colour.
+    var plain: Bool { self == .quote || self == .watch || self == .neutral }
 
     init(outcome: String) {
         switch outcome {
@@ -87,6 +93,7 @@ enum Signal {
         case "approval": self = .warn
         case "blocked": self = .block
         case "quoted": self = .quote
+        case "watching": self = .watch
         default: self = .neutral
         }
     }
