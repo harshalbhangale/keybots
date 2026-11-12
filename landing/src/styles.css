@@ -205,7 +205,7 @@ h3 {
   line-height: 1.02;
 }
 .h-xl {
-  font-size: clamp(48px, 8.4vw, 116px);
+  font-size: clamp(44px, 7.2vw, 104px);
   letter-spacing: -0.05em;
   line-height: 0.95;
 }
@@ -287,7 +287,7 @@ section {
 /* ---------- hero ---------- */
 .hero {
   position: relative;
-  min-height: 100svh;
+  min-height: max(100svh, 860px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -329,16 +329,15 @@ section {
   margin-top: 6px;
 }
 .hero-typed {
-  position: absolute;
-  z-index: 3;
-  left: 50%;
-  bottom: 9vh;
-  transform: translateX(-50%);
-  width: min(560px, calc(100% - 32px));
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  width: min(560px, 100%);
+  margin-top: 26px;
+  height: 58px;
   pointer-events: none;
+}
+.hero-typed .chip {
+  min-height: 58px;
+  border-radius: 999px;
+  padding: 10px 20px 10px 12px;
 }
 .typed-field {
   display: flex;
