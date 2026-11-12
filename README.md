@@ -101,15 +101,15 @@ Type `swap 20 usdc to sol`. The server:
 
 1. **Checks both tokens** against NEAR Intents' own list (`GET /v0/tokens`, 230 assets). You pay from NEAR, where the leash is, and receive on the token's home chain, so "SOL" means SOL on Solana (`nep141:sol.omft.near`), never a look-alike. A symbol that isn't listed is refused.
 2. **Gets a quote from 1Click** as a **dry run** (`"dry": true`): the real route and price, with nothing deposited, signed or sent.
-3. **Holds the swap's value to the leash's caps**, read from the testnet contract: worth more than the trusted agent's per-payment cap or what's left today, and it's blocked.
+3. **Holds the swap's value to the Trading Agent's caps**, read from the testnet contract ([`trade.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/trade.airkey-harshal.testnet): 1 NEAR a trade, 2 a day, separate from what the Payment Agent may spend): worth more than its per-trade cap or what's left today, and it's blocked.
 4. **Never trades from pasted text**: the untrusted Inbox Agent can't swap at all.
 
 From the last live run (1Click mainnet API, caps from the testnet leash):
 
 | Command | Outcome |
 |---|---|
-| Swap 20 USDC to SOL | blocked: quoted at 0.2454 SOL, but worth ~5.9 NEAR, over the 0.5 NEAR per-payment cap |
-| swap 1 usdc to sol | quoted: 0.01226 SOL (~$1.00), ~12 s, worth 0.296 NEAR, within the caps; dry run |
+| swap 2 usdc to sol | quoted: 0.02444 SOL (~$1.99), ~12 s, worth 0.59 NEAR, within the Trading Agent's caps; dry run |
+| Swap 20 USDC to SOL | blocked: worth ~5.9 NEAR, over the 1 NEAR per-trade cap |
 | swap 1 usdc to toshi | blocked: TOSHI isn't on NEAR Intents' list of 230 assets |
 | swap 1 usdc to sol (pasted) | blocked: the Inbox Agent can't trade |
 
