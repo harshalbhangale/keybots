@@ -50,6 +50,6 @@ struct Answer: Equatable {
     let detail: String
     /// What a tap on the answer puts in the message.
     let insert: String
-    /// For a price: the command a tap on Buy types, "buy $10 of near".
+    /// For a price: the command a tap on Buy types, "buy $2 of near".
     let buy: String?
 }

@@ -133,7 +133,7 @@ final class KeyboardModel {
         switch ask {
         case .price(let symbol, _):
             guard let p = try? await API().price(symbol) else { return nil }
-            return Answer(ask: ask, title: "\(p.symbol) \(Fmt.usd(p.usd))", detail: "Live price from NEAR Intents", insert: "\(p.symbol) is \(Fmt.usd(p.usd))", buy: "buy $10 of \(p.symbol.lowercased())")
+            return Answer(ask: ask, title: "\(p.symbol) \(Fmt.usd(p.usd))", detail: "Live price from NEAR Intents", insert: "\(p.symbol) is \(Fmt.usd(p.usd))", buy: "buy $2 of \(p.symbol.lowercased())")
         case .fx(let amount, let from, let to):
             guard let c = try? await API().fx(amount: amount, from: from, to: to) else { return nil }
             return Answer(ask: ask, title: Fmt.money(c.value, c.to), detail: "\(amount) \(c.from) at today's rate", insert: " = \(Fmt.money(c.value, c.to))", buy: nil)
@@ -154,7 +154,8 @@ final class KeyboardModel {
         refreshContext()
     }
 
-    /// Buy on a price: "$near" becomes "buy $10 of near", which the bar then offers to run.
+    /// Buy on a price: "$near" becomes "buy $2 of near", which the bar then offers to run.
+    /// A small amount on purpose: the number is there to be edited.
     func buyAnswer() {
         guard let a = answer, let command = a.buy, case .price(_, let typed) = a.ask else { return }
         replaceTail(typed, with: command)
