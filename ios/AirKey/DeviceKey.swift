@@ -10,6 +10,10 @@ import Security
 enum DeviceKey {
     private static let service = "tech.airkey.owner-key"
     private static let account = "device"
+    nonisolated(unsafe) private static var cached: Curve25519.Signing.PrivateKey?
+    /// False if the Keychain refused to keep the key (for example an unsigned
+    /// build). The key then only lives until the app quits; Settings says so.
+    nonisolated(unsafe) static private(set) var persisted = true
 
     /// "ed25519:<base58>", NEAR's public-key format.
     static var publicKey: String {
@@ -40,9 +44,14 @@ enum DeviceKey {
     }
 
     private static func privateKey() -> Curve25519.Signing.PrivateKey {
-        if let raw = read(), let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw) { return key }
+        if let cached { return cached }
+        if let raw = read(), let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw) {
+            cached = key
+            return key
+        }
         let key = Curve25519.Signing.PrivateKey()
-        write(key.rawRepresentation)
+        persisted = write(key.rawRepresentation)
+        cached = key
         return key
     }
 
@@ -57,7 +66,8 @@ enum DeviceKey {
         return SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess ? out as? Data : nil
     }
 
-    private static func write(_ data: Data) {
+    @discardableResult
+    private static func write(_ data: Data) -> Bool {
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -66,7 +76,7 @@ enum DeviceKey {
             kSecValueData as String: data,
         ]
         SecItemDelete(q as CFDictionary)
-        SecItemAdd(q as CFDictionary, nil)
+        return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
     }
 }
 
