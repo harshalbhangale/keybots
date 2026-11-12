@@ -1,72 +1,75 @@
 import SwiftUI
 
-enum Tab: String, CaseIterable {
-    case home, agents, leash, receipts
-
-    var title: String { rawValue.capitalized }
-    var icon: String {
-        switch self {
-        case .home: "circle.grid.2x2"
-        case .agents: "person.2"
-        case .leash: "shield.lefthalf.filled"
-        case .receipts: "doc.text"
-        }
-    }
-}
+enum AppTab: Hashable { case home, agents, leash, activity }
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
-    @State private var tab: Tab = .home
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var tab: AppTab = .home
     @State private var showSettings = false
-    @State private var keyboardUp = false
+    @State private var showCommand = false
+    @State private var receipt: Receipt?
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                switch tab {
-                case .home: HomeView(go: { tab = $0 }, openSettings: { showSettings = true })
-                case .agents: AgentsView()
-                case .leash: LeashView()
-                case .receipts: ReceiptsView()
+        TabView(selection: $tab) {
+            Tab("Home", systemImage: "house.fill", value: AppTab.home) {
+                NavigationStack {
+                    HomeView(go: { tab = $0 }, openSettings: { showSettings = true }, open: { receipt = $0 })
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            if !keyboardUp { TabBar(tab: $tab).transition(.opacity) }
+            Tab("Agents", systemImage: "person.2.fill", value: AppTab.agents) {
+                NavigationStack { AgentsView() }
+            }
+            Tab("Leash", systemImage: "lock.shield.fill", value: AppTab.leash) {
+                NavigationStack { LeashView() }
+            }
+            .badge(model.state?.pending.count ?? 0)
+            Tab("Activity", systemImage: "clock.fill", value: AppTab.activity) {
+                NavigationStack { ActivityView(open: { receipt = $0 }) }
+            }
         }
-        .animation(.easeOut(duration: 0.15), value: keyboardUp)
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
-        .background(AK.ink.ignoresSafeArea())
+        .tabViewBottomAccessory { CommandBar { showCommand = true } }
+        .tabBarMinimizeBehavior(.onScrollDown)
         .task { await model.refresh() }
-        .refreshable { await model.refresh() }
-        .sheet(isPresented: $showSettings) { SettingsView().presentationDetents([.large]) }
+        .onChange(of: scenePhase) { _, phase in
+            // Coming back from a chat where the keyboard ran something.
+            if phase == .active { Task { await model.refresh() } }
+        }
+        .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showCommand) {
+            CommandSheet { r in
+                showCommand = false
+                Task {
+                    try? await Task.sleep(for: .milliseconds(350))
+                    receipt = r
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $receipt) { r in
+            ReceiptDetail(r: r).presentationDragIndicator(.visible)
+        }
     }
 }
 
-/// A floating bar: four words, no labels hidden behind icons.
-struct TabBar: View {
-    @Binding var tab: Tab
+/// The bar above the tabs, on every screen: the one place you tell an agent what to do.
+struct CommandBar: View {
+    let action: () -> Void
+
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(Tab.allCases, id: \.self) { t in
-                Button { tab = t } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: t.icon).font(.system(size: 17, weight: .medium))
-                        Text(t.title).font(.system(size: 11, weight: .semibold))
-                    }
-                    .foregroundStyle(tab == t ? AK.ink : AK.muted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9)
-                    .background(tab == t ? AK.bone : .clear, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(tab == t ? .isSelected : [])
+        Button(action: action) {
+            HStack(spacing: 10) {
+                KeycapMark(size: 18)
+                Text("Pay, swap, or check a message").font(.subheadline).foregroundStyle(AK.muted).lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.up.circle.fill").font(.title3).foregroundStyle(AK.mint)
             }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
-        .padding(5)
-        .background(AK.raised.opacity(0.96), in: Capsule())
-        .overlay(Capsule().strokeBorder(AK.line, lineWidth: 1))
-        .padding(.horizontal, 24)
-        .padding(.bottom, 8)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Tell an agent what to do")
     }
 }
