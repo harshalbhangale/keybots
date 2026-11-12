@@ -18,6 +18,8 @@
 		493F215D8AE2EF3CA2992694 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76815909587B9263F41E788 /* AppModel.swift */; };
 		4E7B527414E0A3454AFFECFC /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF89A02FA1B292BF5E5BE5A /* API.swift */; };
 		51E2BE13813FE385EACFA92D /* AgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235D82802F01F7286217056B /* AgentsView.swift */; };
+		555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
+		59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
 		5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC5173F4853BB06FDF38E4C /* LeashView.swift */; };
 		5FF82EC3BADB8EDE32DB0AA5 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A268554547ABD1D29F4116 /* KeyboardViewController.swift */; };
 		74BA5C38204091668AFD48DC /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0A160B829D262A48C12542 /* KeyboardView.swift */; };
@@ -27,6 +29,7 @@
 		B3CF34DD5591AFC0E98EBC18 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602E65F915BF5CB7CA8F9B37 /* Models.swift */; };
 		BD60A00EB851372B06F1E92C /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
 		BFDF1177B79E8A06313E81B7 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
+		C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1ED72AD170088D3999341D5 /* CommandSheet.swift */; };
 		C432680CE757B1F296C7A8AC /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
 		D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE30351773DFCF5713DBF24A /* DeviceKey.swift */; };
 		DADE104895F822FF5FE891E0 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
@@ -69,6 +72,7 @@
 		41A268554547ABD1D29F4116 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
 		50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptsView.swift; sourceTree = "<group>"; };
 		5313A4631B0C886CFD88DE0A /* Logo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logo.swift; sourceTree = "<group>"; };
+		53E174E7250C5963B6505C36 /* Intent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intent.swift; sourceTree = "<group>"; };
 		602E65F915BF5CB7CA8F9B37 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		6FA7930E7E3D9C9F9BB9D296 /* KeyboardModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardModel.swift; sourceTree = "<group>"; };
 		74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -81,6 +85,7 @@
 		D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AirKeyKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9851A9A472BEEA624723FBC /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		DF85E248A9A14144C071BC8E /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		E1ED72AD170088D3999341D5 /* CommandSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSheet.swift; sourceTree = "<group>"; };
 		E1F81127BD0FC8E23110F7C6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F76815909587B9263F41E788 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		FCC5173F4853BB06FDF38E4C /* LeashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashView.swift; sourceTree = "<group>"; };
@@ -115,6 +120,7 @@
 			isa = PBXGroup;
 			children = (
 				235D82802F01F7286217056B /* AgentsView.swift */,
+				E1ED72AD170088D3999341D5 /* CommandSheet.swift */,
 				C554356C064E910AACA9AF32 /* HomeView.swift */,
 				FCC5173F4853BB06FDF38E4C /* LeashView.swift */,
 				50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */,
@@ -159,6 +165,7 @@
 			children = (
 				2DF89A02FA1B292BF5E5BE5A /* API.swift */,
 				D9851A9A472BEEA624723FBC /* Format.swift */,
+				53E174E7250C5963B6505C36 /* Intent.swift */,
 				5313A4631B0C886CFD88DE0A /* Logo.swift */,
 				602E65F915BF5CB7CA8F9B37 /* Models.swift */,
 				DF85E248A9A14144C071BC8E /* Theme.swift */,
@@ -263,6 +270,7 @@
 			files = (
 				4E7B527414E0A3454AFFECFC /* API.swift in Sources */,
 				280530690716794F66165515 /* Format.swift in Sources */,
+				555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */,
 				E3CA1CFCBFE800F0AB8E8E11 /* KeyboardModel.swift in Sources */,
 				74BA5C38204091668AFD48DC /* KeyboardView.swift in Sources */,
 				5FF82EC3BADB8EDE32DB0AA5 /* KeyboardViewController.swift in Sources */,
@@ -280,10 +288,12 @@
 				51E2BE13813FE385EACFA92D /* AgentsView.swift in Sources */,
 				9947C11236F0D6EDFC1C3C8A /* AirKeyApp.swift in Sources */,
 				493F215D8AE2EF3CA2992694 /* AppModel.swift in Sources */,
+				C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */,
 				86522BDC05010DA5622CD4D3 /* Components.swift in Sources */,
 				D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */,
 				BD60A00EB851372B06F1E92C /* Format.swift in Sources */,
 				000C52470CDAD2D90C62C217 /* HomeView.swift in Sources */,
+				59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */,
 				5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */,
 				DADE104895F822FF5FE891E0 /* Logo.swift in Sources */,
 				86F1F77CD21B8621B052801F /* Models.swift in Sources */,
@@ -427,7 +437,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -489,7 +499,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
