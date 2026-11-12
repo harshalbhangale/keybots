@@ -1,127 +1,171 @@
 import SwiftUI
 
-/// The control panel: kill switch, what the leash holds, who's allowed and
-/// blocked, and the payments waiting for you. Every change here is signed on
-/// this phone after Face ID.
+/// The control panel: stop everything, what's waiting, the limits, and who is
+/// allowed or blocked. Every change here is signed on this phone after Face ID.
 struct LeashView: View {
     @Environment(AppModel.self) private var model
+    @State private var adding: ListKind?
+    @State private var account = ""
+    @State private var reason = ""
+
+    enum ListKind: String, Identifiable { case allow, block; var id: String { rawValue } }
 
     var body: some View {
-        Screen(title: "Leash", subtitle: "The rules your agents can't change. Enforced by a NEAR contract, not by this app.") {
-            if let error = model.error { ErrorBanner(text: error) }
+        Screen(tint: model.mood) {
+            Text("Rules your agents can't change. A NEAR contract enforces them, not this app.")
+                .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             if let state = model.state {
                 killSwitch(state)
-                pending(state)
-                limits(state)
-                lists(state)
-                if let tx = model.lastOwnerTx {
-                    Link(destination: URL(string: tx.url)!) {
-                        Text("Last signed: \(tx.method) · \(String(tx.txHash.prefix(10)))… ↗").font(AK.mono).foregroundStyle(AK.mint)
+                if !state.pending.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionTitle("Waiting for you", trailing: "\(state.pending.count)")
+                        ForEach(state.pending) { ApprovalCard(pending: $0) }
                     }
                 }
-                Link(destination: URL(string: "\(state.explorer)/address/\(state.leash)")!) {
-                    Text("Contract \(state.leash) ↗").font(AK.mono).foregroundStyle(AK.muted)
-                }
+                limits(state)
+                allowed(state)
+                blocked(state)
+                footer(state)
             } else if model.loading {
                 ProgressView().tint(AK.muted).frame(maxWidth: .infinity).padding(.top, 40)
             }
         }
+        .navigationTitle("Leash")
+        .alert(adding == .allow ? "Allow someone" : "Block someone", isPresented: Binding(get: { adding != nil }, set: { if !$0 { adding = nil } })) {
+            TextField("name.near", text: $account).textInputAutocapitalization(.never).autocorrectionDisabled()
+            if adding == .block { TextField("Why (optional)", text: $reason) }
+            Button("Cancel", role: .cancel) { clear() }
+            Button(adding == .allow ? "Allow" : "Block") { submit() }
+        } message: {
+            Text(adding == .allow
+                ? "The Inbox Agent can pay this account without asking you, within its caps."
+                : "No agent can pay this account.")
+        }
     }
+
+    private func submit() {
+        let name = account.trimmingCharacters(in: .whitespaces).lowercased()
+        let why = reason.trimmingCharacters(in: .whitespaces)
+        let kind = adding
+        clear()
+        guard !name.isEmpty, let kind else { return }
+        Task {
+            switch kind {
+            case .allow: await model.owner("allow", ["account": name], reason: "Allow \(name)")
+            case .block: await model.owner("block", ["account": name, "reason": why.isEmpty ? "Blocked by the owner" : why], reason: "Block \(name)")
+            }
+        }
+    }
+
+    private func clear() { adding = nil; account = ""; reason = "" }
 
     private func killSwitch(_ s: LeashState) -> some View {
         let on = s.paused
         return Button {
-            Task { await model.owner("set_paused", ["paused": !on], reason: on ? "Turn the kill switch off" : "Stop every agent now") }
+            Task { await model.owner("set_paused", ["paused": !on], reason: on ? "Let your agents work again" : "Stop every agent now") }
         } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle().fill(on ? AK.red : AK.raised).frame(width: 46, height: 46)
-                    Image(systemName: "power").font(.system(size: 20, weight: .bold)).foregroundStyle(on ? AK.ink : AK.red)
-                }
+            HStack(spacing: 16) {
+                Image(systemName: "power")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(on ? AK.ink : AK.red)
+                    .frame(width: 52, height: 52)
+                    .background(on ? AK.red : AK.red.opacity(0.16), in: Circle())
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(on ? "Kill switch is ON" : "Kill switch").font(.system(size: 18, weight: .semibold)).foregroundStyle(on ? AK.red : AK.bone)
-                    Text(on ? "No agent can pay. Tap to let them work again." : "Tap to stop every agent at once.").font(.system(size: 13)).foregroundStyle(AK.muted)
+                    Text(on ? "Everything is stopped" : "Stop everything").font(.headline).foregroundStyle(on ? AK.red : AK.bone)
+                    Text(on ? "No agent can pay. Tap to let them work again." : "One tap, and no agent can pay.")
+                        .font(.subheadline).foregroundStyle(AK.muted).multilineTextAlignment(.leading)
                 }
-                Spacer()
+                Spacer(minLength: 0)
                 if model.busy == "set_paused" { ProgressView().tint(AK.muted) }
             }
             .padding(16)
-            .background((on ? AK.red.opacity(0.1) : AK.surface), in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: AK.radius, style: .continuous).strokeBorder(on ? AK.red.opacity(0.5) : AK.line, lineWidth: 1))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassEffect(on ? .regular.tint(AK.red.opacity(0.22)).interactive() : .regular.interactive(), in: .rect(cornerRadius: AK.radius))
         }
         .buttonStyle(.plain)
         .disabled(model.busy != nil)
-        .accessibilityLabel(on ? "Kill switch on. Turn off." : "Kill switch off. Turn on.")
-    }
-
-    @ViewBuilder private func pending(_ s: LeashState) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack { Eyebrow("Waiting for you", color: s.pending.isEmpty ? AK.muted : AK.amber); Spacer(); Text("\(s.pending.count)").font(AK.number(14)).foregroundStyle(AK.muted) }
-            if s.pending.isEmpty {
-                Text("Nothing waiting.").font(.system(size: 14)).foregroundStyle(AK.faint)
-            }
-            ForEach(s.pending) { p in
-                Panel {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(Fmt.near(p.amount)).font(AK.number(22)).foregroundStyle(AK.bone)
-                        Spacer()
-                        Pill(text: p.rule, color: AK.amber)
-                    }
-                    KeyValue(key: "To", value: p.receiver, mono: true)
-                    KeyValue(key: "Agent", value: Fmt.short(p.agent), mono: true)
-                    if let memo = p.memo { KeyValue(key: "For", value: memo) }
-                    Text(p.reason).font(.system(size: 13)).foregroundStyle(AK.amber).fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 10) {
-                        ActionButton(title: "Reject", color: AK.red, outline: true) { Task { await model.owner("reject", ["id": p.id], reason: "Reject \(Fmt.near(p.amount)) to \(p.receiver)") } }
-                        ActionButton(title: model.busy == "approve" ? "Signing…" : "Approve", color: AK.mint) { Task { await model.owner("approve", ["id": p.id], reason: "Pay \(Fmt.near(p.amount)) to \(p.receiver)") } }
-                    }
-                    .disabled(model.busy != nil)
-                }
-            }
-        }
+        .accessibilityLabel(on ? "Everything is stopped. Tap to let agents work again." : "Stop everything")
     }
 
     private func limits(_ s: LeashState) -> some View {
-        Panel {
-            Eyebrow("Holds")
-            Text(Fmt.near(s.available)).font(AK.number(30)).foregroundStyle(AK.bone)
-            Text("Agents spend from here, never from your account.").font(.system(size: 13)).foregroundStyle(AK.muted)
-            Hairline()
-            ForEach(s.agents) { a in
-                KeyValue(key: Fmt.agentName(a.agent.tier), value: "\(Fmt.near(a.agent.per_payment_cap, unit: false)) per payment · \(Fmt.near(a.agent.daily_cap)) a day")
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle("Limits")
+            Panel {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(Fmt.near(s.available, unit: false)).font(AK.number(28)).foregroundStyle(AK.bone)
+                    Text("NEAR in the leash").font(.subheadline).foregroundStyle(AK.muted)
+                }
+                Text("Agents spend from here, never from your own account.")
+                    .font(.footnote).foregroundStyle(AK.muted)
+                Hairline()
+                ForEach(s.agents) { a in
+                    KeyValue(
+                        key: Fmt.agentName(account: a.account),
+                        value: "\(Fmt.near(a.agent.per_payment_cap, unit: false)) a payment · \(Fmt.near(a.agent.daily_cap, unit: false)) a day"
+                    )
+                }
             }
         }
     }
 
-    private func lists(_ s: LeashState) -> some View {
+    private func allowed(_ s: LeashState) -> some View {
         VStack(alignment: .leading, spacing: 12) {
+            SectionTitle("Allowed", trailing: "Add") { adding = .allow }
             Panel {
-                Eyebrow("Allowed", color: AK.mint)
-                if s.allowlist.isEmpty { Text("No one yet.").font(.system(size: 14)).foregroundStyle(AK.faint) }
-                ForEach(s.allowlist, id: \.self) { a in
+                if s.allowlist.isEmpty {
+                    Text("No one yet. Payments from messages will wait for you.").font(.subheadline).foregroundStyle(AK.muted)
+                }
+                ForEach(Array(s.allowlist.enumerated()), id: \.element) { i, a in
+                    if i > 0 { Hairline() }
                     HStack {
                         Text(a).font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
-                        Spacer()
+                        Spacer(minLength: 12)
                         Button("Remove") { Task { await model.owner("disallow", ["account": a], reason: "Remove \(a) from your allowlist") } }
-                            .font(.system(size: 13, weight: .medium)).foregroundStyle(AK.muted)
-                    }
-                }
-            }
-            Panel {
-                Eyebrow("Blocked", color: AK.red)
-                if s.blocklist.isEmpty { Text("No one.").font(.system(size: 14)).foregroundStyle(AK.faint) }
-                ForEach(s.blocklist) { b in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(b.account).font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
-                            Spacer()
-                            Button("Unblock") { Task { await model.owner("unblock", ["account": b.account], reason: "Unblock \(b.account)") } }
-                                .font(.system(size: 13, weight: .medium)).foregroundStyle(AK.muted)
-                        }
-                        Text(b.reason).font(.system(size: 12)).foregroundStyle(AK.red.opacity(0.85)).lineLimit(3)
+                            .font(.subheadline).foregroundStyle(AK.muted)
                     }
                 }
             }
         }
+        .disabled(model.busy != nil)
+    }
+
+    private func blocked(_ s: LeashState) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle("Blocked", trailing: "Add") { adding = .block }
+            Panel {
+                if s.blocklist.isEmpty {
+                    Text("No one.").font(.subheadline).foregroundStyle(AK.muted)
+                }
+                ForEach(Array(s.blocklist.enumerated()), id: \.element.id) { i, b in
+                    if i > 0 { Hairline() }
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(b.account).font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+                            Spacer(minLength: 12)
+                            Button("Unblock") { Task { await model.owner("unblock", ["account": b.account], reason: "Unblock \(b.account)") } }
+                                .font(.subheadline).foregroundStyle(AK.muted)
+                        }
+                        Text(b.reason).font(.footnote).foregroundStyle(AK.red.opacity(0.9)).lineLimit(3)
+                    }
+                }
+            }
+        }
+        .disabled(model.busy != nil)
+    }
+
+    @ViewBuilder private func footer(_ s: LeashState) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let tx = model.lastOwnerTx, let url = URL(string: tx.url) {
+                Link(destination: url) {
+                    Label("Last change you signed: \(tx.method)", systemImage: "checkmark.seal.fill").font(.footnote).foregroundStyle(AK.mint)
+                }
+            }
+            if let url = URL(string: "\(s.explorer)/address/\(s.leash)") {
+                Link(destination: url) {
+                    Label("See the contract on NEAR", systemImage: "arrow.up.right").font(.footnote).foregroundStyle(AK.muted)
+                }
+            }
+        }
+        .padding(.horizontal, 4)
     }
 }
