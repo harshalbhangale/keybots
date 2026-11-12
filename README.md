@@ -115,6 +115,12 @@ From the last live run (1Click mainnet API, caps from the testnet leash):
 
 **Not built yet:** executing the swap. NEAR Intents has no testnet (hackathon rule Q-007), so that means a mainnet deposit with real funds, and it waits for the owner's explicit go-ahead. Code: `server/src/intents.ts`, tests in `server/test/intents.test.ts` and `server/test/agent.test.ts`.
 
+### Orders that wait for a price
+
+Type `sell 1 near if it drops below 2` (or `buy $2 of near when it goes above 4`). The server checks both tokens against NEAR Intents' list, notes the price now, and leaves the order with a watcher that looks at NEAR Intents' prices every 15 seconds. When the price crosses, the trade runs exactly like one you typed: same token checks, same Trading Agent caps, its own receipt. Pasted text can never set an order. Home lists what is being watched, with Cancel.
+
+From a live run: "buy $2 of near if it goes above 3" was accepted with NEAR at $3.39, triggered on the next look, and produced the quote "2 USDC → 0.5861 NEAR". Like every swap for now, the triggered trade is a quote; nothing is sent. Code: `server/src/orders.ts`, tests in `server/test/orders.test.ts`.
+
 ### 4. The AIRKEY app and keyboard (iOS)
 
 <p>
