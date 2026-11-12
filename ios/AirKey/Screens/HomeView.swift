@@ -15,6 +15,7 @@ struct HomeView: View {
                 ForEach(pending) { ApprovalCard(pending: $0) }
             }
             today
+            if !model.watching.isEmpty { watching }
             recent
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -80,6 +81,32 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 6)
         .accessibilityElement(children: .combine)
+    }
+
+    /// Trades the Trading Agent will make when a price is reached.
+    private var watching: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle("Watching", trailing: "\(model.watching.count)")
+            VStack(spacing: 0) {
+                ForEach(Array(model.watching.enumerated()), id: \.element.id) { i, o in
+                    if i > 0 { Hairline().padding(.leading, 40) }
+                    HStack(spacing: 12) {
+                        SignalBadge(signal: .watch, size: 28)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(o.command.prefix(1).uppercased() + o.command.dropFirst()).font(.subheadline.weight(.medium)).foregroundStyle(AK.bone).lineLimit(1)
+                            Text(o.condition).font(.footnote).foregroundStyle(AK.muted).lineLimit(1)
+                        }
+                        Spacer(minLength: 8)
+                        Button("Cancel") { Task { await model.cancel(o) } }
+                            .font(.subheadline).foregroundStyle(AK.muted)
+                    }
+                    .padding(.vertical, 12)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 2)
+            .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
+        }
     }
 
     @ViewBuilder private var recent: some View {
