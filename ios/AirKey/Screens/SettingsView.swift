@@ -4,72 +4,98 @@ import UIKit
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var server = Settings.serverURL
     @State private var token = Settings.token
     @State private var name = Settings.name
     @State private var copied = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                HStack {
-                    Text("Settings").font(AK.title(26)).foregroundStyle(AK.bone)
-                    Spacer()
-                    Button("Done") { save(); dismiss() }.font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.mint)
-                }
-                Panel {
-                    Eyebrow("You")
-                    field("Name", $name)
-                }
-                Panel {
-                    Eyebrow("AIRKEY server")
-                    field("Address", $server, mono: true)
-                    field("Token (optional)", $token, mono: true, secure: true)
-                    Text("The keyboard uses the same server.").font(.system(size: 12)).foregroundStyle(AK.faint)
-                }
-                Panel {
-                    Eyebrow("This device")
-                    Text("Your owner key lives on this phone and signs approvals after Face ID. Add it to your NEAR account once:").font(.system(size: 13)).foregroundStyle(AK.muted)
-                    Text(DeviceKey.publicKey).font(AK.mono).foregroundStyle(AK.bone).textSelection(.enabled)
-                    if !DeviceKey.persisted {
-                        Text("This build can't save the key in the Keychain, so it lasts only until the app quits.").font(.system(size: 12)).foregroundStyle(AK.amber)
+        NavigationStack {
+            Form {
+                Section("Keyboard") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        step(1, "Open Settings › Apps › AIRKEY › Keyboards")
+                        step(2, "Turn on AIRKEY")
+                        step(3, "Turn on Allow Full Access, so agents can reach the server")
                     }
-                    Button(copied ? "Copied" : "Copy key") { UIPasteboard.general.string = DeviceKey.publicKey; copied = true }
-                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(AK.mint)
-                    Text("npm run add-device -- <owner> <key>").font(AK.mono).foregroundStyle(AK.faint)
+                    .padding(.vertical, 4)
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    }
                 }
-                if let owner = model.state?.owner {
-                    Panel {
-                        Eyebrow("Owner")
-                        Text(owner).font(AK.mono).foregroundStyle(AK.bone)
+
+                Section {
+                    TextField("Your name", text: $name)
+                } header: {
+                    Text("You")
+                }
+
+                Section {
+                    LabeledContent("Address") {
+                        TextField("http://127.0.0.1:8787", text: $server)
+                            .font(AK.mono)
+                            .multilineTextAlignment(.trailing)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+                    }
+                    LabeledContent("Token") {
+                        SecureField("Optional", text: $token).font(AK.mono).multilineTextAlignment(.trailing)
+                    }
+                } header: {
+                    Text("AIRKEY server")
+                } footer: {
+                    Text("The keyboard uses the same server.")
+                }
+
+                Section {
+                    Text(DeviceKey.publicKey).font(AK.mono).foregroundStyle(AK.bone).textSelection(.enabled)
+                    Button(copied ? "Copied" : "Copy key") {
+                        UIPasteboard.general.string = DeviceKey.publicKey
+                        copied = true
+                    }
+                } header: {
+                    Text("This phone's key")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("It signs approvals after Face ID and never leaves this phone. Add it to your NEAR account once:")
+                        Text("npm run add-device -- <owner> <key>").font(AK.mono)
+                        if !DeviceKey.persisted {
+                            Text("This build can't save the key in the Keychain, so it lasts only until the app quits.").foregroundStyle(AK.amber)
+                        }
+                    }
+                }
+
+                if let state = model.state {
+                    Section("Account") {
+                        LabeledContent("Owner") { Text(state.owner).font(AK.mono) }
+                        LabeledContent("Leash") { Text(state.leash).font(AK.mono) }
                     }
                 }
             }
-            .padding(AK.gutter)
+            .scrollContentBackground(.hidden)
+            .background(AK.ink.ignoresSafeArea())
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+            }
         }
-        .background(AK.ink.ignoresSafeArea())
-        .onDisappear { save() }
+        .onDisappear(perform: save)
+    }
+
+    private func step(_ n: Int, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("\(n)").font(.footnote.weight(.bold)).foregroundStyle(AK.ink).frame(width: 20, height: 20).background(AK.mint, in: Circle())
+            Text(text).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func save() {
-        Settings.serverURL = server
+        Settings.serverURL = server.trimmingCharacters(in: .whitespaces)
         Settings.token = token
         Settings.name = name
         Task { await model.refresh() }
-    }
-
-    private func field(_ label: String, _ value: Binding<String>, mono: Bool = false, secure: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.system(size: 12)).foregroundStyle(AK.muted)
-            Group {
-                if secure { SecureField("", text: value) } else { TextField("", text: value) }
-            }
-            .font(mono ? AK.mono : .system(size: 16))
-            .foregroundStyle(AK.bone)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .padding(12)
-            .background(AK.raised, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        }
     }
 }
