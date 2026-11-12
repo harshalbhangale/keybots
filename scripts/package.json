@@ -1,0 +1,13 @@
+{
+  "name": "@airkey/scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node setup-testnet.mjs",
+    "deploy": "node deploy-leash.mjs",
+    "e2e": "node e2e-testnet.mjs"
+  },
+  "dependencies": {
+    "near-api-js": "^7.5.3"
+  }
+}
