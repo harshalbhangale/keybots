@@ -22,7 +22,7 @@ path.stroke()
 
 let tabW = cap * 0.13, tabH = cap * 0.46
 let tab = NSBezierPath(roundedRect: NSRect(x: capRect.maxX - tabW / 2 + cap * 0.065, y: capRect.midY - tabH / 2, width: tabW, height: tabH), xRadius: tabW / 2, yRadius: tabW / 2)
-c(0x00E59B).setFill()
+c(0xC6F25A).setFill()
 tab.fill()
 
 let a = NSAttributedString(string: "A", attributes: [.font: NSFont.systemFont(ofSize: cap * 0.5, weight: .bold), .foregroundColor: c(0xF2EEE6)])
