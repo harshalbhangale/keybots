@@ -170,6 +170,38 @@ describe("swaps", () => {
     expect(r.message).toMatch(/Inbox Agent can't trade/);
   });
 
+  // With a Trading Agent on the leash (1 NEAR a trade, 2 a day), swaps use its caps, not the Payment Agent's.
+  const chainWithTrader = (spent = "0") => {
+    const chain = chainWithCaps();
+    const base = chain.state;
+    chain.state = async () => {
+      const s = await base();
+      return { ...s, agents: [...s.agents, { account: "trade.x.testnet", agent: { tier: "trusted" as const, per_payment_cap: "1000000000000000000000000", daily_cap: "2000000000000000000000000", spent_today: spent, day: 0 } }] };
+    };
+    return chain;
+  };
+
+  it("holds a swap to the Trading Agent's caps when the leash has one", async () => {
+    // $3 is 0.75 NEAR: over the Payment Agent's 0.5 cap, inside the Trading Agent's 1.
+    const r = await runCommand({ cfg, chain: chainWithTrader(), receipts: memoryStore(), intents: fakeIntents("3.00") as never }, "swap 3 usdc to sol", "typed");
+    expect(r.outcome).toBe("quoted");
+    expect(r.agent?.account).toBe("trade.x.testnet");
+    expect(r.swap?.leash?.agent).toBe("trade.x.testnet");
+    expect(r.swap?.leash?.perPaymentCap).toBe("1000000000000000000000000");
+  });
+
+  it("the same swap is blocked without a Trading Agent, on the Payment Agent's caps", async () => {
+    const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("3.00") as never }, "swap 3 usdc to sol", "typed");
+    expect(r.outcome).toBe("blocked");
+    expect(r.agent?.account).toBe("pay.x.testnet");
+  });
+
+  it("blocks a swap once the Trading Agent's day is used up", async () => {
+    const r = await runCommand({ cfg, chain: chainWithTrader("1900000000000000000000000"), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "typed");
+    expect(r.outcome).toBe("blocked");
+    expect(r.message).toMatch(/only 0.1 NEAR is left today/);
+  });
+
   it("blocks tokens NEAR Intents doesn't list", async () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to toshi2", "typed");
     expect(r.outcome).toBe("blocked");
