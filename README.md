@@ -71,7 +71,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 20 tests: parser, receiver checks, the full command flow
+npm test                       # 33 tests: parser, receiver checks, swaps, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
