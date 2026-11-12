@@ -117,6 +117,11 @@ From the last live run (1Click mainnet API, caps from the testnet leash):
 
 ### 4. The AIRKEY app and keyboard (iOS)
 
+<p>
+  <img src="docs/screens/home.png" width="260" alt="AIRKEY Home: what the leash holds, today's numbers and recent activity" />
+  <img src="docs/screens/keyboard-blocked.png" width="260" alt="The AIRKEY keyboard showing a payment the leash blocked" />
+</p>
+
 Needs Xcode and [XcodeGen](https://github.com/yonaskolb/XcodeGen). With the server from step 3 running:
 
 ```bash
