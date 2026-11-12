@@ -28,6 +28,7 @@ final class AppModel {
     }
 
     func run(_ text: String, source: String) async -> Receipt? {
+        error = nil
         do {
             let r = try await api.command(text, source: source)
             await refresh()
@@ -41,6 +42,7 @@ final class AppModel {
     /// Owner action: the server builds it, Face ID unlocks the device key, the phone signs, the server relays.
     func owner(_ method: String, _ args: [String: any Sendable], reason: String) async {
         busy = method
+        error = nil
         defer { busy = nil }
         do {
             let prepared = try await api.prepare(method: method, args: args, publicKey: DeviceKey.publicKey)
