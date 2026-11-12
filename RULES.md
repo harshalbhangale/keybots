@@ -47,9 +47,9 @@ Every decision is logged as a NEP-297 event (`standard: "airkey"`): `paid`, `pen
 
 Swaps go through NEAR Intents, which has no testnet, so they are quoted as dry runs for now and these rules run on the server, using the caps the leash holds on chain:
 
-- Only the trusted agent can swap. Anything pasted or forwarded can never trade.
+- Only the Trading Agent can swap (`trade.<you>`, trusted, with its own caps). Anything pasted or forwarded can never trade.
 - Both tokens must be on NEAR Intents' own token list.
-- The swap's value in NEAR must fit the trusted agent's per-payment cap and what's left of its daily cap, and the kill switch must be off.
+- The swap's value in NEAR must fit the Trading Agent's per-trade cap and what's left of its daily cap, and the kill switch must be off. Trading never uses up what the Payment Agent may spend.
 
 When swaps execute on mainnet, the leash will hold these rules itself.
 

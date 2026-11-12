@@ -56,6 +56,16 @@ enum Fmt {
         return date.formatted(.dateTime.day().month(.abbreviated))
     }
 
+    /// "$2.41", "$81,250.00", "$0.0042": two decimals, more for tiny prices.
+    static func usd(_ v: Double) -> String {
+        v.formatted(.currency(code: "USD").precision(.fractionLength(v > 0 && v < 1 ? 2...4 : 2...2)))
+    }
+
+    /// "₹8,870.50": an amount in its own currency.
+    static func money(_ v: Double, _ code: String) -> String {
+        v.formatted(.currency(code: code).precision(.fractionLength(0...2)))
+    }
+
     static func time(_ date: Date?) -> String {
         guard let date else { return "" }
         let f = RelativeDateTimeFormatter()

@@ -20,6 +20,20 @@ describe("parse", () => {
     });
   });
 
+  it("reads buying with dollars and selling as swaps", () => {
+    expect(parse("buy $10 of near")).toEqual({ kind: "swap", amount: "10", from: "USDC", to: "NEAR" });
+    expect(parse("Buy $2.50 of $sol")).toEqual({ kind: "swap", amount: "2.5", from: "USDC", to: "SOL" });
+    expect(parse("buy 10 usdc of near")).toEqual({ kind: "swap", amount: "10", from: "USDC", to: "NEAR" });
+    expect(parse("buy 5 dollars worth of btc")).toEqual({ kind: "swap", amount: "5", from: "USDC", to: "BTC" });
+    expect(parse("sell 5 near")).toEqual({ kind: "swap", amount: "5", from: "NEAR", to: "USDC" });
+    expect(parse("sell 0.5 near for sol")).toEqual({ kind: "swap", amount: "0.5", from: "NEAR", to: "SOL" });
+  });
+
+  it("doesn't mistake shopping for trading", () => {
+    expect(parse("buy 2 tickets for tonight").kind).toBe("unknown");
+    expect(parse("can you buy milk").kind).toBe("unknown");
+  });
+
   it("says when there's nothing to do", () => {
     expect(parse("see you at 8 tonight").kind).toBe("unknown");
     expect(parse("pay").kind).toBe("unknown");

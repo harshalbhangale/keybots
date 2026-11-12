@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-export const KEYS_DIR = join(ROOT, "keys"); // gitignored
+export const KEYS_DIR = process.env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"); // gitignored
 export const NETWORK = process.env.NEAR_NETWORK ?? "testnet";
 export const RPC = process.env.NEAR_RPC ?? (NETWORK === "mainnet" ? "https://free.rpc.fastnear.com" : "https://test.rpc.fastnear.com");
 export const EXPLORER = NETWORK === "mainnet" ? "https://nearblocks.io" : "https://testnet.nearblocks.io";
@@ -22,6 +22,7 @@ export function names(owner) {
     leash: `leash.${owner}`,
     pay: `pay.${owner}`, // trusted agent: acts on what the owner types
     inbox: `inbox.${owner}`, // untrusted agent: acts on pasted or inbound text
+    trade: `trade.${owner}`, // trusted agent for swaps, with its own caps
     friend: `friend.${owner}`, // demo receiver on the allowlist
     vendor: `vendor.${owner}`, // demo receiver not on the allowlist
     drain: `drain.${owner}`, // demo scammer

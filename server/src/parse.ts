@@ -21,6 +21,15 @@ const RECEIVER_FIRST = new RegExp(String.raw`\b${VERB}\s+${ACCOUNT}\s+${AMOUNT}$
 // "swap 20 usdc to sol"
 const SWAP = new RegExp(String.raw`\bswap\s+${AMOUNT}\s*([a-z][a-z0-9]{1,9})\s+(?:to|for|into)\s+([a-z][a-z0-9]{1,9})\b`, "i");
 
+// "buy $10 of near", "buy 10 usdc of sol": spend dollars (USDC) on a token.
+const SYMBOL = String.raw`\$?([a-z][a-z0-9]{1,9})`;
+const BUY_DOLLAR = new RegExp(String.raw`\bbuy\s+\$\s*${AMOUNT}\s+(?:worth\s+)?(?:of\s+)?${SYMBOL}\b`, "i");
+const BUY_WORDS = new RegExp(String.raw`\bbuy\s+${AMOUNT}\s*(?:usdc?|dollars?|bucks)\s+(?:worth\s+)?(?:of\s+)?${SYMBOL}\b`, "i");
+// "sell 5 near", "sell 0.5 near for usdc": sell a token, for USDC unless said.
+const SELL = new RegExp(String.raw`\bsell\s+${AMOUNT}\s*${SYMBOL}(?:\s+(?:for|to|into)\s+${SYMBOL})?\b`, "i");
+/** What a dollar amount is paid in. */
+export const DOLLAR = "USDC";
+
 const FILLER = new Set(["immediately", "now", "asap", "urgently", "please", "pls", "today", "right", "away"]);
 
 /** Reads the first action in the text. Works line by line so a pasted message can carry other words. */
@@ -34,6 +43,13 @@ export function parse(text: string): Action {
     const line = stripFiller(raw);
     const s = line.match(SWAP);
     if (s) return { kind: "swap", amount: s[1], from: s[2].toUpperCase(), to: s[3].toUpperCase() };
+    const b = line.match(BUY_DOLLAR) ?? line.match(BUY_WORDS);
+    if (b && b[2].toUpperCase() !== DOLLAR) return { kind: "swap", amount: normaliseAmount(b[1]), from: DOLLAR, to: b[2].toUpperCase() };
+    const x = line.match(SELL);
+    if (x) {
+      const to = (x[3] ?? DOLLAR).toUpperCase();
+      if (to !== x[2].toUpperCase()) return { kind: "swap", amount: normaliseAmount(x[1]), from: x[2].toUpperCase(), to };
+    }
     const a = line.match(AMOUNT_FIRST);
     if (a && !/^\d/.test(a[2])) return pay(a[2], a[1], a[3]);
     const r = line.match(RECEIVER_FIRST);

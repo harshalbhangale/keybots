@@ -123,6 +123,14 @@ struct AgentBar: View {
                 working(source)
             } else if let intent = model.intent {
                 ready(intent)
+            } else if let a = model.answer {
+                suggestion(
+                    icon: a.buy == nil ? "banknote" : "chart.line.uptrend.xyaxis", title: a.title, detail: a.detail,
+                    action: a.buy == nil ? "Insert" : "Buy", primary: a.buy != nil,
+                    onTap: { model.insertAnswer() }, onAction: { a.buy == nil ? model.insertAnswer() : model.buyAnswer() }
+                )
+            } else if let i = model.instant {
+                suggestion(icon: "equal", title: i.title, detail: i.detail, action: "Insert", primary: false, onTap: { model.insertInstant() }, onAction: { model.insertInstant() })
             } else {
                 idle
             }
@@ -188,10 +196,47 @@ struct AgentBar: View {
         .accessibilityLabel("\(intent.title). Run with your Payment Agent.")
     }
 
+    /// An answer the keyboard found: a price, a conversion or a sum. Tap it
+    /// to put it in the message; the button on the right is the one next step.
+    private func suggestion(icon: String, title: String, detail: String, action: String, primary: Bool, onTap: @escaping () -> Void, onAction: @escaping () -> Void) -> some View {
+        HStack(spacing: 10) {
+            Button(action: onTap) {
+                HStack(spacing: 10) {
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(palette.text)
+                        .frame(width: 28, height: 28)
+                        .background(palette.function, in: Circle())
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(palette.text).lineLimit(1).minimumScaleFactor(0.8)
+                        Text(detail).font(.caption2).foregroundStyle(palette.soft).lineLimit(1)
+                    }
+                    Spacer(minLength: 4)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(title). \(detail). Tap to add it to your message.")
+            Button(action: onAction) {
+                Text(action)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(primary ? AK.ink : palette.text)
+                    .padding(.horizontal, 16)
+                    .frame(height: 30)
+                    .background(primary ? AK.accent : palette.function, in: Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 7)
+        .padding(.trailing, 7)
+        .frame(height: 44)
+        .glassEffect(.regular.interactive(), in: .capsule)
+    }
+
     private func working(_ source: String) -> some View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(palette.text)
-            Text(source == "pasted" ? "Inbox Agent is checking it…" : "Asking the leash on NEAR…")
+            Text(source == "pasted" ? "Inbox Agent is checking it…" : model.runningKind == .swap ? "Trading Agent is getting a quote…" : "Asking the leash on NEAR…")
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(palette.text)
             Spacer(minLength: 0)

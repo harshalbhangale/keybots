@@ -1,8 +1,9 @@
 import Fastify from "fastify";
 import { runCommand, type Deps as CommandDeps } from "./agent.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
+import type { RatesClient } from "./rates.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions> };
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient };
 
 export function buildApp(deps: Deps) {
   const app = Fastify({ logger: false });
@@ -29,6 +30,52 @@ export function buildApp(deps: Deps) {
       return await runCommand(deps, text, source);
     } catch (e) {
       return reply.code(502).send({ error: `NEAR didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** A token's live price, from NEAR Intents' own list. Unknown or look-alike symbols get 404. */
+  app.get<{ Params: { symbol: string } }>("/v1/price/:symbol", async (req, reply) => {
+    if (!deps.intents) return reply.code(501).send({ error: "Prices aren't set up on this server" });
+    const symbol = req.params.symbol.replace(/^\$/, "").toUpperCase();
+    if (!/^[A-Z][A-Z0-9]{1,9}$/.test(symbol)) return reply.code(400).send({ error: "That isn't a token symbol" });
+    try {
+      const check = await deps.intents.pick(symbol, "to");
+      if (!check.verified || !check.token || typeof check.token.price !== "number") {
+        return reply.code(404).send({ error: check.verified ? `No price for ${symbol} right now` : check.reason });
+      }
+      return { symbol, usd: check.token.price, blockchain: check.token.blockchain, assetId: check.token.assetId, source: "NEAR Intents" };
+    } catch (e) {
+      return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** "100 usd to inr" for the keyboard: today's rate, nothing stored. */
+  app.get<{ Querystring: { amount?: string; from?: string; to?: string } }>("/v1/fx", async (req, reply) => {
+    if (!deps.rates) return reply.code(501).send({ error: "Currency rates aren't set up on this server" });
+    const amount = Number(req.query.amount);
+    const { from = "", to = "" } = req.query;
+    if (!Number.isFinite(amount) || amount < 0 || !/^[a-z]{3}$/i.test(from) || !/^[a-z]{3}$/i.test(to)) {
+      return reply.code(400).send({ error: "Send ?amount=100&from=usd&to=inr" });
+    }
+    try {
+      const c = await deps.rates.convert(amount, from, to);
+      if (!c) return reply.code(404).send({ error: `I don't have a rate for ${from.toUpperCase()} to ${to.toUpperCase()}` });
+      return { amount, from: from.toUpperCase(), to: to.toUpperCase(), value: c.value, rate: c.rate, date: c.date };
+    } catch (e) {
+      return reply.code(502).send({ error: `Rates didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** Every symbol NEAR Intents lists, so the keyboard only offers trades in real tokens. */
+  app.get("/v1/tokens", async (_req, reply) => {
+    if (!deps.intents) return reply.code(501).send({ error: "Tokens aren't set up on this server" });
+    try {
+      const list = await deps.intents.tokens();
+      const symbols = new Set(list.map((t) => t.symbol.toUpperCase()));
+      if (symbols.has("WNEAR")) symbols.add("NEAR"); // what people type
+      return { symbols: [...symbols].sort(), source: "NEAR Intents" };
+    } catch (e) {
+      return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
   });
 

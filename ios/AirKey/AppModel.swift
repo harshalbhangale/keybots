@@ -31,6 +31,7 @@ final class AppModel {
             async let r = api.receipts()
             (state, receipts) = try await (s, r)
             error = nil
+            if Tokens.stale, let symbols = try? await api.tokens() { Tokens.save(symbols) }
         } catch {
             self.error = error.localizedDescription
         }
