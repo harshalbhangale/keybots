@@ -78,6 +78,25 @@ struct ReceiptDetail: View {
                         if let rcv = r.receiver { KeyValue(key: "Paying", value: rcv.account, mono: true) }
                     }
                 }
+                if let sw = r.swap {
+                    step("4", "Swap on NEAR Intents") {
+                        tokenRow("Pay", sw.from)
+                        tokenRow("Get", sw.to)
+                        if let q = sw.quote {
+                            Hairline()
+                            KeyValue(key: "You send", value: "\(q.amountInFormatted) \(sw.from.asked.uppercased())" + (q.amountInUsd.flatMap(Double.init).map { String(format: " (~$%.2f)", $0) } ?? ""))
+                            KeyValue(key: "You get", value: "\(q.amountOutFormatted) \(sw.to.asked.uppercased())" + (q.amountOutUsd.flatMap(Double.init).map { String(format: " (~$%.2f)", $0) } ?? ""))
+                            if let t = q.timeEstimate { KeyValue(key: "Settles in", value: "~\(Int(t))s") }
+                            KeyValue(key: "Mode", value: "Dry run: nothing sent", color: AK.amber)
+                        }
+                        if let l = sw.leash {
+                            Hairline()
+                            KeyValue(key: "Worth", value: "\(l.valueNear) NEAR")
+                            KeyValue(key: "Leash cap", value: "\(Fmt.near(l.perPaymentCap)) per payment · \(Fmt.near(l.leftToday)) left today")
+                            KeyValue(key: "Within the leash", value: l.within ? "Yes" : "No", color: l.within ? AK.mint : AK.red)
+                        }
+                    }
+                }
                 if let c = r.checks {
                     step("4", "Checks before asking") {
                         KeyValue(key: "Verdict", value: c.verdict, color: c.verdict == "allow" ? AK.mint : c.verdict == "warn" ? AK.amber : AK.red)
@@ -98,6 +117,18 @@ struct ReceiptDetail: View {
             .padding(AK.gutter)
         }
         .background(AK.ink.ignoresSafeArea())
+    }
+
+    private func tokenRow(_ label: String, _ t: Receipt.TokenCheck) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack {
+                Text(label).font(.system(size: 14)).foregroundStyle(AK.muted)
+                Spacer()
+                Text(t.token.map { "\($0.symbol) on \($0.blockchain)" } ?? t.asked.uppercased()).font(.system(size: 14, weight: .medium)).foregroundStyle(AK.bone)
+                Image(systemName: t.verified ? "checkmark.seal.fill" : "xmark.octagon.fill").foregroundStyle(t.verified ? AK.mint : AK.red)
+            }
+            Text(t.reason).font(.system(size: 11, design: .monospaced)).foregroundStyle(AK.faint).lineLimit(2).truncationMode(.middle)
+        }
     }
 
     private func step<C: View>(_ n: String, _ title: String, @ViewBuilder _ content: () -> C) -> some View {
