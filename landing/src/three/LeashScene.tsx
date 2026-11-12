@@ -327,6 +327,7 @@ function Drift({ children }: { children: React.ReactNode }) {
 export default function LeashScene({ active = true }: { active?: boolean }) {
   return (
     <Canvas frameloop={active ? "always" : "never"} dpr={[1, 1.75]} camera={{ position: [0, 1.6, 11], fov: 35 }} gl={{ antialias: true, alpha: true }}>
+      <color attach="background" args={["#0f1112"]} />
       <Framing />
       <Studio intensity={0.8} />
       <ambientLight intensity={0.3} />

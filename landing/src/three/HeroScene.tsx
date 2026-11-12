@@ -252,6 +252,7 @@ export default function HeroScene({ active = true }: { active?: boolean }) {
       camera={{ position: [0, 14, 14], fov: 30 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
+      <color attach="background" args={["#08090a"]} />
       <Framing />
       <Studio tint="#ffffff" />
       <ambientLight intensity={0.25} />

@@ -303,7 +303,8 @@ section {
   height: 70%;
   background: radial-gradient(50% 50% at 50% 50%, rgba(198, 242, 90, 0.16), transparent 70%);
   filter: blur(40px);
-  z-index: 0;
+  z-index: 1;
+  mix-blend-mode: screen;
   pointer-events: none;
 }
 .hero-copy {
@@ -1333,23 +1334,24 @@ section {
 .ui {
   position: absolute;
   inset: 0;
-  padding: 58px 18px 18px;
+  padding: 56px 16px 16px;
   background: radial-gradient(120% 60% at 50% 0%, #2b3b14 0%, #0a0b0b 55%);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  font-size: 13px;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.35;
 }
 .ui h4 {
-  margin: 0;
-  font-size: 26px;
+  margin: 0 0 2px;
+  font-size: 24px;
   letter-spacing: -0.03em;
 }
 .ui .card {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 9px 12px;
 }
 .ui .killrow {
   display: flex;
@@ -1359,7 +1361,7 @@ section {
 .ui .row {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  padding: 4px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--muted);
 }
@@ -1383,7 +1385,8 @@ section {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 46px;
+  height: 42px;
+  flex-shrink: 0;
   border-radius: 999px;
   background: var(--lime);
   color: #0a0a0a;
@@ -1679,5 +1682,11 @@ footer.foot a:hover {
   [data-reveal] {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -24;
   }
 }
