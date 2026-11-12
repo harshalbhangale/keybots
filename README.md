@@ -129,7 +129,7 @@ xcrun simctl launch booted tech.airkey.app
 
 - **Home** shows what the leash holds, any payment waiting for you (approve or reject right there), today's paid / waiting / blocked counts, and recent activity.
 - **The command bar** sits above the tabs on every screen. Tap it, say whose words they are ("I'm asking" is trusted, "Someone sent me this" is untrusted), and type or paste. It shows what the words would do before you send them, and the outcome after.
-- **Agents** shows each agent's account, tier, caps, today's spend and what its key can call.
+- **Agents** shows each agent's account, whether it's trusted, today's spend against its daily cap, and its limits.
 - **Leash** is the control panel: kill switch, payments waiting for you, what the leash holds, allow and block lists. Every change there is **signed on the phone**: the server builds the transaction, Face ID unlocks this device's key, the phone signs, the server relays (`server/src/owner.ts`).
 - **Receipts** lists every command; tap one for the steps: what you said, how it was read, which agent, the checks, and the leash's decision with its transaction.
 - **Settings** shows this device's key. Enroll it once: `cd scripts && npm run add-device -- <owner> <key>`.
