@@ -49,7 +49,8 @@ struct ReceiptDetail: View {
                         said
                         read
                         if r.agent != nil { acted }
-                        if let sw = r.swap { swap(sw) }
+                        if let sw = r.swap, r.order == nil { swap(sw) }
+                        if let o = r.order { order(o) }
                         if let c = r.checks { checks(c) }
                         if let d = r.decision { decided(d) }
                     }
@@ -58,7 +59,7 @@ struct ReceiptDetail: View {
                 .padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
-            .background { Ambient(tint: r.signal == .neutral || r.signal == .quote ? AK.accent : r.signal.color) }
+            .background { Ambient(tint: r.signal.plain ? AK.accent : r.signal.color) }
             .navigationTitle("Receipt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -86,6 +87,8 @@ struct ReceiptDetail: View {
                 if let amt = a.amountNear { KeyValue(key: "Pay", value: "\(amt) NEAR") }
                 if let to = a.receiver { KeyValue(key: "To", value: to, mono: true) }
                 if let memo = a.memo { KeyValue(key: "For", value: memo) }
+            } else if a.kind == "watch" {
+                KeyValue(key: "Order", value: a.command ?? "")
             } else if a.kind == "swap" {
                 KeyValue(key: "Swap", value: "\(a.amount ?? "") \(a.from ?? "") to \(a.to ?? "")")
             } else if let reason = a.reason {
@@ -126,6 +129,17 @@ struct ReceiptDetail: View {
                 KeyValue(key: "Leash allows", value: "\(Fmt.near(l.perPaymentCap)) a payment · \(Fmt.near(l.leftToday)) left today")
                 KeyValue(key: "Within the leash", value: l.within ? "Yes" : "No", color: l.within ? AK.accent : AK.red)
             }
+        }
+    }
+
+    private func order(_ o: Receipt.OrderRef) -> some View {
+        Step(title: "Left with the Trading Agent", last: true) {
+            KeyValue(key: "Watching", value: o.symbol)
+            KeyValue(key: "Runs when it's", value: "\(o.direction) \(Fmt.usd(o.price))")
+            KeyValue(key: "Price then", value: Fmt.usd(o.priceThen))
+            KeyValue(key: "Then", value: o.command)
+            Text("When the price crosses, the trade runs like one you typed: same token checks, same caps, its own receipt. Cancel it from Home.")
+                .font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
         }
     }
 
