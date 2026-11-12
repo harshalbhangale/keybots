@@ -129,11 +129,24 @@ final class KeyboardModel {
                 let r = try await API().command(text, source: source)
                 result = r
                 feedback(for: r.signal)
+                if source == "typed", r.signal == .allow || r.signal == .warn || r.signal == .quote { clearCommand(text) }
             } catch {
                 notice = error.localizedDescription
             }
             running = nil
         }
+    }
+
+    /// The command was for the agent, not for the person in the chat: once it
+    /// has run, take it out of the message box so it can't be sent by mistake.
+    /// Only when the box still holds exactly what was run; a blocked command
+    /// stays so it can be fixed.
+    private func clearCommand(_ text: String) {
+        let p = proxy()
+        guard typed.trimmingCharacters(in: .whitespacesAndNewlines) == text, (p?.documentContextAfterInput ?? "").isEmpty else { return }
+        for _ in 0..<typed.count { p?.deleteBackward() }
+        typed = ""
+        refreshContext()
     }
 
     /// Put the receipt into the chat, so the other person sees it too.
