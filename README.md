@@ -184,6 +184,8 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | NEAR AI Cloud inference | **Code built, not yet run live** (needs an API key): used only for text the rules can't read; checks each reply's ECDSA response signature against the exact request and response bytes. The attestation report behind the signing key is *not* checked yet, and receipts say so. |
+| Price chips, buy and sell from the keyboard, sums and currency | **Built**: prices and token list from NEAR Intents; sums and splits on the phone |
+| Price-triggered orders | **Built**: typed orders, a 15-second watcher, cancel from Home; the triggered trade is a quote until swaps execute |
 | NEAR Intents swaps | **Quotes built**: token check against NEAR Intents' list, dry-run 1Click quotes, leash caps applied, pasted text can't trade. **Execution is next** (mainnet only). |
 | Mainnet | *Next*, after everything passes on testnet |
 
