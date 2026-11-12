@@ -32,7 +32,7 @@ struct SectionTitle: View {
             Spacer()
             if let trailing {
                 if let action {
-                    Button(trailing, action: action).font(.subheadline.weight(.medium)).foregroundStyle(AK.mint)
+                    Button(trailing, action: action).font(.subheadline.weight(.medium)).foregroundStyle(AK.accent)
                 } else {
                     Text(trailing).font(.subheadline).foregroundStyle(AK.muted)
                 }
@@ -57,7 +57,7 @@ struct Pill: View {
     }
 }
 
-/// The round badge that says what happened: mint check, amber hand, red cross.
+/// The round badge that says what happened: lime check, amber hand, red cross.
 struct SignalBadge: View {
     let signal: Signal
     var size: CGFloat = 30
@@ -119,7 +119,7 @@ struct Hairline: View {
 /// Spend so far today against the daily cap.
 struct SpendBar: View {
     let share: Double
-    var color: Color = AK.mint
+    var color: Color = AK.accent
 
     var body: some View {
         GeometryReader { g in
@@ -188,7 +188,7 @@ struct ApprovalCard: View {
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.glassProminent)
-                .tint(AK.mint)
+                .tint(AK.accent)
                 .foregroundStyle(AK.ink)
             }
             .font(.body.weight(.semibold))
@@ -242,7 +242,7 @@ struct ReceiptGroup: View {
 /// The frame every tab shares: ambient backdrop, scrolling content, pull to refresh.
 struct Screen<Content: View>: View {
     @Environment(AppModel.self) private var model
-    var tint: Color = AK.mint
+    var tint: Color = AK.accent
     @ViewBuilder var content: Content
 
     var body: some View {

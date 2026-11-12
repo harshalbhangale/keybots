@@ -25,7 +25,7 @@ struct AgentCard: View {
     let explorer: String
 
     private var trusted: Bool { entry.agent.tier == "trusted" }
-    private var tierColor: Color { trusted ? AK.mint : AK.amber }
+    private var tierColor: Color { trusted ? AK.accent : AK.amber }
 
     var body: some View {
         Panel(spacing: 16) {
@@ -58,7 +58,7 @@ struct AgentCard: View {
             KeyValue(key: "Most per payment", value: Fmt.near(entry.agent.per_payment_cap))
             KeyValue(key: "Most per day", value: Fmt.near(entry.agent.daily_cap))
             Label("Can't send NEAR on its own. Every payment goes through the leash.", systemImage: "lock.fill")
-                .font(.footnote).foregroundStyle(AK.mint).fixedSize(horizontal: false, vertical: true)
+                .font(.footnote).foregroundStyle(AK.accent).fixedSize(horizontal: false, vertical: true)
         }
     }
 }

@@ -58,7 +58,7 @@ struct ReceiptDetail: View {
                 .padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
-            .background { Ambient(tint: r.signal == .neutral || r.signal == .quote ? AK.mint : r.signal.color) }
+            .background { Ambient(tint: r.signal == .neutral || r.signal == .quote ? AK.accent : r.signal.color) }
             .navigationTitle("Receipt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -93,7 +93,7 @@ struct ReceiptDetail: View {
             }
             if let ai = r.interpretation.ai {
                 KeyValue(key: "Model", value: ai.model, mono: true)
-                KeyValue(key: "Reply signature", value: ai.signature.status, color: ai.signature.status == "verified" ? AK.mint : AK.amber)
+                KeyValue(key: "Reply signature", value: ai.signature.status, color: ai.signature.status == "verified" ? AK.accent : AK.amber)
                 KeyValue(key: "Attestation", value: ai.attestation, color: AK.amber)
             }
         }
@@ -102,7 +102,7 @@ struct ReceiptDetail: View {
     private var acted: some View {
         Step(title: "Who acted") {
             if let agent = r.agent {
-                KeyValue(key: Fmt.agentName(account: agent.account), value: agent.tier == "trusted" ? "Trusted" : "Untrusted", color: agent.tier == "trusted" ? AK.mint : AK.amber)
+                KeyValue(key: Fmt.agentName(account: agent.account), value: agent.tier == "trusted" ? "Trusted" : "Untrusted", color: agent.tier == "trusted" ? AK.accent : AK.amber)
                 KeyValue(key: "Account", value: agent.account, mono: true)
             }
             if let rcv = r.receiver { KeyValue(key: "Paying", value: rcv.account, mono: true) }
@@ -124,7 +124,7 @@ struct ReceiptDetail: View {
                 Hairline()
                 KeyValue(key: "Worth", value: "\(l.valueNear) NEAR")
                 KeyValue(key: "Leash allows", value: "\(Fmt.near(l.perPaymentCap)) a payment · \(Fmt.near(l.leftToday)) left today")
-                KeyValue(key: "Within the leash", value: l.within ? "Yes" : "No", color: l.within ? AK.mint : AK.red)
+                KeyValue(key: "Within the leash", value: l.within ? "Yes" : "No", color: l.within ? AK.accent : AK.red)
             }
         }
     }
@@ -134,7 +134,7 @@ struct ReceiptDetail: View {
             KeyValue(
                 key: "Verdict",
                 value: c.verdict == "allow" ? "Looks fine" : c.verdict == "warn" ? "Ask the owner" : "Stop",
-                color: c.verdict == "allow" ? AK.mint : c.verdict == "warn" ? AK.amber : AK.red
+                color: c.verdict == "allow" ? AK.accent : c.verdict == "warn" ? AK.amber : AK.red
             )
             ForEach(c.reasons, id: \.self) { reason in
                 Text(reason).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
@@ -149,7 +149,7 @@ struct ReceiptDetail: View {
             Text(d.reason).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             if let tx = r.tx, let url = URL(string: tx.url) {
                 Link(destination: url) {
-                    Label("See it on NEAR", systemImage: "arrow.up.right").font(.subheadline.weight(.semibold)).foregroundStyle(AK.mint)
+                    Label("See it on NEAR", systemImage: "arrow.up.right").font(.subheadline.weight(.semibold)).foregroundStyle(AK.accent)
                 }
                 .padding(.top, 2)
             }
@@ -166,7 +166,7 @@ struct ReceiptDetail: View {
                 Text(label).font(.subheadline).foregroundStyle(AK.muted)
                 Spacer()
                 Text(t.token.map { "\($0.symbol) on \($0.blockchain)" } ?? t.asked.uppercased()).font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
-                Image(systemName: t.verified ? "checkmark.seal.fill" : "xmark.octagon.fill").foregroundStyle(t.verified ? AK.mint : AK.red)
+                Image(systemName: t.verified ? "checkmark.seal.fill" : "xmark.octagon.fill").foregroundStyle(t.verified ? AK.accent : AK.red)
             }
             if !t.verified {
                 Text(t.reason).font(.footnote).foregroundStyle(AK.red.opacity(0.9)).fixedSize(horizontal: false, vertical: true)

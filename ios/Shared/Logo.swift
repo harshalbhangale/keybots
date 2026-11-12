@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// The AIRKEY mark: a keycap with a mint side tab. The tab is the "leash":
+/// The AIRKEY mark: a keycap with a lime side tab. The tab is the "leash":
 /// the same tab marks agent keys on the keyboard.
 struct KeycapMark: View {
     var size: CGFloat = 28
-    var tab: Color = AK.mint
+    var tab: Color = AK.accent
     var color: Color = AK.bone
 
     var body: some View {

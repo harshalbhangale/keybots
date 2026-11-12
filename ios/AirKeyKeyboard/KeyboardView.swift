@@ -12,7 +12,7 @@ struct KeyPalette {
 }
 
 /// The AIRKEY keyboard: a normal keyboard, plus a bar that shows what your
-/// words would do and lets an agent do it. P carries a mint tab: hold it to run.
+/// words would do and lets an agent do it. P carries a lime tab: hold it to run.
 struct KeyboardView: View {
     let model: KeyboardModel
     @Environment(\.colorScheme) private var scheme
@@ -163,7 +163,7 @@ struct AgentBar: View {
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(AK.ink)
                     .frame(width: 28, height: 28)
-                    .background(AK.mint, in: Circle())
+                    .background(AK.accent, in: Circle())
                 VStack(alignment: .leading, spacing: 0) {
                     Text(intent.title).font(.footnote.weight(.semibold)).foregroundStyle(palette.text).lineLimit(1).minimumScaleFactor(0.8)
                     if let detail = intent.detail {
@@ -176,7 +176,7 @@ struct AgentBar: View {
                     .foregroundStyle(AK.ink)
                     .padding(.horizontal, 16)
                     .frame(height: 30)
-                    .background(AK.mint, in: Capsule())
+                    .background(AK.accent, in: Capsule())
             }
             .padding(.leading, 7)
             .padding(.trailing, 7)
@@ -255,7 +255,7 @@ struct AgentBar: View {
     }
 }
 
-/// One key. An agent key carries a mint side tab and runs on hold.
+/// One key. An agent key carries a lime side tab and runs on hold.
 struct Key: View {
     var text: String?
     var symbol: String?
@@ -293,7 +293,7 @@ struct Key: View {
             .foregroundStyle(palette.text)
             .frame(maxWidth: .infinity)
             if agentTab {
-                Capsule().fill(held ? palette.text : AK.mint).frame(width: 3, height: 16).padding(.trailing, 3)
+                Capsule().fill(held ? palette.text : AK.accent).frame(width: 3, height: 16).padding(.trailing, 3)
             }
         }
         .frame(width: width, height: 44)

@@ -87,7 +87,7 @@ struct SettingsView: View {
 
     private func step(_ n: Int, _ text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text("\(n)").font(.footnote.weight(.bold)).foregroundStyle(AK.ink).frame(width: 20, height: 20).background(AK.mint, in: Circle())
+            Text("\(n)").font(.footnote.weight(.bold)).foregroundStyle(AK.ink).frame(width: 20, height: 20).background(AK.accent, in: Circle())
             Text(text).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
         }
     }
