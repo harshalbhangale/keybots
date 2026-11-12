@@ -155,7 +155,7 @@ struct CommandSheet: View {
             case .allow: gen.notificationOccurred(.success)
             case .warn: gen.notificationOccurred(.warning)
             case .block: gen.notificationOccurred(.error)
-            case .quote, .neutral: UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            case .quote, .watch, .neutral: UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
         }
     }

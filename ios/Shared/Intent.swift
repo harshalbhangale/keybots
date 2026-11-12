@@ -18,6 +18,11 @@ struct Intent: Equatable {
         // The last line is the message being written.
         guard let line = text.split(whereSeparator: \.isNewline).last.map(String.init)?.trimmingCharacters(in: .whitespaces), line.count >= 6 else { return nil }
 
+        // "<a trade> if it drops below 2": an order for the Trading Agent to wait on.
+        if let m = match(when, line), let trade = read(m[1]), trade.kind == .swap {
+            let below = ["below", "under"].contains(m[2].lowercased())
+            return Intent(kind: .swap, title: trade.title, detail: "Runs when the price is \(below ? "below" : "above") $\(m[3])")
+        }
         if let m = match(swap, line) {
             return Intent(kind: .swap, title: "Swap \(m[1]) \(m[2].uppercased()) to \(m[3].uppercased())", detail: nil)
         }
@@ -64,6 +69,7 @@ struct Intent: Equatable {
     private static let buyWords = regex(#"\bbuy\s+"# + amount + #"\s*(?:usdc?|dollars?|bucks)\s+(?:worth\s+)?(?:of\s+)?"# + symbol + #"\b"#)
     private static let sell = regex(#"\bsell\s+"# + amount + #"\s*"# + symbol + #"(?:\s+(?:for|to|into)\s+"# + symbol + #")?\b"#)
 
+    private static let when = regex(#"^(.+?)\s+(?:if|when|once|whenever)\s+(?:it|the\s+price|\$?[a-z][a-z0-9]{1,9})?\s*(?:drops?|falls?|dips?|goes|is|gets|rises?|climbs?|hits)?\s*(?:to\s+)?(below|under|above|over|past)\s+\$?"# + amount + #"\s*[.!?]*$"#)
     private static let swap = regex(#"\bswap\s+"# + amount + #"\s*([a-z][a-z0-9]{1,9})\s+(?:to|for|into)\s+([a-z][a-z0-9]{1,9})\b"#)
     private static let amountFirst = regex(#"\b"# + verb + #"\s+"# + amount + unit + #"\s+(?:to\s+)?"# + account + memo + #"\s*[.!?]*$"#)
     private static let receiverFirst = regex(#"\b"# + verb + #"\s+"# + account + #"\s+"# + amount + unit + memo + #"\s*[.!?]*$"#)

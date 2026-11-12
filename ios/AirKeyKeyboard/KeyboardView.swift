@@ -247,7 +247,7 @@ struct AgentBar: View {
     }
 
     private func result(_ r: Receipt) -> some View {
-        let plain = r.signal == .quote || r.signal == .neutral
+        let plain = r.signal.plain
         return HStack(spacing: 10) {
             Image(systemName: r.signal.icon)
                 .font(.system(size: 12, weight: .bold))

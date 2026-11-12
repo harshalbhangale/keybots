@@ -54,6 +54,7 @@ struct Receipt: Decodable, Identifiable {
     let checks: Checks?
     let decision: Decision?
     let swap: Swap?
+    let order: OrderRef?
     let outcome: String
     let message: String
     let tx: Tx?
@@ -73,6 +74,7 @@ struct Receipt: Decodable, Identifiable {
         let from: String?
         let to: String?
         let reason: String?
+        let command: String?
     }
     struct AIEvidence: Decodable {
         let provider: String
@@ -109,6 +111,7 @@ struct Receipt: Decodable, Identifiable {
         let minAmountOut: String?
         let timeEstimate: Double?
     }
+    struct OrderRef: Decodable { let id: String; let symbol: String; let direction: String; let price: Double; let priceThen: Double; let command: String }
     struct SwapLeash: Decodable { let agent: String; let valueNear: String; let perPaymentCap: String; let leftToday: String; let within: Bool }
 
     var signal: Signal { Signal(outcome: outcome) }
@@ -116,6 +119,22 @@ struct Receipt: Decodable, Identifiable {
 }
 
 struct ReceiptList: Decodable { let receipts: [Receipt] }
+
+/// A trade waiting for a price: "sell 1 near" when NEAR is below $2.
+struct Order: Decodable, Identifiable {
+    let id: String
+    let command: String
+    let symbol: String
+    let direction: String
+    let price: Double
+    let priceThen: Double
+    let status: String
+
+    /// "when NEAR is below $2"
+    var condition: String { "when \(symbol) is \(direction) \(Fmt.usd(price))" }
+}
+
+struct OrderList: Decodable { let orders: [Order] }
 
 struct Price: Decodable { let symbol: String; let usd: Double; let blockchain: String }
 

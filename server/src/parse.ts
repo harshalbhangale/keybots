@@ -5,6 +5,8 @@
 export type Action =
   | { kind: "pay"; receiver: string; amountNear: string; memo?: string }
   | { kind: "swap"; amount: string; from: string; to: string }
+  /** A trade to run later, when `symbol` crosses `price` (dollars). */
+  | { kind: "watch"; command: string; trade: { amount: string; from: string; to: string }; symbol: string; direction: "below" | "above"; price: string }
   | { kind: "unknown"; reason: string };
 
 const VERB = String.raw`(?:pay|send|give|transfer|tip)`;
@@ -30,6 +32,12 @@ const SELL = new RegExp(String.raw`\bsell\s+${AMOUNT}\s*${SYMBOL}(?:\s+(?:for|to
 /** What a dollar amount is paid in. */
 export const DOLLAR = "USDC";
 
+// "<a trade> if it drops below 2", "<a trade> when near goes above $4"
+const WHEN = new RegExp(
+  String.raw`^(.+?)\s+(?:if|when|once|whenever)\s+(?:it|the\s+price|\$?[a-z][a-z0-9]{1,9})?\s*(?:drops?|falls?|dips?|goes|is|gets|rises?|climbs?|hits)?\s*(?:to\s+)?(below|under|above|over|past)\s+\$?${AMOUNT}\s*[.!?]*$`,
+  "i",
+);
+
 const FILLER = new Set(["immediately", "now", "asap", "urgently", "please", "pls", "today", "right", "away"]);
 
 /** Reads the first action in the text. Works line by line so a pasted message can carry other words. */
@@ -41,6 +49,16 @@ export function parse(text: string): Action {
     .filter(Boolean);
   for (const raw of [text.trim(), ...lines]) {
     const line = stripFiller(raw);
+    const w = line.match(WHEN);
+    if (w) {
+      const trade = parse(w[1]);
+      if (trade.kind === "swap") {
+        // Watch the token being bought or sold, not the dollars on the other side.
+        const symbol = trade.from === DOLLAR ? trade.to : trade.from;
+        const direction = /below|under/i.test(w[2]) ? "below" : "above";
+        return { kind: "watch", command: w[1].trim(), trade: { amount: trade.amount, from: trade.from, to: trade.to }, symbol, direction, price: normaliseAmount(w[3]) };
+      }
+    }
     const s = line.match(SWAP);
     if (s) return { kind: "swap", amount: s[1], from: s[2].toUpperCase(), to: s[3].toUpperCase() };
     const b = line.match(BUY_DOLLAR) ?? line.match(BUY_WORDS);
