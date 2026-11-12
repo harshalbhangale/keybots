@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		000C52470CDAD2D90C62C217 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554356C064E910AACA9AF32 /* HomeView.swift */; };
 		087EFF821ECA87156E7C140D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF871A3D5082D0B29BC2457 /* SettingsView.swift */; };
+		101FBECEE63E631AA97C2EC6 /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
 		202A662AC2A67C19FF48A88E /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
 		205F7DA8AE00065BC648190E /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF89A02FA1B292BF5E5BE5A /* API.swift */; };
 		280530690716794F66165515 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
@@ -25,7 +26,9 @@
 		74BA5C38204091668AFD48DC /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0A160B829D262A48C12542 /* KeyboardView.swift */; };
 		86522BDC05010DA5622CD4D3 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B15209E5CFB080BC92DA76D /* Components.swift */; };
 		86F1F77CD21B8621B052801F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602E65F915BF5CB7CA8F9B37 /* Models.swift */; };
+		93C5563DAAEB0C5006FB53FB /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
 		9947C11236F0D6EDFC1C3C8A /* AirKeyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2848176EB456D3E16DCE29B2 /* AirKeyApp.swift */; };
+		AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE82DAB9B756AF51443152AD /* Instant.swift */; };
 		B3CF34DD5591AFC0E98EBC18 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602E65F915BF5CB7CA8F9B37 /* Models.swift */; };
 		BD60A00EB851372B06F1E92C /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
 		BFDF1177B79E8A06313E81B7 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
@@ -35,6 +38,7 @@
 		DADE104895F822FF5FE891E0 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
 		DDA74E2BD4FEFDAC97BD1578 /* ReceiptsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */; };
 		E3CA1CFCBFE800F0AB8E8E11 /* KeyboardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA7930E7E3D9C9F9BB9D296 /* KeyboardModel.swift */; };
+		EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE82DAB9B756AF51443152AD /* Instant.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,9 +82,11 @@
 		74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7B15209E5CFB080BC92DA76D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		9BF871A3D5082D0B29BC2457 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A5B2568003C3CB91D9A04FB0 /* Ask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ask.swift; sourceTree = "<group>"; };
 		AE30351773DFCF5713DBF24A /* DeviceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKey.swift; sourceTree = "<group>"; };
 		AF41A04D107BDF975DB721DC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		BE0A160B829D262A48C12542 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
+		BE82DAB9B756AF51443152AD /* Instant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Instant.swift; sourceTree = "<group>"; };
 		C554356C064E910AACA9AF32 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AirKeyKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9851A9A472BEEA624723FBC /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
@@ -164,7 +170,9 @@
 			isa = PBXGroup;
 			children = (
 				2DF89A02FA1B292BF5E5BE5A /* API.swift */,
+				A5B2568003C3CB91D9A04FB0 /* Ask.swift */,
 				D9851A9A472BEEA624723FBC /* Format.swift */,
+				BE82DAB9B756AF51443152AD /* Instant.swift */,
 				53E174E7250C5963B6505C36 /* Intent.swift */,
 				5313A4631B0C886CFD88DE0A /* Logo.swift */,
 				602E65F915BF5CB7CA8F9B37 /* Models.swift */,
@@ -269,7 +277,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E7B527414E0A3454AFFECFC /* API.swift in Sources */,
+				93C5563DAAEB0C5006FB53FB /* Ask.swift in Sources */,
 				280530690716794F66165515 /* Format.swift in Sources */,
+				EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */,
 				555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */,
 				E3CA1CFCBFE800F0AB8E8E11 /* KeyboardModel.swift in Sources */,
 				74BA5C38204091668AFD48DC /* KeyboardView.swift in Sources */,
@@ -288,11 +298,13 @@
 				51E2BE13813FE385EACFA92D /* AgentsView.swift in Sources */,
 				9947C11236F0D6EDFC1C3C8A /* AirKeyApp.swift in Sources */,
 				493F215D8AE2EF3CA2992694 /* AppModel.swift in Sources */,
+				101FBECEE63E631AA97C2EC6 /* Ask.swift in Sources */,
 				C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */,
 				86522BDC05010DA5622CD4D3 /* Components.swift in Sources */,
 				D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */,
 				BD60A00EB851372B06F1E92C /* Format.swift in Sources */,
 				000C52470CDAD2D90C62C217 /* HomeView.swift in Sources */,
+				AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */,
 				59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */,
 				5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */,
 				DADE104895F822FF5FE891E0 /* Logo.swift in Sources */,
