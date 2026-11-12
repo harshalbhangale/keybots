@@ -5,11 +5,12 @@ import SwiftUI
 struct KeycapMark: View {
     var size: CGFloat = 28
     var tab: Color = AK.mint
+    var color: Color = AK.bone
 
     var body: some View {
         ZStack(alignment: .trailing) {
             RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
-                .strokeBorder(AK.bone, lineWidth: max(1.5, size * 0.085))
+                .strokeBorder(color, lineWidth: max(1.5, size * 0.085))
                 .frame(width: size, height: size)
             Capsule()
                 .fill(tab)
@@ -17,7 +18,7 @@ struct KeycapMark: View {
                 .offset(x: size * 0.065)
             Text("A")
                 .font(.system(size: size * 0.5, weight: .bold))
-                .foregroundStyle(AK.bone)
+                .foregroundStyle(color)
                 .frame(width: size, height: size)
         }
         .frame(width: size + size * 0.07, height: size)
