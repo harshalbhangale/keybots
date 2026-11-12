@@ -3,9 +3,9 @@
 //   npm run setup -- airkey-<yourname>.testnet
 //
 // 1. Creates the owner account through the testnet faucet (it arrives with free testnet NEAR).
-// 2. Creates the sub-accounts: leash (the contract), pay and inbox (the agents, whose only key is a
+// 2. Creates the sub-accounts: leash (the contract), pay, inbox and trade (the agents, whose only key is a
 //    function-call key for the leash), and friend / vendor / drain (demo receivers).
-// 3. Deploys and initialises the leash, registers both agents, allowlists friend, funds the leash.
+// 3. Deploys and initialises the leash, registers the agents, allowlists friend, funds the leash.
 // Keys are saved to keys/ (gitignored).
 import { readFileSync } from "node:fs";
 import { actions } from "near-api-js";
@@ -54,7 +54,7 @@ if (!(await exists(n.leash))) saveKey(n.leash, leashKey);
 await createSub(o, n.leash, near(4), actions.addFullAccessKey(leashKey.getPublicKey()));
 
 // Agents: the only key is a function-call key for the leash's pay/report, with a 0.25 NEAR gas allowance.
-for (const id of [n.pay, n.inbox]) {
+for (const id of [n.pay, n.inbox, n.trade]) {
   const kp = newKey();
   if (!(await exists(id))) saveKey(id, kp);
   await createSub(o, id, near(0.3), actions.addFunctionCallAccessKey(kp.getPublicKey(), n.leash, ["pay", "report"], near(0.25)));
@@ -82,12 +82,14 @@ if (!initialised) {
   console.log(`• ${n.leash} already initialised (use npm run deploy to update code)`);
 }
 
-// Rules: pay = trusted, inbox = untrusted, both 0.5 per payment / 1 a day. friend is allowlisted.
+// Rules: pay = trusted, inbox = untrusted, both 0.5 per payment / 1 a day. trade = trusted, 1 a trade / 2 a day.
+// friend is allowlisted.
 const call = (methodName, args) => o.callFunction({ contractId: n.leash, methodName, args, deposit: 1n });
 await call("add_agent", { agent: n.pay, tier: "trusted", per_payment_cap: near(0.5).toString(), daily_cap: near(1).toString() });
 await call("add_agent", { agent: n.inbox, tier: "untrusted", per_payment_cap: near(0.5).toString(), daily_cap: near(1).toString() });
+await call("add_agent", { agent: n.trade, tier: "trusted", per_payment_cap: near(1).toString(), daily_cap: near(2).toString() });
 await call("allow", { account: n.friend });
-console.log("✓ agents registered, friend allowlisted");
+console.log("✓ agents registered (pay, inbox, trade), friend allowlisted");
 
 console.log(`\nLeash can spend ${fmt(await view(n.leash, "available"))}. Explorer: ${txUrl("").replace("/txns/", "/address/")}${n.leash}`);
 console.log(`Next: npm run e2e -- ${owner}`);
