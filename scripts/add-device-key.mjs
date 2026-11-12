@@ -2,7 +2,7 @@
 // The AIRKEY app shows the key in Settings ("This device"). Testnet only.
 //
 //   npm run add-device -- airkey-<yourname>.testnet ed25519:<key from the app>
-import { actions } from "near-api-js";
+import { PublicKey, actions } from "near-api-js";
 import { NETWORK, account, provider, txUrl } from "./common.mjs";
 
 const [owner, publicKey] = process.argv.slice(2);
@@ -23,5 +23,5 @@ try {
   /* not there yet */
 }
 
-const res = await account(owner).signAndSendTransaction({ receiverId: owner, actions: [actions.addFullAccessKey(publicKey)] });
+const res = await account(owner).signAndSendTransaction({ receiverId: owner, actions: [actions.addFullAccessKey(PublicKey.fromString(publicKey))] });
 console.log(`✓ added the device key to ${owner}  ${txUrl(res.transaction.hash)}`);
