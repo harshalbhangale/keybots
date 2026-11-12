@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 @Observable
 @MainActor
@@ -13,6 +14,14 @@ final class AppModel {
     var lastOwnerTx: Submitted?
 
     var api: API { API() }
+
+    /// The colour of what's going on: red while everything is stopped, amber
+    /// while something waits for the owner, mint otherwise.
+    var mood: Color {
+        guard let state else { return AK.mint }
+        if state.paused { return AK.red }
+        return state.pending.isEmpty ? AK.mint : AK.amber
+    }
 
     func refresh() async {
         loading = true
