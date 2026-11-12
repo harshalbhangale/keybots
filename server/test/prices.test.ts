@@ -41,8 +41,8 @@ describe("GET /v1/price/:symbol", () => {
 });
 
 describe("GET /v1/tokens", () => {
-  it("lists each symbol once", async () => {
+  it("lists each symbol once, and NEAR as people type it", async () => {
     const r = await app().inject("/v1/tokens");
-    expect(r.json().symbols).toEqual(["SOL", "USDC", "WNEAR"]);
+    expect(r.json().symbols).toEqual(["NEAR", "SOL", "USDC", "WNEAR"]);
   });
 });
