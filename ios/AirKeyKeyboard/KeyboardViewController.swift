@@ -27,6 +27,7 @@ final class KeyboardViewController: UIInputViewController {
         host.didMove(toParent: self)
         self.host = host
         model.needsGlobe = needsInputModeSwitchKey
+        watch()
     }
 
     override func viewWillLayoutSubviews() {
@@ -46,16 +47,21 @@ final class KeyboardViewController: UIInputViewController {
     // menu, a message sent). Look again a few times a second while it's on screen.
     private var watcher: Task<Void, Never>?
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        model.refreshContext()
-        watcher?.cancel()
+    private func watch() {
+        guard watcher == nil else { return }
         watcher = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(400))
-                self?.model.refreshContext()
+                guard let self else { return }
+                if self.view.window != nil { self.model.refreshContext() }
             }
         }
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        model.refreshContext()
+        watch()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
