@@ -17,6 +17,11 @@ final class KeyboardModel {
     var result: Receipt?
     var notice: String?
 
+    /// What was typed through this keyboard. iOS only hands a keyboard the
+    /// text back to the last sentence break ("pay harshal 0.1" arrives as "1"),
+    /// so the keyboard keeps its own copy and checks it against what iOS shows.
+    @ObservationIgnored private var typed = ""
+
     @ObservationIgnored var proxy: () -> UITextDocumentProxy? = { nil }
     @ObservationIgnored var advance: () -> Void = {}
     @ObservationIgnored var hasFullAccess: () -> Bool = { false }
@@ -25,7 +30,7 @@ final class KeyboardModel {
 
     func type(_ s: String) {
         let out = shift || capsLock ? s.uppercased() : s
-        proxy()?.insertText(out)
+        insert(out)
         if shift && !capsLock { shift = false }
         UIDevice.current.playInputClick()
         refreshContext()
@@ -33,24 +38,31 @@ final class KeyboardModel {
 
     func delete() {
         proxy()?.deleteBackward()
+        if !typed.isEmpty { typed.removeLast() }
         UIDevice.current.playInputClick()
         refreshContext()
+    }
+
+    private func insert(_ s: String) {
+        proxy()?.insertText(s)
+        typed += s
     }
 
     func space() {
         // Double space after a word: ". " like the system keyboard.
         if let before = proxy()?.documentContextBeforeInput, before.hasSuffix(" "), let last = before.dropLast().last, last.isLetter || last.isNumber {
             proxy()?.deleteBackward()
-            proxy()?.insertText(". ")
+            if !typed.isEmpty { typed.removeLast() }
+            insert(". ")
         } else {
-            proxy()?.insertText(" ")
+            insert(" ")
         }
         UIDevice.current.playInputClick()
         refreshContext()
     }
 
     func returnKey() {
-        proxy()?.insertText("\n")
+        insert("\n")
         refreshContext()
     }
 
@@ -58,17 +70,23 @@ final class KeyboardModel {
         if shift { capsLock.toggle(); shift = capsLock } else { shift = true }
     }
 
-    /// The text in the field, as far as the host app lets a keyboard see it.
+    /// The whole message being written: our own copy before the cursor, plus
+    /// whatever iOS shows after it.
     private var fieldText: String {
-        let p = proxy()
-        return (p?.documentContextBeforeInput ?? "") + (p?.documentContextAfterInput ?? "")
+        typed + (proxy()?.documentContextAfterInput ?? "")
     }
 
     /// Called after every keystroke and whenever the host app changes the text.
     func refreshContext() {
-        let before = proxy()?.documentContextBeforeInput ?? ""
+        let p = proxy()
+        let before = p?.documentContextBeforeInput ?? ""
+        // Keep our copy honest: empty when the field is (sent or cleared), and
+        // replaced by what iOS shows when the two disagree (pasted, cursor moved).
+        if before.isEmpty { typed = "" } else if !typed.hasSuffix(before) { typed = before }
+
         if layer == .letters, !capsLock {
-            shift = before.isEmpty || before.hasSuffix(". ") || before.hasSuffix("? ") || before.hasSuffix("! ") || before.hasSuffix("\n")
+            let sentences = (p?.autocapitalizationType ?? .sentences) == .sentences
+            shift = sentences && (before.isEmpty || before.hasSuffix(". ") || before.hasSuffix("? ") || before.hasSuffix("! ") || before.hasSuffix("\n"))
         }
         intent = Intent.read(fieldText)
         returnLabel = switch proxy()?.returnKeyType {
@@ -123,7 +141,7 @@ final class KeyboardModel {
         guard let r = result else { return }
         var line = "AIRKEY · \(r.signal.word.capitalized): \(r.message)"
         if let tx = r.tx { line += " \(tx.url)" }
-        proxy()?.insertText(line)
+        insert(line)
         result = nil
         refreshContext()
     }
