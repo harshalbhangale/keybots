@@ -210,7 +210,7 @@ final class KeyboardModel {
                 let r = try await API().command(text, source: source)
                 result = r
                 feedback(for: r.signal)
-                if source == "typed", r.signal == .allow || r.signal == .warn || r.signal == .quote { clearCommand(text) }
+                if source == "typed", r.signal != .block, r.signal != .neutral { clearCommand(text) }
             } catch {
                 notice = error.localizedDescription
             }
@@ -248,7 +248,7 @@ final class KeyboardModel {
         case .allow: gen.notificationOccurred(.success)
         case .warn: gen.notificationOccurred(.warning)
         case .block: gen.notificationOccurred(.error)
-        case .quote: UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        case .quote, .watch: UIImpactFeedbackGenerator(style: .light).impactOccurred()
         case .neutral: break
         }
     }
