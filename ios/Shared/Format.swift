@@ -28,10 +28,32 @@ enum Fmt {
         tier == "trusted" ? "Payment Agent" : "Inbox Agent"
     }
 
-    static func agentPurpose(_ tier: String) -> String {
-        tier == "trusted"
-            ? "Pays for what you type. Trusted: it can pay anyone within its caps."
-            : "Acts on messages from other people. Untrusted: it pays only your allowlist on its own; everyone else waits for you."
+    /// Named by the account's first part: pay.<you> is the Payment Agent.
+    static func agentName(account: String) -> String {
+        switch short(account) {
+        case "pay": "Payment Agent"
+        case "inbox": "Inbox Agent"
+        case "trade": "Trading Agent"
+        case "copy": "Copy Agent"
+        case let other: other.prefix(1).uppercased() + other.dropFirst() + " Agent"
+        }
+    }
+
+    static func agentPurpose(account: String, tier: String) -> String {
+        switch short(account) {
+        case "pay": "Pays for what you type, within its caps."
+        case "inbox": "Reads messages other people send you. It can pay your allowlist; anyone else waits for you."
+        case "trade": "Swaps tokens you ask for, within its caps."
+        default: tier == "trusted" ? "Acts on what you type, within its caps." : "Acts on other people's words. Anyone off your allowlist waits for you."
+        }
+    }
+
+    /// "Today", "Yesterday", or "12 Nov".
+    static func day(_ date: Date?) -> String {
+        guard let date else { return "Earlier" }
+        if Calendar.current.isDateInToday(date) { return "Today" }
+        if Calendar.current.isDateInYesterday(date) { return "Yesterday" }
+        return date.formatted(.dateTime.day().month(.abbreviated))
     }
 
     static func time(_ date: Date?) -> String {
