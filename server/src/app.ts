@@ -1,5 +1,8 @@
 import Fastify from "fastify";
-import { runCommand, type Deps } from "./agent.js";
+import { runCommand, type Deps as CommandDeps } from "./agent.js";
+import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
+
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions> };
 
 export function buildApp(deps: Deps) {
   const app = Fastify({ logger: false });
@@ -32,6 +35,29 @@ export function buildApp(deps: Deps) {
   app.get<{ Querystring: { limit?: string } }>("/v1/receipts", async (req) => ({
     receipts: deps.receipts.list(Math.min(200, Number(req.query.limit ?? 50) || 50)),
   }));
+
+  /** Owner actions: the server builds the transaction, the phone signs its hash, the server relays it. */
+  app.post<{ Body: { method?: string; args?: Record<string, unknown>; publicKey?: string } }>("/v1/owner/prepare", async (req, reply) => {
+    const { method, args = {}, publicKey } = req.body ?? {};
+    if (!deps.owner) return reply.code(501).send({ error: "Owner actions aren't set up on this server" });
+    if (!method || !publicKey) return reply.code(400).send({ error: 'Send {"method", "args", "publicKey"}' });
+    try {
+      return await deps.owner.prepare(method as OwnerMethod, args, publicKey);
+    } catch (e) {
+      return reply.code(e instanceof UserError ? 400 : 502).send({ error: (e as Error).message });
+    }
+  });
+
+  app.post<{ Body: { tx?: string; signature?: string } }>("/v1/owner/submit", async (req, reply) => {
+    const { tx, signature } = req.body ?? {};
+    if (!deps.owner) return reply.code(501).send({ error: "Owner actions aren't set up on this server" });
+    if (!tx || !signature) return reply.code(400).send({ error: 'Send {"tx", "signature"}' });
+    try {
+      return await deps.owner.submit(tx, signature);
+    } catch (e) {
+      return reply.code(e instanceof UserError ? 400 : 502).send({ error: (e as Error).message.slice(0, 300) });
+    }
+  });
 
   return app;
 }
