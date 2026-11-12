@@ -105,6 +105,7 @@ final class KeyboardModel {
         case .allow: gen.notificationOccurred(.success)
         case .warn: gen.notificationOccurred(.warning)
         case .block: gen.notificationOccurred(.error)
+        case .quote: UIImpactFeedbackGenerator(style: .light).impactOccurred()
         case .neutral: break
         }
     }

@@ -38,13 +38,14 @@ extension Color {
 
 /// The three outcomes, and how each one looks everywhere.
 enum Signal {
-    case allow, warn, block, neutral
+    case allow, warn, block, quote, neutral
 
     var color: Color {
         switch self {
         case .allow: AK.mint
         case .warn: AK.amber
         case .block: AK.red
+        case .quote: AK.bone
         case .neutral: AK.muted
         }
     }
@@ -54,6 +55,7 @@ enum Signal {
         case .allow: "PAID"
         case .warn: "APPROVE?"
         case .block: "BLOCKED"
+        case .quote: "QUOTE"
         case .neutral: "NOT SENT"
         }
     }
@@ -63,6 +65,7 @@ enum Signal {
         case "paid": self = .allow
         case "approval": self = .warn
         case "blocked": self = .block
+        case "quoted": self = .quote
         default: self = .neutral
         }
     }
