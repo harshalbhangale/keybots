@@ -27,7 +27,9 @@ export interface Receipt {
     leash?: { agent: string; valueNear: string; perPaymentCap: string; leftToday: string; within: boolean };
   };
   /** Shown to the person: allow (mint), warn (amber), block (red), quote, or info. */
-  outcome: "paid" | "approval" | "blocked" | "quoted" | "not-sent";
+  outcome: "paid" | "approval" | "blocked" | "quoted" | "watching" | "not-sent";
+  /** A price-triggered order this command created. */
+  order?: { id: string; symbol: string; direction: "below" | "above"; price: number; priceThen: number; command: string };
   message: string;
   tx?: { hash: string; url: string };
   events?: unknown[];
