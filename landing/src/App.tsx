@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import Nav from "./sections/Nav";
 import Hero from "./sections/Hero";
+import { Marquee, Pillars, Problem } from "./sections/Story";
+import Lab from "./sections/Lab";
 import { prefersReducedMotion, useRevealAll } from "./lib/hooks";
 
 export default function App() {
@@ -25,6 +27,10 @@ export default function App() {
       <Nav />
       <main>
         <Hero />
+        <Marquee />
+        <Problem />
+        <Pillars />
+        <Lab />
       </main>
       <div className="grain" />
     </>
