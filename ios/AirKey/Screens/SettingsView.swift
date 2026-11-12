@@ -31,6 +31,9 @@ struct SettingsView: View {
                     Eyebrow("This device")
                     Text("Your owner key lives on this phone and signs approvals after Face ID. Add it to your NEAR account once:").font(.system(size: 13)).foregroundStyle(AK.muted)
                     Text(DeviceKey.publicKey).font(AK.mono).foregroundStyle(AK.bone).textSelection(.enabled)
+                    if !DeviceKey.persisted {
+                        Text("This build can't save the key in the Keychain, so it lasts only until the app quits.").font(.system(size: 12)).foregroundStyle(AK.amber)
+                    }
                     Button(copied ? "Copied" : "Copy key") { UIPasteboard.general.string = DeviceKey.publicKey; copied = true }
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(AK.mint)
                     Text("npm run add-device -- <owner> <key>").font(AK.mono).foregroundStyle(AK.faint)
