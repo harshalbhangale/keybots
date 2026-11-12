@@ -13,6 +13,14 @@ final class KeyboardModel {
     var returnLabel = "return"
     /// What the words in the field would do, read as you type.
     var intent: Intent?
+    /// A sum, a percentage or a bill split worked out on the phone.
+    var instant: Instant?
+    /// A price or a currency conversion that came back from the server.
+    var answer: Answer?
+    /// What the keyboard is looking up, so a late reply for old text is dropped.
+    @ObservationIgnored private var asking: Ask?
+    /// The kind of command that is running, for the wording while it waits.
+    var runningKind: Intent.Kind?
     var running: String?  // "typed" or "pasted" while waiting
     var result: Receipt?
     var notice: String?
@@ -88,7 +96,11 @@ final class KeyboardModel {
             let sentences = (p?.autocapitalizationType ?? .sentences) == .sentences
             shift = sentences && (before.isEmpty || before.hasSuffix(". ") || before.hasSuffix("? ") || before.hasSuffix("! ") || before.hasSuffix("\n"))
         }
-        intent = Intent.read(fieldText)
+        let text = fieldText
+        intent = Intent.read(text)
+        // One thing at a time: a command first, then a lookup, then a sum.
+        look(up: intent == nil ? Ask.read(text) : nil)
+        instant = intent == nil && asking == nil ? Instant.read(text) : nil
         returnLabel = switch proxy()?.returnKeyType {
         case .send: "send"
         case .go: "go"
@@ -98,6 +110,73 @@ final class KeyboardModel {
         case .join: "join"
         default: "return"
         }
+    }
+
+    // MARK: answers
+
+    /// Ask the server for a price or a conversion, a moment after typing stops.
+    private func look(up ask: Ask?) {
+        guard ask != asking else { return }
+        asking = ask
+        answer = nil
+        guard let ask, hasFullAccess() else { return }
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard asking == ask else { return }
+            let found = await Self.fetch(ask)
+            guard asking == ask else { return }
+            answer = found
+        }
+    }
+
+    private static func fetch(_ ask: Ask) async -> Answer? {
+        switch ask {
+        case .price(let symbol, _):
+            guard let p = try? await API().price(symbol) else { return nil }
+            return Answer(ask: ask, title: "\(p.symbol) \(Fmt.usd(p.usd))", detail: "Live price from NEAR Intents", insert: "\(p.symbol) is \(Fmt.usd(p.usd))", buy: "buy $10 of \(p.symbol.lowercased())")
+        case .fx(let amount, let from, let to):
+            guard let c = try? await API().fx(amount: amount, from: from, to: to) else { return nil }
+            return Answer(ask: ask, title: Fmt.money(c.value, c.to), detail: "\(amount) \(c.from) at today's rate", insert: " = \(Fmt.money(c.value, c.to))", buy: nil)
+        }
+    }
+
+    /// Tap on a sum: add the answer to the message.
+    func insertInstant() {
+        guard let i = instant else { return }
+        insert(i.insert)
+        refreshContext()
+    }
+
+    /// Tap on a price or a conversion: put it in the message. A price replaces "$near".
+    func insertAnswer() {
+        guard let a = answer else { return }
+        if case .price(_, let typed) = a.ask { replaceTail(typed, with: a.insert) } else { insert(a.insert) }
+        refreshContext()
+    }
+
+    /// Buy on a price: "$near" becomes "buy $10 of near", which the bar then offers to run.
+    func buyAnswer() {
+        guard let a = answer, let command = a.buy, case .price(_, let typed) = a.ask else { return }
+        replaceTail(typed, with: command)
+        refreshContext()
+    }
+
+    /// Swap the last thing typed (plus any spaces after it) for something else.
+    private func replaceTail(_ tail: String, with new: String) {
+        var count = 0
+        var rest = Substring(typed)
+        while let last = rest.last, last.isWhitespace { rest = rest.dropLast(); count += 1 }
+        guard rest.lowercased().hasSuffix(tail.lowercased()) else { insert(" " + new); return }
+        count += tail.count
+        for _ in 0..<count { proxy()?.deleteBackward() }
+        typed.removeLast(min(count, typed.count))
+        insert(new)
+    }
+
+    /// Keep the list of real token symbols fresh (NEAR Intents' list, by way of the server).
+    func refreshTokens() {
+        guard hasFullAccess(), Tokens.stale else { return }
+        Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } }
     }
 
     // MARK: agents
@@ -123,6 +202,7 @@ final class KeyboardModel {
         guard hasFullAccess() else { notice = "Turn on Allow Full Access for AIRKEY so your agents can reach the server."; return }
         notice = nil
         result = nil
+        runningKind = source == "typed" ? intent?.kind : nil
         running = source
         Task {
             do {
