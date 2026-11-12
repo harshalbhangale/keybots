@@ -52,7 +52,7 @@ The old repository or internal code identifiers can remain unchanged temporarily
 
 - Background: deep ink black.
 - Primary text: warm bone white.
-- Accent: mint green inspired by NEAR.
+- Accent: lime (`#C6F25A`), the Kall Markets colour. (First built in mint green; changed on 12 Nov.)
 - Warning: amber.
 - Blocked: red.
 - Typography: modern, clean and confident.
@@ -189,7 +189,7 @@ The contract should be tested to prove that an agent cannot bypass its limits.
 
 AIRKEY should have three clear security outcomes.
 
-**ALLOW — Mint green**
+**ALLOW — Lime**
 
 The action is within the user's permissions.
 
@@ -448,7 +448,7 @@ Type:
 
 Show the Payment Agent interpreting the command, checking the leash and executing the payment.
 
-Display a mint success chip.
+Display a lime success chip.
 
 **0:30–0:50 — Cross-chain swap**
 
