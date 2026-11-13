@@ -14,6 +14,7 @@
 		0A0A135B774164E76FF284E1 /* BoundKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2880647D989BB0F3AA77435 /* BoundKeys.swift */; };
 		0B1D340680832271168DACA0 /* KeyboardThemes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3439DE21FF3E7715A1813D8 /* KeyboardThemes.swift */; };
 		0CA42FB6B22E9D40D5037805 /* Exo2-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5CE5F1BC992FF0DE6714E081 /* Exo2-Regular.ttf */; };
+		0E05EBF97E529CF07BD13CF4 /* AIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF0F14B13F988E165A29BB5 /* AIClient.swift */; };
 		0E2BA2708B079F16054185D0 /* Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E0846BE869104E6DBEA22D /* Decoder.swift */; };
 		101FBECEE63E631AA97C2EC6 /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
 		1169BD52B05DFE6411217DD8 /* GlideTyping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D74A09E78DC5274B51D938F /* GlideTyping.swift */; };
@@ -34,6 +35,7 @@
 		2BC32C817204A010C25A54CD /* AirKeyKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2D5B67D21B7D63048C979ACB /* Limelight-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CEFA8E56206BB79F68313692 /* Limelight-Regular.ttf */; };
 		2E256D8868B5317D3D70F172 /* KeyboardTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */; };
+		2E38D0DF32F921A320E8E687 /* AIList.swift in Sources */ = {isa = PBXBuildFile; fileRef = F519F5FF46CB3E32536C01EA /* AIList.swift */; };
 		32921FDEFAFE7478E0F6938A /* theme-wood-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 99149A26179B099AF88712C1 /* theme-wood-return.caf */; };
 		344ABDADCE51621C04B89A90 /* NoteEditSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C7502D7F5089AD801CCF86 /* NoteEditSurface.swift */; };
 		35F84B06F86CDEA9FCE87903 /* TradeSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F4D4492EC93316D0F4C5F4 /* TradeSurface.swift */; };
@@ -118,6 +120,7 @@
 		9718C0F36021A99174CFAFEB /* EmoticonCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1724C4A419232FE86A5CEA63 /* EmoticonCell.swift */; };
 		9947C11236F0D6EDFC1C3C8A /* AirKeyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2848176EB456D3E16DCE29B2 /* AirKeyApp.swift */; };
 		997DC9E25DB11FDE1E595D6A /* ChakraPetch-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 30457663FB17983A5CBF0343 /* ChakraPetch-Medium.ttf */; };
+		9A4011E27B0095FC2DA655A8 /* AISuggest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07858447593B7AAA8C336898 /* AISuggest.swift */; };
 		9BD375DE10165485127B0DFD /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F281D96CC601377703F9456D /* NotesStore.swift */; };
 		9C32A42F573E50D14DE86AA2 /* RatesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903AACEC21543E477BA83F58 /* RatesStore.swift */; };
 		9EB29FD3F340E36ED2ED720E /* KeyboardToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DFB34C7C6FBB8745B1F985 /* KeyboardToast.swift */; };
@@ -203,6 +206,7 @@
 /* Begin PBXFileReference section */
 		013677326CEDB2AF96662698 /* WalletSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletSurface.swift; sourceTree = "<group>"; };
 		03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSerifDisplay-Regular.ttf"; sourceTree = "<group>"; };
+		07858447593B7AAA8C336898 /* AISuggest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISuggest.swift; sourceTree = "<group>"; };
 		09D40447CC983DE204796FE7 /* Jost-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jost-OFL.txt"; sourceTree = "<group>"; };
 		09EC95D4D892D48A66E2F9FE /* EmojiData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiData.swift; sourceTree = "<group>"; };
 		0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuShell.swift; sourceTree = "<group>"; };
@@ -278,6 +282,7 @@
 		8703A48BC2C8CEDF93C4FD99 /* IMFellEnglish-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IMFellEnglish-OFL.txt"; sourceTree = "<group>"; };
 		877ECDEFFC7A4286B5B50EFA /* Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toolbar.swift; sourceTree = "<group>"; };
 		8879561B2F59D60F62F0A50A /* Limelight-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Limelight-OFL.txt"; sourceTree = "<group>"; };
+		8CF0F14B13F988E165A29BB5 /* AIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIClient.swift; sourceTree = "<group>"; };
 		8DAE64AFDBCDC87016FCA5FF /* Prata-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Prata-OFL.txt"; sourceTree = "<group>"; };
 		903AACEC21543E477BA83F58 /* RatesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatesStore.swift; sourceTree = "<group>"; };
 		923C5EFFF20EF449F93E8B1A /* KeyFaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyFaces.swift; sourceTree = "<group>"; };
@@ -356,6 +361,7 @@
 		F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kit.swift; sourceTree = "<group>"; };
 		F450FC9D20542665FEA11A43 /* theme-wood-letter.caf */ = {isa = PBXFileReference; path = "theme-wood-letter.caf"; sourceTree = "<group>"; };
 		F4E37A35D60CB1639593332E /* MemoryLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryLogger.swift; sourceTree = "<group>"; };
+		F519F5FF46CB3E32536C01EA /* AIList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIList.swift; sourceTree = "<group>"; };
 		F55EA3185F3C9A7AB599371C /* GlideTrail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlideTrail.swift; sourceTree = "<group>"; };
 		F55F915837EB735292FB7E43 /* Marcellus-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Marcellus-Regular.ttf"; sourceTree = "<group>"; };
 		F76815909587B9263F41E788 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -529,6 +535,9 @@
 			isa = PBXGroup;
 			children = (
 				CF6F4A59810137237EEEEADB /* AIBar.swift */,
+				8CF0F14B13F988E165A29BB5 /* AIClient.swift */,
+				F519F5FF46CB3E32536C01EA /* AIList.swift */,
+				07858447593B7AAA8C336898 /* AISuggest.swift */,
 				9D9EE2E3DD16DE1879EB242F /* CallsSurface.swift */,
 				96F3CA247BD59F30C6A56517 /* ClipboardPanel.swift */,
 				A225E599C4173FF39DE0DBD6 /* ControlScrollView.swift */,
@@ -866,6 +875,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				66D0C53BDFF1AA00A431871E /* AIBar.swift in Sources */,
+				0E05EBF97E529CF07BD13CF4 /* AIClient.swift in Sources */,
+				2E38D0DF32F921A320E8E687 /* AIList.swift in Sources */,
+				9A4011E27B0095FC2DA655A8 /* AISuggest.swift in Sources */,
 				4E7B527414E0A3454AFFECFC /* API.swift in Sources */,
 				A4A0B702C7D8673160AE630E /* AccentPopup.swift in Sources */,
 				93CD9FF5B5C6F85C1F49BF94 /* AgentModel.swift in Sources */,

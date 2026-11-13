@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
+import { aiRoutes, type AiRouteDeps } from "./ai-routes.js"; // GLYF AI HOOK
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
@@ -8,7 +9,7 @@ import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore; /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */ poolReturn?: PoolReturn };
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore; /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */ poolReturn?: PoolReturn } & AiRouteDeps;
 
 export function buildApp(deps: Deps) {
   // The calls book (calls.jsonl in the data dir when index.ts gives one; in memory otherwise).
@@ -271,6 +272,9 @@ export function buildApp(deps: Deps) {
       return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
   });
+
+  // GLYF AI HOOK: streamed act, ask, translate, suggest, search, glyfs. See ai-routes.ts.
+  aiRoutes(app, deps);
 
   return app;
 }

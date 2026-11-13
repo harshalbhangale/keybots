@@ -86,6 +86,12 @@ final class KeyboardViewController: UIInputViewController {
     /// Hold space: AI on what you wrote (rewrite, reply, translate, tone,
     /// or ask). Built when it opens and let go when it closes.
     private var aiBar: AIBar?
+    // GLYF AI HOOK: the smart chip's AI suggestion (Surfaces/AISuggest.swift).
+    private lazy var aiSuggest: AISuggest = {
+        let s = AISuggest()
+        s.onReady = { [weak self] in self?.updateCandidates() }
+        return s
+    }()
     private var noteEdit: NoteEditSurface?
     /// Trade panel hook: the swap screen, and what it opens on.
     private var trade: TradeSurface?
@@ -1456,6 +1462,8 @@ final class KeyboardViewController: UIInputViewController {
             Perf.reportHostReads() // end of the cycle: the whole keystroke's crossings
         }
         lastSeenField = fieldSignature
+        // GLYF AI HOOK: live translate follows what is typed.
+        if surface == .ai { aiBar?.draftChanged(beforeContext ?? "") }
         noteEmojiRuns(beforeContext ?? "")
         let tCh = Perf.mark()
         let chipOwns = updateSmartChip()
@@ -1463,6 +1471,13 @@ final class KeyboardViewController: UIInputViewController {
         // AIRKEY's agents read the whole field: a command, a price, a sum.
         refreshAgent()
         if chipOwns { return }            // one chip owns the strip
+        // GLYF AI HOOK: one AI action for what's typed, only when no chip and
+        // no money strip has anything (money always wins).
+        if let tip = aiSuggest.chip(for: agentFieldText, allowed: surface == .none && hasFullAccess
+                                    && !isSecureField && !agent.isShowing && !smartFound) {
+            toolbar.showSmart(.action(label: tip.label))
+            return
+        }
         let policy = typingPolicy
         guard SettingsStore.current.candidates, policy.contains(.suggestions), surface == .none else {
             toolbar.showSuggestions([])
@@ -2120,11 +2135,13 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     /// The AI bar on the text before the cursor: our own copy, which reaches
     /// past the sentence iOS shows a keyboard. Never in a password field.
-    private func openAI() {
+    private func openAI(run action: String? = nil) {
         guard !isSecureField, surface == .none else { return }
         let before = String((beforeContext ?? "").suffix(AIBar.maxSource))
         setSurface(.ai)
-        aiBar?.present(before: before, hasFullAccess: hasFullAccess)
+        // GLYF AI HOOK: a fresh copy gets its own actions; a tapped suggestion runs at once.
+        aiBar?.present(before: before, hasCopy: hasFullAccess && ClipContext.isFresh(),
+                       hasFullAccess: hasFullAccess, run: action)
         applySurfaceLayout(animated: true)
     }
 
@@ -2347,6 +2364,27 @@ extension KeyboardViewController: AIBarDelegate {
         UIPasteboard.general.string = text
         remember(copied: text)
         if let aiBar { KeyboardToast.show(in: aiBar, text: "Copied") }
+    }
+
+    // GLYF AI HOOK: live translate swaps the draft and stays open.
+    func aiBarSwap(source: String, with text: String) {
+        let before = beforeContext ?? ""
+        if !source.isEmpty, before.hasSuffix(source) { hostDelete(source.count) }
+        hostInsert(text)
+        lastCorrection = nil
+        scheduleCandidates()
+    }
+
+    // GLYF AI HOOK: the copy, read when a Copied tile is tapped.
+    func aiBarReadCopied() -> String? {
+        guard hasFullAccess else { return nil }
+        return UIPasteboard.general.string
+    }
+
+    // GLYF AI HOOK: copied money text goes to AIRKEY's own check, never to an AI action.
+    func aiBarCheckCopied() {
+        setSurface(.none)
+        agent.runPasted()
     }
 
     private func aiWrote() {
@@ -2623,6 +2661,8 @@ extension KeyboardViewController: ToolbarDelegate {
     /// The ✕ on a chip. A copy is marked done and never offered again (it is
     /// still in the clipboard panel); anything else rests for a while.
     func toolbarSmartDismissed() {
+        // GLYF AI HOOK
+        if case .action(let label)? = toolbar.smartChip { aiSuggest.dismissed(label) }
         if let chip = toolbar.smartChip {
             stripPolicy.dismissed(Self.policyKind(chip), id: Self.policyID(chip),
                                   now: Date().timeIntervalSince1970)
@@ -2644,8 +2684,10 @@ extension KeyboardViewController: ToolbarDelegate {
         case .details, .convert:
             // Its parts are the actions (toolbarSmartChoiceTapped).
             return
-        case .action:
+        case .action(let label):
             toolbar.showSmart(nil)
+            // GLYF AI HOOK: the AI suggestion runs in the AI bar.
+            if let tip = aiSuggest.take(label) { openAI(run: tip.action) }
             return
         case .paste(let text):
             // History's copy types straight out; the placeholder means we do
