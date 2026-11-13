@@ -197,3 +197,22 @@ extension ISO8601DateFormatter {
         return f
     }()
 }
+
+/// What the keyboard's AI bar got back (POST /v1/act): only the text, and
+/// which AI answered. `provider` is "near-ai-cloud" or "openai"; `signature`
+/// is "verified", "mismatch" or "unavailable" (only NEAR AI Cloud signs).
+struct ActResult: Decodable, Sendable {
+    let text: String
+    let provider: String
+    let model: String
+    let signature: String
+
+    /// Who answered, in the words the keyboard shows.
+    var providerName: String {
+        switch provider {
+        case "near-ai-cloud": "NEAR AI"
+        case "openai": "OpenAI"
+        default: provider
+        }
+    }
+}

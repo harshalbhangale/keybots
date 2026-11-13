@@ -75,6 +75,15 @@ struct API {
         try await post("/v1/owner/submit", ["tx": tx, "signature": signature])
     }
 
+    /// The keyboard's AI bar: "rewrite", "reply", "translate", "tone" or
+    /// "ask" on `text`. Only the answer comes back; nothing is put anywhere.
+    func act(text: String, action: String, tone: String? = nil, language: String? = nil) async throws -> ActResult {
+        var body: [String: any Sendable] = ["text": text, "action": action]
+        if let tone { body["tone"] = tone }
+        if let language { body["language"] = language }
+        return try await post("/v1/act", body)
+    }
+
     private func request(_ path: String) throws -> URLRequest {
         guard let url = URL(string: base.trimmingCharacters(in: .whitespaces) + path) else {
             throw APIError(message: "The server address in Settings isn't a URL.")

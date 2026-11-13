@@ -43,10 +43,6 @@ final class KeyView: UIControl {
     private var legendExtras: [LegendExtra] = []
     private var foilView: GradientView?
     let tintLayer = CALayer()          // ripple overlay, opacity 0 at rest
-    /// AIRKEY's lime side tab, on the P key only: the brand, as on the logo.
-    /// The key types a p and nothing else.
-    private let brandTab = CALayer()
-    private var hasBrandTab: Bool { spec.char == "p" && !spec.pad }
     private var chargeRing: CAShapeLayer?
 
     var isBound = false { didSet { updateBinding() } }
@@ -105,10 +101,6 @@ final class KeyView: UIControl {
         accentDot.isHidden = true
         layer.addSublayer(accentDot)
 
-        brandTab.backgroundColor = Glass.accentPrimary.cgColor
-        brandTab.isHidden = !hasBrandTab
-        layer.addSublayer(brandTab)
-
         updateFace()
         updateFill(pressed: false)
 
@@ -151,11 +143,6 @@ final class KeyView: UIControl {
         tintLayer.frame = bounds
         accentDot.frame = CGRect(x: bounds.width - 10.5, y: 5.5, width: 5, height: 5)
         accentDot.cornerRadius = 2.5
-        if hasBrandTab {
-            let h = min(16, bounds.height * 0.38)
-            brandTab.frame = CGRect(x: bounds.width - 6, y: (bounds.height - h) / 2, width: 3, height: h)
-            brandTab.cornerRadius = 1.5
-        }
         layer.shadowPath = UIBezierPath(
             roundedRect: bounds, cornerRadius: Glass.radiusKey).cgPath
     }
@@ -355,7 +342,6 @@ final class KeyView: UIControl {
             self.foilView?.alpha = alpha
         }
         accentDot.opacity = Float(alpha)
-        brandTab.opacity = Float(alpha)
     }
 
     func setShiftState(_ state: ShiftState) {
@@ -400,20 +386,8 @@ final class KeyView: UIControl {
             textureLayer.isHidden = true
             return
         }
-        if isBound && !pressed && Glass.keyTheme == "glow" {
-            // Glow theme: faint wash + accent UNDER-GLOW (Acti's M-key
-            // move). Never an outline ring — borders were the noise.
-            backgroundColor = Glass.fillKeyBound
-            layer.borderWidth = Glass.hairlineWidth
-            layer.borderColor = Glass.strokeHairline.cgColor
-            layer.shadowColor = Glass.accentPrimary.cgColor
-            layer.shadowOpacity = 0.38
-            layer.shadowRadius = 5
-            layer.shadowOffset = CGSize(width: 0, height: 2.5)
-            return
-        }
-        // Site (default), glass and classic: uniform keys, the DOT alone marks
-        // bindings — simple like Apple, just with purple dots. The Gboard
+        // Every key style: uniform keys, the small lime DOT alone marks a
+        // bound letter (Glyf Keys), in the glow theme too. The Gboard
         // "borders" toggle firms the outline; NEVER an accent border. The site
         // look draws no outline at all, only the hard bottom edge.
         // A theme with a border of its own always draws it, inside the

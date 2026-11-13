@@ -3,29 +3,29 @@
 One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026, 23:59 UTC.
 
 ## P0: the demo path (each step proven on chain, script in docs/DEMO.md)
-- [ ] Typed "pay harshal 0.2" is paid
-- [ ] A pasted scam is blocked
-- [ ] An unknown receiver gets Approve, then Face ID, then paid
-- [ ] "swap 1 near to usdc" goes through Rhea on testnet
-- [ ] A `$near` price chip
-- [ ] Share puts the receipt in the chat
-- [ ] docs/DEMO.md: the click-by-click script with tx links
+- [x] Typed "pay harshal 0.2" is paid ([8yfavh6V…](https://testnet.nearblocks.io/txns/8yfavh6Ve4Sbyq55XxHjT3ARiU7MGDwVyFpyHoWaviek))
+- [x] A pasted scam is blocked ([HkM96rGV…](https://testnet.nearblocks.io/txns/HkM96rGVBx51xEJyDxmdwsRVhE29W6XFtRZ7zZDEEHN4))
+- [x] An unknown receiver gets Approve, then Face ID, then paid ([34yxQfVF…](https://testnet.nearblocks.io/txns/34yxQfVFKN9gytQoNYy74wChike3iMN3BdT63ejd6noJ))
+- [x] "swap 1 near to usdc" goes through Rhea on testnet ([4gMJo7Aw…](https://testnet.nearblocks.io/txns/4gMJo7Awi9jyb3iVo3981gJJt5Buy5A1jUTyrf8VZ9MS))
+- [x] A `$near` price chip
+- [x] Share puts the receipt in the chat
+- [x] docs/DEMO.md: the click-by-click script with tx links
 
 ## Keyboard: typing and feel
 - [x] Glyf's keyboard core moved into AIRKEY: keys, layouts, accent popups, delete repeat
 - [x] Glyf's typing engine: autocorrect, 3 suggestions, next-word prediction, learning
-- [~] Glide (swipe) typing with a trail (ported, not checked in Messages yet)
-- [~] Space-bar cursor glide (ported, not checked yet)
+- [x] Glide (swipe) typing with a trail, checked in Messages; token tickers (usdc, usdt…) glide too
+- [x] Space-bar cursor: slide on space moves the cursor (checked in Messages)
 - [x] Toolbar strip: the mark and three tools; the rest in the menu
-- [~] Clipboard history panel and paste chip (ported, not checked yet)
-- [~] Emoji board, emoji next to words (ported, not checked yet)
-- [~] Themes: glass keys, light and dark from the chat app (light checked, dark not yet)
+- [x] Clipboard panel: All, Text, Link, Image; keeps every copy only if you turn that on
+- [x] Emoji board with search, categories and kaomoji
+- [x] Themes: light and dark follow the chat app (both checked)
 - [x] Autocorrect never touches names, NEAR accounts, token symbols, $tickers or numbers
 - [x] After "pay" or "to", suggest contacts
 - [x] One backspace undoes an autocorrection and learns the word
 - [x] Space on the number layer goes back to letters
 - [x] Haptics on every key like Kall: letter, space, delete, shift, layer, trade, success, error
-- [ ] Types smoothly in Messages, light and dark, checked end to end
+- [x] Types smoothly in Messages, light and dark: taps, glide, cursor, emoji, clipboard
 
 ## Keyboard: money
 - [x] Read "pay harshal 0.2" and show a chip
@@ -35,6 +35,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Price chips: `$near` shows the live price, with Buy
 - [x] Currency conversion, sums and bill splits on the phone
 - [x] Vault: your NEAR account and saved addresses in one tap; keys and phrases refused
+- [x] Check copied needs Settings › Apps › AIRKEY › Paste from Other Apps › Allow (a keyboard can't show the paste prompt); the keyboard says so
 - [x] Swaps in dollars, in the keyboard and on the server ("swap $5 of near to usdc", "5$")
 - [x] Any wording works: an AI reads what the rules miss; the hold sends its exact command
 - [ ] A copied crypto call becomes a prefilled trade chip, with token check and leash caps (Kall)

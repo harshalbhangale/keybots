@@ -159,7 +159,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                     kv.returnEnabled = returnEnabled
                 }
                 // A digit pad is Apple's pad: no bound keys on it.
-                if let c = spec.char, !spec.pad { kv.isBound = s.bindings[c] != nil }
+                if let c = spec.char, !spec.pad { kv.isBound = KeyBindings.target(for: c) != nil }
                 kv.shifted = shiftActive
                 kv.setShiftState(shift)
                 addSubview(kv)
@@ -170,10 +170,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         setNeedsLayout()
     }
 
+    /// The app's Keys screen may have changed what a held letter runs.
     func refreshBindings() {
-        let s = SettingsStore.current
+        KeyBindings.reload()
         for kv in keys {
-            if let c = kv.spec.char, !kv.spec.pad { kv.isBound = s.bindings[c] != nil }
+            if let c = kv.spec.char, !kv.spec.pad { kv.isBound = KeyBindings.target(for: c) != nil }
         }
     }
 
@@ -364,9 +365,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 // (a note, a search, an event title) or a password: a hold
                 // there is a letter's accents, never a swap of the keyboard.
                 let bound = kv.spec.pad || delegate?.kbBindingsLive() == false
-                    ? nil : SettingsStore.current.bindings[c]
+                    ? nil : KeyBindings.target(for: c)
                 if bound != nil {
-                    kv.startChargeRing()
+                    // Held back a beat, so typing a bound letter never
+                    // flashes the ring: only a finger that stays sees it.
+                    let wait = 0.12
+                    kv.startChargeRing(duration: Glass.Ripple.holdThreshold - wait, delay: wait)
                 }
                 if bound != nil || !kv.spec.accents.isEmpty {
                     st.holdTimer = Timer.scheduledTimer(

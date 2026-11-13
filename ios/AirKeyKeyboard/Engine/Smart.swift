@@ -144,18 +144,26 @@ enum Smart {
                      indianGrouping: Bool = true,
                      region: String? = Locale.current.region?.identifier,
                      linkContext: String? = nil) -> Chip? {
+        // Shorthand being typed (";near", ";eth"): what the space turns it into.
+        if text.contains(";"), let s = Shorthand.preview(beforeContext: text, in: VaultStore.shared.load()) {
+            return .convert(s)
+        }
         // A link longer than the strip's view of the message: its trackers.
         if let context = linkContext, context.count > text.count, endsInLink(text), let c = cleanLink(in: context) {
             return .convert(c)
         }
-        let quick = quickAnswer(in: text, region: region)
-        if let c = calc(text, indianGrouping: indianGrouping) {
+        // A payment, a swap or a trade being written is the agents' strip
+        // (Hold to pay): no sum or conversion competes with it, and none
+        // shows first only to be covered when the strip reads the command.
+        let command = moneyCommand(text)
+        let quick = command ? nil : quickAnswer(in: text, region: region)
+        if !command, let c = calc(text, indianGrouping: indianGrouping) {
             // "scored 43/50" is a score, not a division: the answer that read
             // more of the message wins.
             if let q = quick, q.source.count > c.expression.count + 2, q.source.hasSuffix(c.expression) { return .convert(q) }
             return .calc(value: c.value, hasEquals: c.hasEquals, expression: c.expression)
         }
-        if let m = money(in: text, rates: rates) {
+        if !command, let m = money(in: text, rates: rates) {
             // "18% gst on ₹1,000", "3 for $10": the bill says more than the
             // amount it ends on.
             if let q = quick, q.source.count > moneyTailLength(text) { return .convert(q) }
@@ -194,6 +202,21 @@ enum Smart {
             return .paste(text: paste)
         }
         return nil
+    }
+
+    /// Words only a payment, a swap or a trade starts with (AgentModel asks
+    /// the AIRKEY server about the loose ones). "tip", "send" and "give"
+    /// count only once the phone reads a payment: "tip 15% of 80" is a sum.
+    static let moneyVerbs: Set<String> = ["pay", "transfer", "swap", "buy", "sell"]
+
+    /// The line being written is a money command: one the phone reads
+    /// ("pay harshal 0.2"), or one that starts like one and has an amount
+    /// in it ("swap $5 of…", "buy 20 usd"), which the server may read.
+    static func moneyCommand(_ text: String) -> Bool {
+        guard let line = text.split(whereSeparator: \.isNewline).last?.trimmingCharacters(in: .whitespaces),
+              line.contains(where: \.isNumber) else { return false }
+        let first = line.prefix { !$0.isWhitespace }.lowercased()
+        return moneyVerbs.contains(first) || Intent.read(line) != nil
     }
 
     // MARK: Calculator
@@ -1603,6 +1626,25 @@ extension Smart {
         let result = "\(clock) \(zoneLabel(here, at: when))"
         return Conversions(source: ns.substring(with: m.range).trimmingCharacters(in: .whitespaces), results: [result])
     }
+
+    /// A time from one zone in another, both named: "3pm ist in pst",
+    /// "9:30 am est to ist" → 1:30 AM PST. The same work as zoneTimes, with
+    /// the second zone standing where the phone's own would.
+    static func zoneToZone(in text: String, now: Date = Date(),
+                           region: String? = Locale.current.region?.identifier) -> Conversions? {
+        guard text.contains(where: \.isNumber),
+              let g = firstMatch(#"(?<![\d:.])(\d{1,2}(?::[0-5]\d)?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*[a-z]{2,4})\s+(?:in|to|into)\s+([a-z]{2,4})\s*\??$"#, in: text),
+              let time = g[1], let target = g[2]?.lowercased() else { return nil }
+        let r = region?.uppercased()
+        var id = zoneNames[target] ?? ""
+        if target == "cst", r == "CN" { id = "Asia/Shanghai" }
+        if target == "ist", r == "IE" { id = "Europe/Dublin" }
+        if target == "ist", r == "IL" { id = "Asia/Jerusalem" }
+        guard let there = TimeZone(identifier: id),
+              var answer = zoneTimes(in: time, now: now, here: there, region: region) else { return nil }
+        answer.source = (g[0] ?? time).trimmingCharacters(in: .whitespaces)
+        return answer
+    }
 }
 
 // MARK: - Bills, arrivals and dates, worked out as they are typed
@@ -1654,6 +1696,7 @@ extension Smart {
             { conversions(in: text, region: region) },
             { cooking(in: text, region: region) },
             { fuel(in: text, region: region) },
+            { zoneToZone(in: text, now: now, region: region) },
             { zoneTimes(in: text, now: now, here: here, region: region) },
             { cityTime(in: text, now: now, here: here, region: region) },
             { sunAnswer(in: text, now: now, here: here) },
