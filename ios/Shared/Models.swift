@@ -36,7 +36,7 @@ struct LeashState: Decodable {
     /// Account → role name, for agents whose account name says nothing (OutLayer's hex accounts).
     var roleNames: [String: String] {
         guard let active else { return [:] }
-        return [active.trusted: "Payment Agent", active.untrusted: "Inbox Agent", active.trade: "Trading Agent"]
+        return [active.trusted: Plain.agent(role: "pay"), active.untrusted: Plain.agent(role: "inbox"), active.trade: Plain.trades]
     }
 
     struct Holding: Decodable, Identifiable {
@@ -89,6 +89,8 @@ struct Receipt: Decodable, Identifiable {
     let order: OrderRef?
     let outcome: String
     let message: String
+    /// The server's plain line for it. Missing on older servers and older receipts: Plain works it out.
+    let summary: String?
     let tx: Tx?
 
     struct Input: Decodable { let text: String; let source: String }
@@ -118,7 +120,12 @@ struct Receipt: Decodable, Identifiable {
     }
     struct AgentRef: Decodable { let account: String; let tier: String }
     struct ReceiverRef: Decodable { let asked: String; let account: String; let via: String }
-    struct Checks: Decodable { let verdict: String; let reasons: [String] }
+    struct Checks: Decodable {
+        let verdict: String
+        let reasons: [String]
+        let facts: Facts?
+        struct Facts: Decodable { let isContract: Bool?; let paidBefore: Bool?; let ageDays: Int? }
+    }
     struct Decision: Decodable { let status: String; let rule: String?; let reason: String; let pending_id: Int? }
     struct Tx: Decodable { let hash: String; let url: String }
     struct Swap: Decodable {
