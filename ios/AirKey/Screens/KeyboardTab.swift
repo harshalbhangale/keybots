@@ -23,14 +23,10 @@ struct KeyboardTab: View {
             }
             Card(spacing: 14) {
                 CardTitle(text: "IN ANY CHAT")
-                feature("hand.tap.fill", "Hold to pay or swap", "Type “pay harshal 0.2” or “swap 0.1 near to usdc”. A tap does nothing; only a hold runs it, and the leash decides.")
-                feature("text.badge.checkmark", "Typing that knows money", "Autocorrect and suggestions that never touch names, NEAR accounts, token symbols or amounts.")
-                feature("wallet.bifold", "Vault", "Your NEAR account and saved addresses, one tap into the message.")
-                feature("doc.on.clipboard", "Check copied", "Paste in someone else's message: the Inbox Agent reads it, and can only pay people you allowed.")
-                feature("chart.line.uptrend.xyaxis", "Prices and sums", "Type $near for a live price, “50 usd in inr”, or “dinner 1200 split 3”.")
+                feature("hand.tap.fill", "Hold to pay or swap", "“pay harshal 0.2”, “swap $5 of near to usdc”")
+                feature("text.badge.checkmark", "Typing that knows money", "Never changes names, accounts or amounts")
+                feature("wallet.bifold", "Vault", "Your NEAR account in one tap")
             }
-            Button(action: openSettings) { Text("SERVER AND DEVICE KEY") }
-                .buttonStyle(.bigSecondary)
         }
         .toolbarVisibility(.hidden, for: .navigationBar)
     }
