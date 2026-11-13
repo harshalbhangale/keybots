@@ -7,6 +7,7 @@ import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
 import type { IntentsClient } from "./intents.js";
 import type { OrderStore } from "./orders.js";
+import { amountOut, fromUnits, minOut, swapMsg, type RheaClient } from "./rhea.js";
 import { parse, resolveReceiver, toYocto, type Action } from "./parse.js";
 import type { Receipt, ReceiptStore } from "./receipts.js";
 
@@ -17,6 +18,7 @@ export interface Deps {
   readAi?: typeof readWithNearAi;
   intents?: IntentsClient;
   orders?: OrderStore;
+  rhea?: RheaClient;
 }
 
 export async function runCommand(deps: Deps, text: string, source: "typed" | "pasted"): Promise<Receipt> {
@@ -166,11 +168,76 @@ async function swap(
       }
     }
   }
+  // NEAR into a token Rhea has a pool for: swap it for real, from the leash.
+  const route = from.token!.assetId.endsWith("wrap.near") ? deps.rhea?.route(action.to) : undefined;
+  if (route && deps.rhea?.network) {
+    return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done);
+  }
   return done({
     outcome: "quoted",
     message: `Quote: ${action.amount} ${action.from} → ${tidy(quote.amountOutFormatted)} ${action.to}${quote.amountOutUsd ? ` (~$${Number(quote.amountOutUsd).toFixed(2)})` : ""} on NEAR Intents. Nothing sent yet.`,
     agent: { account: agent, tier: "trusted" },
     swap: { from, to, quote, leash },
+  });
+}
+
+/** The leash wraps the NEAR and Rhea swaps it in one pool; the token comes back to the leash. */
+async function swapOnRhea(
+  deps: Deps,
+  action: Extract<Action, { kind: "swap" }>,
+  agent: string,
+  route: NonNullable<ReturnType<RheaClient["route"]>>,
+  swap: NonNullable<Receipt["swap"]>,
+  done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+): Promise<Receipt> {
+  const net = deps.rhea!.network!;
+  const label = `${action.amount} NEAR → ${route.symbol}`;
+  let amountIn: string;
+  try {
+    amountIn = toYocto(action.amount);
+  } catch {
+    return done({ outcome: "not-sent", message: `${action.amount} isn't an amount I can swap.`, swap });
+  }
+  let expected: string;
+  try {
+    expected = await deps.rhea!.quote(route, amountIn);
+  } catch (e) {
+    return done({ outcome: "not-sent", message: `Rhea couldn't price ${label}: ${(e as Error).message}`, swap });
+  }
+  const { decision, txHash, events, logs } = await deps.chain.swap(agent, {
+    venue: net.exchange,
+    amount: amountIn,
+    wrap: net.wrap,
+    msg: swapMsg(net, route, amountIn, minOut(expected)),
+    memo: `swap ${label}`,
+  });
+  const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
+  const who = { account: agent, tier: "trusted" as const };
+  if (decision.status !== "paid") {
+    return done({ outcome: "blocked", message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
+  }
+  const failed = events.some((e) => (e as { event?: string }).event === "swap_failed");
+  const out = amountOut(logs, route.token);
+  const executed = { venue: "Rhea", exchange: net.exchange, amountIn: action.amount, amountOut: out ? fromUnits(out, route.decimals) : undefined, symbolOut: route.symbol, ok: !failed && !!out };
+  if (!executed.ok) {
+    return done({
+      outcome: "not-sent",
+      message: `Rhea didn't fill ${label}; the leash keeps the NEAR as wNEAR. Nothing was lost.`,
+      agent: who,
+      decision,
+      tx,
+      events,
+      swap: { ...swap, executed },
+    });
+  }
+  return done({
+    outcome: "swapped",
+    message: `Swapped ${action.amount} NEAR for ${executed.amountOut} ${route.symbol} on Rhea. It's in the leash.`,
+    agent: who,
+    decision,
+    tx,
+    events,
+    swap: { ...swap, executed },
   });
 }
 
