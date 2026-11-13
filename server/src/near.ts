@@ -1,6 +1,6 @@
-// Everything the server does on NEAR: read the leash, and sign `pay` as an agent.
-// The server holds only the agents' function-call keys (scoped to the leash's
-// pay/report). It never holds the owner's key.
+// Everything the server does on NEAR: read the leash, and sign `pay` or `swap`
+// as an agent. The server holds only the agents' function-call keys (scoped to
+// the leash). It never holds the owner's key.
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { Account, JsonRpcProvider } from "near-api-js";
@@ -45,6 +45,8 @@ export interface Chain {
   blockedReason(account: string): Promise<string | null>;
   facts(account: string): Promise<AccountFacts>;
   pay(agent: string, args: { receiver: string; amount: string; memo?: string; ask_owner?: boolean }): Promise<{ decision: Decision; txHash: string; events: unknown[] }>;
+  /** Ask the leash to swap NEAR at a venue (Rhea, or a NEAR Intents deposit address). `logs` has every log line, the venue's too. */
+  swap(agent: string, args: { venue: string; amount: string; wrap: string; msg?: string; memo?: string }): Promise<{ decision: Decision; txHash: string; events: unknown[]; logs: string[] }>;
   txUrl(hash: string): string;
 }
 
@@ -67,6 +69,21 @@ export function nearChain(cfg: Config): Chain {
     if (!signers.has(id)) signers.set(id, new Account(id, provider, readKey(cfg, id) as never));
     return signers.get(id)!;
   };
+
+  /** Call the leash as an agent; returns its decision, every log line and the airkey events among them. */
+  async function callLeash(agent: string, methodName: string, args: object, gas: bigint) {
+    const res = (await agentAccount(agent).callFunctionRaw({ contractId: cfg.leash, methodName, args, gas })) as {
+      transaction: { hash: string };
+      status: { SuccessValue?: string };
+      transaction_outcome: { outcome: { logs: string[] } };
+      receipts_outcome: { outcome: { logs: string[] } }[];
+    };
+    const v = res.status?.SuccessValue;
+    const decision = JSON.parse(Buffer.from(v ?? "", "base64").toString() || "null") as Decision;
+    const logs = [res.transaction_outcome, ...res.receipts_outcome].flatMap((o) => o.outcome.logs);
+    const events = logs.filter((l) => l.startsWith("EVENT_JSON:")).map((l) => JSON.parse(l.slice(11)));
+    return { decision, txHash: res.transaction.hash, events, logs };
+  }
 
   return {
     async state() {
@@ -115,23 +132,11 @@ export function nearChain(cfg: Config): Chain {
       return { exists, isContract, createdAtNs };
     },
     async pay(agent, args) {
-      const res = (await agentAccount(agent).callFunctionRaw({
-        contractId: cfg.leash,
-        methodName: "pay",
-        args,
-        gas: 50_000_000_000_000n,
-      })) as {
-        transaction: { hash: string };
-        status: { SuccessValue?: string };
-        transaction_outcome: { outcome: { logs: string[] } };
-        receipts_outcome: { outcome: { logs: string[] } }[];
-      };
-      const v = res.status?.SuccessValue;
-      const decision = JSON.parse(Buffer.from(v ?? "", "base64").toString() || "null") as Decision;
-      const logs = [res.transaction_outcome, ...res.receipts_outcome].flatMap((o) => o.outcome.logs);
-      const events = logs.filter((l) => l.startsWith("EVENT_JSON:")).map((l) => JSON.parse(l.slice(11)));
-      return { decision, txHash: res.transaction.hash, events };
+      const { decision, txHash, events } = await callLeash(agent, "pay", args, 50_000_000_000_000n);
+      return { decision, txHash, events };
     },
+    // A swap wraps NEAR, sends it on and waits for the venue: all the gas there is.
+    swap: (agent, args) => callLeash(agent, "swap", args, 300_000_000_000_000n),
     txUrl: (hash) => `${cfg.explorer}/txns/${hash}`,
   };
 }
