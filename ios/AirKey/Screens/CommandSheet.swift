@@ -41,8 +41,9 @@ struct CommandSheet: View {
                     ErrorBanner(text: error)
                 } else if trimmed.isEmpty {
                     suggestions
-                } else if let intent {
-                    preview(intent)
+                } else {
+                    preview
+                    action
                 }
             }
             .padding(.horizontal, AK.gutter)
@@ -58,37 +59,22 @@ struct CommandSheet: View {
     }
 
     private var field: some View {
-        HStack(alignment: .bottom, spacing: 10) {
-            TextField(
-                "",
-                text: $text,
-                prompt: Text(pasted ? "Paste the message you got" : "Pay harshal.near 0.2 NEAR for dinner").foregroundStyle(AK.faint),
-                axis: .vertical
-            )
-            .lineLimit(1...5)
-            .font(.body)
-            .foregroundStyle(AK.bone)
-            .focused($focused)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-            .submitLabel(.go)
-            .onSubmit(run)
-
-            Button(action: run) {
-                Group {
-                    if running { ProgressView().tint(AK.ink) } else { Image(systemName: "arrow.up").font(.system(size: 16, weight: .bold)) }
-                }
-                .foregroundStyle(AK.ink)
-                .frame(width: 34, height: 34)
-                .background(trimmed.isEmpty ? AK.raised : AK.accent, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(trimmed.isEmpty || running)
-            .accessibilityLabel("Run")
-        }
-        .padding(.leading, 16)
-        .padding(.trailing, 8)
-        .padding(.vertical, 8)
+        TextField(
+            "",
+            text: $text,
+            prompt: Text(pasted ? "Paste the message you got" : "Pay harshal.near 0.2 NEAR for dinner").foregroundStyle(AK.faint),
+            axis: .vertical
+        )
+        .lineLimit(1...5)
+        .font(.body)
+        .foregroundStyle(AK.bone)
+        .focused($focused)
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
+        .submitLabel(.done)
+        .onSubmit { focused = false }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 15)
         .glassEffect(.regular, in: .rect(cornerRadius: 24))
     }
 
@@ -123,22 +109,57 @@ struct CommandSheet: View {
     }
 
     /// What the words would do, before you send them.
-    private func preview(_ intent: Intent) -> some View {
+    @ViewBuilder private var preview: some View {
         HStack(spacing: 12) {
-            Image(systemName: intent.icon)
+            Image(systemName: intent?.icon ?? (pasted ? "tray" : "questionmark"))
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(AK.ink)
                 .frame(width: 28, height: 28)
-                .background(pasted ? AK.amber : AK.accent, in: Circle())
+                .background(pasted ? AK.amber : intent == nil ? AK.muted : AK.accent, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
-                Text(intent.title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
-                Text(pasted ? "The Inbox Agent will ask the leash" : (intent.detail ?? "The leash checks it before anything moves"))
-                    .font(.footnote).foregroundStyle(AK.muted)
+                Text(intent?.title ?? (pasted ? "Someone else's words" : "Not a payment or a trade"))
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
+                Text(note)
+                    .font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 4)
         .transition(.opacity)
+    }
+
+    private var note: String {
+        if pasted { return "The Inbox Agent reads it and asks the leash. It can only pay people on your allowlist." }
+        if let intent { return intent.detail ?? "The leash checks it before anything moves." }
+        return "Try “pay harshal 0.2 for dinner” or “buy $5 of near”."
+    }
+
+    /// Your own command that moves money takes a hold. Checking someone
+    /// else's message is a tap: the leash already treats it as untrusted.
+    @ViewBuilder private var action: some View {
+        if running {
+            HStack(spacing: 10) {
+                ProgressView().tint(AK.bone)
+                Text(pasted ? "Inbox Agent is checking it…" : intent?.kind == .swap ? "Trading Agent is getting a quote…" : "Asking the leash on NEAR…")
+                    .font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .glassEffect(.regular, in: .capsule)
+        } else if let intent, !pasted {
+            HoldToConfirm(label: intent.holdLabel, action: run)
+        } else {
+            Button(action: run) {
+                Text(pasted ? "Check it" : "Send anyway")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(AK.bone)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: .capsule)
+        }
     }
 
     private func run() {
