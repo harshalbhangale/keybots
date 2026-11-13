@@ -54,16 +54,35 @@ export async function readWithAi(
   cfg: AiConfig,
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ action: Action; evidence: AiEvidence }> {
-  const near = cfg.provider === "near-ai-cloud";
-  const body = JSON.stringify({
-    model: cfg.model,
-    messages: [
+  const { content, evidence } = await chatWithEvidence(
+    [
       { role: "system", content: SYSTEM },
       { role: "user", content: text.slice(0, 2000) },
     ],
-    temperature: 0,
-    stream: false,
-  });
+    cfg,
+    fetchImpl,
+  );
+  return { action: toAction(content), evidence };
+}
+
+export interface ChatMessage {
+  role: "system" | "user";
+  content: string;
+}
+
+/**
+ * One chat completion, and the evidence for it: who answered, with which
+ * model, and (NEAR AI Cloud only) whether its signature over the exact
+ * request and response bytes checks out.
+ */
+export async function chatWithEvidence(
+  messages: ChatMessage[],
+  cfg: AiConfig,
+  fetchImpl: typeof fetch = fetch,
+  temperature = 0,
+): Promise<{ content: string; evidence: AiEvidence }> {
+  const near = cfg.provider === "near-ai-cloud";
+  const body = JSON.stringify({ model: cfg.model, messages, temperature, stream: false });
   const res = await fetchImpl(`${cfg.base}/chat/completions`, {
     method: "POST",
     headers: {
@@ -89,7 +108,7 @@ export async function readWithAi(
   };
   // Only NEAR AI Cloud signs its answers; OpenAI's stay "unavailable".
   if (near && chatId) evidence.signature = await checkSignature(chatId, cfg, sha256(body), sha256(raw), fetchImpl);
-  return { action: toAction(content), evidence };
+  return { content, evidence };
 }
 
 async function checkSignature(
