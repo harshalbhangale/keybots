@@ -77,3 +77,56 @@ enum Protections {
         Settings.store.set(Array(words.suffix(500)), forKey: learnedKey)
     }
 }
+
+/// The paste guard: an address that lands in the message all at once (pasted
+/// or dropped in, not typed letter by letter) and isn't yours, in your vault
+/// or one of your contacts' gets a warning. Address poisoning slips in a
+/// lookalike that shares the first and last few characters with one you've
+/// used, so the warning shows both ends and asks for every character.
+enum PasteGuard {
+    private static let patterns: [NSRegularExpression] = [
+        // NEAR names (harshal.near, pay.airkey-harshal.testnet), not inside a link.
+        #"(?<![\w.@/-])(?:[a-z0-9_-]+\.)+(?:near|testnet)(?![\w.-])"#,
+        // NEAR implicit accounts.
+        #"(?<![\w/])[0-9a-f]{64}(?!\w)"#,
+        // EVM.
+        #"(?<![\w/])0x[a-fA-F0-9]{40}(?!\w)"#,
+        // Solana and other base58.
+        #"(?<![\w/])[1-9A-HJ-NP-Za-km-z]{32,44}(?!\w)"#,
+    ].compactMap { try? NSRegularExpression(pattern: $0) }
+
+    static func addresses(in text: String) -> [String] {
+        let range = NSRange(text.startIndex..., in: text)
+        var found: [String] = []
+        for p in patterns {
+            for m in p.matches(in: text, range: range) {
+                guard let r = Range(m.range, in: text) else { continue }
+                let a = String(text[r])
+                if !found.contains(a) { found.append(a) }
+            }
+        }
+        return found
+    }
+
+    /// Yours, your vault's and your contacts', lower case.
+    static var known: Set<String> {
+        var k = Set(Vault.all.map { $0.value.lowercased() })
+        k.formUnion(Contacts.accounts)
+        return k
+    }
+
+    /// The first address in `new` that wasn't in `old`, arrived in one go,
+    /// and isn't known. A typed address grows a letter at a time, so it never
+    /// shows up whole in one change.
+    static func stranger(old: String, new: String, known: Set<String>) -> String? {
+        let before = Set(addresses(in: old))
+        let grew = new.count - old.count
+        for a in addresses(in: new) where !before.contains(a) && !known.contains(a.lowercased()) {
+            if grew >= a.count - 2 { return a }
+        }
+        return nil
+    }
+
+    /// "0x1234…cdef": both ends, where lookalikes try to match.
+    static func short(_ a: String) -> String { a.count > 16 ? "\(a.prefix(6))…\(a.suffix(4))" : a }
+}

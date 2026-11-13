@@ -38,8 +38,8 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Check copied needs Settings › Apps › AIRKEY › Paste from Other Apps › Allow (a keyboard can't show the paste prompt); the keyboard says so
 - [x] Swaps in dollars, in the keyboard and on the server ("swap $5 of near to usdc", "5$")
 - [x] Any wording works: an AI reads what the rules miss; the hold sends its exact command
-- [ ] A copied crypto call becomes a prefilled trade chip, with token check and leash caps (Kall)
-- [ ] Paste guard: a pasted address that isn't a contact or in the vault gets a warning (Glyf)
+- [x] A copied crypto call becomes a hold chip: token checked on NEAR Intents, Intents quote, inside the Trading Agent's caps; testnet runs NEAR → USDC on Rhea and says so ([7XUq6MLF…](https://testnet.nearblocks.io/txns/7XUq6MLFCiPL15FynnKsyWp9KCx6Ki7pc2WsgTDqRUey))
+- [~] Paste guard: an address that arrives whole and isn't yours, your vault's or a contact's gets a warning (built, not checked on screen yet)
 - [ ] Uniswap-style swap panel in the keyboard, after Kall's trade tab (waiting on Harshal: keyboard or app only)
 - [ ] Balances the leash holds, shown in the keyboard
 
@@ -61,7 +61,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] OpenAI key saved on this Mac, outside git
 - [x] NEAR AI Cloud by default, OpenAI as the fallback when NEAR AI has no key or doesn't answer (Harshal, 13 Nov)
 - [ ] NEAR AI Cloud key set (coming from NEAR Builders)
-- [ ] Hold space for AI: rewrite, reply, translate, on NEAR AI Cloud
+- [~] Hold space for AI: rewrite, reply, translate, tone; Replace, Insert or Copy only on a tap (built; runs on OpenAI until a NEAR AI Cloud key is set; `AIRKEY_AI_FALLBACK=off` for the recording)
 - [ ] AI receipts: model, signature verified yes or no, "attestation not checked"
 - [ ] Attestation check of the TEE, not just the signature
 
@@ -69,7 +69,9 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Kall-style design: masthead, cards, big lime numbers, uppercase buttons, badges
 - [x] Wallet: NEAR and token balances, leash address, approvals, swap card with hold to swap, recent
 - [x] Activity: every command with its receipt and badge
-- [x] Leash: kill switch, agents and caps, allow and block lists, signed after Face ID
+- [x] Leash: kill switch, agents and caps, allow and block lists, signed after Face ID; kill switch proven: paused, keyboard pay blocked (R1), unpaused ([Hmk7LcjQ…](https://testnet.nearblocks.io/txns/Hmk7LcjQJsjaqnZL9WAgS4DmVxY6PrxhN121boMY8nuR))
+- [x] App shows only the three agents the server uses, by role
+- [x] `npm run demo-reset` puts testnet back to the demo's start; `npm run demo-runs -- 10` runs the whole script and logs it
 - [x] Keyboard tab: setup steps and what it does
 - [x] Hold to approve, then Face ID
 
@@ -78,7 +80,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Agents: Payment (trusted), Inbox (untrusted), Trading
 - [x] Receiver checks: exists, blocked, allowlisted, account age, paid before
 - [x] Receipts for every command; server logs which client sent it
-- [x] 82 server tests
+- [x] 117 server tests, 21 contract tests
 - [ ] Host the server (waiting on Harshal's choice)
 
 ## Ship

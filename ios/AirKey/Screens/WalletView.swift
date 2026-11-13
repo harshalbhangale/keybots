@@ -53,7 +53,7 @@ struct WalletView: View {
             HStack(spacing: 8) {
                 Circle().fill(model.mood).frame(width: 8, height: 8)
                 Text(s.paused ? "Everything is stopped. No agent can pay."
-                    : s.pending.isEmpty ? "\(s.agents.count) agents ready · \(model.paidToday) paid today"
+                    : s.pending.isEmpty ? "\(s.shownAgents.count) agents ready · \(model.paidToday) paid today"
                     : "\(s.pending.count) waiting for you")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(s.paused ? AK.red : AK.bone)

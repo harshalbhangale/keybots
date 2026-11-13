@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
+import { readCall, routeCall } from "./calls.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
@@ -25,7 +26,8 @@ export function buildApp(deps: Deps) {
   /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch, and the tokens it holds. */
   app.get("/v1/state", async () => {
     const [state, holdings] = await Promise.all([deps.chain.state(), deps.rhea ? deps.rhea.holdings(deps.cfg.leash).catch(() => []) : []]);
-    return { ...state, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings };
+    // `active`: the three agent accounts this server signs for (named, or OutLayer's when that's on).
+    return { ...state, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings, active: deps.cfg.agents };
   });
 
   /** What swapping `amount` NEAR into a token gets on Rhea right now, before you hold to swap. */
@@ -183,6 +185,18 @@ export function buildApp(deps: Deps) {
       if (e instanceof ActUnavailable) return reply.code(503).send({ error: e.message });
       return reply.code(502).send({ error: `The AI didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
+  });
+
+  /**
+   * A copied crypto call: what it says, and the one small trade the keyboard
+   * may offer for it. Runs nothing; the hold sends `route.command` as typed.
+   */
+  app.post<{ Body: { text?: unknown } }>("/v1/call", async (req, reply) => {
+    const text = typeof req.body?.text === "string" ? req.body.text.trim().slice(0, 2000) : "";
+    if (!text) return reply.code(400).send({ error: 'Send {"text": "..."}' });
+    const call = readCall(text);
+    const route = await routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea });
+    return { call, route };
   });
 
   return app;
