@@ -14,7 +14,7 @@ struct AgentCard: View {
             HStack(spacing: 12) {
                 KeycapMark(size: 34, tab: tierColor)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(Fmt.agentName(account: entry.account)).font(.title3.weight(.semibold)).foregroundStyle(AK.bone)
+                    Text(Fmt.agentName(account: entry.account)).font(.title3.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.7)
                     if let url = URL(string: "\(explorer)/address/\(entry.account)") {
                         Link(destination: url) {
                             Text(entry.account).font(AK.mono).foregroundStyle(AK.muted).lineLimit(1).truncationMode(.middle)
