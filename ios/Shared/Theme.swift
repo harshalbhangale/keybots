@@ -89,7 +89,7 @@ enum Signal {
 
     init(outcome: String) {
         switch outcome {
-        case "paid": self = .allow
+        case "paid", "swapped": self = .allow
         case "approval": self = .warn
         case "blocked": self = .block
         case "quoted": self = .quote

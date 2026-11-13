@@ -7,7 +7,8 @@
     "deploy": "node deploy-leash.mjs",
     "e2e": "node e2e-testnet.mjs",
     "add-device": "node add-device-key.mjs",
-    "add-trader": "node add-trading-agent.mjs"
+    "add-trader": "node add-trading-agent.mjs",
+    "setup-swaps": "node setup-swaps.mjs"
   },
   "dependencies": {
     "near-api-js": "^7.5.3"

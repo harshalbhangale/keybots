@@ -94,6 +94,8 @@ final class KeyboardModel {
             if !autocorrect() { lastFix = nil }
             insert(" ")
         }
+        // Like the system keyboard: after "0.1 " the next word is letters again.
+        if layer != .letters { layer = .letters }
         UIDevice.current.playInputClick()
         refreshContext()
     }

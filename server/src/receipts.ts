@@ -25,9 +25,11 @@ export interface Receipt {
     to: TokenCheck;
     quote?: SwapQuote;
     leash?: { agent: string; valueNear: string; perPaymentCap: string; leftToday: string; within: boolean };
+    /** A swap that really ran: where, what went in and what came back to the leash. */
+    executed?: { venue: string; exchange: string; amountIn: string; amountOut?: string; symbolOut: string; ok: boolean };
   };
   /** Shown to the person: allow (mint), warn (amber), block (red), quote, or info. */
-  outcome: "paid" | "approval" | "blocked" | "quoted" | "watching" | "not-sent";
+  outcome: "paid" | "swapped" | "approval" | "blocked" | "quoted" | "watching" | "not-sent";
   /** A price-triggered order this command created. */
   order?: { id: string; symbol: string; direction: "below" | "above"; price: number; priceThen: number; command: string };
   message: string;

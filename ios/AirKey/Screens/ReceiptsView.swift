@@ -17,6 +17,7 @@ struct ActivityView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
+            Masthead(eyebrow: "AIRKEY · EVERY COMMAND, ITS RECEIPT", title: "ACTIVITY")
             if model.receipts.isEmpty {
                 Panel {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
@@ -31,7 +32,7 @@ struct ActivityView: View {
                 }
             }
         }
-        .navigationTitle("Activity")
+        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 }
 
@@ -113,10 +114,16 @@ struct ReceiptDetail: View {
     }
 
     private func swap(_ sw: Receipt.Swap) -> some View {
-        Step(title: "Swap on NEAR Intents") {
+        Step(title: "Swap on \(sw.executed?.venue ?? "NEAR Intents")") {
             tokenRow("You pay", sw.from)
             tokenRow("You get", sw.to)
-            if let q = sw.quote {
+            if let x = sw.executed {
+                Hairline()
+                KeyValue(key: "Swapped on", value: x.venue)
+                KeyValue(key: "Paid", value: "\(x.amountIn) NEAR from the leash")
+                if let out = x.amountOut { KeyValue(key: "Got", value: "\(out) \(x.symbolOut), back in the leash", color: AK.accent) }
+                KeyValue(key: "Mode", value: x.ok ? "Done on chain" : "Not filled, nothing lost", color: x.ok ? AK.accent : AK.amber)
+            } else if let q = sw.quote {
                 Hairline()
                 KeyValue(key: "Send", value: "\(q.amountInFormatted) \(sw.from.asked.uppercased())" + usd(q.amountInUsd))
                 KeyValue(key: "Receive", value: "\(q.amountOutFormatted) \(sw.to.asked.uppercased())" + usd(q.amountOutUsd))

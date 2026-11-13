@@ -45,7 +45,7 @@ export function loadConfig(env = process.env): Config {
     agents: {
       trusted: env.AIRKEY_AGENT_TRUSTED ?? `pay.${owner}`,
       untrusted: env.AIRKEY_AGENT_UNTRUSTED ?? `inbox.${owner}`,
-      trade: env.AIRKEY_AGENT_TRADE ?? `trade.${owner}`,
+      trade: env.AIRKEY_AGENT_TRADE ?? `trader.${owner}`,
     },
     keysDir: env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"),
     dataDir: env.AIRKEY_DATA_DIR ?? join(ROOT, "server", "data"),

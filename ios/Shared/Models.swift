@@ -13,6 +13,15 @@ struct LeashState: Decodable {
     let pending: [Pending]
     let explorer: String
     let contacts: [String: String]
+    /// Tokens the leash holds (swaps land back in it). Missing on older servers.
+    let holdings: [Holding]?
+
+    struct Holding: Decodable, Identifiable {
+        let symbol: String
+        let token: String
+        let amount: String
+        var id: String { token }
+    }
 
     struct AgentEntry: Decodable, Identifiable {
         let account: String
@@ -94,6 +103,16 @@ struct Receipt: Decodable, Identifiable {
         let to: TokenCheck
         let quote: Quote?
         let leash: SwapLeash?
+        /// Set when the swap really ran: on Rhea, from the leash.
+        let executed: Executed?
+    }
+    struct Executed: Decodable {
+        let venue: String
+        let exchange: String
+        let amountIn: String
+        let amountOut: String?
+        let symbolOut: String
+        let ok: Bool
     }
     struct TokenCheck: Decodable {
         let asked: String
@@ -119,6 +138,16 @@ struct Receipt: Decodable, Identifiable {
 }
 
 struct ReceiptList: Decodable { let receipts: [Receipt] }
+
+/// What a NEAR swap would get on Rhea right now.
+struct SwapQuote: Decodable {
+    let venue: String
+    let pool: Int
+    let to: String
+    let amountIn: String
+    let amountOut: String
+    let minAmountOut: String
+}
 
 /// A trade waiting for a price: "sell 1 near" when NEAR is below $2.
 struct Order: Decodable, Identifiable {
