@@ -1,24 +1,6 @@
 import SwiftUI
 
-struct AgentsView: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        Screen(tint: model.mood) {
-            Text("Each agent is its own NEAR account. Its key can only ask the leash.")
-                .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
-            if let state = model.state {
-                ForEach(state.agents) { a in
-                    AgentCard(entry: a, paused: state.paused, explorer: state.explorer)
-                }
-            } else if model.loading {
-                ProgressView().tint(AK.muted).frame(maxWidth: .infinity).padding(.top, 40)
-            }
-        }
-        .navigationTitle("Agents")
-    }
-}
-
+/// One agent on the Leash tab: who it is, what it may spend, and what it spent today.
 struct AgentCard: View {
     let entry: LeashState.AgentEntry
     let paused: Bool

@@ -4,6 +4,7 @@ import { nearChain } from "./near.js";
 import { fileStore } from "./receipts.js";
 import { ownerActions } from "./owner.js";
 import { intentsClient } from "./intents.js";
+import { rheaClient } from "./rhea.js";
 import { ratesClient } from "./rates.js";
 import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
@@ -17,6 +18,7 @@ const deps = {
   intents: intentsClient({ jwt: process.env.ONECLICK_JWT, recipient: process.env.AIRKEY_INTENTS_ACCOUNT ?? cfg.owner }),
   rates: ratesClient(),
   orders: fileOrders(cfg.dataDir),
+  rhea: rheaClient({ network: cfg.network, rpc: cfg.rpc }),
 };
 const app = buildApp(deps);
 

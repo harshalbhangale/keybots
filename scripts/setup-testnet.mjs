@@ -57,7 +57,9 @@ await createSub(o, n.leash, near(4), actions.addFullAccessKey(leashKey.getPublic
 for (const id of [n.pay, n.inbox, n.trade]) {
   const kp = newKey();
   if (!(await exists(id))) saveKey(id, kp);
-  await createSub(o, id, near(0.3), actions.addFunctionCallAccessKey(kp.getPublicKey(), n.leash, ["pay", "report"], near(0.25)));
+  // Only the Trading Agent may ask the leash to swap.
+  const methods = id === n.trade ? ["pay", "report", "swap"] : ["pay", "report"];
+  await createSub(o, id, near(0.3), actions.addFunctionCallAccessKey(kp.getPublicKey(), n.leash, methods, near(0.25)));
 }
 
 // Demo receivers (keys kept so they can be inspected or cleaned up).

@@ -28,17 +28,17 @@ struct SectionTitle: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(text).font(.headline).foregroundStyle(AK.bone)
+            Text(text.uppercased()).font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.muted)
             Spacer()
             if let trailing {
                 if let action {
-                    Button(trailing, action: action).font(.subheadline.weight(.medium)).foregroundStyle(AK.accent)
+                    Button(trailing.uppercased(), action: action).font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.accent)
                 } else {
-                    Text(trailing).font(.subheadline).foregroundStyle(AK.muted)
+                    Text(trailing).font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(AK.muted)
                 }
             }
         }
-        .padding(.horizontal, 4)
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -176,22 +176,18 @@ struct ApprovalCard: View {
                 Button(role: .destructive) {
                     Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(pending.receiver)") }
                 } label: {
-                    Text(model.busy == "reject" ? "Rejecting…" : "Reject")
-                        .font(.body.weight(.semibold))
-                        .padding(.horizontal, 22)
-                        .frame(height: 50)
-                        .contentShape(Capsule())
+                    Text(model.busy == "reject" ? "…" : "REJECT")
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(AK.bone)
-                .glassEffect(.regular.interactive(), in: .capsule)
+                .buttonStyle(BigButtonStyle(primary: false, height: 50))
+                .frame(width: 104)
                 .disabled(working)
 
                 // Approving pays someone, so it takes a hold, then Face ID.
                 HoldToConfirm(
-                    label: model.busy == "approve" ? "Signing…" : "Hold to approve",
+                    label: model.busy == "approve" ? "SIGNING…" : "HOLD TO APPROVE",
                     icon: "faceid",
                     height: 50,
+                    font: .system(size: 14, weight: .heavy),
                     disabled: working
                 ) {
                     Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(pending.receiver)") }
@@ -203,43 +199,42 @@ struct ApprovalCard: View {
     }
 }
 
-/// One line of activity: what happened, what was said, when.
+/// One line of activity, as its own card: what happened, what was said, when, and a badge.
 struct ReceiptRow: View {
     let r: Receipt
 
     var body: some View {
+        let b = r.badge
         HStack(alignment: .top, spacing: 12) {
-            SignalBadge(signal: r.signal, size: 28)
+            SignalBadge(signal: r.signal, size: 30)
             VStack(alignment: .leading, spacing: 3) {
-                Text(r.message).font(.subheadline.weight(.medium)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
-                Text(r.input.source == "typed" ? "You typed “\(r.input.text)”" : "Pasted “\(r.input.text)”")
+                Text(r.message).font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
+                Text([r.input.source == "typed" ? "You typed “\(r.input.text)”" : "Pasted “\(r.input.text)”", Fmt.time(r.date)].joined(separator: " · "))
                     .font(.footnote)
                     .foregroundStyle(AK.muted)
                     .lineLimit(1)
             }
-            Spacer(minLength: 8)
-            Text(Fmt.time(r.date)).font(.footnote).foregroundStyle(AK.faint)
+            Spacer(minLength: 6)
+            Badge(text: b.text, color: b.color, filled: b.filled)
         }
-        .padding(.vertical, 12)
+        .padding(12)
+        .background(AK.graphite.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(AK.hairline))
         .contentShape(Rectangle())
     }
 }
 
-/// A list of receipts in one panel, with hairlines between rows.
+/// A list of receipts, one card each.
 struct ReceiptGroup: View {
     let receipts: [Receipt]
     let open: (Receipt) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(receipts.enumerated()), id: \.element.id) { i, r in
-                if i > 0 { Hairline().padding(.leading, 40) }
+        VStack(spacing: 8) {
+            ForEach(receipts) { r in
                 Button { open(r) } label: { ReceiptRow(r: r) }.buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 2)
-        .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
 

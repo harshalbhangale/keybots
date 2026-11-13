@@ -5,9 +5,12 @@
 // on Solana, never a look-alike listed somewhere else.
 //
 // Quotes are dry runs ("dry": true): 1Click prices the route and returns what
-// you'd get, but nothing is deposited, signed or sent. NEAR Intents has no
-// testnet, so executing a swap means mainnet and real funds; that waits for the
-// owner's explicit go-ahead.
+// you'd get, but nothing is deposited, signed or sent.
+//
+// A live quote ("dry": false) is a swap for real: 1Click answers with a deposit
+// address on NEAR, and sending the input there starts it. The output goes to
+// the recipient, a failed swap is refunded on NEAR, and `status` follows it.
+// NEAR Intents has no testnet, so a live swap is mainnet and real funds.
 
 export const ONE_CLICK = "https://1click.chaindefuser.com/v0";
 
@@ -40,6 +43,28 @@ export interface SwapQuote {
   minAmountOut?: string;
   timeEstimate?: number;
 }
+
+/** A quote that can be executed: send `amountIn` of the input to `depositAddress`. */
+export interface LiveQuote extends Omit<SwapQuote, "dry"> {
+  dry: false;
+  depositAddress: string;
+  depositMemo?: string;
+  deadline?: string;
+}
+
+export type SwapStatus = "KNOWN_DEPOSIT_TX" | "PENDING_DEPOSIT" | "INCOMPLETE_DEPOSIT" | "PROCESSING" | "SUCCESS" | "REFUNDED" | "FAILED";
+
+/** Where a live swap stands, from GET /v0/status. */
+export interface SwapProgress {
+  status: SwapStatus;
+  /** Finished one way or the other: nothing more will happen. */
+  done: boolean;
+  amountOutFormatted?: string;
+  /** Explorer links 1Click reports for the deposit and the payout. */
+  txs: string[];
+}
+
+const FINAL: SwapStatus[] = ["SUCCESS", "REFUNDED", "FAILED"];
 
 /** Where each symbol "lives". Anything else defaults to NEAR, where the leash holds funds. */
 const HOME: Record<string, string> = {
@@ -99,6 +124,18 @@ export function intentsClient(opts: { jwt?: string; recipient: string; fetchImpl
     return cache.list;
   }
 
+  async function post<T>(path: string, body: unknown): Promise<T> {
+    const r = await f(`${base}${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(opts.jwt ? { "x-api-key": opts.jwt } : {}) },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20_000),
+    });
+    const j = (await r.json().catch(() => ({}))) as T & { message?: string };
+    if (!r.ok) throw new Error(j.message ?? `NEAR Intents answered ${r.status}`);
+    return j;
+  }
+
   async function quote(from: IntentsToken, to: IntentsToken, amount: string): Promise<SwapQuote> {
     const body = {
       dry: true,
@@ -114,26 +151,56 @@ export function intentsClient(opts: { jwt?: string; recipient: string; fetchImpl
       refundType: "INTENTS",
       deadline: new Date(Date.now() + 5 * 60_000).toISOString(),
     };
-    const r = await f(`${base}/quote`, {
-      method: "POST",
-      headers: { "content-type": "application/json", ...(opts.jwt ? { "x-api-key": opts.jwt } : {}) },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20_000),
-    });
-    const j = (await r.json()) as { quote?: Omit<SwapQuote, "dry">; message?: string };
-    if (!r.ok || !j.quote) throw new Error(j.message ?? `NEAR Intents answered ${r.status}`);
-    const q = j.quote;
-    return {
-      dry: true,
-      amountIn: q.amountIn,
-      amountInFormatted: q.amountInFormatted,
-      amountInUsd: q.amountInUsd,
-      amountOut: q.amountOut,
-      amountOutFormatted: q.amountOutFormatted,
-      amountOutUsd: q.amountOutUsd,
-      minAmountOut: q.minAmountOut,
-      timeEstimate: q.timeEstimate,
+    const j = await post<{ quote?: Omit<SwapQuote, "dry"> }>("/quote", body);
+    if (!j.quote) throw new Error("NEAR Intents sent no quote");
+    return { dry: true, ...pickQuote(j.quote) };
+  }
+
+  /**
+   * A quote to execute. The input is paid from NEAR (`refundTo` gets it back
+   * if the swap fails); the output goes to `recipient` on NEAR when the token
+   * lives there, otherwise into that account inside NEAR Intents.
+   */
+  async function liveQuote(from: IntentsToken, to: IntentsToken, amount: string, who: { refundTo: string; recipient: string }): Promise<LiveQuote> {
+    const body = {
+      dry: false,
+      swapType: "EXACT_INPUT",
+      slippageTolerance: 100,
+      originAsset: from.assetId,
+      depositType: "ORIGIN_CHAIN",
+      destinationAsset: to.assetId,
+      amount: toUnits(amount, from.decimals),
+      refundTo: who.refundTo,
+      refundType: "ORIGIN_CHAIN",
+      recipient: who.recipient,
+      recipientType: to.blockchain === "near" ? "DESTINATION_CHAIN" : "INTENTS",
+      deadline: new Date(Date.now() + 10 * 60_000).toISOString(),
     };
+    const j = await post<{ quote?: Omit<LiveQuote, "dry"> }>("/quote", body);
+    if (!j.quote?.depositAddress) throw new Error("NEAR Intents gave no deposit address");
+    return { dry: false, ...pickQuote(j.quote), depositAddress: j.quote.depositAddress, depositMemo: j.quote.depositMemo, deadline: j.quote.deadline };
+  }
+
+  /** Tell 1Click the deposit went out, so it doesn't wait to notice. */
+  async function submitDeposit(txHash: string, depositAddress: string): Promise<void> {
+    await post("/deposit/submit", { txHash, depositAddress });
+  }
+
+  /** Where a live swap stands. */
+  async function status(depositAddress: string): Promise<SwapProgress> {
+    const r = await f(`${base}/status?depositAddress=${encodeURIComponent(depositAddress)}`, {
+      headers: opts.jwt ? { "x-api-key": opts.jwt } : {},
+      signal: AbortSignal.timeout(10_000),
+    });
+    const j = (await r.json().catch(() => ({}))) as {
+      status?: SwapStatus;
+      message?: string;
+      swapDetails?: { amountOutFormatted?: string; originChainTxHashes?: { explorerUrl?: string }[]; destinationChainTxHashes?: { explorerUrl?: string }[] };
+    };
+    if (!r.ok || !j.status) throw new Error(j.message ?? `NEAR Intents answered ${r.status}`);
+    const d = j.swapDetails ?? {};
+    const txs = [...(d.originChainTxHashes ?? []), ...(d.destinationChainTxHashes ?? [])].map((t) => t.explorerUrl).filter((u): u is string => !!u);
+    return { status: j.status, done: FINAL.includes(j.status), amountOutFormatted: d.amountOutFormatted, txs };
   }
 
   /** A token's dollar price on its home chain, or undefined if it isn't listed or has none. */
@@ -142,7 +209,21 @@ export function intentsClient(opts: { jwt?: string; recipient: string; fetchImpl
     return check.verified ? check.token?.price : undefined;
   }
 
-  return { tokens, quote, price, pick: async (asked: string, side: "from" | "to") => pickToken(await tokens(), asked, side) };
+  return { tokens, quote, liveQuote, submitDeposit, status, price, pick: async (asked: string, side: "from" | "to") => pickToken(await tokens(), asked, side) };
 }
 
 export type IntentsClient = ReturnType<typeof intentsClient>;
+
+/** The fields AIRKEY keeps from a 1Click quote. */
+function pickQuote(q: Omit<SwapQuote, "dry">) {
+  return {
+    amountIn: q.amountIn,
+    amountInFormatted: q.amountInFormatted,
+    amountInUsd: q.amountInUsd,
+    amountOut: q.amountOut,
+    amountOutFormatted: q.amountOutFormatted,
+    amountOutUsd: q.amountOutUsd,
+    minAmountOut: q.minAmountOut,
+    timeEstimate: q.timeEstimate,
+  };
+}

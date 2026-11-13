@@ -1,33 +1,34 @@
 import SwiftUI
 
-enum AppTab: Hashable { case home, agents, leash, activity }
+enum AppTab: Hashable { case wallet, activity, leash, keyboard }
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
-    @State private var tab: AppTab = .home
+    @State private var tab: AppTab = .wallet
     @State private var showSettings = false
     @State private var showCommand = false
     @State private var receipt: Receipt?
 
     var body: some View {
         TabView(selection: $tab) {
-            Tab("Home", systemImage: "house.fill", value: AppTab.home) {
+            Tab("Wallet", systemImage: "wallet.bifold", value: AppTab.wallet) {
                 NavigationStack {
-                    HomeView(go: { tab = $0 }, openSettings: { showSettings = true }, open: { receipt = $0 })
+                    WalletView(go: { tab = $0 }, openSettings: { showSettings = true }, open: { receipt = $0 })
                 }
             }
-            Tab("Agents", systemImage: "person.2.fill", value: AppTab.agents) {
-                NavigationStack { AgentsView() }
+            Tab("Activity", systemImage: "clock.arrow.circlepath", value: AppTab.activity) {
+                NavigationStack { ActivityView(open: { receipt = $0 }) }
             }
             Tab("Leash", systemImage: "lock.shield.fill", value: AppTab.leash) {
                 NavigationStack { LeashView() }
             }
             .badge(model.state?.pending.count ?? 0)
-            Tab("Activity", systemImage: "clock.fill", value: AppTab.activity) {
-                NavigationStack { ActivityView(open: { receipt = $0 }) }
+            Tab("Keyboard", systemImage: "keyboard", value: AppTab.keyboard) {
+                NavigationStack { KeyboardTab(openSettings: { showSettings = true }) }
             }
         }
+        .tint(AK.accent)
         .tabViewBottomAccessory { CommandBar { showCommand = true } }
         .tabBarMinimizeBehavior(.onScrollDown)
         .task { await model.refresh() }

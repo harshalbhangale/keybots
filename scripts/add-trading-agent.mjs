@@ -2,10 +2,10 @@
 //
 //   npm run add-trader -- airkey-<yourname>.testnet [perTradeNear] [perDayNear]
 //
-// Creates trade.<owner>, whose only key is a function-call key for the leash's
-// pay and report (like the other agents), and registers it on the leash as a
-// trusted agent with its own caps. Swaps are held to these caps, so trading
-// never eats into what the Payment Agent may spend.
+// Creates trader.<owner>, whose only key is a function-call key for the
+// leash's pay, report and swap, and registers it on the leash as a trusted
+// agent with its own caps. Swaps are held to these caps, so trading never eats
+// into what the Payment Agent may spend.
 import { actions } from "near-api-js";
 import { NETWORK, names, near, newKey, saveKey, account, exists, txUrl, view, fmt } from "./common.mjs";
 
@@ -27,7 +27,7 @@ if (await exists(n.trade)) {
     actions: [
       actions.createAccount(),
       actions.transfer(near(0.3)),
-      actions.addFunctionCallAccessKey(kp.getPublicKey(), n.leash, ["pay", "report"], near(0.25)),
+      actions.addFunctionCallAccessKey(kp.getPublicKey(), n.leash, ["pay", "report", "swap"], near(0.25)),
     ],
   });
   console.log(`✓ created ${n.trade}  ${txUrl(res.transaction.hash)}`);
