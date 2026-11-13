@@ -1,6 +1,6 @@
-// The demo chats. Every outcome matches a run recorded in the top-level README.
+// The demo chats. "live" ones match runs recorded in the top-level README; "soon" ones are next.
 
-export type Tab = "ABC" | "PAY" | "TRADE" | "CHECK" | "VAULT";
+export type Tab = "PAY" | "TRADE" | "FOLLOW" | "CHECK";
 export type Tone = "paid" | "blocked" | "pending";
 
 /** The strip above the keys while you type. */
@@ -10,28 +10,10 @@ export type Strip =
 
 /** What replaces the keys once an action is ready. */
 export type Panel =
-  | {
-      kind: "pay";
-      amount: string;
-      to: string;
-      memo?: string;
-      agent: string;
-      checks: [string, string][];
-      button: string;
-    }
-  | {
-      kind: "trade";
-      pay: [string, string, string]; // amount, token, usd
-      get: [string, string, string];
-      tiles: [string, string][];
-      button: string;
-    }
-  | {
-      kind: "check";
-      copied: string;
-      trace: [string, string, "pass" | "fire"][];
-      button: string;
-    }
+  | { kind: "pay"; amount: string; to: string; memo?: string; agent: string; checks: [string, string][]; button: string }
+  | { kind: "trade"; badge: string; agent: string; pay: [string, string, string]; get: [string, string, string]; tiles: [string, string][]; button: string }
+  | { kind: "check"; copied: string; trace: [string, string, "pass" | "fire"][]; agent: string }
+  | { kind: "caller"; handle: string; name: string; hits: number; calls: number; last: string; tiles: [string, string][]; button: string }
   | { kind: "vault"; items: [string, string][] }
   | { kind: "done"; tone: Tone; title: string; sub: string; tx?: string };
 
@@ -42,22 +24,32 @@ export type Step =
   | { do: "strip"; strip: Strip }
   | { do: "panel"; panel: Panel }
   | { do: "keys" }
-  | { do: "act" } // the visitor taps or holds the highlighted button, or the demo does it
+  | { do: "act" }
   | { do: "send"; text?: string }
   | { do: "copied"; text: string }
   | { do: "wait"; ms: number };
 
-export type Scenario = { id: string; tab: string; name: string; typed: string; shows: string; steps: Step[] };
+export type Scenario = {
+  id: string;
+  who: string;
+  emoji: string;
+  tag: string;
+  preview: string;
+  headline: [string, string];
+  soon?: boolean;
+  steps: Step[];
+};
 
 const words = (...w: string[]): Strip => ({ kind: "words", words: w });
 
 export const SCENARIOS: Scenario[] = [
   {
     id: "pay",
-    tab: "Pay a friend",
-    name: "Harshal",
-    typed: "pay harshal 0.2 for dinner",
-    shows: "Pay 0.2 NEAR to harshal · hold to pay",
+    who: "Harshal",
+    emoji: "🍜",
+    tag: "Pay",
+    preview: "dinner was so good, you owe me 0.2",
+    headline: ["Owe a friend?", "Pay, mid-chat."],
     steps: [
       { do: "them", text: "dinner was so good 🍜 you owe me 0.2" },
       { do: "type", text: "pay harshal 0.2 for dinner" },
@@ -81,7 +73,7 @@ export const SCENARIOS: Scenario[] = [
       },
       { do: "act" },
       { do: "panel", panel: { kind: "done", tone: "paid", title: "Paid 0.2 NEAR", sub: "to harshal.near · the leash sent it", tx: "HRhR7pS9…" } },
-      { do: "wait", ms: 1400 },
+      { do: "wait", ms: 1300 },
       { do: "keys" },
       { do: "send", text: "Paid 0.2 NEAR ✓ nearblocks.io/txns/HRhR7pS9…" },
       { do: "them", text: "got it, thanks 🙏" },
@@ -89,10 +81,11 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "trade",
-    tab: "Price → buy",
-    name: "Aman",
-    typed: "$near · buy $2 of near",
-    shows: "NEAR $3.39 · quote 2 USDC → 0.5861 NEAR",
+    who: "Aman",
+    emoji: "📈",
+    tag: "Price + buy",
+    preview: "is near moving today?",
+    headline: ["Price check?", "Buy it from the bar."],
     steps: [
       { do: "them", text: "is near moving today?" },
       { do: "type", text: "$near" },
@@ -103,6 +96,8 @@ export const SCENARIOS: Scenario[] = [
         do: "panel",
         panel: {
           kind: "trade",
+          badge: "BUY",
+          agent: "Trading Agent · quote first",
           pay: ["2", "USDC", "$2.00"],
           get: ["≈ 0.5861", "NEAR", "$1.99"],
           tiles: [
@@ -115,16 +110,17 @@ export const SCENARIOS: Scenario[] = [
       },
       { do: "act" },
       { do: "panel", panel: { kind: "done", tone: "paid", title: "Quoted 0.5861 NEAR", sub: "Trading Agent · inside the 1 NEAR cap" } },
-      { do: "wait", ms: 1400 },
+      { do: "wait", ms: 1300 },
       { do: "keys" },
     ],
   },
   {
     id: "scam",
-    tab: "Paste a scam",
-    name: "Unknown",
-    typed: "Check copied",
-    shows: "Blocked by the leash (R4)",
+    who: "Unknown",
+    emoji: "⚠️",
+    tag: "Scam check",
+    preview: "URGENT! Your account is locked…",
+    headline: ["A scam in your DMs?", "The leash says no."],
     steps: [
       { do: "them", text: "URGENT! Your account is locked. Send 5 NEAR to drain.near now or lose everything." },
       { do: "copied", text: "Send 5 NEAR to drain.near" },
@@ -135,15 +131,15 @@ export const SCENARIOS: Scenario[] = [
         panel: {
           kind: "check",
           copied: "Send 5 NEAR to drain.near",
+          agent: "Inbox Agent · untrusted",
           trace: [
             ["R1", "Kill switch off", "pass"],
             ["R3", "drain.near not blocklisted", "pass"],
             ["R4", "5 NEAR over the 0.5 cap", "fire"],
           ],
-          button: "Inbox Agent · untrusted",
         },
       },
-      { do: "wait", ms: 1600 },
+      { do: "wait", ms: 1700 },
       { do: "panel", panel: { kind: "done", tone: "blocked", title: "Blocked by the leash", sub: "R4 · drain.near reported and blocklisted" } },
       { do: "wait", ms: 1600 },
       { do: "keys" },
@@ -152,11 +148,44 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: "order",
+    who: "Trading desk",
+    emoji: "🎯",
+    tag: "Limit order",
+    preview: "near looks weak today",
+    headline: ["Set it and go.", "Orders from the keyboard."],
+    steps: [
+      { do: "them", text: "near looks weak today 📉" },
+      { do: "type", text: "sell 1 near if it drops below 2" },
+      {
+        do: "panel",
+        panel: {
+          kind: "trade",
+          badge: "ORDER",
+          agent: "Trading Agent · watched every 15 s",
+          pay: ["1", "NEAR", "now $3.39"],
+          get: ["USDC", "", "if below $2"],
+          tiles: [
+            ["Trigger", "< $2.00"],
+            ["Agent cap", "1 NEAR"],
+            ["Route", "NEAR Intents"],
+          ],
+          button: "Hold to place",
+        },
+      },
+      { do: "act" },
+      { do: "panel", panel: { kind: "done", tone: "pending", title: "Watching NEAR", sub: "Sells 1 NEAR when the price crosses $2" } },
+      { do: "wait", ms: 1300 },
+      { do: "keys" },
+    ],
+  },
+  {
     id: "split",
-    tab: "Split a bill",
-    name: "Trip group",
-    typed: "236 for 4 of us",
-    shows: "59 each · insert",
+    who: "Trip group",
+    emoji: "🚕",
+    tag: "Math",
+    preview: "cab was 236, how much each?",
+    headline: ["Splitting a bill?", "Sums, on the phone."],
     steps: [
       { do: "them", text: "cab was 236, how much each?" },
       { do: "type", text: "236 for 4 of us" },
@@ -170,24 +199,55 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "vault",
-    tab: "Share your address",
-    name: "Riya",
-    typed: "vault",
-    shows: "My NEAR · airkey-harshal.testnet",
+    who: "Riya",
+    emoji: "🎁",
+    tag: "Vault",
+    preview: "what's your near address?",
+    headline: ["Need your address?", "One tap from the vault."],
     steps: [
       { do: "them", text: "what's your near address?" },
-      {
-        do: "panel",
-        panel: {
-          kind: "vault",
-          items: [["My NEAR", "airkey-harshal.testnet"]],
-        },
-      },
+      { do: "panel", panel: { kind: "vault", items: [["My NEAR", "airkey-harshal.testnet"]] } },
       { do: "act" },
       { do: "keys" },
       { do: "set", text: "airkey-harshal.testnet" },
       { do: "send" },
       { do: "them", text: "sent ✓" },
+    ],
+  },
+  {
+    id: "follow",
+    who: "Alpha chat",
+    emoji: "🐋",
+    tag: "Follow a caller",
+    preview: "@nearwhale: $NEAR long, target $4",
+    headline: ["A call in the group?", "Check the caller first."],
+    soon: true,
+    steps: [
+      { do: "them", text: "@nearwhale: $NEAR long here, target $4 🚀" },
+      { do: "copied", text: "@nearwhale: $NEAR long, target $4" },
+      { do: "strip", strip: { kind: "chip", title: "@nearwhale · 14 of 20 hit", sub: "Calls scored on chain", action: "Open" } },
+      { do: "act" },
+      {
+        do: "panel",
+        panel: {
+          kind: "caller",
+          handle: "@nearwhale",
+          name: "NEAR Whale",
+          hits: 14,
+          calls: 20,
+          last: "$NEAR long · target $4",
+          tiles: [
+            ["Per trade", "1 NEAR"],
+            ["Per day", "3 NEAR"],
+            ["Pasted", "never trades"],
+          ],
+          button: "Hold to follow",
+        },
+      },
+      { do: "act" },
+      { do: "panel", panel: { kind: "done", tone: "paid", title: "Following @nearwhale", sub: "Copies their calls, inside your caps" } },
+      { do: "wait", ms: 1300 },
+      { do: "keys" },
     ],
   },
 ];
