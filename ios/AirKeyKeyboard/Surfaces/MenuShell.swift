@@ -141,7 +141,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
     /// any tile can be dragged up to live there. People reorder them by
     /// holding one and moving it (saved as `menuOrder`).
     static let tools: [(id: String, title: String)] = [
-        ("wallet", "Wallet"), ("calls", "Calls"), // WALLET/CALLS HOOK
+        ("wallet", "Wallet"), ("calls", "Calls"), ("swap", "Swap"), // WALLET/CALLS + TRADE HOOKS
         ("check", "Check copied"), ("clipboard", "Clipboard"), ("notes", "Notes"),
         ("emoji", "Emoji"), ("style", "Style"), ("games", "Games"), ("settings", "Settings"),
     ]
