@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { nearChain } from "./near.js";
+import { outlayerChain } from "./outlayer.js";
 import { fileStore } from "./receipts.js";
 import { ownerActions } from "./owner.js";
 import { intentsClient } from "./intents.js";
@@ -12,7 +13,7 @@ import { runCommand } from "./agent.js";
 const cfg = loadConfig();
 const deps = {
   cfg,
-  chain: nearChain(cfg),
+  chain: process.env.AIRKEY_SIGNER === "outlayer" ? outlayerChain(cfg, nearChain(cfg)) : nearChain(cfg),
   receipts: fileStore(cfg.dataDir),
   owner: ownerActions(cfg),
   intents: intentsClient({ jwt: process.env.ONECLICK_JWT, recipient: process.env.AIRKEY_INTENTS_ACCOUNT ?? cfg.owner }),
