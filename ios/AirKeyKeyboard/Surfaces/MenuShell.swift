@@ -753,7 +753,19 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
             }
             vaultGrid.addSubview(cell)
         }
+        if vaultCards.isEmpty {
+            let empty = UILabel()
+            empty.tag = Self.emptyTag
+            empty.text = "Notes, details and ;shorthand you add here type themselves with a tap. Add one with the +."
+            empty.font = .systemFont(ofSize: 15)
+            empty.textColor = Glass.textSecondary
+            empty.numberOfLines = 0
+            empty.textAlignment = .center
+            vaultGrid.addSubview(empty)
+        }
     }
+
+    private static let emptyTag = 9_001
 
     /// Holding a note card opens it in the editor strip, the way the list's
     /// ✎ does; a tap keeps inserting.
@@ -775,6 +787,8 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func layoutVaultGrid() {
+        vaultGrid.viewWithTag(Self.emptyTag)?.frame = CGRect(x: 40, y: 0, width: max(0, vaultGrid.bounds.width - 80),
+                                                             height: max(0, vaultGrid.bounds.height - Self.addClearance))
         let cols = 3, gap: CGFloat = 6, side: CGFloat = 6
         let w = (vaultGrid.bounds.width - side * 2 - gap * CGFloat(cols - 1)) / CGFloat(cols)
         let rows = max(1, Int(ceil(Double(vaultCards.count) / Double(cols))))
@@ -1004,9 +1018,6 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
             }
             for image in vault.images {
                 rows.append(.vaultImage(image))
-            }
-            if rows.isEmpty {
-                rows.append(.info(title: "Add a note, a detail or a ;shorthand with the +", detail: nil))
             }
             // Adding is the + floating over the list (layoutAddButton).
             return Screen(id: "notes", title: "Notes", rows: rows, showOpenInApp: false)
