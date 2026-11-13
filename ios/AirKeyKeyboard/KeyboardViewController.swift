@@ -1724,7 +1724,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
             return
         }
         // Right after a glide, one backspace takes the whole word (iOS's way).
-        if glideBackspace() { return }
+        if glideBackspace() { Haptics.markWordDelete(); return }
         // Backspace right after a correction puts back what was typed (and
         // teaches the engine to leave that word alone).
         // After a fix made by punctuation ("the,") backspace deletes as usual.
@@ -1733,6 +1733,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
             hostInsert(corr.original)
             lastCorrection = nil
             teachUndo(corr)
+            Haptics.markWordDelete()
         } else {
             lastCorrection = nil
             hostDelete()
