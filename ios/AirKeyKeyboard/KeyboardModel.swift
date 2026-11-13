@@ -174,10 +174,12 @@ final class KeyboardModel {
         insert(new)
     }
 
-    /// Keep the list of real token symbols fresh (NEAR Intents' list, by way of the server).
+    /// Keep the list of real token symbols fresh (NEAR Intents' list, by way of
+    /// the server), and the names in your contacts.
     func refreshTokens() {
-        guard hasFullAccess(), Tokens.stale else { return }
-        Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } }
+        guard hasFullAccess() else { return }
+        if Tokens.stale { Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } } }
+        if Contacts.stale { Task { if let s = try? await API().state() { Contacts.save(s.contacts) } } }
     }
 
     // MARK: agents
