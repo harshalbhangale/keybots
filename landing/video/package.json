@@ -1,0 +1,12 @@
+{
+  "name": "airkey-demo-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cards": "node render.mjs",
+    "make": "./make.sh"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}
