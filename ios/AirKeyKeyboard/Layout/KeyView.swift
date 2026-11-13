@@ -258,9 +258,8 @@ final class KeyView: UIControl {
             // A theme's face keeps these sizes (docs/THEMES.md §0.2).
             label.font = Glass.keyFont(ofSize: shifted ? 22 : 24.5)
         case .space:
-            // Watermark, not a label: AIRKEY, wide and quiet.
-            text = "AIRKEY"
-            label.font = .systemFont(ofSize: 11, weight: .semibold, width: .expanded)
+            // Blank, like the iPhone's own space bar: the mark at the top left is the brand.
+            text = ""
         case .ret:
             if let word = returnFace.text {
                 text = word
