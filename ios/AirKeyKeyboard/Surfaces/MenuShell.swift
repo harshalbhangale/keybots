@@ -340,10 +340,12 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
         let isRoot = screen.id == "root"
         // In the website look the strip carries the title, the close button
         // AND the way back, so the panel spends none of its 206pt on chrome.
-        let headerH: CGFloat = Glass.solidLook ? 0 : 36
-        titleLabel.isHidden = Glass.solidLook
-        closeButton.isHidden = Glass.solidLook
-        backButton.isHidden = Glass.solidLook || screen.id == "root"
+        // The strip above carries the title, the close button AND the way
+        // back, so the panel spends none of its height on chrome.
+        let headerH: CGFloat = 0
+        titleLabel.isHidden = true
+        closeButton.isHidden = true
+        backButton.isHidden = true
         header.frame = CGRect(x: 0, y: 0, width: bounds.width, height: headerH)
         backButton.frame = CGRect(x: 4, y: 0, width: 44, height: headerH)
         closeButton.frame = CGRect(x: bounds.width - 48, y: 0, width: 44, height: headerH)
@@ -396,7 +398,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
 
     /// The vault and its New detail screen are cards in the website's look.
     private var usesCardGrid: Bool {
-        Glass.solidLook && (screen.id == "notes" || screen.id == "notes:detail")
+        screen.id == "notes" || screen.id == "notes:detail"
     }
 
     private func buildGrid() {
@@ -934,6 +936,14 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
                 .toggle(title: "Keep what I copy",
                         value: { SettingsStore.current.clipboardHistory ?? true },
                         set: { v in SettingsStore.update { $0.clipboardHistory = v } }),
+                // Every read of a copy raises iOS's "Allow Paste?" until the
+                // person allows it once in Settings, so this starts off.
+                .toggle(title: "Keep every copy",
+                        value: { SettingsStore.current.clipboardCaptureAll == true },
+                        set: { v in SettingsStore.update { $0.clipboardCaptureAll = v } }),
+                .toggle(title: "Recent screenshots",
+                        value: { SettingsStore.current.clipboardScreenshots == true },
+                        set: { v in SettingsStore.update { $0.clipboardScreenshots = v } }),
                 .header(title: "Strip"),
                 .nav(icon: "slider.horizontal.3", title: "Toolbar items", detail: nil,
                      target: "toolbar"),
