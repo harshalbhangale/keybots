@@ -247,7 +247,10 @@ final class AgentModel {
     func runPasted() {
         guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY to check what you copied."; return }
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
-            notice = "Copy a message first, then tap Check."
+            // A keyboard can't show iOS's "Allow Paste" prompt, so a refused read looks like an empty clipboard.
+            notice = UIPasteboard.general.hasStrings
+                ? "To check copied text: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                : "Copy a message first, then tap Check."
             return
         }
         send(text, source: "pasted")
@@ -276,8 +279,11 @@ final class AgentModel {
     /// Put the receipt into the chat, so the other person sees it too.
     func insertReceipt() {
         guard let r = result else { return }
-        // A success already says what happened ("Paid…", "Swapped…"); other outcomes get their word.
-        var line = r.signal == .allow ? "AIRKEY · \(r.message)" : "AIRKEY · \(r.signal.word.capitalized): \(r.message)"
+        // Most messages already say what happened ("Paid…", "Swapped…", "Blocked by the leash…");
+        // the outcome word goes first only when the message doesn't start with it.
+        let word = r.signal.word.capitalized
+        let says = r.signal == .allow || r.message.lowercased().hasPrefix(word.lowercased().trimmingCharacters(in: .punctuationCharacters))
+        var line = says ? "AIRKEY · \(r.message)" : "AIRKEY · \(word): \(r.message)"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         host?.agentInsert(line, spaced: true)
