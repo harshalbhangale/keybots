@@ -71,6 +71,8 @@ struct API {
         }
         var r = URLRequest(url: url, timeoutInterval: 30)
         if !token.isEmpty { r.setValue("Bearer \(token)", forHTTPHeaderField: "authorization") }
+        // Which side sent it, so the server log can tell keyboard runs from app runs.
+        r.setValue(Bundle.main.bundleIdentifier?.hasSuffix(".keyboard") == true ? "keyboard" : "app", forHTTPHeaderField: "x-airkey-client")
         return r
     }
 
