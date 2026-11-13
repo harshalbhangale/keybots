@@ -26,7 +26,7 @@ export interface Receipt {
     quote?: SwapQuote;
     leash?: { agent: string; valueNear: string; perPaymentCap: string; leftToday: string; within: boolean };
     /** A swap that really ran: where, what went in and what came back to the leash. */
-    executed?: { venue: string; exchange: string; amountIn: string; amountOut?: string; symbolOut: string; ok: boolean };
+    executed?: { venue: string; exchange: string; amountIn: string; /** What was sold, when it wasn't NEAR. */ symbolIn?: string; amountOut?: string; symbolOut: string; ok: boolean };
   };
   /** Shown to the person: allow (mint), warn (amber), block (red), quote, or info. */
   outcome: "paid" | "swapped" | "approval" | "blocked" | "quoted" | "watching" | "not-sent";
