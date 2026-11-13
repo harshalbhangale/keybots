@@ -28,6 +28,11 @@ final class KeyboardViewController: UIInputViewController {
         self.host = host
         model.needsGlobe = needsInputModeSwitchKey
         watch()
+        // Your text replacements and contacts' names, so autocorrect knows them.
+        requestSupplementaryLexicon { [weak self] lexicon in
+            let entries = lexicon.entries.map { (input: $0.userInput, output: $0.documentText) }
+            Task { @MainActor in self?.model.words.load(entries) }
+        }
     }
 
     override func viewWillLayoutSubviews() {
