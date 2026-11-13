@@ -414,9 +414,7 @@ final class AIBar: UIView {
     /// person's other language (the last one they picked, else their phone's
     /// second language) for English.
     static func translateTarget(for text: String) -> String {
-        if let lang = NLLanguageRecognizer.dominantLanguage(for: text), lang != .english, lang != .undetermined {
-            return "English"
-        }
+        if sourceLanguage(of: text) != "English" { return "English" }
         if let saved = UserDefaults.standard.string(forKey: savedTargetKey), saved != "English" { return saved }
         let english = Locale(identifier: "en_US")
         for id in Locale.preferredLanguages {
@@ -427,6 +425,15 @@ final class AIBar: UIView {
         return "Spanish"
     }
 
+    /// The language the text is written in, by its English name; English
+    /// when it can't tell (a word or two).
+    static func sourceLanguage(of text: String) -> String {
+        guard let lang = NLLanguageRecognizer.dominantLanguage(for: text), lang != .undetermined,
+              let name = Locale(identifier: "en_US").localizedString(forLanguageCode: lang.rawValue)
+        else { return "English" }
+        return name
+    }
+
     private static let savedTargetKey = "ai.translateTo"
     private static let commonLanguages = ["English", "Spanish", "Hindi", "French", "German",
                                           "Portuguese", "Japanese", "Chinese", "Arabic"]
@@ -435,8 +442,10 @@ final class AIBar: UIView {
     private func cycleLanguage() {
         guard var r = request, r.action == .translate, phase == .result || phase == .failed else { return }
         let current = r.language ?? "English"
-        var seen = Set<String>()
+        // Never into the language it is already in.
+        var seen: Set<String> = [Self.sourceLanguage(of: source)]
         let options = ([Self.translateTarget(for: source)] + Self.commonLanguages).filter { seen.insert($0).inserted }
+        guard !options.isEmpty else { return }
         let next = options[((options.firstIndex(of: current) ?? -1) + 1) % options.count]
         r.language = next
         if next != "English" { UserDefaults.standard.set(next, forKey: Self.savedTargetKey) }
