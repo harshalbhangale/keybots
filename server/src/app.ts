@@ -27,6 +27,9 @@ export function buildApp(deps: Deps) {
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
     const source = req.body?.source === "pasted" ? "pasted" : req.body?.source === "typed" ? "typed" : null;
     if (!text || !source) return reply.code(400).send({ error: 'Send {"text": "...", "source": "typed" | "pasted"}' });
+    // One line per command, with which client sent it (the iOS keyboard or the app).
+    const client = String(req.headers["x-airkey-client"] ?? "unknown").slice(0, 20);
+    console.log(`${new Date().toISOString()} command from ${client} (${source}): ${JSON.stringify(text.slice(0, 120))}`);
     try {
       return await runCommand(deps, text, source);
     } catch (e) {
