@@ -121,6 +121,8 @@ struct AgentBar: View {
                 self.notice(notice)
             } else if let source = model.running {
                 working(source)
+            } else if model.vaultOpen {
+                vault
             } else if let intent = model.intent {
                 ready(intent)
             } else if let a = model.answer {
@@ -145,13 +147,24 @@ struct AgentBar: View {
         HStack(spacing: 8) {
             KeycapMark(size: 17, color: palette.text)
             if model.empty {
-                Text("Type “pay harshal 0.2 for dinner”")
+                Text("Try “pay harshal 0.2”")
                     .font(.footnote)
                     .foregroundStyle(palette.soft)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
             Spacer(minLength: 4)
+            Button { model.openVault() } label: {
+                Image(systemName: "wallet.bifold")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(palette.text)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: .circle)
+            .accessibilityLabel("Vault")
+            .accessibilityHint("Your NEAR account and saved addresses")
             Button { model.runPasted() } label: {
                 Label("Check copied", systemImage: "doc.on.clipboard")
                     .font(.footnote.weight(.semibold))
@@ -165,6 +178,39 @@ struct AgentBar: View {
             .accessibilityHint("Sends what you copied to the Inbox Agent to check")
         }
         .padding(.leading, 8)
+    }
+
+    /// Your NEAR account and saved addresses. A tap puts one in the message.
+    private var vault: some View {
+        HStack(spacing: 4) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(model.vaultItems) { item in
+                        Button { model.insertVault(item) } label: {
+                            HStack(spacing: 6) {
+                                Text(item.label).font(.footnote.weight(.semibold)).foregroundStyle(palette.text)
+                                Text(item.value)
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(palette.soft)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .frame(maxWidth: 150)
+                            }
+                            .padding(.horizontal, 12)
+                            .frame(height: 34)
+                            .background(palette.function, in: Capsule())
+                            .contentShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Insert \(item.label), \(item.value)")
+                    }
+                }
+                .padding(.leading, 5)
+            }
+            close
+        }
+        .frame(height: 44)
+        .glassEffect(.regular, in: .capsule)
     }
 
     /// Three word choices, like the system keyboard: what you typed, the fix
