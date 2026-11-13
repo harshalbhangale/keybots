@@ -151,7 +151,8 @@ async function storePolicy(role, key, addr) {
     contractId: contract,
     methodName: "store_wallet_policy",
     args: {
-      wallet_pubkey: enc.wallet_pubkey,
+      // encrypt-policy's wallet_pubkey is the wallet id on testnet; the contract wants ed25519:<hex>.
+      wallet_pubkey: addr.public_key,
       encrypted_data: enc.encrypted_base64,
       wallet_signature: signed.signature_hex,
       version: signed.version,
