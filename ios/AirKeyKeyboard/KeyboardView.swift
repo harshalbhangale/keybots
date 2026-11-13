@@ -98,7 +98,7 @@ struct KeyboardView: View {
         return HStack(spacing: gap) {
             ForEach(keys, id: \.self) { k in
                 if k == "p" && model.layer == .letters {
-                    Key(text: upper ? "P" : "p", width: unit, agentTab: true, palette: palette, onHold: { model.runTyped() }) { model.type("p") }
+                    Key(text: upper ? "P" : "p", width: unit, agentTab: true, palette: palette) { model.type("p") }
                 } else {
                     Key(text: upper ? k.uppercased() : k, width: unit, palette: palette) { model.type(k) }
                 }
@@ -297,7 +297,8 @@ struct AgentBar: View {
     }
 }
 
-/// One key. An agent key carries a lime side tab and runs on hold.
+/// One key. The P key carries AIRKEY's lime side tab, like the logo; it
+/// types a p and nothing else. Running a command takes the hold chip in the bar.
 struct Key: View {
     var text: String?
     var symbol: String?
@@ -359,7 +360,6 @@ struct Key: View {
         .accessibilityElement()
         .accessibilityLabel(label ?? text ?? "")
         .accessibilityAddTraits(.isKeyboardKey)
-        .accessibilityHint(agentTab ? "Hold to run what you typed with your Payment Agent" : "")
         .accessibilityAction { action() }
     }
 
