@@ -103,3 +103,4 @@ To point the server or the scripts at `leash2` instead: `AIRKEY_LEASH=leash2.air
   - USDT: [EjEdKA5J…](https://testnet.nearblocks.io/txns/EjEdKA5Jg3iWz2AspcMpH6k7FNZZqgA9xN2UUNqT96Eb)
 - State after the upgrade is unchanged. The kill switch is still off, and all 6 agents, the allowlist (friend), the blocklist (drain) and the empty pending list are as before. Spendable NEAR went from 0.5143 to 0.2707: the larger code and the two rules take storage.
 - `GET /v1/quote` now marks these as runnable: USDC → NEAR (pool 1103), NEAR → USDC, and USDC → USDT (pool 1126). NEAR → SOL stays a NEAR Intents mainnet quote, and nothing is sent.
+- Proof on the live leash, from the keyboard's swap screen: 0.5 USDC → 0.2365 NEAR on Rhea, back in the leash as NEAR: [JE32cE9q…](https://testnet.nearblocks.io/txns/JE32cE9q2rjHMGhJT3P1hgq7YVSfD4xkkNXANmeDA1Q).
