@@ -96,7 +96,12 @@ final class KeyboardViewController: UIInputViewController {
         agent.reader = { text in
             guard let r = try? await API().read(text), r.kind == "pay" || r.kind == "swap",
                   let title = r.title, let verb = r.verb, let command = r.command else { return nil }
-            return .init(kind: r.kind == "pay" ? .pay : .swap, title: title, verb: verb, command: command, byAI: r.reader != "rules")
+            let by: String? = switch r.reader {
+            case "near-ai-cloud": "NEAR AI"
+            case "openai": "OpenAI"
+            default: nil
+            }
+            return .init(kind: r.kind == "pay" ? .pay : .swap, title: title, verb: verb, command: command, readBy: by)
         }
         return agent
     }()
