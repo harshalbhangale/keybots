@@ -207,6 +207,8 @@ struct AgentBar: View {
                 }
                 .padding(.leading, 5)
             }
+            // In a bar this short, iOS's soft scroll-edge blur would cover the chips.
+            .scrollEdgeEffectHidden(true, for: .all)
             close
         }
         .frame(height: 44)
