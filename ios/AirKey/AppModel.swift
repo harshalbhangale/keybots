@@ -33,7 +33,10 @@ final class AppModel {
             async let r = api.receipts()
             (state, receipts) = try await (s, r)
             error = nil
-            if let contacts = state?.contacts { Contacts.save(contacts) }
+            if let state {
+                Contacts.save(state.contacts)
+                Vault.saveOwner(state.owner)
+            }
             watching = ((try? await api.orders()) ?? []).filter { $0.status == "watching" }
             if Tokens.stale, let symbols = try? await api.tokens() { Tokens.save(symbols) }
         } catch {
