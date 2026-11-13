@@ -28,8 +28,8 @@ struct AgentStrip: View {
                 working(source, palette)
             } else if model.vaultOpen {
                 vault(palette)
-            } else if let intent = model.intent {
-                ready(intent, palette)
+            } else if let ready = model.ready {
+                self.ready(ready, palette)
             } else if let a = model.answer {
                 suggestion(
                     icon: a.buy == nil ? "banknote" : "chart.line.uptrend.xyaxis", title: a.title, detail: a.detail,
@@ -43,7 +43,7 @@ struct AgentStrip: View {
         }
         .padding(.horizontal, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .animation(.snappy(duration: 0.22), value: model.intent)
+        .animation(.snappy(duration: 0.22), value: model.ready)
         .animation(.snappy(duration: 0.22), value: model.running)
     }
 
@@ -86,7 +86,7 @@ struct AgentStrip: View {
 
     /// Your words read as an action. Press and hold to run it, so a stray
     /// tap while chatting never moves money.
-    private func ready(_ intent: Intent, _ palette: StripPalette) -> some View {
+    private func ready(_ intent: AgentModel.Ready, _ palette: StripPalette) -> some View {
         HStack(spacing: 10) {
             HStack(spacing: 10) {
                 Image(systemName: intent.icon)
@@ -104,7 +104,7 @@ struct AgentStrip: View {
             }
             .accessibilityElement(children: .combine)
             HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 28, font: .footnote.weight(.bold)) {
-                model.runTyped()
+                model.runReady()
             }
             .fixedSize()
         }

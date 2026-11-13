@@ -28,8 +28,31 @@ protocol AgentHost: AnyObject {
 @Observable
 @MainActor
 final class AgentModel {
+    /// A command ready to run, as the strip shows it: what it would do and
+    /// the word on its hold button. `command` is what goes to the server
+    /// when it is not the field's own text (a reading of loose wording).
+    struct Ready: Equatable {
+        let kind: Intent.Kind
+        let title: String
+        let detail: String?
+        let verb: String
+        var command: String? = nil
+
+        var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
+        var holdLabel: String { "Hold to \(verb)" }
+    }
+
     /// What the words in the field would do, read as you type.
     var intent: Intent?
+    /// A reading of wording the phone's own patterns don't know, from the
+    /// AIRKEY server, for the text it was asked about.
+    var readIntent: Ready?
+
+    /// The command the strip offers to run, if any.
+    var ready: Ready? {
+        if let intent { return Ready(kind: intent.kind, title: intent.title, detail: intent.detail, verb: intent.verb) }
+        return readIntent
+    }
     /// A sum, a percentage or a bill split worked out on the phone, when the
     /// keyboard's own answers had nothing for the text.
     var instant: Instant?
@@ -48,7 +71,7 @@ final class AgentModel {
     /// True while the strip is the agent's (the toolbar's otherwise).
     var isShowing: Bool {
         result != nil || notice != nil || running != nil || vaultOpen
-            || intent != nil || answer != nil || instant != nil
+            || ready != nil || answer != nil || instant != nil
     }
 
     @ObservationIgnored weak var host: AgentHost?
@@ -144,6 +167,18 @@ final class AgentModel {
 
     // MARK: Agents
 
+    /// The hold on the strip's button: the command it shows.
+    func runReady() {
+        if let command = ready?.command { runCommand(command) } else { runTyped() }
+    }
+
+    /// A command the server read out of what was typed: it runs, and what
+    /// was typed is taken out of the message box as a typed command is.
+    func runCommand(_ command: String) {
+        let typed = (host?.agentFieldText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        send(command, source: "typed", clearing: typed)
+    }
+
     /// The text in the field: what you typed. Goes to the trusted Payment Agent.
     func runTyped() {
         let text = (host?.agentFieldText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -161,19 +196,19 @@ final class AgentModel {
         send(text, source: "pasted")
     }
 
-    private func send(_ text: String, source: String) {
+    private func send(_ text: String, source: String, clearing: String? = nil) {
         guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so your agents can reach the server."; return }
         notice = nil
         result = nil
         vaultOpen = false
-        runningKind = source == "typed" ? intent?.kind : nil
+        runningKind = source == "typed" ? ready?.kind : nil
         running = source
         Task {
             do {
                 let r = try await API().command(text, source: source)
                 result = r
                 feedback(for: r.signal)
-                if source == "typed", r.signal != .block, r.signal != .neutral { host?.agentClear(text) }
+                if source == "typed", r.signal != .block, r.signal != .neutral { host?.agentClear(clearing ?? text) }
             } catch {
                 notice = error.localizedDescription
             }
