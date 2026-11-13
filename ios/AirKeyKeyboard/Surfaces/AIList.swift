@@ -82,17 +82,18 @@ final class AIList: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         scroll.frame = bounds
-        var y: CGFloat = 0
+        // A point of room all round, so the picked row's edge is never clipped.
+        var y: CGFloat = 1
         for r in rows {
             // The rise-in animates the transform; frames are set around it.
             let t = r.transform
             r.transform = .identity
-            let h = r.height(for: bounds.width)
-            r.frame = CGRect(x: 0, y: y, width: bounds.width, height: h)
+            let h = r.height(for: bounds.width - 2)
+            r.frame = CGRect(x: 1, y: y, width: bounds.width - 2, height: h)
             r.transform = t
             y += h + 6
         }
-        scroll.contentSize = CGSize(width: bounds.width, height: max(0, y - 6))
+        scroll.contentSize = CGSize(width: bounds.width, height: max(0, y - 5))
     }
 }
 
