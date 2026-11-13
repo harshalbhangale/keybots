@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		000C52470CDAD2D90C62C217 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554356C064E910AACA9AF32 /* HomeView.swift */; };
 		087EFF821ECA87156E7C140D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF871A3D5082D0B29BC2457 /* SettingsView.swift */; };
 		101FBECEE63E631AA97C2EC6 /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
 		202A662AC2A67C19FF48A88E /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
@@ -15,17 +14,20 @@
 		280530690716794F66165515 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
 		298CD3FA72975045D5D78551 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF41A04D107BDF975DB721DC /* RootView.swift */; };
 		2BC32C817204A010C25A54CD /* AirKeyKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2E256D8868B5317D3D70F172 /* KeyboardTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */; };
 		42E11D5013352DB96632C633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */; };
 		493F215D8AE2EF3CA2992694 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76815909587B9263F41E788 /* AppModel.swift */; };
 		4E7B527414E0A3454AFFECFC /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF89A02FA1B292BF5E5BE5A /* API.swift */; };
 		51E2BE13813FE385EACFA92D /* AgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235D82802F01F7286217056B /* AgentsView.swift */; };
 		528304A5639284DD30BB2028 /* HoldToConfirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */; };
 		555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
+		5597B89D3880E309D9E14D9D /* SwapCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C789ADED35D8C14B662DF37 /* SwapCard.swift */; };
 		59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
 		5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC5173F4853BB06FDF38E4C /* LeashView.swift */; };
 		5FF82EC3BADB8EDE32DB0AA5 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A268554547ABD1D29F4116 /* KeyboardViewController.swift */; };
 		60AF539665A49DD6F75582C4 /* Vault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372D9B19A11E10D4CD1002D /* Vault.swift */; };
 		74BA5C38204091668AFD48DC /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0A160B829D262A48C12542 /* KeyboardView.swift */; };
+		840436A47AA75E8CA508C4B6 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57A355F592BAB5FCFE18190 /* WalletView.swift */; };
 		86522BDC05010DA5622CD4D3 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B15209E5CFB080BC92DA76D /* Components.swift */; };
 		86F1F77CD21B8621B052801F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602E65F915BF5CB7CA8F9B37 /* Models.swift */; };
 		93C5563DAAEB0C5006FB53FB /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
@@ -37,6 +39,7 @@
 		BFDF1177B79E8A06313E81B7 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
 		C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1ED72AD170088D3999341D5 /* CommandSheet.swift */; };
 		C432680CE757B1F296C7A8AC /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
+		CF12F7BC9D2F918CC62FB1DD /* Kit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */; };
 		CF383AE8E9C2FBFCC86CBEE6 /* Vault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372D9B19A11E10D4CD1002D /* Vault.swift */; };
 		D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE30351773DFCF5713DBF24A /* DeviceKey.swift */; };
 		D3E21B1D6AA1AE8340A9B476 /* Words.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6ED6DB63E06B6DB3DB0A8 /* Words.swift */; };
@@ -71,10 +74,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTab.swift; sourceTree = "<group>"; };
 		1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirm.swift; sourceTree = "<group>"; };
 		235D82802F01F7286217056B /* AgentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsView.swift; sourceTree = "<group>"; };
 		27032A1EC0496215FA221E2E /* AirKey.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AirKey.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2848176EB456D3E16DCE29B2 /* AirKeyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirKeyApp.swift; sourceTree = "<group>"; };
+		2C789ADED35D8C14B662DF37 /* SwapCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapCard.swift; sourceTree = "<group>"; };
 		2DF89A02FA1B292BF5E5BE5A /* API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = API.swift; sourceTree = "<group>"; };
 		35390853D03FDF49B2568811 /* AirKey.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AirKey.entitlements; sourceTree = "<group>"; };
 		38827B21096CE8DA8AB2FE61 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -95,12 +100,13 @@
 		B372D9B19A11E10D4CD1002D /* Vault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vault.swift; sourceTree = "<group>"; };
 		BE0A160B829D262A48C12542 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
 		BE82DAB9B756AF51443152AD /* Instant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Instant.swift; sourceTree = "<group>"; };
-		C554356C064E910AACA9AF32 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AirKeyKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9851A9A472BEEA624723FBC /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		DF85E248A9A14144C071BC8E /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		E1ED72AD170088D3999341D5 /* CommandSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSheet.swift; sourceTree = "<group>"; };
 		E1F81127BD0FC8E23110F7C6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E57A355F592BAB5FCFE18190 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kit.swift; sourceTree = "<group>"; };
 		F76815909587B9263F41E788 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		FCC5173F4853BB06FDF38E4C /* LeashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -110,8 +116,16 @@
 			isa = PBXGroup;
 			children = (
 				7B15209E5CFB080BC92DA76D /* Components.swift */,
+				F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		0D67CEC6ECCD3EB698F5599E /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
 			sourceTree = "<group>";
 		};
 		189699E195BCCCA4A9E0B0FB /* AirKey */ = {
@@ -124,10 +138,18 @@
 				AE30351773DFCF5713DBF24A /* DeviceKey.swift */,
 				38827B21096CE8DA8AB2FE61 /* Info.plist */,
 				AF41A04D107BDF975DB721DC /* RootView.swift */,
+				0D67CEC6ECCD3EB698F5599E /* .claude */,
 				09770E26BBCCB4EA757F7D26 /* Components */,
 				22AAAB9198B7E413FE4CC2D8 /* Screens */,
 			);
 			path = AirKey;
+			sourceTree = "<group>";
+		};
+		1955E37AC411BC4F0D5B799E /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
 			sourceTree = "<group>";
 		};
 		22AAAB9198B7E413FE4CC2D8 /* Screens */ = {
@@ -135,10 +157,12 @@
 			children = (
 				235D82802F01F7286217056B /* AgentsView.swift */,
 				E1ED72AD170088D3999341D5 /* CommandSheet.swift */,
-				C554356C064E910AACA9AF32 /* HomeView.swift */,
+				1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */,
 				FCC5173F4853BB06FDF38E4C /* LeashView.swift */,
 				50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */,
 				9BF871A3D5082D0B29BC2457 /* SettingsView.swift */,
+				2C789ADED35D8C14B662DF37 /* SwapCard.swift */,
+				E57A355F592BAB5FCFE18190 /* WalletView.swift */,
 			);
 			path = Screens;
 			sourceTree = "<group>";
@@ -161,6 +185,7 @@
 				BE0A160B829D262A48C12542 /* KeyboardView.swift */,
 				41A268554547ABD1D29F4116 /* KeyboardViewController.swift */,
 				7AC6ED6DB63E06B6DB3DB0A8 /* Words.swift */,
+				1955E37AC411BC4F0D5B799E /* .claude */,
 			);
 			path = AirKeyKeyboard;
 			sourceTree = "<group>";
@@ -318,17 +343,20 @@
 				D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */,
 				BD60A00EB851372B06F1E92C /* Format.swift in Sources */,
 				B306D3258734682B66A65CE5 /* HoldToConfirm.swift in Sources */,
-				000C52470CDAD2D90C62C217 /* HomeView.swift in Sources */,
 				AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */,
 				59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */,
+				2E256D8868B5317D3D70F172 /* KeyboardTab.swift in Sources */,
+				CF12F7BC9D2F918CC62FB1DD /* Kit.swift in Sources */,
 				5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */,
 				DADE104895F822FF5FE891E0 /* Logo.swift in Sources */,
 				86F1F77CD21B8621B052801F /* Models.swift in Sources */,
 				DDA74E2BD4FEFDAC97BD1578 /* ReceiptsView.swift in Sources */,
 				298CD3FA72975045D5D78551 /* RootView.swift in Sources */,
 				087EFF821ECA87156E7C140D /* SettingsView.swift in Sources */,
+				5597B89D3880E309D9E14D9D /* SwapCard.swift in Sources */,
 				202A662AC2A67C19FF48A88E /* Theme.swift in Sources */,
 				CF383AE8E9C2FBFCC86CBEE6 /* Vault.swift in Sources */,
+				840436A47AA75E8CA508C4B6 /* WalletView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
