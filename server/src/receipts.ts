@@ -33,6 +33,8 @@ export interface Receipt {
   /** A price-triggered order this command created. */
   order?: { id: string; symbol: string; direction: "below" | "above"; price: number; priceThen: number; command: string };
   message: string;
+  /** The same thing in plain words, with no rule codes: what the keyboard and the app show first. */
+  summary?: string;
   tx?: { hash: string; url: string };
   events?: unknown[];
 }
