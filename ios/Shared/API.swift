@@ -6,12 +6,26 @@ enum Settings {
     static let group = "group.tech.airkey.shared"
     static var store: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 
+    /// A value the build put in Info.plist (AIRKEY_SERVER, AIRKEY_TOKEN), or nil.
+    private static func baked(_ key: String) -> String? {
+        (Bundle.main.object(forInfoDictionaryKey: key) as? String).flatMap { $0.isEmpty || $0.hasPrefix("$(") ? nil : $0 }
+    }
+
+    /// A new build with a new server drops the address and token saved for the old one.
+    private static func adoptBuild() {
+        let built = baked("AirkeyServer") ?? ""
+        guard store.string(forKey: "builtServer") != built else { return }
+        store.removeObject(forKey: "serverURL")
+        store.removeObject(forKey: "token")
+        store.set(built, forKey: "builtServer")
+    }
+
     static var serverURL: String {
-        get { store.string(forKey: "serverURL") ?? (Bundle.main.object(forInfoDictionaryKey: "AirkeyServer") as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "http://127.0.0.1:8787" }
+        get { adoptBuild(); return store.string(forKey: "serverURL") ?? baked("AirkeyServer") ?? "http://127.0.0.1:8787" }
         set { store.set(newValue, forKey: "serverURL") }
     }
     static var token: String {
-        get { store.string(forKey: "token") ?? "" }
+        get { adoptBuild(); return store.string(forKey: "token") ?? baked("AirkeyToken") ?? "" }
         set { store.set(newValue, forKey: "token") }
     }
     static var name: String {

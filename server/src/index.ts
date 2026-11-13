@@ -61,5 +61,5 @@ const warm = () => {
 warm();
 setInterval(warm, 60_000).unref();
 
-await app.listen({ port: cfg.port, host: "0.0.0.0" });
+await app.listen({ port: cfg.port, host: process.env.HOST ?? "0.0.0.0" });
 console.log(`AIRKEY server on :${cfg.port} · ${cfg.network} · leash ${cfg.leash} · AI ${cfg.nearAi.apiKey ? "NEAR AI Cloud (private)" : cfg.openAi.apiKey ? `OpenAI ${cfg.openAi.model}` : "off"} · auth ${cfg.apiToken ? "on" : "off"}`);
