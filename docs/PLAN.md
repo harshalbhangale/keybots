@@ -4,7 +4,7 @@
 
 **Tagline:** Your AI. Your keys. Your rules.
 
-> This is the team's product plan: the full vision. What is built today, with proof, is in the [README](../README.md). Where this plan says "rebrand Glyf", the team has since decided to build AIRKEY as a new codebase from scratch, with Glyf as a design reference only.
+> This is the team's product plan: the full vision. What is built today, with proof, is in the [README](../README.md). AIRKEY builds on pre-hackathon code from Glyf (the keyboard core) and Kall Markets (haptics, hold to confirm, app design); the README lists exactly what came from each.
 
 ## 1. The vision
 
