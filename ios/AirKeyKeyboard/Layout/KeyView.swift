@@ -43,10 +43,6 @@ final class KeyView: UIControl {
     private var legendExtras: [LegendExtra] = []
     private var foilView: GradientView?
     let tintLayer = CALayer()          // ripple overlay, opacity 0 at rest
-    /// AIRKEY's lime side tab, on the P key only: the brand, as on the logo.
-    /// The key types a p and nothing else.
-    private let brandTab = CALayer()
-    private var hasBrandTab: Bool { spec.char == "p" && !spec.pad }
     private var chargeRing: CAShapeLayer?
 
     var isBound = false { didSet { updateBinding() } }
@@ -105,10 +101,6 @@ final class KeyView: UIControl {
         accentDot.isHidden = true
         layer.addSublayer(accentDot)
 
-        brandTab.backgroundColor = Glass.accentPrimary.cgColor
-        brandTab.isHidden = !hasBrandTab
-        layer.addSublayer(brandTab)
-
         updateFace()
         updateFill(pressed: false)
 
@@ -151,11 +143,6 @@ final class KeyView: UIControl {
         tintLayer.frame = bounds
         accentDot.frame = CGRect(x: bounds.width - 10.5, y: 5.5, width: 5, height: 5)
         accentDot.cornerRadius = 2.5
-        if hasBrandTab {
-            let h = min(16, bounds.height * 0.38)
-            brandTab.frame = CGRect(x: bounds.width - 6, y: (bounds.height - h) / 2, width: 3, height: h)
-            brandTab.cornerRadius = 1.5
-        }
         layer.shadowPath = UIBezierPath(
             roundedRect: bounds, cornerRadius: Glass.radiusKey).cgPath
     }
@@ -355,7 +342,6 @@ final class KeyView: UIControl {
             self.foilView?.alpha = alpha
         }
         accentDot.opacity = Float(alpha)
-        brandTab.opacity = Float(alpha)
     }
 
     func setShiftState(_ state: ShiftState) {
