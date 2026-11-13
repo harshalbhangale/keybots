@@ -9,7 +9,8 @@
     "add-device": "node add-device-key.mjs",
     "add-trader": "node add-trading-agent.mjs",
     "setup-swaps": "node setup-swaps.mjs",
-    "demo-reset": "node demo-reset.mjs"
+    "demo-reset": "node demo-reset.mjs",
+    "demo-runs": "node demo-runs.mjs"
   },
   "dependencies": {
     "near-api-js": "^7.5.3"
