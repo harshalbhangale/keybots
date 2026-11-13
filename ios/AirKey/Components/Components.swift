@@ -176,22 +176,18 @@ struct ApprovalCard: View {
                 Button(role: .destructive) {
                     Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(pending.receiver)") }
                 } label: {
-                    Text(model.busy == "reject" ? "Rejecting…" : "Reject")
-                        .font(.body.weight(.semibold))
-                        .padding(.horizontal, 22)
-                        .frame(height: 50)
-                        .contentShape(Capsule())
+                    Text(model.busy == "reject" ? "…" : "REJECT")
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(AK.bone)
-                .glassEffect(.regular.interactive(), in: .capsule)
+                .buttonStyle(BigButtonStyle(primary: false, height: 50))
+                .frame(width: 104)
                 .disabled(working)
 
                 // Approving pays someone, so it takes a hold, then Face ID.
                 HoldToConfirm(
-                    label: model.busy == "approve" ? "Signing…" : "Hold to approve",
+                    label: model.busy == "approve" ? "SIGNING…" : "HOLD TO APPROVE",
                     icon: "faceid",
                     height: 50,
+                    font: .system(size: 14, weight: .heavy),
                     disabled: working
                 ) {
                     Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(pending.receiver)") }
