@@ -107,7 +107,9 @@ final class AgentModel {
         if let putAwayFor, putAwayFor == text { return }
         putAwayFor = nil
         // One thing at a time: a command first, then a lookup, then a sum.
-        look(up: ready == nil ? Ask.read(text) : nil)
+        // A conversion the keyboard already worked out ("50 usd in inr") is
+        // not asked of the server again: its chip is up, with no flip.
+        look(up: ready == nil && !answered ? Ask.read(text) : nil)
         let sum = ready == nil && asking == nil && !answered ? Instant.read(text) : nil
         if sum != instant { instant = sum }
     }
@@ -245,7 +247,10 @@ final class AgentModel {
     func runPasted() {
         guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY to check what you copied."; return }
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
-            notice = "Copy a message first, then tap Check."
+            // A keyboard can't show iOS's "Allow Paste" prompt, so a refused read looks like an empty clipboard.
+            notice = UIPasteboard.general.hasStrings
+                ? "To check copied text: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                : "Copy a message first, then tap Check."
             return
         }
         send(text, source: "pasted")
@@ -274,7 +279,11 @@ final class AgentModel {
     /// Put the receipt into the chat, so the other person sees it too.
     func insertReceipt() {
         guard let r = result else { return }
-        var line = "AIRKEY · \(r.signal.word.capitalized): \(r.message)"
+        // Most messages already say what happened ("Paid…", "Swapped…", "Blocked by the leash…");
+        // the outcome word goes first only when the message doesn't start with it.
+        let word = r.signal.word.capitalized
+        let says = r.signal == .allow || r.message.lowercased().hasPrefix(word.lowercased().trimmingCharacters(in: .punctuationCharacters))
+        var line = says ? "AIRKEY · \(r.message)" : "AIRKEY · \(word): \(r.message)"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         host?.agentInsert(line, spaced: true)

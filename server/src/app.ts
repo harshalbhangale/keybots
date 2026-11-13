@@ -1,5 +1,6 @@
 import Fastify from "fastify";
-import { describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
+import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
+import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
@@ -160,6 +161,27 @@ export function buildApp(deps: Deps) {
       return await deps.owner.submit(tx, signature);
     } catch (e) {
       return reply.code(e instanceof UserError ? 400 : 502).send({ error: (e as Error).message.slice(0, 300) });
+    }
+  });
+
+  /**
+   * The keyboard's AI bar: rewrite, reply, translate, tone or ask, on the
+   * text in the field. Only the text comes back, with who answered; the
+   * keyboard never puts it in by itself.
+   */
+  app.post<{ Body: { text?: unknown; action?: unknown; tone?: unknown; language?: unknown } }>("/v1/act", async (req, reply) => {
+    const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+    const action = req.body?.action as ActAction;
+    if (!text || !ACT_ACTIONS.includes(action)) {
+      return reply.code(400).send({ error: `Send {"text": "...", "action": "${ACT_ACTIONS.join('" | "')}"}` });
+    }
+    const tone = typeof req.body?.tone === "string" ? req.body.tone : undefined;
+    const language = typeof req.body?.language === "string" ? req.body.language : undefined;
+    try {
+      return await act({ text, action, tone, language }, aiReaders(deps.cfg));
+    } catch (e) {
+      if (e instanceof ActUnavailable) return reply.code(503).send({ error: e.message });
+      return reply.code(502).send({ error: `The AI didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
   });
 
