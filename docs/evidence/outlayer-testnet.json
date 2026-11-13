@@ -1,0 +1,126 @@
+{
+  "at": "2026-11-13T09:16:00.112Z",
+  "leash": "leash.airkey-harshal.testnet",
+  "agents": {
+    "trusted": "d8dc39a816372c3ad171de47b26f331330884b8cdaa58e8bebb347686c96b1f9",
+    "untrusted": "e74de3f95b541381f905defb0e47ff1401954541dfc1055bd138ee40baa2c627",
+    "trade": "a3b5fd06b6eeab944af0c881e4651412bb5cc1423fdf13eca00c2ef4333b9ad8"
+  },
+  "1_pay_through_outlayer": {
+    "agent": "d8dc39a816372c3ad171de47b26f331330884b8cdaa58e8bebb347686c96b1f9",
+    "receiver": "friend.airkey-harshal.testnet",
+    "amount": "0.01 NEAR",
+    "decision": {
+      "status": "paid",
+      "rule": null,
+      "reason": "Within your rules",
+      "pending_id": null
+    },
+    "events": [
+      {
+        "standard": "airkey",
+        "version": "1.0.0",
+        "event": "paid",
+        "data": [
+          {
+            "agent": "d8dc39a816372c3ad171de47b26f331330884b8cdaa58e8bebb347686c96b1f9",
+            "receiver": "friend.airkey-harshal.testnet",
+            "amount": "10000000000000000000000",
+            "memo": "OutLayer custody proof"
+          }
+        ]
+      }
+    ],
+    "tx": "https://testnet.nearblocks.io/txns/HirZn4VK47ftSXgCpG7ymsVichUEXhiKMduHkCS3Jq77"
+  },
+  "2_pasted_scam_through_outlayer": {
+    "agent": "e74de3f95b541381f905defb0e47ff1401954541dfc1055bd138ee40baa2c627",
+    "receiver": "drain.airkey-harshal.testnet",
+    "decision": {
+      "status": "blocked",
+      "rule": "R3",
+      "reason": "drain.airkey-harshal.testnet is blocked: reported by inbox.airkey-harshal.testnet: asked for an urgent payment to unlock an account",
+      "pending_id": null
+    },
+    "events": [
+      {
+        "standard": "airkey",
+        "version": "1.0.0",
+        "event": "blocked",
+        "data": [
+          {
+            "agent": "e74de3f95b541381f905defb0e47ff1401954541dfc1055bd138ee40baa2c627",
+            "receiver": "drain.airkey-harshal.testnet",
+            "amount": "10000000000000000000000",
+            "memo": "urgent: unlock your account",
+            "rule": "R3",
+            "reason": "drain.airkey-harshal.testnet is blocked: reported by inbox.airkey-harshal.testnet: asked for an urgent payment to unlock an account"
+          }
+        ]
+      }
+    ],
+    "tx": "https://testnet.nearblocks.io/txns/AqUBD8JtATSxhsgGmuiYFKNq4QZW3vqcTVSiXqL648Fu"
+  },
+  "3_over_cap_through_outlayer": {
+    "agent": "d8dc39a816372c3ad171de47b26f331330884b8cdaa58e8bebb347686c96b1f9",
+    "amount": "0.6 NEAR",
+    "decision": {
+      "status": "blocked",
+      "rule": "R4",
+      "reason": "Over the per-payment cap of 0.5 NEAR",
+      "pending_id": null
+    },
+    "tx": "https://testnet.nearblocks.io/txns/C8ciirrhnL88funddjo1gjBSzrmcQSxarwdsYdGBaCgf"
+  },
+  "4_agent_calls_owner_method_withdraw": {
+    "agent": "e74de3f95b541381f905defb0e47ff1401954541dfc1055bd138ee40baa2c627",
+    "status": 422,
+    "body": {
+      "error": "onchain_tx_failed",
+      "message": "Smart contract panicked: Only the owner can do this",
+      "tx_hash": "B5BnuEkss1gi7PcAjD1i5geCTGSuosnXNzdBpaff8fhK",
+      "failure": {
+        "ActionError": {
+          "index": 0,
+          "kind": {
+            "FunctionCallError": {
+              "ExecutionError": "Smart contract panicked: Only the owner can do this"
+            }
+          }
+        }
+      }
+    }
+  },
+  "5_agent_transfers_its_gas_money_out": {
+    "status": 403,
+    "body": {
+      "error": "policy_denied",
+      "message": "Transaction type 'transfer' is not allowed by policy"
+    }
+  },
+  "6_agent_calls_another_contract": {
+    "status": 403,
+    "body": {
+      "error": "policy_denied",
+      "message": "Address 'wrap.testnet' is not in whitelist"
+    }
+  },
+  "7_policy_as_outlayer_reports_it": {
+    "status": 200,
+    "controller": "ed25519:e74de3f95b541381f905defb0e47ff1401954541dfc1055bd138ee40baa2c627",
+    "frozen": false,
+    "policy": "stored",
+    "version": 1,
+    "rules": {
+      "addresses": {
+        "list": [
+          "leash.airkey-harshal.testnet"
+        ],
+        "mode": "whitelist"
+      },
+      "transaction_types": [
+        "call"
+      ]
+    }
+  }
+}
