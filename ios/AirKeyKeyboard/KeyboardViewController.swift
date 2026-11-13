@@ -877,7 +877,9 @@ final class KeyboardViewController: UIInputViewController {
             break
         }
         applySurfaceLayout(animated: animated)
-        if new == .none { updateCandidates() }
+        // Back on the keys: the strip is about the field again (a glide's
+        // other guesses while the caret is still after it).
+        if new == .none { scheduleCandidates() }
     }
 
     // MARK: Text context
@@ -1953,7 +1955,10 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     /// A tap on another guess swaps the glided word for it.
     private func glideSwap(_ suggestion: KeyToolbar.Suggestion) -> Bool {
-        guard suggestion.kind == .word, let g = glide, g.isCurrent(before: beforeContext) else { return false }
+        // Only one of the glide's own guesses: a next-word prediction shown
+        // in the same slots (after a panel closed, say) is a new word.
+        guard suggestion.kind == .word, let g = glide, g.isCurrent(before: beforeContext),
+              g.alternatives.contains(suggestion.text) else { return false }
         hostDelete(g.deleteCount)
         hostInsert(suggestion.text + " ")
         let anchor = beforeContext ?? ""
