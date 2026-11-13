@@ -205,6 +205,7 @@ final class AgentModel {
         primed = false
         guard host?.agentHasFullAccess == true else { return }
         if Tokens.stale { Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } } }
+        Task { await Vault.pull() }
         if Contacts.stale || Contacts.accounts.isEmpty || Vault.owner == nil {
             Task {
                 guard let s = try? await API().state() else { return }
@@ -417,6 +418,13 @@ final class AgentModel {
     /// Show your NEAR account and saved addresses in the strip.
     func openVault() {
         vaultItems = Vault.all
+        if host?.agentHasFullAccess == true {
+            Task { @MainActor in
+                await Vault.pull()
+                vaultItems = Vault.all
+                if !vaultItems.isEmpty { notice = nil }
+            }
+        }
         guard !vaultItems.isEmpty else {
             notice = "Add addresses in the AIRKEY app, in Settings › Vault."
             return
