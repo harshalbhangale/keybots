@@ -14,11 +14,14 @@ const NS_PER_DAY: u64 = 86_400_000_000_000;
 const GAS_FOR_CALLBACK: Gas = Gas::from_tgas(10);
 /// Wrapped-NEAR contracts a swap may use, so an agent can't name a fake one.
 const WRAP: [&str; 2] = ["wrap.near", "wrap.testnet"];
-const GAS_FOR_WRAP: Gas = Gas::from_tgas(10);
-const GAS_FOR_SEND: Gas = Gas::from_tgas(150);
+// A swap fits in 200 TGas, so an agent's key (0.25 NEAR allowance) can afford
+// the upfront gas reservation: wrap 5, then 170 for the send (140, enough for a
+// one-pool Rhea swap and its payout) and the last callback.
+const GAS_FOR_WRAP: Gas = Gas::from_tgas(5);
+const GAS_FOR_SEND: Gas = Gas::from_tgas(140);
 const GAS_FOR_STORAGE: Gas = Gas::from_tgas(10);
 /// Gas the step after wrapping gets: the send, storage if needed, and the last callback.
-const GAS_FOR_ON_WRAPPED: Gas = Gas::from_tgas(190);
+const GAS_FOR_ON_WRAPPED: Gas = Gas::from_tgas(170);
 /// What a NEP-145 storage registration costs on wrap.near.
 const FT_STORAGE: NearToken = NearToken::from_micronear(1_250);
 const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
