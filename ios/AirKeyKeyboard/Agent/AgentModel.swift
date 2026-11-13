@@ -274,7 +274,8 @@ final class AgentModel {
     /// Put the receipt into the chat, so the other person sees it too.
     func insertReceipt() {
         guard let r = result else { return }
-        var line = "AIRKEY · \(r.signal.word.capitalized): \(r.message)"
+        // A success already says what happened ("Paid…", "Swapped…"); other outcomes get their word.
+        var line = r.signal == .allow ? "AIRKEY · \(r.message)" : "AIRKEY · \(r.signal.word.capitalized): \(r.message)"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         host?.agentInsert(line, spaced: true)
