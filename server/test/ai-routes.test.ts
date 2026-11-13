@@ -274,6 +274,30 @@ group("search", () => {
     const r = await app(f, {}, { SERPER_API_KEY: "k" }).a.inject({ method: "POST", url: "/v1/search", payload: { query: "capital of france" } });
     expect(r.json()).toMatchObject({ provider: "google", answer: { value: "Paris", source: "en.wikipedia.org" }, cards: [{ domain: "paris.fr" }] });
   });
+
+  it("searches YouTube videos, and keeps only YouTube links", async () => {
+    const f = fakeFetch({
+      search: {
+        videos: [
+          { title: "Dune: Part Two | Official Trailer", link: "https://www.youtube.com/watch?v=Way9Dexny3w", channel: "Warner Bros.", duration: "2:25", date: "May 3, 2023" },
+          { title: "Elsewhere", link: "https://evil.example/watch?v=1", channel: "x" },
+          { title: "Fake", link: "https://youtube.com.evil.example/watch?v=1" },
+        ],
+      },
+    });
+    const r = await app(f, {}, { SERPER_API_KEY: "k" }).a.inject({ method: "POST", url: "/v1/search", payload: { query: "dune 2 trailer", kind: "youtube" } });
+    expect(f.urls.some((u) => u.endsWith("/videos"))).toBe(true);
+    expect(r.json()).toEqual({
+      provider: "youtube",
+      answer: null,
+      cards: [{ id: "youtube-0", title: "Dune: Part Two | Official Trailer", url: "https://www.youtube.com/watch?v=Way9Dexny3w", domain: "Warner Bros. · 2:25", snippet: "May 3, 2023" }],
+    });
+  });
+
+  it("says YouTube needs the Serper key", async () => {
+    const r = await app(fakeFetch({}), {}, {}).a.inject({ method: "POST", url: "/v1/search", payload: { query: "x", kind: "youtube" } });
+    expect(r.statusCode).toBe(501);
+  });
 });
 
 group("my glyfs", () => {

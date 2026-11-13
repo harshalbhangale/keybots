@@ -11,7 +11,7 @@ import { AiUnavailable, answered, openEvents, streamChat } from "./ai-stream.js"
 import { rewriteVersions } from "./ai-rewrite.js";
 import { RecentAnswers, TRANSLATE_MAX, languageWord, translate, type TranslateResult } from "./ai-translate.js";
 import { readsAsMoney, suggest } from "./ai-suggest.js";
-import { SearchNeedsKey, searchProvider, searchWeb, type SearchEnv } from "./ai-search.js";
+import { SearchNeedsKey, searchProvider, searchWeb, searchYouTube, type SearchEnv } from "./ai-search.js";
 import { GlyfError, STARTER_GLYFS, buildGlyf, fileGlyfs, runGlyf, type GlyfStore } from "./ai-glyfs.js";
 
 export interface AiRouteDeps {
@@ -154,10 +154,12 @@ export function aiRoutes(app: FastifyInstance, deps: CommandDeps & AiRouteDeps):
   });
 
   /** Search the web from the keyboard: an answer when there is one, and a few results as cards. */
-  app.post<{ Body: { query?: unknown } }>("/v1/search", async (req, reply) => {
+  /** `kind: "youtube"` searches YouTube videos instead of the web. */
+  app.post<{ Body: { query?: unknown; kind?: unknown } }>("/v1/search", async (req, reply) => {
     const query = typeof req.body?.query === "string" ? req.body.query.trim().slice(0, 200) : "";
     if (!query) return reply.code(400).send({ error: 'Send {"query": "..."}' });
     try {
+      if (req.body?.kind === "youtube") return await searchYouTube(query, deps.searchEnv, net);
       return await searchWeb(query, deps.searchEnv, net);
     } catch (e) {
       if (e instanceof SearchNeedsKey) return reply.code(501).send({ error: e.message, needsKey: true });
