@@ -25,7 +25,7 @@ export interface Deps {
 export function aiReaders(cfg: Config): AiConfig[] {
   const out: AiConfig[] = [];
   if (cfg.nearAi.apiKey) out.push({ provider: "near-ai-cloud", ...cfg.nearAi });
-  if (cfg.openAi?.apiKey) out.push({ provider: "openai", ...cfg.openAi });
+  if (cfg.openAi?.apiKey && cfg.aiFallback !== "off") out.push({ provider: "openai", ...cfg.openAi });
   return out;
 }
 
@@ -199,6 +199,14 @@ async function swap(
   // A deployment without a Trading Agent falls back to the Payment Agent's caps.
   const nearPrice = (await deps.intents.tokens()).find((t) => t.assetId === "nep141:wrap.near")?.price;
   const usd = Number(quote.amountInUsd ?? 0);
+  // Mainnet spends real money: a hard ceiling in dollars, before anything else.
+  if (deps.cfg.network === "mainnet" && !(usd > 0 && usd <= deps.cfg.mainnetUsdCap)) {
+    return done({
+      outcome: "blocked",
+      message: `On mainnet AIRKEY swaps at most $${deps.cfg.mainnetUsdCap}${usd > 0 ? `; this is about $${usd.toFixed(2)}` : ", and NEAR Intents gave no dollar value"}.`,
+      swap: { from, to, quote },
+    });
+  }
   const state = await deps.chain.state();
   const agent = state.agents.some((x) => x.account === deps.cfg.agents.trade) ? deps.cfg.agents.trade : deps.cfg.agents.trusted;
   let leash: NonNullable<Receipt["swap"]>["leash"];

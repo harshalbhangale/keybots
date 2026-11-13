@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { nearChain } from "./near.js";
+import { outlayerChain } from "./outlayer.js";
 import { fileStore } from "./receipts.js";
 import { ownerActions } from "./owner.js";
 import { intentsClient } from "./intents.js";
@@ -9,10 +10,16 @@ import { ratesClient } from "./rates.js";
 import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
 
+// server/.env (gitignored) for keys and switches, when it's there.
+try {
+  process.loadEnvFile(new URL("../.env", import.meta.url));
+} catch {
+  // No .env: the environment and keys/ are enough.
+}
 const cfg = loadConfig();
 const deps = {
   cfg,
-  chain: nearChain(cfg),
+  chain: process.env.AIRKEY_SIGNER === "outlayer" ? outlayerChain(cfg, nearChain(cfg)) : nearChain(cfg),
   receipts: fileStore(cfg.dataDir),
   owner: ownerActions(cfg),
   intents: intentsClient({ jwt: process.env.ONECLICK_JWT, recipient: process.env.AIRKEY_INTENTS_ACCOUNT ?? cfg.owner }),
@@ -41,5 +48,14 @@ setInterval(async () => {
     looking = false;
   }
 }, WATCH_MS).unref();
+// Keep the slow lookups warm so the keyboard's chips come up fast: NEAR
+// Intents' token list (refetched before it goes stale) and the leash's state.
+const warm = () => {
+  deps.intents.tokens(4 * 60_000).catch(() => {});
+  deps.chain.state().catch(() => {});
+};
+warm();
+setInterval(warm, 60_000).unref();
+
 await app.listen({ port: cfg.port, host: "0.0.0.0" });
 console.log(`AIRKEY server on :${cfg.port} · ${cfg.network} · leash ${cfg.leash} · AI ${cfg.nearAi.apiKey ? "NEAR AI Cloud (private)" : cfg.openAi.apiKey ? `OpenAI ${cfg.openAi.model}` : "off"} · auth ${cfg.apiToken ? "on" : "off"}`);

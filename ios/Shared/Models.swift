@@ -15,6 +15,29 @@ struct LeashState: Decodable {
     let contacts: [String: String]
     /// Tokens the leash holds (swaps land back in it). Missing on older servers.
     let holdings: [Holding]?
+    /// The agent accounts this server signs for, by role. Missing on older servers.
+    let active: Roles?
+
+    struct Roles: Decodable {
+        let trusted: String
+        let untrusted: String
+        let trade: String
+    }
+
+    /// The agents this server uses: the leash may list more (the named set
+    /// and OutLayer's), and only the active three are shown.
+    var shownAgents: [AgentEntry] {
+        guard let active else { return agents }
+        let mine = [active.trusted, active.untrusted, active.trade]
+        let shown = agents.filter { mine.contains($0.account) }
+        return shown.isEmpty ? agents : shown
+    }
+
+    /// Account → role name, for agents whose account name says nothing (OutLayer's hex accounts).
+    var roleNames: [String: String] {
+        guard let active else { return [:] }
+        return [active.trusted: "Payment Agent", active.untrusted: "Inbox Agent", active.trade: "Trading Agent"]
+    }
 
     struct Holding: Decodable, Identifiable {
         let symbol: String
@@ -215,4 +238,43 @@ struct ActResult: Decodable, Sendable {
         default: provider
         }
     }
+}
+
+/// A copied crypto call, read by the server's rules (POST /v1/call).
+struct CallCheck: Decodable {
+    struct Call: Decodable {
+        let isCall: Bool
+        let confidence: String
+        let asset: String?
+        let direction: String?
+        let summary: String
+    }
+    struct Caps: Decodable {
+        let agent: String
+        let perTrade: String
+        let leftToday: String
+        let paused: Bool
+        let within: Bool?
+    }
+    /// NEAR Intents' dry quote for the token the call names.
+    struct Quote: Decodable {
+        let amountIn: String
+        let amountOut: String
+        let symbolOut: String
+    }
+    /// "available" with the command a hold would send, or "unavailable" with why not.
+    struct Route: Decodable {
+        let status: String
+        let side: String?
+        let command: String?
+        let title: String?
+        let caps: Caps?
+        let quote: Quote?
+        /// What the hold runs instead of the title, when it does (testnet has no SOL).
+        let standIn: String?
+        let note: String?
+        let reason: String?
+    }
+    let call: Call
+    let route: Route
 }

@@ -84,6 +84,10 @@ struct API {
         return try await post("/v1/act", body)
     }
 
+    /// A copied crypto call: what it says and the one small trade it could
+    /// be. Runs nothing.
+    func call(_ text: String) async throws -> CallCheck { try await post("/v1/call", ["text": text]) }
+
     private func request(_ path: String) throws -> URLRequest {
         guard let url = URL(string: base.trimmingCharacters(in: .whitespaces) + path) else {
             throw APIError(message: "The server address in Settings isn't a URL.")

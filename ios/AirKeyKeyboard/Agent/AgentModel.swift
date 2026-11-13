@@ -37,6 +37,9 @@ final class AgentModel {
         let detail: String?
         let verb: String
         var command: String? = nil
+        /// Short lines the strip turns through under the title, one at a
+        /// time (a copied call's checks), in place of `detail`.
+        var lines: [String] = []
 
         var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
         var holdLabel: String { "Hold to \(verb)" }
@@ -51,7 +54,7 @@ final class AgentModel {
     /// The command the strip offers to run, if any.
     var ready: Ready? {
         if let intent { return Ready(kind: intent.kind, title: intent.title, detail: intent.detail, verb: intent.verb) }
-        return readIntent
+        return readIntent ?? callIntent
     }
     /// A sum, a percentage or a bill split worked out on the phone, when the
     /// keyboard's own answers had nothing for the text.
@@ -67,11 +70,15 @@ final class AgentModel {
     /// The vault row is open in the strip, with what it offers.
     var vaultOpen = false
     var vaultItems: [Vault.Item] = []
+    /// The trade a copied crypto call could be, ready to hold (POST /v1/call).
+    var callIntent: Ready?
+    /// The paste guard: an address that arrived whole and isn't one you know.
+    var pasteWarning: String?
 
     /// True while the strip is the agent's (the toolbar's otherwise).
     var isShowing: Bool {
         result != nil || notice != nil || running != nil || vaultOpen
-            || ready != nil || answer != nil || instant != nil
+            || ready != nil || answer != nil || instant != nil || pasteWarning != nil
     }
 
     @ObservationIgnored weak var host: AgentHost?
@@ -94,12 +101,20 @@ final class AgentModel {
     /// was put away for: it stays away until the text changes.
     @ObservationIgnored private var lastText = ""
     @ObservationIgnored private var putAwayFor: String?
+    /// What the agents just put in the message themselves (a receipt, an
+    /// address from the vault), so the paste guard lets it be.
+    @ObservationIgnored private var ownInsert: String?
+    /// False until the first read after the keyboard opens: a draft that's
+    /// already in the field was not pasted just now.
+    @ObservationIgnored private var primed = false
+    @ObservationIgnored private var warnedAddress: String?
 
     // MARK: Reading the field
 
     /// Called whenever the text settles. `answered` is true when the
     /// keyboard's own strip already has an answer for it (a sum, a unit).
     func read(_ text: String, answered: Bool) {
+        guardPaste(old: lastText, new: text)
         lastText = text
         let next = Intent.read(text)
         if next != intent { intent = next }
@@ -185,9 +200,10 @@ final class AgentModel {
     /// Keep the list of real token symbols fresh (NEAR Intents' list, by way
     /// of the server), the names in your contacts and your NEAR account.
     func refreshTokens() {
+        primed = false
         guard host?.agentHasFullAccess == true else { return }
         if Tokens.stale { Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } } }
-        if Contacts.stale || Vault.owner == nil {
+        if Contacts.stale || Contacts.accounts.isEmpty || Vault.owner == nil {
             Task {
                 guard let s = try? await API().state() else { return }
                 Contacts.save(s.contacts)
@@ -226,7 +242,11 @@ final class AgentModel {
     /// The hold on the strip's button: the command it shows.
     func runReady() {
         Haptics.hold()
-        if let command = ready?.command { runCommand(command) } else { runTyped() }
+        if intent == nil, readIntent == nil, let call = callIntent, let command = call.command {
+            // A copied call's trade: the message box keeps whatever is in it.
+            send(command, source: "typed")
+            callIntent = nil
+        } else if let command = ready?.command { runCommand(command) } else { runTyped() }
     }
 
     /// A command the server read out of what was typed: it runs, and what
@@ -253,7 +273,63 @@ final class AgentModel {
                 : "Copy a message first, then tap Check."
             return
         }
-        send(text, source: "pasted")
+        checkCall(text)
+    }
+
+    /// A copied message. A crypto call becomes a trade chip to hold, its
+    /// token checked on NEAR Intents and its size under the leash's caps (or
+    /// one line saying why not); anything else goes to the untrusted Inbox Agent.
+    private func checkCall(_ text: String) {
+        notice = nil
+        result = nil
+        callIntent = nil
+        running = "pasted"
+        Task {
+            let check = try? await API().call(text)
+            running = nil
+            guard let check, check.call.isCall else { send(text, source: "pasted"); return }
+            let r = check.route
+            guard r.status == "available", let command = r.command, let title = r.title else {
+                notice = r.reason ?? check.call.summary
+                Haptics.warning()
+                return
+            }
+            callIntent = Ready(kind: .swap, title: title, detail: nil, verb: r.side == "sell" ? "sell" : "buy",
+                               command: command, lines: Self.callLines(check))
+            Haptics.letter()
+        }
+    }
+
+    private static func callLines(_ c: CallCheck) -> [String] {
+        let r = c.route
+        var caps = "the leash checks the caps"
+        if let k = r.caps {
+            caps = k.paused ? "the kill switch is on"
+                : (k.within ?? true) ? "within your caps" : "over today's cap (\(k.leftToday) NEAR left)"
+        }
+        var lines = ["\(c.call.asset ?? "Token") verified on NEAR Intents · \(caps)"]
+        if let q = r.quote {
+            let out = Double(q.amountOut).map { String(format: "%.4g", $0) } ?? q.amountOut
+            lines.append("NEAR Intents quote: \(q.amountIn) NEAR → \(out) \(q.symbolOut)")
+        }
+        if let s = r.standIn { lines.append(s) }
+        return lines
+    }
+
+    /// The paste guard (Protections.swift): warn about an address that
+    /// arrived whole and isn't yours, your vault's or a contact's.
+    private func guardPaste(old: String, new: String) {
+        defer { if new != old { ownInsert = nil } }
+        if let warned = warnedAddress, !new.contains(warned) {
+            warnedAddress = nil
+            pasteWarning = nil
+        }
+        guard primed else { primed = true; return }
+        guard new != old, let a = PasteGuard.stranger(old: old, new: new, known: PasteGuard.known),
+              !(ownInsert?.contains(a) ?? false) else { return }
+        warnedAddress = a
+        pasteWarning = "\(PasteGuard.short(a)) isn't yours or a contact's. Check every character before you pay it."
+        Haptics.warning()
     }
 
     private func send(_ text: String, source: String, clearing: String? = nil) {
@@ -286,10 +362,13 @@ final class AgentModel {
         var line = says ? "AIRKEY · \(r.message)" : "AIRKEY · \(word): \(r.message)"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
+        ownInsert = line
         host?.agentInsert(line, spaced: true)
     }
 
     func dismiss() {
+        callIntent = nil
+        pasteWarning = nil
         result = nil
         notice = nil
         vaultOpen = false
@@ -316,6 +395,7 @@ final class AgentModel {
     /// Put an address in the message, with a space before it if it needs one.
     func insertVault(_ item: Vault.Item) {
         vaultOpen = false
+        ownInsert = item.value
         host?.agentInsert(item.value, spaced: true)
         UIDevice.current.playInputClick()
     }
