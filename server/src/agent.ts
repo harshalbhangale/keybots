@@ -7,7 +7,7 @@ import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
 import type { IntentsClient } from "./intents.js";
 import type { OrderStore } from "./orders.js";
-import { amountOut, fromUnits, minOut, swapMsg, type RheaClient } from "./rhea.js";
+import { amountOut, fromUnits, minOut, sellMsg, swapMsg, toUnits, type RheaClient, type RheaSell } from "./rhea.js";
 import { DOLLAR, parse, resolveReceiver, toYocto, type Action } from "./parse.js";
 import type { Receipt, ReceiptStore } from "./receipts.js";
 
@@ -237,6 +237,12 @@ async function swap(
   if (route && deps.rhea?.network) {
     return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done);
   }
+  // A token the leash holds (USDC, USDT) into NEAR or the other one: sell it on Rhea, from the leash.
+  // Only when the owner has set the leash's rule for that token; otherwise it stays a quote.
+  const sell = deps.rhea?.network ? deps.rhea.sellRoute?.(action.from, action.to) : undefined;
+  if (sell && (await deps.chain.tokenCap?.(sell.from.token).catch(() => null))) {
+    return sellOnRhea(deps, action, agent, sell, { from, to, quote, leash }, done);
+  }
   // On mainnet, NEAR into anything NEAR Intents lists: fund a 1Click deposit address from the leash.
   if (deps.cfg.network === "mainnet" && from.token!.assetId === "nep141:wrap.near") {
     return swapOnIntents(deps, action, agent, { from, to, quote, leash }, done);
@@ -354,6 +360,88 @@ async function swapOnRhea(
   return done({
     outcome: "swapped",
     message: `Swapped ${action.amount} NEAR for ${executed.amountOut} ${route.symbol} on Rhea. It's in the leash.`,
+    agent: who,
+    decision,
+    tx,
+    events,
+    swap: { ...swap, executed },
+  });
+}
+
+/**
+ * The leash sends a token it holds to Rhea, which swaps it in one pool and
+ * sends NEAR (as wNEAR, which the leash unwraps) or the other token back.
+ * The leash's caps are in NEAR, so the trade's value goes with it: NEAR
+ * Intents' price when it has one, else what the pool itself pays in NEAR.
+ */
+async function sellOnRhea(
+  deps: Deps,
+  action: Extract<Action, { kind: "swap" }>,
+  agent: string,
+  sell: RheaSell,
+  swap: NonNullable<Receipt["swap"]>,
+  done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+): Promise<Receipt> {
+  const rhea = deps.rhea!;
+  const net = rhea.network!;
+  const label = `${action.amount} ${sell.from.symbol} → ${sell.to.symbol}`;
+  const who = { account: agent, tier: "trusted" as const };
+  let amountIn: string;
+  try {
+    amountIn = toUnits(action.amount, sell.from.decimals);
+    if (BigInt(amountIn) <= 0n) throw new Error();
+  } catch {
+    return done({ outcome: "not-sent", message: `${action.amount} isn't an amount I can swap.`, swap });
+  }
+  let expected: string;
+  let valueNear: string;
+  try {
+    expected = await rhea.quoteSell(sell, amountIn);
+    const priced = swap.leash ? toYocto(swap.leash.valueNear) : "0";
+    // No NEAR Intents price: the pool's own answer, in NEAR.
+    valueNear = BigInt(priced) > 0n ? priced : sell.unwrap ? expected : await rhea.quoteSell({ ...sell, to: { symbol: "NEAR", token: net.wrap, decimals: 24 }, pool: sell.from.pool }, amountIn);
+  } catch (e) {
+    return done({ outcome: "not-sent", message: `Rhea couldn't price ${label}: ${(e as Error).message}`, swap });
+  }
+  const { decision, txHash, events, logs } = await deps.chain.swapToken(agent, {
+    venue: net.exchange,
+    token: sell.from.token,
+    amount: amountIn,
+    valueNear,
+    wrap: net.wrap,
+    msg: sellMsg(sell, amountIn, minOut(expected)),
+    unwrap: sell.unwrap,
+    memo: `swap ${label}`,
+  });
+  const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
+  if (decision.status !== "paid") {
+    return done({ outcome: "blocked", message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
+  }
+  const failed = events.some((e) => (e as { event?: string }).event === "swap_failed");
+  const out = amountOut(logs, sell.to.token);
+  const executed = {
+    venue: "Rhea",
+    exchange: net.exchange,
+    amountIn: action.amount,
+    symbolIn: sell.from.symbol,
+    amountOut: out ? fromUnits(out, sell.to.decimals) : undefined,
+    symbolOut: sell.to.symbol,
+    ok: !failed && !!out,
+  };
+  if (!executed.ok) {
+    return done({
+      outcome: "not-sent",
+      message: `Rhea didn't fill ${label}; the leash keeps the ${sell.from.symbol}. Nothing was lost.`,
+      agent: who,
+      decision,
+      tx,
+      events,
+      swap: { ...swap, executed },
+    });
+  }
+  return done({
+    outcome: "swapped",
+    message: `Swapped ${action.amount} ${sell.from.symbol} for ${executed.amountOut} ${sell.to.symbol} on Rhea. It's in the leash.`,
     agent: who,
     decision,
     tx,
