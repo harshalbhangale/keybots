@@ -28,6 +28,9 @@ final class KeyboardModel {
     var suggestions: [Words.Suggestion] = []
     /// Nothing in the field yet.
     var empty = true
+    /// The vault row is open in the bar, with what it offers.
+    var vaultOpen = false
+    var vaultItems: [Vault.Item] = []
 
     /// Autocorrect and suggestions, worked out on the phone.
     @ObservationIgnored let words = Words()
@@ -320,7 +323,30 @@ final class KeyboardModel {
         refreshContext()
     }
 
-    func dismissResult() { result = nil; notice = nil }
+    func dismissResult() { result = nil; notice = nil; vaultOpen = false }
+
+    // MARK: vault
+
+    /// Show your NEAR account and saved addresses in the bar.
+    func openVault() {
+        vaultItems = Vault.all
+        guard !vaultItems.isEmpty else {
+            notice = "Add addresses in the AIRKEY app, in Settings › Vault."
+            return
+        }
+        notice = nil
+        vaultOpen = true
+    }
+
+    /// Put an address in the message, with a space before it if it needs one.
+    func insertVault(_ item: Vault.Item) {
+        if let last = typed.last, !last.isWhitespace { insert(" ") }
+        insert(item.value)
+        vaultOpen = false
+        lastFix = nil
+        UIDevice.current.playInputClick()
+        refreshContext()
+    }
 
     private func feedback(for signal: Signal) {
         let gen = UINotificationFeedbackGenerator()
