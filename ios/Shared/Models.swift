@@ -231,6 +231,13 @@ struct CallCheck: Decodable {
         let perTrade: String
         let leftToday: String
         let paused: Bool
+        let within: Bool?
+    }
+    /// NEAR Intents' dry quote for the token the call names.
+    struct Quote: Decodable {
+        let amountIn: String
+        let amountOut: String
+        let symbolOut: String
     }
     /// "available" with the command a hold would send, or "unavailable" with why not.
     struct Route: Decodable {
@@ -239,6 +246,9 @@ struct CallCheck: Decodable {
         let command: String?
         let title: String?
         let caps: Caps?
+        let quote: Quote?
+        /// What the hold runs instead of the title, when it does (testnet has no SOL).
+        let standIn: String?
         let note: String?
         let reason: String?
     }
