@@ -80,6 +80,9 @@ final class KeyboardViewController: UIInputViewController {
     private var clipboardPanel: ClipboardPanel?
     /// Menu → Games: Snake and Chomp over the key area.
     private var games: GamesSurface?
+    /// WALLET/CALLS HOOK: the Wallet or the Calls panel (Surfaces/WalletModel.swift),
+    /// built when it opens and let go when it closes.
+    private var money: MoneyPanel?
     /// Hold space: AI on what you wrote (rewrite, reply, translate, tone,
     /// or ask). Built when it opens and let go when it closes.
     private var aiBar: AIBar?
@@ -110,7 +113,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai, wallet, calls }
     private var surface: Surface = .none
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
@@ -200,7 +203,7 @@ final class KeyboardViewController: UIInputViewController {
         case .noteEdit: return base + NoteEditSurface.stripHeight - Glass.toolbarHeight
         // Panels take the key area instead of growing the keyboard: the keys
         // never move, so muscle memory holds.
-        case .none, .shell, .clipboard, .games, .ai: return base
+        case .none, .shell, .clipboard, .games, .ai, .wallet, .calls: return base
         }
     }
 
@@ -638,6 +641,8 @@ final class KeyboardViewController: UIInputViewController {
             return (title == MenuShell.rootTitle ? "square.grid.2x2" : nil, title)
         case .emoji where emoji?.searchActive != true: return ("face.smiling", "Emoji")
         case .games: return ("gamecontroller", "Games")
+        case .wallet: return (KeyToolbar.icons["wallet"], "Wallet") // WALLET/CALLS HOOK
+        case .calls: return (KeyToolbar.icons["calls"], "Calls")
         default: return (nil, nil)
         }
     }
@@ -797,6 +802,10 @@ final class KeyboardViewController: UIInputViewController {
             toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
             keyboardView.isHidden = true
             games?.frame = panelRect(w, h)
+        case .wallet, .calls: // WALLET/CALLS HOOK: over the keys, under the strip's title.
+            toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
+            keyboardView.isHidden = true
+            money?.frame = panelRect(w, h)
         case .clipboard:
             // The clipboard owns the whole keyboard, strip included.
             toolbarHiddenBySurface = true
@@ -834,7 +843,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.games, self.aiBar] as [UIView?] {
+                            self.clipboardPanel, self.games, self.aiBar, self.money] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
@@ -871,6 +880,7 @@ final class KeyboardViewController: UIInputViewController {
             noteEdit?.removeFromSuperview(); noteEdit = nil
         case .clipboard: clipboardPanel?.removeFromSuperview(); clipboardPanel = nil
         case .games: games?.stop(); games?.removeFromSuperview(); games = nil
+        case .wallet, .calls: money?.close(); money = nil // WALLET/CALLS HOOK: timers stop, the panel is let go.
         case .ai: aiBar?.removeFromSuperview(); aiBar = nil
         case .none: break
         }
@@ -917,6 +927,13 @@ final class KeyboardViewController: UIInputViewController {
             prepareEntrance(g, animated: animated)
             games = g
             MemoryLogger.logSurface("games")
+        case .wallet, .calls: // WALLET/CALLS HOOK
+            let m = MoneyPanel(kind: new == .wallet ? .wallet : .calls, actions: moneyActions, dark: Glass.chromeDark)
+            content.addSubview(m)
+            m.attach(to: self)
+            prepareEntrance(m, animated: animated)
+            money = m
+            MemoryLogger.logSurface(new == .wallet ? "wallet" : "calls")
         case .ai:
             let b = AIBar()
             b.delegate = self
@@ -2122,6 +2139,43 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
 // MARK: - AgentHost (AIRKEY's agents)
 
+// MARK: - WALLET/CALLS HOOK: what the Wallet and Calls panels may ask for
+
+extension KeyboardViewController {
+
+    /// The panels never type or send by themselves: words go in the message
+    /// (where the strip reads them and offers its hold), a receipt goes in
+    /// the chat, a link opens in Safari.
+    fileprivate var moneyActions: MoneyActions {
+        MoneyActions(
+            fullAccess: { [weak self] in self?.hasFullAccess ?? false },
+            insert: { [weak self] text in
+                guard let self else { return }
+                self.setSurface(.none)
+                self.agent.insertOwn(text)
+            },
+            share: { [weak self] line in
+                guard let self else { return }
+                self.setSurface(.none)
+                self.agent.insertOwn(line)
+            },
+            open: { [weak self] url, done in
+                // A keyboard has no UIApplication of its own; with Full Access
+                // the host app's is on the responder chain.
+                var responder: UIResponder? = self
+                while let r = responder {
+                    if let app = r as? UIApplication {
+                        app.open(url, options: [:]) { ok in DispatchQueue.main.async { done(ok) } }
+                        return
+                    }
+                    responder = r.next
+                }
+                done(false)
+            }
+        )
+    }
+}
+
 extension KeyboardViewController: AgentHost {
 
     /// The whole message being written: our own copy before the caret, plus
@@ -2323,7 +2377,10 @@ extension KeyboardViewController: ToolbarDelegate {
         let id = KeyboardSettings.Toolbar.canonical(requested)
         switch id {
         // AIRKEY: your NEAR account and saved addresses, in the strip.
-        case "wallet": setSurface(.none); agent.openVault()
+        // WALLET/CALLS HOOK: the Wallet panel (the saved addresses are inside it, under Addresses).
+        case "wallet": setSurface(.wallet)
+        // The calls book: copied calls, open and done.
+        case "calls": setSurface(.calls)
         // AIRKEY: what you copied, to the Inbox Agent.
         case "check": setSurface(.none); agent.runPasted()
         case "clipboard": setSurface(.clipboard)

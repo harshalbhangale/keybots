@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		087EFF821ECA87156E7C140D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF871A3D5082D0B29BC2457 /* SettingsView.swift */; };
+		097F98C9E521444EA769EC35 /* WalletModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC0285346B389EDAC16484E /* WalletModel.swift */; };
 		0983935B8B08545D7AA63EC2 /* ChakraPetch-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4CFDCFD03DD341CF92FD9FE1 /* ChakraPetch-OFL.txt */; };
 		0999A71F4903F5845EC447A2 /* linen.png in Resources */ = {isa = PBXBuildFile; fileRef = 3999150A8EDD6C1DCC432E0E /* linen.png */; };
 		0A0A135B774164E76FF284E1 /* BoundKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2880647D989BB0F3AA77435 /* BoundKeys.swift */; };
@@ -77,6 +78,7 @@
 		69E1DDD3770611B4B4D5D71F /* EmojiData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09EC95D4D892D48A66E2F9FE /* EmojiData.swift */; };
 		6A21012BD031383586747449 /* theme-typewriter-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = A3DEF79ED1A588D9458E1D32 /* theme-typewriter-return.caf */; };
 		6A9C5A38A5383F57DA7BC3A5 /* KeyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A791BF76C4E67F6F86C158DF /* KeyView.swift */; };
+		6CA8A1B8838B87A068850245 /* CallsSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D9EE2E3DD16DE1879EB242F /* CallsSurface.swift */; };
 		6D36C8F67170601B792CB61C /* KeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C83B914356CC09E45DEEDA8 /* KeysView.swift */; };
 		6E4B0B95DF1C5C2613B678B6 /* paper.png in Resources */ = {isa = PBXBuildFile; fileRef = C60C275CEBFFF17F9C47E3A5 /* paper.png */; };
 		6FD68D4822232046C2CAED6C /* velvet.png in Resources */ = {isa = PBXBuildFile; fileRef = 5957797AF8BE643BD226581D /* velvet.png */; };
@@ -87,6 +89,7 @@
 		74F1B4C2F01682D943DF3F36 /* BoundKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2880647D989BB0F3AA77435 /* BoundKeys.swift */; };
 		7517AE660EEE95353772FC4B /* LibreCaslonText-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CE390C9F4968A16B7546807E /* LibreCaslonText-Regular.ttf */; };
 		7608CAA377D4DAA2BB136395 /* Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877ECDEFFC7A4286B5B50EFA /* Toolbar.swift */; };
+		77224B6D0BBC688AB3B46C67 /* WalletSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013677326CEDB2AF96662698 /* WalletSurface.swift */; };
 		78167AAEA3D5284396FE8FD7 /* theme-typewriter-delete.caf in Resources */ = {isa = PBXBuildFile; fileRef = 1C14FA40F1A0366533BE145C /* theme-typewriter-delete.caf */; };
 		7A1485E83FC8324FB7F1CCC5 /* CourierPrime-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3A6F05819A38C99646C33906 /* CourierPrime-Regular.ttf */; };
 		7D3EAEC2C25FC391A80D437F /* bricks.png in Resources */ = {isa = PBXBuildFile; fileRef = AD85AFCDE8A01928A51D00C9 /* bricks.png */; };
@@ -191,6 +194,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		013677326CEDB2AF96662698 /* WalletSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletSurface.swift; sourceTree = "<group>"; };
 		03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSerifDisplay-Regular.ttf"; sourceTree = "<group>"; };
 		09D40447CC983DE204796FE7 /* Jost-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jost-OFL.txt"; sourceTree = "<group>"; };
 		09EC95D4D892D48A66E2F9FE /* EmojiData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiData.swift; sourceTree = "<group>"; };
@@ -252,6 +256,7 @@
 		6A7F99D92F4BD595F413AA77 /* PersonalLexicon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalLexicon.swift; sourceTree = "<group>"; };
 		6B3BEFB94B7D41FA6895D34D /* GlydTrie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlydTrie.swift; sourceTree = "<group>"; };
 		6BABBBB976524CC990F56359 /* packs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = packs.json; sourceTree = "<group>"; };
+		6EC0285346B389EDAC16484E /* WalletModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletModel.swift; sourceTree = "<group>"; };
 		6F050F6DDBA07718B7DC1920 /* marble.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = marble.png; sourceTree = "<group>"; };
 		6F130E28E3271A378D3BDA02 /* theme-typewriter-space.caf */ = {isa = PBXFileReference; path = "theme-typewriter-space.caf"; sourceTree = "<group>"; };
 		74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -279,6 +284,7 @@
 		9BF871A3D5082D0B29BC2457 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9C0ABBC721D4F513C1AE3917 /* theme-mech-letter.caf */ = {isa = PBXFileReference; path = "theme-mech-letter.caf"; sourceTree = "<group>"; };
 		9D74A09E78DC5274B51D938F /* GlideTyping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlideTyping.swift; sourceTree = "<group>"; };
+		9D9EE2E3DD16DE1879EB242F /* CallsSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallsSurface.swift; sourceTree = "<group>"; };
 		A225E599C4173FF39DE0DBD6 /* ControlScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlScrollView.swift; sourceTree = "<group>"; };
 		A3439DE21FF3E7715A1813D8 /* KeyboardThemes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardThemes.swift; sourceTree = "<group>"; };
 		A35AB0DC6B52A98B4B6621BE /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
@@ -351,7 +357,6 @@
 				1C27100FB234C7ABEC38EB7B /* AgentModel.swift */,
 				B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */,
 				2A7505EE4ED5DF1E83292523 /* Protections.swift */,
-				91C217EA25E892B407ABFDEB /* .claude */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -385,13 +390,6 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-		0D67CEC6ECCD3EB698F5599E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		189699E195BCCCA4A9E0B0FB /* AirKey */ = {
 			isa = PBXGroup;
 			children = (
@@ -402,18 +400,10 @@
 				AE30351773DFCF5713DBF24A /* DeviceKey.swift */,
 				38827B21096CE8DA8AB2FE61 /* Info.plist */,
 				AF41A04D107BDF975DB721DC /* RootView.swift */,
-				0D67CEC6ECCD3EB698F5599E /* .claude */,
 				09770E26BBCCB4EA757F7D26 /* Components */,
 				22AAAB9198B7E413FE4CC2D8 /* Screens */,
 			);
 			path = AirKey;
-			sourceTree = "<group>";
-		};
-		1955E37AC411BC4F0D5B799E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		22AAAB9198B7E413FE4CC2D8 /* Screens */ = {
@@ -452,13 +442,6 @@
 				C70C41E6B9B22A5F3AD0E222 /* Textures */,
 			);
 			path = Resources;
-			sourceTree = "<group>";
-		};
-		5D25F608B8B8E403D70BBD2E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		800B64210BA145E55B616DD0 /* Fonts */ = {
@@ -500,17 +483,11 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
-		91C217EA25E892B407ABFDEB /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		98A81E83354111FC345F7EBB /* Surfaces */ = {
 			isa = PBXGroup;
 			children = (
 				CF6F4A59810137237EEEEADB /* AIBar.swift */,
+				9D9EE2E3DD16DE1879EB242F /* CallsSurface.swift */,
 				96F3CA247BD59F30C6A56517 /* ClipboardPanel.swift */,
 				A225E599C4173FF39DE0DBD6 /* ControlScrollView.swift */,
 				D2E771E266A49E43CB697AB1 /* EmojiBoard.swift */,
@@ -521,6 +498,8 @@
 				0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */,
 				B2C7502D7F5089AD801CCF86 /* NoteEditSurface.swift */,
 				877ECDEFFC7A4286B5B50EFA /* Toolbar.swift */,
+				6EC0285346B389EDAC16484E /* WalletModel.swift */,
+				013677326CEDB2AF96662698 /* WalletSurface.swift */,
 			);
 			path = Surfaces;
 			sourceTree = "<group>";
@@ -543,7 +522,6 @@
 				3AF49B41A807E6455291CD22 /* AirKeyKeyboard.entitlements */,
 				E1F81127BD0FC8E23110F7C6 /* Info.plist */,
 				41A268554547ABD1D29F4116 /* KeyboardViewController.swift */,
-				1955E37AC411BC4F0D5B799E /* .claude */,
 				07888C8DFF812A19F0FE10F3 /* Agent */,
 				C1E384945909F6681F522065 /* Design */,
 				B50FB382AF12A7C5EF088C9F /* Engine */,
@@ -576,7 +554,6 @@
 				5D3CFBB86938CDC8F30275EB /* StripPolicy.swift */,
 				DABA0E548446A1B47682D911 /* TextPDF.swift */,
 				994FF05E6C99D2F1D75113ED /* VaultStore.swift */,
-				5D25F608B8B8E403D70BBD2E /* .claude */,
 				BF754FBE26852779E64F5B3A /* Typing */,
 			);
 			path = Engine;
@@ -635,16 +612,8 @@
 				602E65F915BF5CB7CA8F9B37 /* Models.swift */,
 				DF85E248A9A14144C071BC8E /* Theme.swift */,
 				B372D9B19A11E10D4CD1002D /* Vault.swift */,
-				C52C527F2FD4B6B2BDE238D0 /* .claude */,
 			);
 			path = Shared;
-			sourceTree = "<group>";
-		};
-		C52C527F2FD4B6B2BDE238D0 /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		C70C41E6B9B22A5F3AD0E222 /* Textures */ = {
@@ -846,6 +815,7 @@
 				93C5563DAAEB0C5006FB53FB /* Ask.swift in Sources */,
 				49570D9016EF0087146309F2 /* Autocorrect.swift in Sources */,
 				74F1B4C2F01682D943DF3F36 /* BoundKeys.swift in Sources */,
+				6CA8A1B8838B87A068850245 /* CallsSurface.swift in Sources */,
 				F5A5DA58BB9169706B9EC4AD /* ClipContext.swift in Sources */,
 				9694A387AD7A6C5F323BAE49 /* ClipboardPanel.swift in Sources */,
 				E6DE7A72BE51B79E0ADD419F /* ClipboardStore.swift in Sources */,
@@ -902,6 +872,8 @@
 				8F0E3E973F36F60D6BD32923 /* TypingText.swift in Sources */,
 				60AF539665A49DD6F75582C4 /* Vault.swift in Sources */,
 				DA270A58B2055DF8A7FC151B /* VaultStore.swift in Sources */,
+				097F98C9E521444EA769EC35 /* WalletModel.swift in Sources */,
+				77224B6D0BBC688AB3B46C67 /* WalletSurface.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

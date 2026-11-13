@@ -277,4 +277,54 @@ struct CallCheck: Decodable {
     }
     let call: Call
     let route: Route
+    /// Its record in the calls book (GET /v1/calls). Missing on older servers, and for text that isn't a call.
+    let id: String?
 }
+
+/// One call in the calls book: what was copied, how it was read, the trade a
+/// hold would send, and what came back if one did.
+struct CallRecord: Decodable, Identifiable {
+    let id: String
+    let at: String
+    let text: String
+    let asset: String?
+    /// "bullish" or "bearish".
+    let direction: String?
+    let confidence: String
+    /// "available" with `command`, or "unavailable" with `reason`.
+    let status: String
+    let reason: String?
+    let command: String?
+    let title: String?
+    let side: String?
+    let standIn: String?
+    /// The token passed NEAR Intents' check.
+    let verified: Bool?
+    /// The token's dollar price when the call was checked, and now.
+    let priceThen: Double?
+    let priceNow: Double?
+    let trade: Trade?
+    let dismissed: Bool?
+
+    struct Trade: Decodable {
+        let at: String
+        let outcome: String
+        let message: String
+        let tx: Receipt.Tx?
+        var signal: Signal { Signal(outcome: outcome) }
+    }
+
+    var date: Date? { ISO8601DateFormatter.withFraction.date(from: at) ?? ISO8601DateFormatter().date(from: at) }
+    var bearish: Bool { direction == "bearish" }
+    /// Still to act on: a trade is on offer and nothing has been done with it.
+    var open: Bool { status == "available" && trade == nil && dismissed != true }
+
+    /// The move since the call, in the called direction, in percent.
+    var move: Double? {
+        guard let then = priceThen, then > 0, let now = priceNow else { return nil }
+        let m = (now - then) / then * 100
+        return bearish ? -m : m
+    }
+}
+
+struct CallList: Decodable { let calls: [CallRecord] }

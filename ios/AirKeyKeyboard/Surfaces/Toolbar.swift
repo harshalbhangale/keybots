@@ -101,6 +101,7 @@ final class KeyToolbar: UIView {
         // AIRKEY: your NEAR account and saved addresses, and the check of
         // what you copied by the Inbox Agent.
         "wallet": "wallet.bifold",
+        "calls": "chart.line.uptrend.xyaxis", // WALLET/CALLS HOOK: the calls book
         "check": "checkmark.shield",
         "clipboard": "doc.on.clipboard",
         "notes": "person.text.rectangle",
