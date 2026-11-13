@@ -1,42 +1,84 @@
 // One command, start to finish: read it, pick the agent, check the receiver,
 // ask the leash, and write a receipt.
 import { randomUUID } from "node:crypto";
-import { readWithNearAi } from "./ai.js";
+import { readWithAi, type AiConfig } from "./ai.js";
 import { judge } from "./checks.js";
 import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
 import type { IntentsClient } from "./intents.js";
 import type { OrderStore } from "./orders.js";
 import { amountOut, fromUnits, minOut, swapMsg, type RheaClient } from "./rhea.js";
-import { parse, resolveReceiver, toYocto, type Action } from "./parse.js";
+import { DOLLAR, parse, resolveReceiver, toYocto, type Action } from "./parse.js";
 import type { Receipt, ReceiptStore } from "./receipts.js";
 
 export interface Deps {
   cfg: Config;
   chain: Chain;
   receipts: ReceiptStore;
-  readAi?: typeof readWithNearAi;
+  readAi?: typeof readWithAi;
   intents?: IntentsClient;
   orders?: OrderStore;
   rhea?: RheaClient;
+}
+
+/** Which AI reads what the rules can't: NEAR AI Cloud (private) first, else OpenAI, else none. */
+export function aiReader(cfg: Config): AiConfig | null {
+  if (cfg.nearAi.apiKey) return { provider: "near-ai-cloud", ...cfg.nearAi };
+  if (cfg.openAi?.apiKey) return { provider: "openai", ...cfg.openAi };
+  return null;
+}
+
+/** Read a command: rules first, an AI only for what the rules can't read. Runs nothing. */
+export async function readCommand(deps: Deps, text: string): Promise<Receipt["interpretation"]> {
+  const action = parse(text);
+  const ai = aiReader(deps.cfg);
+  if (action.kind !== "unknown" || !ai) return { action, reader: "rules" };
+  try {
+    const read = await (deps.readAi ?? readWithAi)(text, ai);
+    return { action: read.action, reader: ai.provider, ai: read.evidence };
+  } catch {
+    return { action, reader: "rules" };
+  }
+}
+
+/** What an action is, in words and as the exact command the rules read back the same way. */
+export function describe(action: Action): { kind: "pay" | "swap"; title: string; verb: string; command: string } | null {
+  const up = (s: string) => s.toUpperCase();
+  switch (action.kind) {
+    case "pay":
+      return {
+        kind: "pay",
+        title: `Pay ${action.amountNear} NEAR to ${action.receiver}`,
+        verb: "pay",
+        command: `pay ${action.receiver} ${action.amountNear}${action.memo ? ` for ${action.memo}` : ""}`,
+      };
+    case "swap":
+      if (action.usd) {
+        return { kind: "swap", title: `Swap $${action.amount} of ${up(action.from)} to ${up(action.to)}`, verb: "swap", command: `swap $${action.amount} of ${action.from.toLowerCase()} to ${action.to.toLowerCase()}` };
+      }
+      if (action.from === DOLLAR) {
+        return { kind: "swap", title: `Buy $${action.amount} of ${up(action.to)}`, verb: "buy", command: `buy $${action.amount} of ${action.to.toLowerCase()}` };
+      }
+      return { kind: "swap", title: `Swap ${action.amount} ${up(action.from)} to ${up(action.to)}`, verb: "swap", command: `swap ${action.amount} ${action.from.toLowerCase()} to ${action.to.toLowerCase()}` };
+    case "watch":
+      return {
+        kind: "swap",
+        title: `${action.command.charAt(0).toUpperCase()}${action.command.slice(1)} when ${up(action.symbol)} is ${action.direction} $${action.price}`,
+        verb: "place",
+        command: `${action.command} if it goes ${action.direction} ${action.price}`,
+      };
+    default:
+      return null;
+  }
 }
 
 export async function runCommand(deps: Deps, text: string, source: "typed" | "pasted"): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
   const base = { id: randomUUID(), at: new Date().toISOString(), input: { text: text.slice(0, 2000), source } };
 
-  // 1. Read it: rules first, NEAR AI Cloud only for what the rules can't read.
-  let action: Action = parse(text);
-  let interpretation: Receipt["interpretation"] = { action, reader: "rules" };
-  if (action.kind === "unknown" && cfg.nearAi.apiKey) {
-    try {
-      const ai = await (deps.readAi ?? readWithNearAi)(text, cfg.nearAi);
-      action = ai.action;
-      interpretation = { action, reader: "near-ai-cloud", ai: ai.evidence };
-    } catch (e) {
-      interpretation = { action, reader: "rules" };
-    }
-  }
+  // 1. Read it: rules first, an AI only for what the rules can't read.
+  const interpretation = await readCommand(deps, text);
+  let action: Action = interpretation.action;
 
   const done = (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">): Receipt => {
     const receipt = { ...base, interpretation, ...r } as Receipt;
