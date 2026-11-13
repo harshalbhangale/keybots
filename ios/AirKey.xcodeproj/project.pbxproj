@@ -19,6 +19,7 @@
 		493F215D8AE2EF3CA2992694 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76815909587B9263F41E788 /* AppModel.swift */; };
 		4E7B527414E0A3454AFFECFC /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF89A02FA1B292BF5E5BE5A /* API.swift */; };
 		51E2BE13813FE385EACFA92D /* AgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235D82802F01F7286217056B /* AgentsView.swift */; };
+		528304A5639284DD30BB2028 /* HoldToConfirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */; };
 		555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
 		59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
 		5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC5173F4853BB06FDF38E4C /* LeashView.swift */; };
@@ -29,6 +30,7 @@
 		93C5563DAAEB0C5006FB53FB /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
 		9947C11236F0D6EDFC1C3C8A /* AirKeyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2848176EB456D3E16DCE29B2 /* AirKeyApp.swift */; };
 		AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE82DAB9B756AF51443152AD /* Instant.swift */; };
+		B306D3258734682B66A65CE5 /* HoldToConfirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */; };
 		B3CF34DD5591AFC0E98EBC18 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602E65F915BF5CB7CA8F9B37 /* Models.swift */; };
 		BD60A00EB851372B06F1E92C /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
 		BFDF1177B79E8A06313E81B7 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
@@ -66,6 +68,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirm.swift; sourceTree = "<group>"; };
 		235D82802F01F7286217056B /* AgentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsView.swift; sourceTree = "<group>"; };
 		27032A1EC0496215FA221E2E /* AirKey.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AirKey.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2848176EB456D3E16DCE29B2 /* AirKeyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirKeyApp.swift; sourceTree = "<group>"; };
@@ -172,6 +175,7 @@
 				2DF89A02FA1B292BF5E5BE5A /* API.swift */,
 				A5B2568003C3CB91D9A04FB0 /* Ask.swift */,
 				D9851A9A472BEEA624723FBC /* Format.swift */,
+				1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */,
 				BE82DAB9B756AF51443152AD /* Instant.swift */,
 				53E174E7250C5963B6505C36 /* Intent.swift */,
 				5313A4631B0C886CFD88DE0A /* Logo.swift */,
@@ -279,6 +283,7 @@
 				4E7B527414E0A3454AFFECFC /* API.swift in Sources */,
 				93C5563DAAEB0C5006FB53FB /* Ask.swift in Sources */,
 				280530690716794F66165515 /* Format.swift in Sources */,
+				528304A5639284DD30BB2028 /* HoldToConfirm.swift in Sources */,
 				EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */,
 				555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */,
 				E3CA1CFCBFE800F0AB8E8E11 /* KeyboardModel.swift in Sources */,
@@ -303,6 +308,7 @@
 				86522BDC05010DA5622CD4D3 /* Components.swift in Sources */,
 				D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */,
 				BD60A00EB851372B06F1E92C /* Format.swift in Sources */,
+				B306D3258734682B66A65CE5 /* HoldToConfirm.swift in Sources */,
 				000C52470CDAD2D90C62C217 /* HomeView.swift in Sources */,
 				AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */,
 				59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */,
