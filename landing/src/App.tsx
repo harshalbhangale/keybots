@@ -75,7 +75,11 @@ export default function App() {
               <span className="y-live" /> Live on NEAR testnet
             </a>
             <h1 className="y-h1">
-              Type it. <span className="y-nowrap"><NearMark /> NEAR</span> does the rest.
+              Type it.{" "}
+              <span className="y-nowrap">
+                <img className="y-keylogo" src="/logo.svg" alt="" aria-hidden /> NEAR
+              </span>{" "}
+              does the rest.
             </h1>
             <p className="y-sub">Your keyboard is the AI. NEAR is the leash.</p>
             <Downloads />

@@ -39,14 +39,9 @@ export function Play({ size = 22 }: { size?: number }) {
   );
 }
 
-export function Mark({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
-      <rect x="10" y="12" width="36" height="40" rx="10" fill="none" stroke="currentColor" strokeWidth="4.5" />
-      <rect x="47" y="22" width="6" height="20" rx="3" fill="#C6F25A" />
-      <path d="M20 43 L28 21 L36 43 M23 36 H33" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+/** The AIRKEY logo: a lime keycap with the NEAR mark as its legend (public/logo.svg). */
+export function Mark({ size = 28 }: { size?: number }) {
+  return <img src="/logo.svg" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
 }
 
 /** Android download, App Store and Google Play (soon), GitHub. */
