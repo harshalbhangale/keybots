@@ -125,8 +125,34 @@ final class WalletModel {
 
 /// Words the money panels share.
 enum MoneyText {
+    /// The server's words, in plain ones: no "leash", no rule codes.
+    /// "Blocked by the leash (R3): drain.near is blocked: reported by …" reads
+    /// "Blocked: drain.near is on your blocked list."
+    static func plain(_ message: String) -> String {
+        var s = message
+        let swaps: [(String, String)] = [
+            (#"Blocked by the leash \([^)]*\): (\S+) is blocked\b.*"#, "Blocked: $1 is on your blocked list."),
+            (#"Blocked by the leash \([^)]*\): "#, "Blocked: "),
+            (#"Blocked by the leash: "#, "Blocked: "),
+            (#"The leash would block this: "#, "Over your limits: "),
+            (#" ?\(R\d+\)"#, ""),
+            (#"It's in the leash\."#, "It's in your wallet."),
+            (#"the leash keeps the NEAR"#, "the NEAR stays in your wallet"),
+            (#"through the leash"#, "from your wallet"),
+            (#"by the leash"#, "by your limits"),
+            (#"refunds the leash"#, "refunds your wallet"),
+            (#"The leash"#, "Your wallet"),
+            (#"the leash"#, "your wallet"),
+        ]
+        for (pattern, with) in swaps {
+            s = s.replacingOccurrences(of: pattern, with: with, options: .regularExpression)
+        }
+        return s
+    }
+
     /// A receipt as one line for the chat, the way the strip's Share writes it.
     static func receiptLine(message: String, signal: Signal, tx: Receipt.Tx?) -> String {
+        let message = plain(message)
         let word = signal.word.capitalized
         let says = signal == .allow || message.lowercased().hasPrefix(word.lowercased().trimmingCharacters(in: .punctuationCharacters))
         var line = says ? "AIRKEY · \(message)" : "AIRKEY · \(word): \(message)"
