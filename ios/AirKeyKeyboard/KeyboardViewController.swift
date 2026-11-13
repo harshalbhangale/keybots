@@ -2030,6 +2030,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
     }
 
     func kbTextInteraction() {}
+
+    func kbLettersShown() { syncAutoShift() }
 }
 
 // MARK: - AgentHost (AIRKEY's agents)

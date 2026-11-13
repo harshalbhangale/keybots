@@ -22,11 +22,13 @@ protocol KeyboardViewDelegate: AnyObject {
     /// no host cursor to glide and a hold is just a space; secure fields
     /// never open the bar (§11.9).
     func kbSpaceGestures() -> (glide: Bool, bar: Bool)
-    /// A bound key held ≥320ms (M2 — Glyf Keys, §6.5).
+    /// A bound key held ≥320ms.
     func kbBoundKeyIgnited(keyId: String, target: String, origin: KeyView)
     /// Whether a held key may run what it is bound to right now.
     func kbBindingsLive() -> Bool
     func kbTextInteraction()
+    /// The board went back to the letters: the shift the text wants applies.
+    func kbLettersShown()
     /// Glide typing (user, 2026-10-07: "implement glide typing, like glide
     /// over keyboard to type"): whether a glide may start now, the word to
     /// float over the finger as it moves, and the lift that types it.
@@ -358,7 +360,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 delegate?.kbDeleteBackward()
                 startDeleteRepeat(st)
             case .char(let c):
-                // Bindings rest while the keys type into Glyf's own fields
+                // Bindings rest while the keys type into the keyboard's own fields
                 // (a note, a search, an event title) or a password: a hold
                 // there is a letter's accents, never a swap of the keyboard.
                 let bound = kv.spec.pad || delegate?.kbBindingsLive() == false
@@ -377,9 +379,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             case .space:
                 st.mode = .space
                 st.space = SpaceGesture(x: p.x, y: p.y, time: touch.timestamp)
-                // The same purple ring a glyf key shows, from the first
+                // The same accent ring a bound key shows, from the first
                 // moment (user, 2026-09-30: "the space bar should also have
-                // that purple thing on pressing like other glyf keys"); it
+                // that accent ring on pressing like other bound keys"); it
                 // had waited 0.1 s, so a tap never showed it.
                 kv.startChargeRing(duration: SpaceGesture.holdThreshold)
                 st.holdTimer = Timer.scheduledTimer(
@@ -636,7 +638,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             // On the phone pad "+*#" opens its second page and "123" comes back.
             case "123": setMode(context.isPad ? .letters : .symbols1)
             case "+*#": setMode(.symbols1)
-            case "ABC": setMode(.letters)
+            case "ABC":
+                setMode(.letters)
+                delegate?.kbLettersShown()
             case "#+=": setMode(.symbols2)
             default: break
             }
