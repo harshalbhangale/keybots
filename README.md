@@ -71,7 +71,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 82 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, the full command flow
+npm test                       # 117 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
@@ -102,7 +102,7 @@ Type `swap 0.1 near to usdc` in any chat (or use the swap card in the app) and *
 1. **Checks both tokens** against NEAR Intents' own list (`GET /v0/tokens`, 230 assets), so a look-alike symbol is refused.
 2. **Holds the swap to the Trading Agent's caps** on chain ([`trader.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/trader.airkey-harshal.testnet): 1 NEAR a trade, 2 a day, separate from what the Payment Agent may spend). Its key can only call the leash's `pay`, `report` and `swap`.
 3. **The leash swaps on Rhea.** The contract's new `swap` method runs the same rules as `pay` (kill switch, blocklist, caps, what the leash holds), wraps exactly the amount into wNEAR and, only if that worked, hands it to Rhea (formerly Ref Finance) with `ft_transfer_call`. Rhea swaps in one pool and sends the token **back to the leash**: value never leaves it, and the swap can't fill below 1% under the pool's quote. If anything fails, the spend is rolled back.
-4. **Never trades from pasted text**: the untrusted Inbox Agent can't swap at all.
+4. **Pasted text never trades by itself.** The untrusted Inbox Agent can't swap. A copied crypto call ("$SOL breaking out, I'm buying") becomes a hold-to-confirm chip for the Trading Agent: fixed rules read it, the token is checked on NEAR Intents, and the trade is sized inside the agent's caps ($1). Nothing moves until you hold the chip. On testnet, where there's no SOL, the hold swaps NEAR to USDC on Rhea instead, and the chip says so; the SOL price shown is NEAR Intents' live quote ([7XUq6MLF…](https://testnet.nearblocks.io/txns/7XUq6MLFCiPL15FynnKsyWp9KCx6Ki7pc2WsgTDqRUey)). Code: `server/src/calls.ts`, `POST /v1/call`.
 
 Live on testnet today:
 
@@ -112,7 +112,7 @@ Live on testnet today:
 | Swap 0.1 near to usdc | keyboard, in Messages | swapped: 0.1 NEAR → 0.2101 USDC | [89dXiQh4…](https://testnet.nearblocks.io/txns/89dXiQh4SToJM2c3tpFp9F7TgdyDT1b6CTnEPRSj7aaM) |
 | swap 0.1 near to usdc | app swap card | swapped: 0.1 NEAR → 0.2101 USDC | [3SXCNbeS…](https://testnet.nearblocks.io/txns/3SXCNbeSZ1UdeRsfebzaqNW5LJYpCtHxycZajVyZZtwC) |
 
-On testnet AIRKEY trades in Rhea's deepest pools for test stablecoins (pool 1084 for USDT, 1103 for USDC). Tokens without a pool there (SOL, BTC…) get a NEAR Intents quote. On mainnet the same `swap` method funds a NEAR Intents deposit address instead (no message: storage, then `ft_transfer`); the server side for live 1Click quotes and status is in place, and it runs with real money only after the owner funds a mainnet leash. Tokenized stocks: NEAR offers Ondo's US stocks on near.com, but they aren't in the public 1Click list yet, so AIRKEY can't trade them. Code: `contracts/leash/src/lib.rs` (`swap`), `server/src/rhea.ts`, `server/src/intents.ts`; one-time setup `npm run add-trader` and `npm run setup-swaps`.
+On testnet AIRKEY trades in Rhea's deepest pools for test stablecoins (pool 1084 for USDT, 1103 for USDC). Tokens without a pool there (SOL, BTC…) get a NEAR Intents quote. On mainnet the same `swap` method funds a NEAR Intents deposit address instead (no message: storage, then `ft_transfer`); the server side for live 1Click quotes and status is in place, but **the leash runs on testnet only and has enforced no mainnet swap**. On mainnet the server refuses any swap above $0.15 (`AIRKEY_MAINNET_USD_CAP`). Tokenized stocks: NEAR offers Ondo's US stocks on near.com, but they aren't in the public 1Click list yet, so AIRKEY can't trade them. Code: `contracts/leash/src/lib.rs` (`swap`), `server/src/rhea.ts`, `server/src/intents.ts`; one-time setup `npm run add-trader` and `npm run setup-swaps`.
 
 ### Orders that wait for a price
 
@@ -174,20 +174,23 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 
 | Plan item | Status |
 |---|---|
-| Rust Leash contract: per-payment cap, daily cap, allowlist, blocklist, kill switch, events | **Built**, 16 unit tests, live on testnet |
+| Rust Leash contract: per-payment cap, daily cap, allowlist, blocklist, kill switch, events, swaps | **Built**, 21 unit tests, live on testnet |
 | Restricted agent identities (function-call keys only) | **Built**, proven on testnet (steps 6 and 7) |
 | One successful payment, one blocked malicious payment | **Built**, proven on testnet (steps 1 and 3) |
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
 | A Trading Agent with its own identity and limits | **Built**: `trader.<you>` on testnet, function-call key only (pay, report, swap), its own caps (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
-| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 82 tests, live on testnet (table above) |
+| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 117 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | AI reading | **Built**: used only for wording the rules can't read. **NEAR AI Cloud** (private inference) answers by default and each reply's ECDSA signature is checked against the exact request and response bytes; the attestation report behind the signing key is *not* checked yet, and receipts say so. **OpenAI** is the fallback when NEAR AI has no key or doesn't answer; it isn't private or signed. Every receipt, and the keyboard chip, names the one that actually answered. |
+| Hold-space AI bar in the keyboard | **Built**: hold the space bar to rewrite, reply, translate or change the tone; nothing goes into the message until you tap Replace, Insert or Copy. NEAR AI Cloud answers first; OpenAI is the fallback and is labelled as such, and `AIRKEY_AI_FALLBACK=off` turns it off. Not yet run on NEAR AI Cloud: there's no key yet. |
+| A copied crypto call becomes a trade chip | **Built and live on testnet**: Check copied, then a hold-to-confirm chip for the Trading Agent, token checked on NEAR Intents, inside its caps (see Swaps above) |
+| Agent keys held in OutLayer's TEE | **Built, off by default** (`AIRKEY_SIGNER=outlayer`): the agents' `pay` and `swap` are signed inside OutLayer and the leash still decides every payment; proven on testnet ([evidence](docs/evidence/outlayer-testnet.md)). OutLayer returned no attestation we verified. |
 | Price chips, buy and sell from the keyboard, sums and currency | **Built**: prices and token list from NEAR Intents; sums and splits on the phone |
 | Price-triggered orders | **Built**: typed orders, a 15-second watcher, cancel from Home; the triggered trade is a quote until swaps execute |
 | Swaps on NEAR | **Built and live on testnet**: the leash's `swap` wraps NEAR and swaps on Rhea, the token comes back to the leash; hold to swap from the keyboard or the app. NEAR Intents: token checks and quotes; mainnet execution waits for a funded mainnet leash. |
-| Mainnet | *Next*, after everything passes on testnet |
+| Mainnet | *Not done.* The leash runs on testnet only and has enforced no mainnet swap. |
 
 ## Next (not built yet)
 
@@ -203,7 +206,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
   - **Kall Markets** (a trading keyboard): the keyboard haptics, the hold-to-confirm pattern, and the app's visual design (masthead, cards, swap card), adapted to AIRKEY.
   - Built during the hackathon: the leash contract, the server and its agents, Rhea and NEAR Intents swaps, the AIRKEY agent strip in the keyboard (`ios/AirKeyKeyboard/Agent/`), the money-safe typing rules, the vault, and the app.
 - Built with an AI coding assistant (Claude Code). Harshal chose the product, the rules and every trade-off; the assistant wrote code and tests to those decisions.
-- Testnet only so far. Never commit keys: `keys/` is gitignored.
+- Testnet only: the leash contract runs on NEAR testnet and has enforced no mainnet swap. Never commit keys: `keys/` and `server/.env` are gitignored.
 
 ## License
 
