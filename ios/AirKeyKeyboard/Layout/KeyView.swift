@@ -386,20 +386,8 @@ final class KeyView: UIControl {
             textureLayer.isHidden = true
             return
         }
-        if isBound && !pressed && Glass.keyTheme == "glow" {
-            // Glow theme: faint wash + accent UNDER-GLOW (Acti's M-key
-            // move). Never an outline ring — borders were the noise.
-            backgroundColor = Glass.fillKeyBound
-            layer.borderWidth = Glass.hairlineWidth
-            layer.borderColor = Glass.strokeHairline.cgColor
-            layer.shadowColor = Glass.accentPrimary.cgColor
-            layer.shadowOpacity = 0.38
-            layer.shadowRadius = 5
-            layer.shadowOffset = CGSize(width: 0, height: 2.5)
-            return
-        }
-        // Site (default), glass and classic: uniform keys, the DOT alone marks
-        // bindings — simple like Apple, just with purple dots. The Gboard
+        // Every key style: uniform keys, the small lime DOT alone marks a
+        // bound letter (Glyf Keys), in the glow theme too. The Gboard
         // "borders" toggle firms the outline; NEVER an accent border. The site
         // look draws no outline at all, only the hard bottom edge.
         // A theme with a border of its own always draws it, inside the
