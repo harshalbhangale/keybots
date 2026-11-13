@@ -28,7 +28,7 @@
 		<true/>
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
-	<string>AIRKEY uses Face ID before your key signs an approval or flips the kill switch.</string>
+	<string>AIRKEY uses Face ID before you approve a payment or change your limits.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>AIRKEY talks to your AIRKEY server on this network to run your agents.</string>
 	<key>UILaunchScreen</key>

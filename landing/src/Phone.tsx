@@ -437,7 +437,7 @@ export default function Phone({
 
         <div className="kb">
           <div className="tabs-row">
-            <span className="brandkey">A<i /></span>
+            <span className="brandkey"><img src="/logo.svg" alt="" aria-hidden /></span>
             <div className="ktabs">
               {TABS.map((t) => (
                 <span key={t} className={active === t ? "on" : ""}>{t}</span>

@@ -54,7 +54,7 @@ enum Signal {
     var word: String {
         switch self {
         case .allow: "PAID"
-        case .warn: "APPROVE?"
+        case .warn: "WAITING"
         case .block: "BLOCKED"
         case .quote: "QUOTE"
         case .watch: "WATCHING"
@@ -65,7 +65,7 @@ enum Signal {
     var title: String {
         switch self {
         case .allow: "Paid"
-        case .warn: "Needs your approval"
+        case .warn: "Waiting for you"
         case .block: "Blocked"
         case .quote: "Quote"
         case .watch: "Watching the price"

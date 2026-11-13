@@ -39,12 +39,12 @@ struct Intent: Equatable {
         // Buying and selling only light up for tokens NEAR Intents lists, so
         // "buy 2 tickets" or "sell 3 chairs" stays an ordinary message.
         if let m = match(buyDollar, line) ?? match(buyWords, line), Tokens.known.contains(m[2].uppercased()), m[2].uppercased() != "USDC" {
-            return Intent(kind: .swap, title: "Buy $\(m[1]) of \(m[2].uppercased())", detail: "Trading Agent gets a quote first", verb: "buy")
+            return Intent(kind: .swap, title: "Buy $\(m[1]) of \(m[2].uppercased())", detail: "Checks the live price first", verb: "buy")
         }
         if let m = match(sell, line), Tokens.known.contains(m[2].uppercased()) {
             let to = m[3].isEmpty ? "USDC" : m[3].uppercased()
             if to != m[2].uppercased(), Tokens.known.contains(to) {
-                return Intent(kind: .swap, title: "Sell \(m[1]) \(m[2].uppercased()) for \(to)", detail: "Trading Agent gets a quote first", verb: "sell")
+                return Intent(kind: .swap, title: "Sell \(m[1]) \(m[2].uppercased()) for \(to)", detail: "Checks the live price first", verb: "sell")
             }
         }
         if let m = match(amountFirst, line), usable(m[2]) {
@@ -145,7 +145,21 @@ enum Contacts {
     static var accounts: Set<String> { Set(Settings.store.stringArray(forKey: accountsKey) ?? []) }
     private static let accountsKey = "contactAccounts"
 
+    /// Account -> the shortest name you have for it ("friend.you.testnet" -> "harshal").
+    static var byAccount: [String: String] { Settings.store.dictionary(forKey: mapKey) as? [String: String] ?? [:] }
+    private static let mapKey = "contactByAccount"
+
+    /// The contact's name for an account, if it is one of yours.
+    static func name(for account: String) -> String? { byAccount[account.lowercased()] }
+
     static func save(_ contacts: [String: String]) {
+        var map: [String: String] = [:]
+        // The plainest name wins: "harshal" over "harshal.near" over "friend".
+        for (name, account) in contacts.sorted(by: { ($0.key.contains(".") ? 1 : 0, $0.key.count, $0.key) < ($1.key.contains(".") ? 1 : 0, $1.key.count, $1.key) }) {
+            let a = account.lowercased()
+            if map[a] == nil { map[a] = name.lowercased() }
+        }
+        Settings.store.set(map, forKey: mapKey)
         Settings.store.set(contacts.keys.map { $0.lowercased() }.sorted(), forKey: key)
         Settings.store.set(contacts.values.map { $0.lowercased() }.sorted(), forKey: accountsKey)
         Settings.store.set(Date().timeIntervalSince1970, forKey: stamp)

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SwiftUI
+import UIKit
 
 @Observable
 @MainActor
@@ -67,9 +68,11 @@ final class AppModel {
             guard let hash = Data(base64Encoded: prepared.hash) else { throw APIError(message: "Bad transaction from the server.") }
             let sig = try await DeviceKey.sign(hash, reason: reason)
             lastOwnerTx = try await api.submit(tx: prepared.tx, signature: sig.base64EncodedString())
+            UINotificationFeedbackGenerator().notificationOccurred(lastOwnerTx?.ok == false ? .error : .success)
             await refresh()
         } catch {
             self.error = error.localizedDescription
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
     }
 

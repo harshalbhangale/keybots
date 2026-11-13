@@ -1,6 +1,40 @@
 import SwiftUI
 import UIKit
 
+/// How a hold feels: a soft touch as it starts, ticks that rise while the
+/// band fills, and a thud when it fires. What happened next (success, a
+/// warning, an error) is played by whoever gets the answer. The generators
+/// are made once and kept prepared. The keyboard turns `enabled` off when it
+/// has no Full Access or the person switched haptics off.
+@MainActor
+enum HoldFeel {
+    static var enabled = true
+    static let ticks = 6
+
+    private static let soft = UIImpactFeedbackGenerator(style: .soft)
+    private static let rigid = UIImpactFeedbackGenerator(style: .rigid)
+    private static let heavy = UIImpactFeedbackGenerator(style: .heavy)
+
+    static func begin() {
+        guard enabled else { return }
+        soft.impactOccurred(intensity: 0.5)
+        rigid.prepare()
+        heavy.prepare()
+    }
+
+    /// `progress` runs 0...1 through the hold.
+    static func tick(_ progress: Double) {
+        guard enabled else { return }
+        rigid.impactOccurred(intensity: 0.25 + 0.65 * progress)
+        rigid.prepare()
+    }
+
+    static func commit() {
+        guard enabled else { return }
+        heavy.impactOccurred(intensity: 1)
+    }
+}
+
 /// The one control for anything that moves your money on your say-so.
 /// Press and hold: a darker band sweeps across the button with haptic ticks
 /// that grow stronger, and it fires when the band reaches the end. Letting go
@@ -65,15 +99,15 @@ struct HoldToConfirm: View {
         if down {
             guard !fired else { return }
             pressing = true
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            HoldFeel.begin()
             withAnimation(.linear(duration: duration)) { progress = 1 }
             ticks?.cancel()
             ticks = Task { @MainActor in
-                let steps = 5
+                let steps = HoldFeel.ticks
                 for i in 1..<steps {
                     try? await Task.sleep(for: .seconds(duration / Double(steps)))
                     guard !Task.isCancelled, pressing, !fired else { return }
-                    UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.3 + 0.7 * Double(i) / Double(steps))
+                    HoldFeel.tick(Double(i) / Double(steps))
                 }
             }
         } else {
@@ -91,7 +125,7 @@ struct HoldToConfirm: View {
         fired = true
         ticks?.cancel()
         progress = 1
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        HoldFeel.commit()
         action()
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))

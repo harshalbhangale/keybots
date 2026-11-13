@@ -19,7 +19,7 @@ struct SwapCard: View {
 
     /// The Trading Agent's limits, as the leash has them on chain.
     private var trader: LeashState.AgentEntry? {
-        model.state?.shownAgents.first { Fmt.agentName(account: $0.account) == "Trading Agent" }
+        model.state?.shownAgents.first { Fmt.agentName(account: $0.account) == Plain.trades }
     }
 
     /// The most one swap may be now: the per-trade cap, what's left today, what the leash holds.
@@ -30,9 +30,9 @@ struct SwapCard: View {
     }
 
     private var blocked: String? {
-        guard model.state != nil else { return "Reading the leash…" }
-        guard trader != nil else { return "Add a Trading Agent first" }
-        if model.state?.paused == true { return "The kill switch is on" }
+        guard model.state != nil else { return "Loading your limits…" }
+        guard trader != nil else { return "Trades aren't set up yet" }
+        if model.state?.paused == true { return "Stop everything is on" }
         guard let n = Double(amount), n > 0 else { return "Enter an amount" }
         if let most, n > most + 1e-9 { return "Up to \(Self.trim(most)) NEAR now" }
         return nil
@@ -102,7 +102,7 @@ struct SwapCard: View {
                 }
             }
             if let most {
-                Text("Up to \(Self.trim(most)) NEAR now · the Trading Agent's caps")
+                Text("Up to \(Self.trim(most)) NEAR now · your trade limit")
                     .font(.caption).foregroundStyle(AK.muted)
             }
             Button(action: quote) {
@@ -116,11 +116,11 @@ struct SwapCard: View {
     private func review(_ q: SwapQuote) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("\(q.amountIn) NEAR → \(q.amountOut) \(q.to)").font(.system(size: 17, weight: .black).monospacedDigit()).foregroundStyle(AK.bone)
-            line("You pay", "\(q.amountIn) NEAR from the leash")
+            line("You pay", "\(q.amountIn) NEAR from your AIRKEY balance")
             line("You get", "≈ \(q.amountOut) \(q.to)")
             line("At least", "\(q.minAmountOut) \(q.to), or it doesn't fill")
             line("Where", "Rhea pool #\(q.pool) · NEAR testnet")
-            line("Lands in", "the leash")
+            line("Lands in", "your AIRKEY balance")
             HStack(spacing: 8) {
                 Button { step = .idle } label: { Text("BACK") }
                     .buttonStyle(BigButtonStyle(primary: false, height: 48))
@@ -175,11 +175,11 @@ struct SwapCard: View {
             let r = await model.run("swap \(amount) near to \(to.lowercased())", source: "typed")
             if let r, r.outcome == "swapped" {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                step = .done(r.message)
+                step = .done(Plain.line(r))
                 amount = ""
             } else {
                 UINotificationFeedbackGenerator().notificationOccurred(.error)
-                step = .failed(r?.message ?? model.error ?? "The swap didn't go through.")
+                step = .failed(r.map(Plain.line) ?? model.error ?? "The swap didn't go through.")
             }
         }
     }

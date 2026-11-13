@@ -24,32 +24,25 @@ enum Fmt {
         account.split(separator: ".").first.map(String.init) ?? account
     }
 
-    static func agentName(_ tier: String) -> String {
-        tier == "trusted" ? "Payment Agent" : "Inbox Agent"
-    }
+    static func agentName(_ tier: String) -> String { Plain.agent(role: tier) }
 
     /// The server's agents by role (LeashState.roleNames), set when the state loads.
     nonisolated(unsafe) static var roleNames: [String: String] = [:]
 
-    /// Named by role when the server says, else by the account's first part: pay.<you> is the Payment Agent.
+    /// Named by what it does (Plain): by role when the server says, else by the account's first part: pay.<you> is Payments.
     static func agentName(account: String) -> String {
-        if let name = roleNames[account] { return name }
-        return switch short(account) {
-        case "pay": "Payment Agent"
-        case "inbox": "Inbox Agent"
-        case "trade", "trader": "Trading Agent"
-        case "copy": "Copy Agent"
-        case let other: other.prefix(1).uppercased() + other.dropFirst() + " Agent"
-        }
+        roleNames[account] ?? Plain.agent(role: short(account))
     }
 
     static func agentPurpose(account: String, tier: String) -> String {
-        switch short(account) {
-        case "pay": "Pays for what you type, within its caps."
-        case "inbox": "Reads messages other people send you. It can pay your allowlist; anyone else waits for you."
-        case "trade", "trader": "Swaps tokens you ask for, within its caps."
-        default: tier == "trusted" ? "Acts on what you type, within its caps." : "Acts on other people's words. Anyone off your allowlist waits for you."
+        // An account whose name says nothing (a hex one) is known by the role the server gave it.
+        let role = switch roleNames[account] {
+        case Plain.agent(role: "pay"): "pay"
+        case Plain.agent(role: "inbox"): "inbox"
+        case Plain.trades: "trade"
+        default: short(account)
         }
+        return Plain.purpose(role: role, tier: tier)
     }
 
     /// "Today", "Yesterday", or "12 Nov".

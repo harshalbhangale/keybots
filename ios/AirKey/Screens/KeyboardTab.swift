@@ -12,7 +12,7 @@ struct KeyboardTab: View {
             Card(spacing: 14) {
                 CardTitle(text: "SET UP", icon: "keyboard")
                 NumberedStep(n: 1, text: "Settings › Apps › AIRKEY › Keyboards, and turn on AIRKEY.")
-                NumberedStep(n: 2, text: "Turn on Allow Full Access, so your agents can reach the server.")
+                NumberedStep(n: 2, text: "Turn on Allow Full Access, so AIRKEY can pay and swap for you.")
                 NumberedStep(n: 3, text: "In any chat, hold the globe key and pick AIRKEY.")
                 Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
