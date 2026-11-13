@@ -452,10 +452,14 @@ final class VaultStore {
 /// Predictable beats clever — exact trigger match only.
 enum Shorthand {
     /// The token the user just finished typing (last run of non-space chars).
+    /// A semicolon and a word only: a run with a dot, a slash or a colon in
+    /// it is an account or a link ("harshal.near", "x.com/;near"), never shorthand.
     static func pendingToken(beforeContext: String?) -> String? {
         guard let ctx = beforeContext, !ctx.isEmpty else { return nil }
         let token = WordTrackerTokenTail(ctx)
-        guard token.hasPrefix(";"), token.count >= 2, token.count <= 12 else { return nil }
+        guard token.hasPrefix(";"), token.count >= 2, token.count <= 12,
+              token.dropFirst().allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" })
+        else { return nil }
         return token
     }
 
@@ -469,8 +473,43 @@ enum Shorthand {
         return token
     }
 
+    /// Your own shorthand first, then AIRKEY's vault (`;near`, `;eth`).
     static func expansion(for token: String, in vault: VaultBook) -> String? {
-        vault.snippets.first { $0.trigger == token }?.text
+        let t = token.lowercased()
+        if let own = vault.snippets.first(where: { $0.trigger.lowercased() == t }) { return own.text }
+        return airkey().first { $0.trigger == t }?.value
+    }
+
+    /// AIRKEY's vault as shorthand: `;near` is your NEAR account, and each
+    /// saved address answers to its name ("ETH" → `;eth`, "Main UPI" → `;mainupi`).
+    static func airkey(owner: String? = Vault.owner, items: [Vault.Item] = Vault.items)
+        -> [(trigger: String, label: String, value: String)] {
+        var out: [(trigger: String, label: String, value: String)] = []
+        if let owner, !owner.isEmpty { out.append((";near", "My NEAR", owner)) }
+        for item in items {
+            let t = trigger(for: item.label)
+            guard t.count >= 2, !out.contains(where: { $0.trigger == t }) else { continue }
+            out.append((t, item.label, item.value))
+        }
+        return out
+    }
+
+    /// A label as a trigger: its letters and digits, lowercased, short
+    /// enough to type (a token is twelve characters at most).
+    static func trigger(for label: String) -> String {
+        ";" + String(label.lowercased().filter { $0.isLetter || $0.isNumber }.prefix(11))
+    }
+
+    /// What the strip shows while a shorthand is being typed, before the
+    /// space expands it: `;eth` → the address. Nil when nothing matches, or
+    /// for shorthand with blanks to fill ({cursor}, {clipboard}), which only
+    /// the space fills.
+    static func preview(beforeContext: String?, in vault: VaultBook) -> Smart.Conversions? {
+        guard let token = pendingToken(beforeContext: beforeContext),
+              let value = expansion(for: token, in: vault), !value.contains("{") else { return nil }
+        let oneLine = value.replacingOccurrences(of: "\n", with: " ")
+        let shown = oneLine.count > 28 ? String(oneLine.prefix(12)) + "…" + String(oneLine.suffix(8)) : oneLine
+        return Smart.Conversions(source: token, results: [shown], inserts: [value], hows: [.replace])
     }
 }
 
