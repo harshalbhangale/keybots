@@ -223,6 +223,7 @@ final class AgentModel {
 
     /// The hold on the strip's button: the command it shows.
     func runReady() {
+        Haptics.hold()
         if let command = ready?.command { runCommand(command) } else { runTyped() }
     }
 
@@ -311,12 +312,11 @@ final class AgentModel {
     }
 
     private func feedback(for signal: Signal) {
-        let gen = UINotificationFeedbackGenerator()
         switch signal {
-        case .allow: gen.notificationOccurred(.success)
-        case .warn: gen.notificationOccurred(.warning)
-        case .block: gen.notificationOccurred(.error)
-        case .quote, .watch: UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        case .allow: Haptics.success()
+        case .warn: Haptics.warning()
+        case .block: Haptics.error()
+        case .quote, .watch: Haptics.letter()
         case .neutral: break
         }
     }

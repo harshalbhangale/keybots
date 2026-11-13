@@ -214,6 +214,14 @@ final class KeyboardViewController: UIInputViewController {
         paste.addTypeIdentifiers(forAccepting: UIImage.self)
         pasteConfiguration = paste
         agent.host = self
+        refreshHaptics()
+    }
+
+    /// Haptics need Full Access, and the person may have turned them off.
+    /// The generators are warmed up so the first key is not late.
+    private func refreshHaptics() {
+        Haptics.allowed = hasFullAccess && SettingsStore.current.haptics
+        Haptics.warmUp()
     }
 
     /// Where every system paste button in the keyboard lands.
@@ -346,6 +354,7 @@ final class KeyboardViewController: UIInputViewController {
     /// A look, appearance or binding changed on disk: apply what differs
     /// (both calls are no-ops when nothing did).
     private func settingsChanged() {
+        refreshHaptics()
         guard didBuild else { return }
         keyboardView.refreshBindings()
         resolveAppearance()
@@ -419,6 +428,7 @@ final class KeyboardViewController: UIInputViewController {
         typed = ""         // another field: our copy of its text starts over
         forgetBefore()
         VaultStore.shared.invalidate() // the app may have edited the vault
+        refreshHaptics()
         seedOwnNames()
         resolveAppearance() // BEFORE building — tokens feed every surface
         if !didBuild {
@@ -2191,10 +2201,12 @@ extension KeyboardViewController: ClipboardPanelDelegate {
 extension KeyboardViewController: ToolbarDelegate {
 
     func toolbarBrandTapped() {
+        Haptics.layer()
         setSurface(surface == .shell ? .none : .shell)
     }
 
     func toolbarItemTapped(_ id: String) {
+        Haptics.layer()
         openTool(id)
     }
 
@@ -2422,6 +2434,7 @@ extension KeyboardViewController: ToolbarDelegate {
     }
 
     func toolbarSuggestionTapped(_ suggestion: KeyToolbar.Suggestion) {
+        Haptics.letter()
         // Another guess for the word a glide just put in replaces it.
         if glideSwap(suggestion) { return }
         let before = beforeContext

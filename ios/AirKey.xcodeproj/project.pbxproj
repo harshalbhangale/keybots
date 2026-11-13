@@ -122,6 +122,7 @@
 		B499AACC5C567A4A70C7EB8C /* SpaceGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECD5E091EE2449E9439D0CB4 /* SpaceGesture.swift */; };
 		B578EB8217E1CB2CFBF710E7 /* MenuShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */; };
 		B9C7BFE0BFC77E8B7B9E290B /* marble.png in Resources */ = {isa = PBXBuildFile; fileRef = 6F050F6DDBA07718B7DC1920 /* marble.png */; };
+		BB50E01BA953AFF7EB3BE5D2 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B266FD6C151D3FF2DC9AEBF /* Haptics.swift */; };
 		BCE809DD730ABB417CEC4394 /* knurl.png in Resources */ = {isa = PBXBuildFile; fileRef = 14D78E32782508FD6396E683 /* knurl.png */; };
 		BD5A2B50C89EE2F5132777D5 /* theme-sonar-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 4230BFEBE70BF167FF7FE637 /* theme-sonar-return.caf */; };
 		BD60A00EB851372B06F1E92C /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
@@ -267,6 +268,7 @@
 		9823A1625F31B1E78B0D3972 /* Marcellus-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Marcellus-OFL.txt"; sourceTree = "<group>"; };
 		99149A26179B099AF88712C1 /* theme-wood-return.caf */ = {isa = PBXFileReference; path = "theme-wood-return.caf"; sourceTree = "<group>"; };
 		994FF05E6C99D2F1D75113ED /* VaultStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultStore.swift; sourceTree = "<group>"; };
+		9B266FD6C151D3FF2DC9AEBF /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		9BF871A3D5082D0B29BC2457 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9C0ABBC721D4F513C1AE3917 /* theme-mech-letter.caf */ = {isa = PBXFileReference; path = "theme-mech-letter.caf"; sourceTree = "<group>"; };
 		9D74A09E78DC5274B51D938F /* GlideTyping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlideTyping.swift; sourceTree = "<group>"; };
@@ -535,6 +537,7 @@
 				AE36E7E1F8D537B25CFCB213 /* ClipContext.swift */,
 				E81D724E561D9CD11204E132 /* EmojiWords.swift */,
 				1D39239910F1CF41CAC6C09B /* Games.swift */,
+				9B266FD6C151D3FF2DC9AEBF /* Haptics.swift */,
 				F4E37A35D60CB1639593332E /* MemoryLogger.swift */,
 				F281D96CC601377703F9456D /* NotesStore.swift */,
 				D5EFC66EC9089F83D6FF6384 /* PhraseMemory.swift */,
@@ -822,6 +825,7 @@
 				3D89726AC2B2766329C5F4AF /* GlideTrail.swift in Sources */,
 				1169BD52B05DFE6411217DD8 /* GlideTyping.swift in Sources */,
 				53479A81A27723E71F8DF346 /* GlydTrie.swift in Sources */,
+				BB50E01BA953AFF7EB3BE5D2 /* Haptics.swift in Sources */,
 				528304A5639284DD30BB2028 /* HoldToConfirm.swift in Sources */,
 				F85FAD38A4101292DFE21288 /* InlineEditor.swift in Sources */,
 				EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */,
