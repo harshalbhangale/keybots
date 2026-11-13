@@ -25,6 +25,9 @@ enum Plain {
         let full = line(r)
         for lead in ["Blocked: ", "Waiting for you: ", "Not sent: "] where full.hasPrefix(lead) {
             let rest = full.dropFirst(lead.count)
+            // A name stays as it is written: "drain.near", "vendor".
+            let first = rest.split(separator: " ").first.map(String.init) ?? ""
+            if first.contains(".") || Contacts.names.contains(first) { return String(rest) }
             return rest.prefix(1).uppercased() + rest.dropFirst()
         }
         return full
@@ -175,7 +178,8 @@ enum Plain {
     static func blockedReason(_ reason: String) -> String {
         var s = reason
         if let r = s.range(of: #"^reported by [^:]+:\s*"#, options: [.regularExpression, .caseInsensitive]) {
-            s = "Reported: " + s[r.upperBound...]
+            let why = s[r.upperBound...]
+            s = "Reported as a scam: " + why
         }
         if s == "Blocked by the owner" { return "You blocked it" }
         return scrub(s)
@@ -225,6 +229,7 @@ enum Plain {
         (#"(The|the) (Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
         (#"(Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
         (#"The agent asked you to approve this one"#, "AIRKEY asks you first for this one"),
+        (#"reported by [a-z0-9_-]+(\.[a-z0-9_-]+)+"#, "reported by AIRKEY"),
         (#"allowlist"#, "allowed list"),
         (#"blocklist"#, "blocked list"),
         (#"\bcaps\b"#, "limits"),
