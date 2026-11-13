@@ -28,17 +28,17 @@ struct SectionTitle: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(text).font(.headline).foregroundStyle(AK.bone)
+            Text(text.uppercased()).font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.muted)
             Spacer()
             if let trailing {
                 if let action {
-                    Button(trailing, action: action).font(.subheadline.weight(.medium)).foregroundStyle(AK.accent)
+                    Button(trailing.uppercased(), action: action).font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.accent)
                 } else {
-                    Text(trailing).font(.subheadline).foregroundStyle(AK.muted)
+                    Text(trailing).font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(AK.muted)
                 }
             }
         }
-        .padding(.horizontal, 4)
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
