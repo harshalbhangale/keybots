@@ -260,6 +260,39 @@ describe("swaps", () => {
     expect(calls).toHaveLength(0);
   });
 
+  // Mainnet: NEAR into a token without a Rhea route funds a NEAR Intents deposit address from the leash.
+  const mainnet = { ...loadConfig({ AIRKEY_OWNER: "x.near", NEAR_NETWORK: "mainnet" }), nearAi: { apiKey: "", model: "m", base: "b" } };
+  const liveIntents = (status: string) => {
+    const submitted: string[] = [];
+    const i = {
+      ...intentsWithNear(),
+      liveQuote: async () => ({ dry: false as const, depositAddress: "deposit1", amountIn: "100000000000000000000000", amountInFormatted: "0.1", amountOut: "1", amountOutFormatted: "0.0042" }),
+      submitDeposit: async (tx: string) => { submitted.push(tx); },
+      status: async () => ({ status, done: ["SUCCESS", "REFUNDED", "FAILED"].includes(status), amountOutFormatted: "0.0041", txs: [] }),
+    };
+    return { i, submitted };
+  };
+
+  it("on mainnet, funds a NEAR Intents deposit address from the leash and reports the payout", async () => {
+    const { chain, calls } = fakeChain();
+    chain.state = chainWithTrader().state;
+    const { i, submitted } = liveIntents("SUCCESS");
+    const r = await runCommand({ cfg: mainnet, chain, receipts: memoryStore(), intents: i as never }, "swap 0.1 near to sol", "typed");
+    expect(r.outcome).toBe("swapped");
+    expect(r.message).toBe("Swapped 0.1 NEAR for 0.0041 SOL on NEAR Intents.");
+    expect(calls[0].args).toMatchObject({ venue: "deposit1", wrap: "wrap.near", amount: "100000000000000000000000" });
+    expect(calls[0].args.msg).toBeUndefined();
+    expect(submitted).toEqual(["SWAP"]);
+  });
+
+  it("on mainnet, says so when NEAR Intents refunds the leash", async () => {
+    const { chain } = fakeChain();
+    chain.state = chainWithTrader().state;
+    const r = await runCommand({ cfg: mainnet, chain, receipts: memoryStore(), intents: liveIntents("REFUNDED").i as never }, "swap 0.1 near to sol", "typed");
+    expect(r.outcome).toBe("not-sent");
+    expect(r.message).toMatch(/refunded to the leash/);
+  });
+
   it("blocks tokens NEAR Intents doesn't list", async () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to toshi2", "typed");
     expect(r.outcome).toBe("blocked");
