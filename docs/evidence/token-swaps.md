@@ -92,3 +92,14 @@ npm run setup-token-swaps -- airkey-harshal.testnet   # owner: USDC and USDT rul
 The built wasm should have the code hash above. To undo: redeploy the previous wasm; the token rules it leaves behind are entries the old code never reads.
 
 To point the server or the scripts at `leash2` instead: `AIRKEY_LEASH=leash2.airkey-harshal.testnet AIRKEY_AGENT_TRUSTED=pay2.airkey-harshal.testnet AIRKEY_AGENT_UNTRUSTED=inbox2.airkey-harshal.testnet AIRKEY_AGENT_TRADE=trader2.airkey-harshal.testnet`.
+
+## Live leash upgraded (13 Nov 2026)
+
+`leash.airkey-harshal.testnet` now runs the token-selling code.
+
+- Deploy: [BYjjWNU4…](https://testnet.nearblocks.io/txns/BYjjWNU4kdiVqLn97H8vVfkpYWmbsLfuGri5fi2dBkoe), wasm 255,136 bytes.
+- Token rules, at most 5 a trade on Rhea, counted as at least 1 NEAR per 5:
+  - USDC: [9r8jYXU9…](https://testnet.nearblocks.io/txns/9r8jYXU9HAMpu5dKGgoAyxumW4CDyciTFgaBG6R4KsJP)
+  - USDT: [EjEdKA5J…](https://testnet.nearblocks.io/txns/EjEdKA5Jg3iWz2AspcMpH6k7FNZZqgA9xN2UUNqT96Eb)
+- State after the upgrade is unchanged. The kill switch is still off, and all 6 agents, the allowlist (friend), the blocklist (drain) and the empty pending list are as before. Spendable NEAR went from 0.5143 to 0.2707: the larger code and the two rules take storage.
+- `GET /v1/quote` now marks these as runnable: USDC → NEAR (pool 1103), NEAR → USDC, and USDC → USDT (pool 1126). NEAR → SOL stays a NEAR Intents mainnet quote, and nothing is sent.
