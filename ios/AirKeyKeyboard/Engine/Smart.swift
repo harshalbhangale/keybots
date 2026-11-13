@@ -144,6 +144,10 @@ enum Smart {
                      indianGrouping: Bool = true,
                      region: String? = Locale.current.region?.identifier,
                      linkContext: String? = nil) -> Chip? {
+        // Shorthand being typed (";near", ";eth"): what the space turns it into.
+        if text.contains(";"), let s = Shorthand.preview(beforeContext: text, in: VaultStore.shared.load()) {
+            return .convert(s)
+        }
         // A link longer than the strip's view of the message: its trackers.
         if let context = linkContext, context.count > text.count, endsInLink(text), let c = cleanLink(in: context) {
             return .convert(c)
