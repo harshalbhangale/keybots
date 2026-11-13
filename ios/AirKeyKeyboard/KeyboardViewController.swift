@@ -2035,6 +2035,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     /// What a held key opens: a menu screen ("surface:notes").
     private func runBinding(_ target: String) {
+        // Glyf Keys (Engine/KeyBindings): a strip tool, or words typed ("pay ").
+        if let tool = KeyBindings.tool(in: target) { return openTool(tool) }
+        if let words = KeyBindings.words(in: target) { return agentInsert(words, spaced: true) }
         guard target.hasPrefix("surface:") else { return }
         if surface != .shell { setSurface(.shell) }
         shell?.push(String(target.dropFirst("surface:".count)))
