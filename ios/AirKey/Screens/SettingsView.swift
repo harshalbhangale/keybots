@@ -17,7 +17,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         step(1, "Open Settings › Apps › AIRKEY › Keyboards")
                         step(2, "Turn on AIRKEY")
-                        step(3, "Turn on Allow Full Access, so agents can reach the server")
+                        step(3, "Turn on Allow Full Access, so AIRKEY can pay and swap for you")
                     }
                     .padding(.vertical, 4)
                     Button("Open Settings") {
@@ -71,8 +71,8 @@ struct SettingsView: View {
 
                 if let state = model.state {
                     Section("Account") {
-                        LabeledContent("Owner") { Text(state.owner).font(AK.mono) }
-                        LabeledContent("Leash") { Text(state.leash).font(AK.mono) }
+                        LabeledContent("Your account") { Text(state.owner).font(AK.mono) }
+                        LabeledContent("Limits contract") { Text(state.leash).font(AK.mono) }
                     }
                 }
             }

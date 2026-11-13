@@ -34,7 +34,7 @@ targets:
           UIColorName: LaunchInk
         UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        NSFaceIDUsageDescription: AIRKEY uses Face ID before your key signs an approval or flips the kill switch.
+        NSFaceIDUsageDescription: AIRKEY uses Face ID before you approve a payment or change your limits.
         NSLocalNetworkUsageDescription: AIRKEY talks to your AIRKEY server on this network to run your agents.
         AirkeyServer: $(AIRKEY_SERVER)
         NSAppTransportSecurity:

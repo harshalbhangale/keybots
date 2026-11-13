@@ -16,6 +16,17 @@ struct StripPalette {
 struct AgentStrip: View {
     let model: AgentModel
     @Environment(\.colorScheme) private var scheme
+    /// The result chip is showing its technical message (the rule code and all) in place of the plain line.
+    @State private var showDetails = false
+
+    /// Which chip is up, so one soft tap marks a new one arriving and
+    /// nothing fires while its words change as you type.
+    private var chip: Int {
+        if model.result != nil || model.notice != nil || model.pasteWarning != nil || model.running != nil || model.vaultOpen { return 0 }
+        if model.ready != nil { return 1 }
+        if model.answer != nil { return 2 }
+        return model.instant != nil ? 3 : 0
+    }
 
     var body: some View {
         let palette = StripPalette(dark: scheme == .dark)
@@ -47,6 +58,8 @@ struct AgentStrip: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.snappy(duration: 0.22), value: model.ready)
         .animation(.snappy(duration: 0.22), value: model.running)
+        .onChange(of: chip) { old, new in if new != 0, old == 0 { Haptics.chip() } }
+        .onChange(of: model.result?.id) { showDetails = false }
     }
 
     private static let height: CGFloat = 38
@@ -168,7 +181,7 @@ struct AgentStrip: View {
     private func working(_ source: String, _ palette: StripPalette) -> some View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(palette.text)
-            Text(source == "pasted" ? "Inbox Agent is checking it…" : model.runningKind == .swap ? "Trading Agent is on it…" : "Asking the leash on NEAR…")
+            Text(Plain.working(pasted: source == "pasted", swap: model.runningKind == .swap))
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(palette.text)
             Spacer(minLength: 0)
@@ -186,13 +199,30 @@ struct AgentStrip: View {
                 .foregroundStyle(plain ? palette.text : AK.ink)
                 .frame(width: 26, height: 26)
                 .background(plain ? palette.function : r.signal.color, in: Circle())
-            Text(r.message)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(palette.text)
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
-            Spacer(minLength: 4)
-            if r.tx != nil {
+            // The plain line; a tap turns it over to the technical message, rule code and all.
+            Button {
+                Haptics.layer()
+                showDetails.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(showDetails ? Plain.details(r) : Plain.line(r))
+                        .font(showDetails ? .caption2.monospaced() : .caption.weight(.medium))
+                        .foregroundStyle(palette.text)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.7)
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: 4)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showDetails ? Plain.details(r) : "\(Plain.title(r)). \(Plain.body(r))")
+            .accessibilityHint(showDetails ? "Shows the plain line" : "Shows the details")
+            if !showDetails, r.decision?.rule != nil || r.message != Plain.line(r) {
+                Text("Details").font(.caption2.weight(.semibold)).foregroundStyle(palette.soft)
+                    .allowsHitTesting(false).accessibilityHidden(true)
+            }
+            if r.tx != nil, !showDetails {
                 Button { model.insertReceipt() } label: {
                     Text("Share").font(.footnote.weight(.semibold)).foregroundStyle(palette.text)
                         .padding(.horizontal, 12).frame(height: 28).background(palette.function, in: Capsule())
@@ -206,7 +236,6 @@ struct AgentStrip: View {
         .frame(height: Self.height)
         .glassEffect(plain ? .regular : .regular.tint(r.signal.color.opacity(0.22)), in: .capsule)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(r.signal.title). \(r.message)")
     }
 
     private func notice(_ text: String, _ palette: StripPalette) -> some View {

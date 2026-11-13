@@ -89,6 +89,8 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
 
   const done = (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">): Receipt => {
     const receipt = { ...base, interpretation, ...r } as Receipt;
+    const summary = plainSummary(receipt, cfg.contacts);
+    if (summary) receipt.summary = summary;
     receipts.add(receipt);
     return receipt;
   };
@@ -151,6 +153,102 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
     tx,
     events,
   });
+}
+
+/** The name a person knows a receiver by: the contact's name when there is one, else the account. */
+function who(r: Receipt, contacts: Record<string, string>): string {
+  const rc = r.receiver;
+  if (!rc) return "them";
+  if (rc.via === "contacts") return rc.asked.toLowerCase();
+  return Object.entries(contacts).find(([, account]) => account === rc.account)?.[0] ?? rc.account;
+}
+
+/** "0.5" out of "Over the per-payment cap of 0.5 NEAR". */
+const nearIn = (s: string) => /(\d+(?:\.\d+)?)\s*NEAR/.exec(s)?.[1];
+
+/**
+ * One plain line for a receipt, for someone new to NEAR: what happened and
+ * why, with no rule codes and no contract words. Worked out from the
+ * receipt's own fields (outcome, rule, receiver, checks, swap), not from
+ * `message`, which stays as it was. Undefined when there is nothing plainer
+ * to say than the message.
+ */
+export function plainSummary(r: Receipt, contacts: Record<string, string> = {}): string | undefined {
+  const a = r.interpretation.action;
+  const name = who(r, contacts);
+  const rule = r.decision?.rule;
+  const stopped = "Blocked: you turned on Stop everything";
+
+  if (r.outcome === "paid" && a.kind === "pay") return `Paid ${a.amountNear} NEAR to ${name}`;
+
+  if (r.outcome === "swapped") {
+    const x = r.swap?.executed;
+    if (!x) return undefined;
+    if (!x.amountOut) return `Swapping ${x.amountIn} NEAR for ${x.symbolOut}`;
+    return r.message.includes("still running")
+      ? `Swapping ${x.amountIn} NEAR for about ${tidy(x.amountOut)} ${x.symbolOut}. It lands in a minute`
+      : `Swapped ${x.amountIn} NEAR for ${tidy(x.amountOut)} ${x.symbolOut}`;
+  }
+
+  if (r.outcome === "approval") {
+    if (rule === "R6") return `Waiting for you: ${name} isn't on your allowed list`;
+    const f = r.checks?.facts;
+    if (!f) return "Waiting for you to approve";
+    const fresh = f.ageDays !== null && f.ageDays < 7;
+    if (f.isContract) return "Waiting for you: this account is an app, not a person";
+    if (fresh && !f.paidBefore) return "Waiting for you: a new account you've never paid";
+    if (fresh) return "Waiting for you: this account is only a few days old";
+    if (!f.paidBefore) return `Waiting for you: you've never paid ${name}`;
+    return "Waiting for you to approve";
+  }
+
+  if (r.outcome === "blocked") {
+    if (rule === "R1") return stopped;
+    if (rule === "R3") return `Blocked: ${name} is on your blocked list`;
+    if (rule === "R4") {
+      const cap = nearIn(r.decision!.reason);
+      const kind = a.kind === "swap" ? "per-trade" : "per-payment";
+      return cap ? `Blocked: over your ${cap} NEAR ${kind} limit` : `Blocked: over your ${kind} limit`;
+    }
+    if (rule === "R5") {
+      const cap = nearIn(r.decision!.reason);
+      return cap ? `Blocked: over your ${cap} NEAR daily limit` : "Blocked: over your daily limit";
+    }
+    if (rule === "R6") return `Blocked: ${name} isn't on your allowed list`;
+    if (rule === "R0") return "Blocked: not enough NEAR in your AIRKEY balance";
+    if (rule) return undefined;
+    // Stopped by the server before the chain was asked.
+    if (r.input.source === "pasted" && (a.kind === "swap" || a.kind === "watch")) {
+      return "Blocked: trades only run from what you type, never from a copied message";
+    }
+    if (r.swap && (!r.swap.from.verified || !r.swap.to.verified)) {
+      const bad = !r.swap.from.verified ? r.swap.from : r.swap.to;
+      return `Blocked: ${bad.asked.toUpperCase()} isn't a token we could verify`;
+    }
+    const l = r.swap?.leash;
+    if (l && !l.within) {
+      if (r.message.includes("kill switch")) return stopped;
+      const cap = yoctoToNear(BigInt(l.perPaymentCap));
+      if (nearToYocto(Number(l.valueNear)) > BigInt(l.perPaymentCap)) return `Blocked: over your ${cap} NEAR per-trade limit`;
+      return `Blocked: only ${tidy(yoctoToNear(BigInt(l.leftToday)))} NEAR left of today's limit`;
+    }
+    return undefined;
+  }
+
+  if (r.outcome === "quoted" && r.swap?.quote && a.kind === "swap") {
+    return `${a.amount} ${a.from.toUpperCase()} gets about ${tidy(r.swap.quote.amountOutFormatted)} ${a.to.toUpperCase()}. Nothing sent yet`;
+  }
+
+  if (r.outcome === "watching" && r.order) {
+    const o = r.order;
+    return `Watching ${o.symbol}: will ${o.command} when it's ${o.direction} $${tidy(o.price)}`;
+  }
+
+  if (r.outcome === "not-sent") {
+    if (r.receiver && r.checks && !r.checks.facts.exists) return `Not sent: ${r.receiver.account} doesn't exist on NEAR`;
+    if (r.swap?.executed && !r.swap.executed.ok) return `Not swapped: ${r.swap.executed.venue} couldn't fill it. Your NEAR is safe`;
+  }
+  return undefined;
 }
 
 const nearToYocto = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 18n;

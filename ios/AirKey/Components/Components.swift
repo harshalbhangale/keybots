@@ -42,7 +42,7 @@ struct SectionTitle: View {
     }
 }
 
-/// Small status tag: Trusted, Untrusted, R6…
+/// Small status tag: Your words, Stopped…
 struct Pill: View {
     let text: String
     let color: Color
@@ -76,13 +76,14 @@ struct SignalBadge: View {
 /// arrives: the command sheet and the top of a receipt.
 struct OutcomeCard: View {
     let signal: Signal
+    var title: String?
     let message: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             SignalBadge(signal: signal, size: 36)
             VStack(alignment: .leading, spacing: 4) {
-                Text(signal.title).font(.headline).foregroundStyle(signal.plain ? AK.bone : signal.color)
+                Text(title ?? signal.title).font(.headline).foregroundStyle(signal.plain ? AK.bone : signal.color)
                 Text(message).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -129,7 +130,7 @@ struct SpendBar: View {
             }
         }
         .frame(height: 6)
-        .accessibilityLabel("\(Int(share * 100)) percent of today's cap used")
+        .accessibilityLabel("\(Int(share * 100)) percent of today's limit used")
     }
 }
 
@@ -163,18 +164,18 @@ struct ApprovalCard: View {
                 Pill(text: "Waiting for you", color: AK.amber)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("to \(pending.receiver)").font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+                Text("to \(Plain.name(pending.receiver))").font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
                 if let memo = pending.memo, !memo.isEmpty {
                     Text("for \(memo)").font(.subheadline).foregroundStyle(AK.muted)
                 }
             }
-            Text("\(Fmt.agentName(account: pending.agent)) asked because: \(pending.reason)")
+            Text(Plain.pending(pending))
                 .font(.footnote)
                 .foregroundStyle(AK.muted)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
                 Button(role: .destructive) {
-                    Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(pending.receiver)") }
+                    Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
                 } label: {
                     Text(model.busy == "reject" ? "…" : "REJECT")
                 }
@@ -190,7 +191,7 @@ struct ApprovalCard: View {
                     font: .system(size: 14, weight: .heavy),
                     disabled: working
                 ) {
-                    Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(pending.receiver)") }
+                    Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
                 }
             }
         }
@@ -208,8 +209,8 @@ struct ReceiptRow: View {
         HStack(alignment: .top, spacing: 12) {
             SignalBadge(signal: r.signal, size: 30)
             VStack(alignment: .leading, spacing: 3) {
-                Text(r.message).font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
-                Text([r.input.source == "typed" ? "You typed “\(r.input.text)”" : "Pasted “\(r.input.text)”", Fmt.time(r.date)].joined(separator: " · "))
+                Text(Plain.line(r)).font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
+                Text([r.input.source == "typed" ? "You typed “\(r.input.text)”" : "You copied “\(r.input.text)”", Fmt.time(r.date)].joined(separator: " · "))
                     .font(.footnote)
                     .foregroundStyle(AK.muted)
                     .lineLimit(1)

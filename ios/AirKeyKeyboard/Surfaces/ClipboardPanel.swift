@@ -747,7 +747,7 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
 
     private func showMenu(rows: [(String, String, () -> Void)], card: UIControl) {
         dismissMenu()
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Haptics.modifier()
         scrim.isHidden = false
         bringSubviewToFront(scrim)
 
