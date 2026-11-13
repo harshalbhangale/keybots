@@ -231,7 +231,7 @@
     <header>
       <div>
         <h1>AIRKEY <span>logo concepts.</span></h1>
-        <p>A keycap and the NEAR mark, ten ways. Each one at hero size, as an app icon, at favicon sizes, and next to the wordmark. Tap Pick on the ones you like.</p>
+        <p>Our own keycap, A and lime tab, eight ways. No third-party marks. Each one at hero size, as an app icon, at favicon sizes, and next to the wordmark. Tap Pick on the ones you like.</p>
         <div class="toggle" role="group" aria-label="Background">
           <button class="on" data-bg="dark">Dark</button>
           <button data-bg="light">Light</button>
@@ -240,7 +240,7 @@
       <div class="picks" id="picks">No picks yet.</div>
     </header>
     <main id="grid"></main>
-    <footer>The NEAR symbol belongs to the NEAR Foundation; check their brand rules before a final mark uses it.</footer>
+    <footer>NEAR's mark stays NEAR's: it appears only in a separate "Built on NEAR" badge, never in the AIRKEY logo.</footer>
 
     <script>
       // The NEAR symbol, 20.2 × 19.6.
@@ -285,45 +285,41 @@
         orange: { top: ["#f08a4b", "#e06a2b"], side: ["#c9541c", "#9c3e12"] },
         dark: { top: ["#46474b", "#303134"], side: ["#2a2b2e", "#17171a"], edge: "rgba(255,255,255,.18)" },
         white: { top: ["#ffffff", "#ecebe8"], side: ["#d7d5d0", "#b9b6b0"], edge: "rgba(255,255,255,.9)" },
-        mint: { top: ["#4dffbd", "#00ec97"], side: ["#00c47d", "#009a62"] },
       };
+
+      /** AIRKEY's own legend: a drawn A, and the lime side tab. No third-party marks. */
+      const A = (cx, cy, w, color, extra = "") => {
+        const h = w * 1.05;
+        const sw = w * 0.2;
+        return `<path d="M${cx - w / 2} ${cy + h / 2} L${cx} ${cy - h / 2} L${cx + w / 2} ${cy + h / 2} M${cx - w * 0.26} ${cy + h * 0.16} H${cx + w * 0.26}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+      };
+      const tab = (x, cy, h, color = "#c6f25a") => `<rect x="${x}" y="${cy - h / 2}" width="${h * 0.13}" height="${h}" rx="${h * 0.065}" fill="${color}"/>`;
+      const aTab = (cx, cy, tw, color, tabColor = "#c6f25a") => A(cx - tw * 0.03, cy, tw * 0.44, color) + tab(cx + tw * 0.36, cy, tw * 0.36, tabColor);
 
       const CONCEPTS = [
         {
+          name: "The tab",
+          line: "Today's mark as a real key: an A and the lime side tab.",
+          draw: () => keycap({ ...C.dark, legend: (cx, cy, tw) => aTab(cx, cy, tw, "#f5f5f7") }),
+          icon: "#0b0c0a",
+        },
+        {
           name: "Esc",
-          line: "A lime keycap with the NEAR mark as its legend.",
-          draw: () => keycap({ ...C.lime, legend: (cx, cy, tw) => near(cx, cy, tw * 0.5, "#0b0c0a") }),
+          line: "A lime keycap with a black A. Loud and simple.",
+          draw: () => keycap({ ...C.lime, legend: (cx, cy, tw) => aTab(cx, cy, tw, "#0b0c0a", "#0b0c0a") }),
           icon: "#0b0c0a",
         },
         {
           name: "Burnt orange",
           line: "Your photo's esc key: warm, tactile, engraved.",
-          draw: () => keycap({ ...C.orange, legend: (cx, cy, tw) => near(cx, cy, tw * 0.48, "#7a2c0c", 'opacity=".75"') }),
+          draw: () => keycap({ ...C.orange, legend: (cx, cy, tw) => aTab(cx, cy, tw, "#7a2c0c", "#f5f5f7") }),
           icon: "#16110e",
         },
         {
-          name: "Night key",
-          line: "Black cap, lime NEAR. Quiet and premium.",
-          draw: () => keycap({ ...C.dark, legend: (cx, cy, tw) => near(cx, cy, tw * 0.48, "#c6f25a") }),
-          icon: "#1a1a1c",
-        },
-        {
-          name: "The tab",
-          line: "Today's mark as a real key: an A and the lime tab.",
-          draw: () =>
-            keycap({
-              ...C.dark,
-              legend: (cx, cy, tw) =>
-                `<text x="${cx - 6}" y="${cy + 18}" text-anchor="middle" font-family="Inter Tight" font-weight="800" font-size="${tw * 0.52}" fill="#f5f5f7">A</text>
-                 <rect x="${cx + tw * 0.3}" y="${cy - 20}" width="9" height="40" rx="4.5" fill="#c6f25a"/>`,
-            }),
-          icon: "#0b0c0a",
-        },
-        {
           name: "Air gap",
-          line: "The key floats. Air under it, NEAR on it.",
+          line: "The key floats on air. A and tab on top.",
           draw: () => {
-            const k = keycap({ ...C.white, y: -14, legend: (cx, cy, tw) => near(cx, cy, tw * 0.48, "#111") });
+            const k = keycap({ ...C.white, y: -14, legend: (cx, cy, tw) => aTab(cx, cy, tw, "#111") });
             return `<ellipse cx="100" cy="182" rx="58" ry="7" fill="#000" opacity=".35"/>
               <g stroke="#c6f25a" stroke-width="3" stroke-linecap="round" opacity=".9">
                 <path d="M70 172h18"/><path d="M96 176h12"/><path d="M114 172h18"/>
@@ -333,9 +329,9 @@
         },
         {
           name: "Leash",
-          line: "A key on a loop: your AI, on NEAR's leash.",
+          line: "A key on a loop: your AI, kept on a leash.",
           draw: () => {
-            const k = keycap({ ...C.lime, w: 128, h: 128, x: -12, y: 8, legend: (cx, cy, tw) => near(cx, cy, tw * 0.5, "#0b0c0a") });
+            const k = keycap({ ...C.lime, w: 128, h: 128, x: -12, y: 8, legend: (cx, cy, tw) => aTab(cx, cy, tw, "#0b0c0a", "#0b0c0a") });
             return `${k}<path d="M148 50 C 190 40, 196 110, 160 128" fill="none" stroke="#f5f5f7" stroke-width="7" stroke-linecap="round"/>
               <circle cx="150" cy="48" r="9" fill="none" stroke="#f5f5f7" stroke-width="6"/>`;
           },
@@ -343,42 +339,36 @@
         },
         {
           name: "Stencil",
-          line: "Flat keycap silhouette, NEAR cut out. Works at 16 px.",
+          line: "Flat keycap silhouette, A and tab cut out. Works at 16 px.",
           draw: () =>
-            `<defs><mask id="m${uid}"><rect width="200" height="200" fill="#fff"/>${near(100, 92, 74, "#000")}</mask></defs>
+            `<defs><mask id="m${uid}"><rect width="200" height="200" fill="#fff"/>${A(94, 98, 66, "#000")}${tab(146, 98, 54, "#000")}</mask></defs>
              <g mask="url(#m${uid++})"><path d="M52 30h96q22 0 24 22l8 104q2 24-22 24H46q-24 0-22-24l8-104q2-22 20-22z" fill="#c6f25a"/></g>`,
           icon: "#0b0c0a",
         },
         {
           name: "Key bit",
-          line: "A real key whose head is a keyboard key.",
+          line: "A door key whose head is a keyboard key.",
           draw: () => {
-            const k = keycap({ ...C.lime, w: 104, h: 104, x: -36, y: -2, legend: (cx, cy, tw) => near(cx, cy, tw * 0.5, "#0b0c0a") });
+            const k = keycap({ ...C.lime, w: 104, h: 104, x: -36, y: -2, legend: (cx, cy, tw) => aTab(cx, cy, tw, "#0b0c0a", "#0b0c0a") });
             return `<path d="M112 90h72a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6h-6v10h-10v-10h-8v14h-10v-14h-38z" fill="#c6f25a" opacity=".9"/>${k}`;
           },
           icon: "#0b0c0a",
         },
         {
           name: "Caret",
-          line: "A key mid-sentence: the cursor that pays.",
+          line: "A key mid-sentence: the A and a blinking lime cursor.",
           draw: () =>
             keycap({
               ...C.dark,
               legend: (cx, cy, tw) =>
-                `${near(cx - 8, cy, tw * 0.4, "#f5f5f7")}<rect x="${cx + tw * 0.2}" y="${cy - 24}" width="7" height="48" rx="3.5" fill="#c6f25a"><animate attributeName="opacity" values="1;1;0;0" dur="1.1s" repeatCount="indefinite"/></rect>`,
+                `${A(cx - tw * 0.08, cy, tw * 0.42, "#f5f5f7")}<rect x="${cx + tw * 0.22}" y="${cy - tw * 0.24}" width="${tw * 0.07}" height="${tw * 0.48}" rx="${tw * 0.035}" fill="#c6f25a"><animate attributeName="opacity" values="1;1;0;0" dur="1.1s" repeatCount="indefinite"/></rect>`,
             }),
           icon: "#1a1a1c",
-        },
-        {
-          name: "Mint",
-          line: "All NEAR: their green, our keycap.",
-          draw: () => keycap({ ...C.mint, legend: (cx, cy, tw) => near(cx, cy, tw * 0.5, "#000") }),
-          icon: "#000",
         },
       ];
 
       const grid = document.getElementById("grid");
-      const picks = new Set(JSON.parse((() => { try { return localStorage.getItem("airkey-picks") || "[]"; } catch { return "[]"; } })()));
+      const picks = new Set(JSON.parse((() => { try { return localStorage.getItem("airkey-picks-v2") || "[]"; } catch { return "[]"; } })()));
       const svg = (inner, cls = "", size) =>
         `<svg class="${cls}" viewBox="0 0 200 200" ${size ? `width="${size}" height="${size}"` : ""} xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
 
@@ -402,7 +392,7 @@
           picks.has(n) ? picks.delete(n) : picks.add(n);
           card.classList.toggle("picked", picks.has(n));
           card.querySelector(".pick").textContent = picks.has(n) ? "Picked ✓" : "Pick";
-          try { localStorage.setItem("airkey-picks", JSON.stringify([...picks])); } catch {}
+          try { localStorage.setItem("airkey-picks-v2", JSON.stringify([...picks])); } catch {}
           showPicks();
         });
         grid.appendChild(card);
