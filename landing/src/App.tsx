@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Cards, HeroBar, NearMark, Try } from "./Sections";
+import { BuiltOnNear, Proof, Rules, TryYourself } from "./More";
 import { Downloads, E2E, GitHub, LEASH, Mark, REPO } from "./ui";
 
 function useReveal() {
@@ -22,6 +23,9 @@ export default function App() {
           <Mark /> AIRKEY
         </a>
         <span className="nav-end">
+          <a className="nav-link" href="#proof">
+            Proof
+          </a>
           <a className="nav-link" href={REPO} target="_blank" rel="noreferrer">
             <GitHub size={16} /> GitHub
           </a>
@@ -41,7 +45,7 @@ export default function App() {
                 <NearMark /> <span className="lime">NEAR</span> does the rest.
               </span>
             </h1>
-            <p className="hero-sub">The AI keyboard that pays, trades and stops scams, in any chat.</p>
+            <p className="hero-sub">Your keyboard is the AI. NEAR is the leash.</p>
             <HeroBar />
             <Downloads />
           </div>
@@ -56,27 +60,39 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section tight">
+        <section className="section tight" id="leash">
           <div className="wrap">
+            <h2 className="sec-title center" data-reveal>
+              How the leash <span className="lime">says no.</span>
+            </h2>
+            <p className="sec-sub center" data-reveal>
+              Each agent's key can only ask a NEAR contract to pay. The contract holds the money and checks five things first.
+            </p>
+            <Rules />
             <Cards />
+          </div>
+        </section>
+
+        <section className="section tight" id="proof">
+          <div className="wrap">
+            <h2 className="sec-title center" data-reveal>
+              Don't trust the page. <span className="lime">Read the chain.</span>
+            </h2>
+            <Proof e2e={E2E} leash={LEASH} />
+          </div>
+        </section>
+
+        <section className="section tight" id="yourself">
+          <div className="wrap">
+            <h2 className="sec-title center" data-reveal>
+              Try it yourself.
+            </h2>
+            <TryYourself repo={REPO} />
           </div>
         </section>
 
         <section className="finale" id="get">
           <div className="wrap">
-            <div className="proof" data-reveal>
-              <b>9/9</b>
-              <span>
-                end-to-end steps passed on NEAR testnet ·{" "}
-                <a href={E2E} target="_blank" rel="noreferrer">
-                  every transaction ↗
-                </a>{" "}
-                ·{" "}
-                <a href={LEASH} target="_blank" rel="noreferrer">
-                  the leash ↗
-                </a>
-              </span>
-            </div>
             <h2 className="big-title" data-reveal>
               Your keys. <span className="lime">Your rules.</span>
             </h2>
@@ -91,7 +107,10 @@ export default function App() {
         <span>
           <Mark size={18} /> © 2026 AIRKEY · built at NEAR HACKATHON by Harshal Bhangale
         </span>
-        <span>Testnet only · not financial advice</span>
+        <span className="foot-end">
+          <BuiltOnNear />
+          <span>Testnet only · not financial advice</span>
+        </span>
       </footer>
     </>
   );

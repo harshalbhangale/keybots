@@ -25,7 +25,7 @@ const LINES: { type: string; tone: "paid" | "blocked" | "info"; result: string; 
   { type: "pay harshal 0.2 for dinner", tone: "paid", result: "Paid 0.2 NEAR to harshal.near", meta: "tx HRhR7pS9…" },
   { type: "$near", tone: "info", result: "NEAR $3.39", meta: "live · NEAR Intents" },
   { type: "Send 5 NEAR to drain.near", tone: "blocked", result: "Blocked by the leash · R4", meta: "over the 0.5 cap" },
-  { type: "buy $2 of near", tone: "paid", result: "Quoted 0.5861 NEAR", meta: "inside your 1 NEAR cap" },
+  { type: "swap 0.1 near to usdc", tone: "paid", result: "Swapped 0.1 NEAR → 0.2101 USDC", meta: "on Rhea, inside the leash" },
 ];
 
 export function HeroBar() {
@@ -85,7 +85,7 @@ export function Try() {
         {SCENARIOS.map((c, k) => (
           <button key={c.id} role="tab" aria-selected={k === i} className={k === i ? "on" : ""} onClick={() => setI(k)}>
             <span>{c.emoji}</span> {c.tag}
-            {c.soon && <em>Soon</em>}
+            {c.soon && <em>Next</em>}
           </button>
         ))}
       </div>
@@ -125,14 +125,6 @@ function spot(e: React.PointerEvent<HTMLElement>) {
   e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
 }
 
-const HOLDS = [
-  { k: "P", label: "Pay", result: "Pay 0.2 NEAR to harshal" },
-  { k: "S", label: "Swap", result: "Swap 1 NEAR → USDC" },
-  { k: "V", label: "Vault", result: "airkey-harshal.testnet" },
-  { k: "C", label: "Check", result: "Check what you copied" },
-  { k: "F", label: "Follow", result: "Follow @nearwhale" },
-];
-
 export function Cards() {
   const ref = useRef<HTMLDivElement>(null);
   const [following, setFollowing] = useState(false);
@@ -147,34 +139,24 @@ export function Cards() {
     <div className="feats" ref={ref}>
       <article className="feat" onPointerMove={spot} data-reveal>
         <div className="fv">
-          <div className="hold-results">
-            {HOLDS.map((h, i) => (
-              <span key={h.k} className="hold-result" style={{ "--i": i } as Vars}>
-                {h.result}
-              </span>
-            ))}
-          </div>
-          <div className="hold-keys">
-            {HOLDS.map((h, i) => (
-              <span key={h.k} className="hold" style={{ "--i": i } as Vars}>
-                <span className="hk">
-                  {h.k}
-                  <i />
-                  <svg className="hring" viewBox="0 0 60 60">
-                    <rect x="2" y="2" width="56" height="56" rx="14" />
-                  </svg>
-                </span>
-                <small>{h.label}</small>
-              </span>
-            ))}
+          <div className="htc">
+            <span className="htc-chip">
+              <b>Pay 0.2 NEAR to harshal</b>
+              <small>for dinner</small>
+            </span>
+            <span className="htc-btn">
+              <span className="htc-band" />
+              <span className="htc-lbl">Hold to pay</span>
+            </span>
+            <span className="htc-done">✓ Paid · tx HRhR7pS9…</span>
           </div>
         </div>
-        <h3>Hold a key. It acts.</h3>
-        <p>Pay, swap, check or share, without leaving the chat.</p>
+        <h3>Hold to confirm.</h3>
+        <p>Money moves only after a deliberate hold. A stray tap in a chat never pays.</p>
       </article>
 
       <article className="feat" onPointerMove={spot} data-reveal style={{ transitionDelay: "0.08s" }}>
-        <span className="pill-soon">Soon</span>
+        <span className="pill-soon">Next</span>
         <div className="fv">
           <div className="mini-caller">
             <div className="mc-top">
