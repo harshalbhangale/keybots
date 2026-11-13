@@ -47,6 +47,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: tech.airkey.app.keyboard
+        # The keys, the typing engine and the panels are UIKit written for
+        # Swift 5's concurrency checking; the app stays on Swift 6.
+        SWIFT_VERSION: "5.0"
     entitlements:
       path: AirKeyKeyboard/AirKeyKeyboard.entitlements
       properties:
@@ -55,6 +58,7 @@ targets:
       path: AirKeyKeyboard/Info.plist
       properties:
         CFBundleDisplayName: AIRKEY
+        NSPhotoLibraryUsageDescription: AIRKEY shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSExtension:
