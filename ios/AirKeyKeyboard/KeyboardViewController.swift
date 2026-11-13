@@ -80,6 +80,9 @@ final class KeyboardViewController: UIInputViewController {
     private var clipboardPanel: ClipboardPanel?
     /// Menu → Games: Snake and Chomp over the key area.
     private var games: GamesSurface?
+    /// Hold space: AI on what you wrote (rewrite, reply, translate, tone,
+    /// or ask). Built when it opens and let go when it closes.
+    private var aiBar: AIBar?
     private var noteEdit: NoteEditSurface?
     /// What the editor strip opens on (set right before setSurface(.noteEdit)).
     private var pendingEdit: NoteEditSurface.Edit?
@@ -107,12 +110,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    /// Where holding space would hand what was typed to an assistant. AIRKEY
-    /// will answer here with NEAR AI, through its own server; until one is
-    /// set, holding space is a long press and nothing more.
-    var assistant: KeyboardAssistant?
-
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai }
     private var surface: Surface = .none
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
@@ -202,7 +200,7 @@ final class KeyboardViewController: UIInputViewController {
         case .noteEdit: return base + NoteEditSurface.stripHeight - Glass.toolbarHeight
         // Panels take the key area instead of growing the keyboard: the keys
         // never move, so muscle memory holds.
-        case .none, .shell, .clipboard, .games: return base
+        case .none, .shell, .clipboard, .games, .ai: return base
         }
     }
 
@@ -804,6 +802,19 @@ final class KeyboardViewController: UIInputViewController {
             toolbarHiddenBySurface = true
             keyboardView.isHidden = true
             clipboardPanel?.frame = CGRect(x: 0, y: 0, width: w, height: h)
+        case .ai:
+            // Asking takes the strip and types with the keys under it; the
+            // rest of the AI bar owns the whole keyboard, as the clipboard does.
+            toolbarHiddenBySurface = true
+            if aiBar?.isStrip == true {
+                keyboardView.isHidden = false
+                aiBar?.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
+                keyboardView.frame = CGRect(x: 0, y: Glass.toolbarHeight, width: w,
+                                            height: max(0, h - Glass.toolbarHeight))
+            } else {
+                keyboardView.isHidden = true
+                aiBar?.frame = CGRect(x: 0, y: 0, width: w, height: h)
+            }
         }
         let agentUp = surface == .none && agent.isShowing && !isSecureField
         toolbar.isHidden = toolbarHiddenBySurface || agentUp
@@ -823,7 +834,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.games] as [UIView?] {
+                            self.clipboardPanel, self.games, self.aiBar] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
@@ -860,6 +871,7 @@ final class KeyboardViewController: UIInputViewController {
             noteEdit?.removeFromSuperview(); noteEdit = nil
         case .clipboard: clipboardPanel?.removeFromSuperview(); clipboardPanel = nil
         case .games: games?.stop(); games?.removeFromSuperview(); games = nil
+        case .ai: aiBar?.removeFromSuperview(); aiBar = nil
         case .none: break
         }
         inlineTarget = nil
@@ -905,6 +917,13 @@ final class KeyboardViewController: UIInputViewController {
             prepareEntrance(g, animated: animated)
             games = g
             MemoryLogger.logSurface("games")
+        case .ai:
+            let b = AIBar()
+            b.delegate = self
+            content.addSubview(b)
+            prepareEntrance(b, animated: animated)
+            aiBar = b
+            MemoryLogger.logSurface("ai")
         case .none:
             break
         }
@@ -1819,6 +1838,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
             noteEdit?.returnPressed()
             return
         }
+        if inlineTarget != nil, surface == .ai {
+            // Return asks, as the arrow does.
+            aiBar?.submitAsk()
+            return
+        }
         if let editor = inlineTarget {
             editor.isActive = false
             inlineTarget = nil
@@ -1876,7 +1900,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
     }
 
     func kbSpaceGestures() -> (glide: Bool, bar: Bool) {
-        (glide: inlineTarget == nil, bar: assistant != nil && inlineTarget == nil && !isSecureField)
+        (glide: inlineTarget == nil, bar: inlineTarget == nil && !isSecureField)
     }
 
     func kbBindingsLive() -> Bool {
@@ -2011,18 +2035,23 @@ extension KeyboardViewController: KeyboardViewDelegate {
     }
 
     func kbSpaceHoldIgnited(origin: KeyView) {
-        // Holding space hands what was typed to the assistant, when AIRKEY
-        // has one (its NEAR AI, through the AIRKEY server). It answers in
-        // the strip; nothing it says is ever run without the hold button.
-        guard let assistant, !isSecureField else { return }
-        let before = beforeContext ?? ""
-        let after = textDocumentProxy.documentContextAfterInput ?? ""
-        let text = (before + after).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, hasFullAccess else { return }
-        assistant.act(on: text) { [weak self] reply in
-            guard let self, let reply, !reply.isEmpty else { return }
-            self.agent.notice = reply
+        // Holding space opens the AI bar once the ripple has had its beat,
+        // the way a held key opens its surface.
+        let delay = Glass.reduceMotion ? Glass.Ripple.reducedMotionFlash
+                                       : Glass.Ripple.surfaceRiseDelay
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            self?.openAI()
         }
+    }
+
+    /// The AI bar on the text before the cursor: our own copy, which reaches
+    /// past the sentence iOS shows a keyboard. Never in a password field.
+    private func openAI() {
+        guard !isSecureField, surface == .none else { return }
+        let before = String((beforeContext ?? "").suffix(AIBar.maxSource))
+        setSurface(.ai)
+        aiBar?.present(before: before, hasFullAccess: hasFullAccess)
+        applySurfaceLayout(animated: true)
     }
 
     func kbBoundKeyIgnited(keyId: String, target: String, origin: KeyView) {
@@ -2130,11 +2159,60 @@ extension KeyboardViewController: AgentHost {
     }
 }
 
-/// An assistant that answers what was typed when space is held. AIRKEY's
-/// NEAR AI will plug in here, through the AIRKEY server.
-@MainActor
-protocol KeyboardAssistant: AnyObject {
-    func act(on text: String, reply: @escaping (String?) -> Void)
+// MARK: - AIBarDelegate (hold space)
+
+extension KeyboardViewController: AIBarDelegate {
+
+    func aiBarClosed() {
+        setSurface(.none)
+        syncAutoShift()
+    }
+
+    func aiBarAskActivated(_ editor: InlineEditor?) {
+        inlineTarget = editor
+        // A question starts with a capital.
+        if editor != nil { keyboardView.syncAutoShift(wantsCapital: true) }
+    }
+
+    func aiBarLayoutChanged() {
+        applySurfaceLayout(animated: true)
+    }
+
+    /// Swaps exactly the text the answer was made from. If the field moved
+    /// on since (it no longer ends with it), nothing is deleted: the answer
+    /// goes in at the cursor instead.
+    func aiBarReplace(source: String, with text: String) {
+        let before = beforeContext ?? ""
+        setSurface(.none)
+        if !source.isEmpty, before.hasSuffix(source) {
+            hostDelete(source.count)
+            hostInsert(text)
+        } else {
+            hostInsert(Self.spaced(text, after: before))
+        }
+        aiWrote()
+    }
+
+    func aiBarInsert(_ text: String) {
+        setSurface(.none)
+        hostInsert(Self.spaced(text, after: beforeContext))
+        aiWrote()
+    }
+
+    func aiBarCopy(_ text: String) {
+        guard hasFullAccess else { return }
+        UIPasteboard.general.string = text
+        remember(copied: text)
+        if let aiBar { KeyboardToast.show(in: aiBar, text: "Copied") }
+    }
+
+    private func aiWrote() {
+        Haptics.success()
+        lastCorrection = nil
+        glide = nil
+        syncAutoShift()
+        updateCandidates()
+    }
 }
 
 // MARK: - ClipboardPanelDelegate
