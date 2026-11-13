@@ -124,8 +124,9 @@ From a live run: "buy $2 of near if it goes above 3" was accepted with NEAR at $
 ### 4. The AIRKEY app and keyboard (iOS)
 
 <p>
-  <img src="docs/screens/home.png" width="260" alt="AIRKEY Home: what the leash holds, today's numbers and recent activity" />
-  <img src="docs/screens/keyboard-blocked.png" width="260" alt="The AIRKEY keyboard showing a payment the leash blocked" />
+  <img src="docs/screens/keyboard-hold.png" width="250" alt="The AIRKEY keyboard in Messages: Pay 0.2 NEAR to harshal, with a lime Hold to pay button" />
+  <img src="docs/screens/keyboard-autocorrect.png" width="250" alt="AIRKEY's suggestion bar: Teh, The (the autocorrection), Ten" />
+  <img src="docs/screens/keyboard-contact.png" width="250" alt="After pay, the bar offers the contact harshal" />
 </p>
 
 Needs Xcode and [XcodeGen](https://github.com/yonaskolb/XcodeGen). With the server from step 3 running:
@@ -144,7 +145,7 @@ xcrun simctl launch booted tech.airkey.app
 - **Leash** is the control panel: stop everything, payments waiting for you, what the leash holds, and the allow and block lists, which you can add to and remove from. Every change there is **signed on the phone**: the server builds the transaction, Face ID unlocks this device's key, the phone signs, the server relays (`server/src/owner.ts`).
 - **Activity** lists every command by day; tap one for its receipt as a timeline: what was said, how it was read, which agent, the checks, and the leash's decision with its transaction.
 - **Settings** has the keyboard setup steps, the server address and this device's key. Enroll the key once: `cd scripts && npm run add-device -- <owner> <key>`.
-- **The keyboard** (turn it on in Settings › Apps › AIRKEY › Keyboards, then Allow Full Access) follows the light or dark look of the app you're typing in. As you type, the bar above the keys shows what your words would do ("Pay 0.2 NEAR to harshal") with a lime **Hold to pay** (or swap, buy, sell, place) button: press and hold until the band fills, so a stray tap in a chat never moves money. **Check copied** sends what you copied to the Inbox Agent. The outcome shows as a lime, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
+- **The keyboard** (turn it on in Settings › Apps › AIRKEY › Keyboards, then Allow Full Access) follows the light or dark look of the app you're typing in. As you type, the bar above the keys shows what your words would do ("Pay 0.2 NEAR to harshal") with a lime **Hold to pay** (or swap, buy, sell, place) button: press and hold until the band fills, so a stray tap in a chat never moves money. While you type, the bar offers three words and autocorrects on space ("teh" becomes "the"; one backspace puts it back and remembers it). It never touches what could be money or a name: contacts, NEAR accounts, token symbols, $tickers and numbers. After "pay" or "to" it offers the people in your contacts. **Check copied** sends what you copied to the Inbox Agent. The outcome shows as a lime, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
 
 **What the bar above the keys shows as you type** (one thing at a time):
 
