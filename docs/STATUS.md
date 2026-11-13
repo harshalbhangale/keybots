@@ -2,22 +2,30 @@
 
 One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026, 23:59 UTC.
 
+## P0: the demo path (each step proven on chain, script in docs/DEMO.md)
+- [ ] Typed "pay harshal 0.2" is paid
+- [ ] A pasted scam is blocked
+- [ ] An unknown receiver gets Approve, then Face ID, then paid
+- [ ] "swap 1 near to usdc" goes through Rhea on testnet
+- [ ] A `$near` price chip
+- [ ] Share puts the receipt in the chat
+- [ ] docs/DEMO.md: the click-by-click script with tx links
+
 ## Keyboard: typing and feel
-- [~] Kall Markets' keyboard core moved into AIRKEY (keys, layouts, accent popups, delete repeat)
-- [~] Glide (swipe) typing with a trail
-- [~] Kall Markets' typing engine: autocorrect, 3 suggestions, next-word prediction, learning
-- [~] Space-bar cursor glide
-- [~] Toolbar strip and menu
-- [~] Clipboard history panel and paste chip
-- [~] Emoji board, emoji next to words
-- [~] Themes: glass keys, light and dark from the chat app
+- [x] Kall Markets' keyboard core moved into AIRKEY: keys, layouts, accent popups, delete repeat
+- [x] Kall Markets' typing engine: autocorrect, 3 suggestions, next-word prediction, learning
+- [~] Glide (swipe) typing with a trail (ported, not checked in Messages yet)
+- [~] Space-bar cursor glide (ported, not checked yet)
+- [x] Toolbar strip: the mark and three tools; the rest in the menu
+- [~] Clipboard history panel and paste chip (ported, not checked yet)
+- [~] Emoji board, emoji next to words (ported, not checked yet)
+- [~] Themes: glass keys, light and dark from the chat app (light checked, dark not yet)
 - [x] Autocorrect never touches names, NEAR accounts, token symbols, $tickers or numbers
 - [x] After "pay" or "to", suggest contacts
 - [x] One backspace undoes an autocorrection and learns the word
 - [x] Space on the number layer goes back to letters
 - [x] Haptics on every key like Kall: letter, space, delete, shift, layer, trade, success, error
-- [ ] Key sounds, number row and one-handed mode as settings
-- [ ] Tested end to end in Messages, light and dark, on AIRKEY's own keys
+- [ ] Types smoothly in Messages, light and dark, checked end to end
 
 ## Keyboard: money
 - [x] Read "pay harshal 0.2" and show a chip
@@ -27,13 +35,12 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Price chips: `$near` shows the live price, with Buy
 - [x] Currency conversion, sums and bill splits on the phone
 - [x] Vault: your NEAR account and saved addresses in one tap; keys and phrases refused
-- [x] Server reads swaps in dollars ("swap $5 of near to usdc", "5$")
-- [x] Keyboard reads swaps in dollars too
-- [x] Any wording works: AI reader reads what the rules miss; the hold sends its exact command
-- [ ] Uniswap-style swap panel in the keyboard, after Kall's trade tab: pay side and get side, chain and token pickers, amount with MAX and presets, live quote, price impact, review card, hold to swap, haptics
+- [x] Swaps in dollars, in the keyboard and on the server ("swap $5 of near to usdc", "5$")
+- [x] Any wording works: an AI reads what the rules miss; the hold sends its exact command
+- [ ] A copied crypto call becomes a prefilled trade chip, with token check and leash caps (Kall)
+- [ ] Paste guard: a pasted address that isn't a contact or in the vault gets a warning (Kall Markets)
+- [ ] Uniswap-style swap panel in the keyboard, after Kall's trade tab (waiting on Harshal: keyboard or app only)
 - [ ] Balances the leash holds, shown in the keyboard
-- [ ] Hold space for AI: rewrite, reply, ask
-- [ ] Translate and tone rewrites
 
 ## Swaps and trading
 - [x] Leash contract `swap`: same rules and caps as `pay`, wraps NEAR, swaps on Rhea, the token comes back to the leash
@@ -43,22 +50,19 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] NEAR Intents quotes for every listed token
 - [x] Mainnet path in code: live 1Click quote, leash funds the deposit address, follow the status
 - [x] Price-triggered orders with a 15-second watcher and Cancel
-- [x] Pasted text can never trade
+- [x] Pasted text can never trade on its own
+- [ ] One small mainnet NEAR Intents swap as proof (only after Harshal funds a mainnet leash and says go)
 - [ ] Sell tokens the leash holds back to NEAR
 - [ ] Buy NEAR with USDC for real (today it's a quote)
-- [ ] More testnet pairs on Rhea
-- [ ] Mainnet swaps live (needs a funded mainnet leash, and your go-ahead)
-- [ ] Share a trade to the chat as a link
-- [ ] Recurring buys (DCA)
-- [ ] Tokenized stocks: blocked, Ondo stocks aren't in the public NEAR Intents list
 
 ## AI and NEAR private compute
 - [x] NEAR AI Cloud reader with signature checks, in code
 - [x] OpenAI key saved on this Mac, outside git
-- [x] OpenAI as the AI reader until NEAR AI is on (gpt-4.1-mini)
-- [ ] NEAR AI Cloud private inference on (needs your NEAR AI Cloud key)
+- [x] OpenAI reads loose wording while NEAR AI has no key (gpt-4.1-mini)
+- [ ] NEAR AI Cloud as the AI provider (key coming from NEAR Builders; OpenAI's place waiting on Harshal)
+- [ ] Hold space for AI: rewrite, reply, translate, on NEAR AI Cloud
+- [ ] AI receipts: model, signature verified yes or no, "attestation not checked"
 - [ ] Attestation check of the TEE, not just the signature
-- [ ] AI receipts: which model, signature, verified or not
 
 ## App
 - [x] Kall-style design: masthead, cards, big lime numbers, uppercase buttons, badges
@@ -67,7 +71,6 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Leash: kill switch, agents and caps, allow and block lists, signed after Face ID
 - [x] Keyboard tab: setup steps and what it does
 - [x] Hold to approve, then Face ID
-- [ ] Vault editor polish, AI receipts view
 
 ## Leash and server
 - [x] Leash rules R0 to R7 on testnet, 21 contract tests
@@ -75,27 +78,28 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Receiver checks: exists, blocked, allowlisted, account age, paid before
 - [x] Receipts for every command; server logs which client sent it
 - [x] 80 server tests
-- [ ] Host the server (pick Vercel, AWS or Railway)
-
-## More from Kall Markets
-- [ ] Vault shorthand and notes in the keyboard
-- [ ] Fancy text styles
-- [ ] More smart chips: units, time zones, parcel tracking, clean links
-- [ ] Search in the keyboard
-- [ ] GIFs and stickers (needs a GIF API key)
-- [ ] Calendar and temp mail
-- [ ] Voice through the app
-- [ ] Games
-
-## Kall Markets and partners
-- [ ] Follow KOLs and auto-trade their calls within the leash (demo list)
-- [ ] Sputnik DAO as a team leash
-- [ ] OutLayer TEE agent
+- [ ] Host the server (waiting on Harshal's choice)
 
 ## Ship
 - [x] Sole owner Harshal; history rewritten, no other names
+- [x] README lists the pre-hackathon code from Kall Markets as baseline
 - [x] README with live transactions and test counts
-- [ ] Fresh clone of main builds (waits on the keyboard helper's commits)
+- [ ] README as "do X, see Y" with real tx links for the demo path
+- [ ] Fresh clone of main builds, tests green
 - [ ] Demo video
-- [ ] NEAR Builders directory profile for hellbuddy.near (later; paste the API key again then, it's never saved)
 - [ ] Submit before 14 Nov, 23:59 UTC
+
+## Later (after submission)
+- Fancy text styles
+- GIFs and stickers
+- Calendar and temp mail
+- Games
+- Voice through the app
+- Tokenized stocks (Ondo stocks aren't in the public NEAR Intents list)
+- Recurring buys (DCA)
+- Sputnik DAO as a team leash
+- OutLayer TEE agent
+- Follow KOLs and auto-trade their calls
+- Key sounds and one-handed mode
+- Search in the keyboard, vault shorthand, more smart chips
+- NEAR Builders directory profile for hellbuddy.near (paste the API key again then; it's never saved)
