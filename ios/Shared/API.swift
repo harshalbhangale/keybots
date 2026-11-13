@@ -131,3 +131,19 @@ struct API {
         }
     }
 }
+
+// MARK: - Trade panel
+
+extension API {
+    /// What a swap pays, gets and costs right now, and the command a hold
+    /// sends. `order` ("limit", "stop", "take") with `trigger` asks for a
+    /// price-triggered order instead. Sends nothing.
+    func quote(from: String, to: String, amount: String, order: String? = nil, trigger: String? = nil) async throws -> TradeQuote {
+        var path = "/v1/quote?from=\(from)&to=\(to)&amount=\(amount)"
+        if let order, let trigger { path += "&order=\(order)&trigger=\(trigger)" }
+        return try await get(path)
+    }
+
+    /// The token picker: what trades here first, with prices and the leash's balances.
+    func tokenList() async throws -> [PickerToken] { try await (get("/v1/tokens/list") as PickerTokenList).tokens }
+}

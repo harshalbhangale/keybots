@@ -113,6 +113,9 @@ struct AgentStrip: View {
                 Spacer(minLength: 4)
             }
             .accessibilityElement(children: .combine)
+            // Trade panel hook: a tap on a trade's chip opens the swap screen too.
+            .contentShape(Rectangle())
+            .onTapGesture { if intent.kind == .swap, model.reviewReady() { Haptics.layer() } }
             HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 28, font: .footnote.weight(.bold)) {
                 model.runReady()
             }

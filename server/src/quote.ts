@@ -115,7 +115,7 @@ const NEAR_DECIMALS = 24;
 const isNear = (s: string) => s === "NEAR" || s === "WNEAR";
 /** "2.933176326" -> "2.933"; small numbers keep four significant digits. */
 export const tidy = (n: number) => (Number.isFinite(n) ? String(Number(n.toPrecision(n >= 1000 ? 7 : 4))) : "0");
-const usd = (n: number) => (n >= 100 ? n.toFixed(0) : n >= 0.01 ? n.toFixed(2) : tidy(n));
+const usd = (n: number) => (n >= 100 ? n.toFixed(0) : n >= 0.01 ? n.toFixed(2) : String(Number(n.toPrecision(2))));
 const yoctoToNear = (y: bigint) => Number(y / 10n ** 18n) / 1e6;
 /** Units to a number, keeping nine digits after the point. */
 const unitsToNumber = (units: string, decimals: number) => Number((BigInt(units) * 10n ** 9n) / 10n ** BigInt(decimals)) / 1e9;
@@ -408,6 +408,8 @@ export function quoter(deps: QuoteDeps) {
       const check = pickToken(list, symbol, "to");
       if (!check.verified || !check.token) continue;
       const tradable = deps.cfg.network === "mainnet" || isNear(symbol) || !!net?.routes[symbol];
+      // A listed token with no price can't be valued against the caps: leave it out unless the leash holds it.
+      if (!(check.token.price && check.token.price > 0) && !held.has(symbol) && !tradable) continue;
       out.push({ symbol, chain: check.token.blockchain, price: typeof check.token.price === "number" ? check.token.price : null, balance: held.get(symbol) ?? null, tradable });
       if (out.length >= limit) break;
     }

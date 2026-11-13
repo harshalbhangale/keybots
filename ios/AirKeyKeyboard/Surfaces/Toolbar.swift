@@ -102,6 +102,7 @@ final class KeyToolbar: UIView {
         // what you copied by the Inbox Agent.
         "wallet": "wallet.bifold",
         "check": "checkmark.shield",
+        "swap": "arrow.left.arrow.right",
         "clipboard": "doc.on.clipboard",
         "notes": "person.text.rectangle",
         "emoji": "face.smiling",
