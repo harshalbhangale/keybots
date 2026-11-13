@@ -135,8 +135,9 @@ export function nearChain(cfg: Config): Chain {
       const { decision, txHash, events } = await callLeash(agent, "pay", args, 50_000_000_000_000n);
       return { decision, txHash, events };
     },
-    // A swap wraps NEAR, sends it on and waits for the venue: all the gas there is.
-    swap: (agent, args) => callLeash(agent, "swap", args, 300_000_000_000_000n),
+    // A swap wraps NEAR, sends it on and waits for the venue. 200 TGas keeps the
+    // upfront reservation (~0.2 NEAR) inside the agent key's allowance.
+    swap: (agent, args) => callLeash(agent, "swap", args, 200_000_000_000_000n),
     txUrl: (hash) => `${cfg.explorer}/txns/${hash}`,
   };
 }
