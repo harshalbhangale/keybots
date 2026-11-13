@@ -61,3 +61,60 @@ describe("quote", () => {
     expect(q.dry).toBe(true);
   });
 });
+
+describe("live swaps", () => {
+  it("asks for a deposit address on NEAR, refunds on NEAR, and pays NEAR tokens out on NEAR", async () => {
+    let sent: Record<string, unknown> = {};
+    const fakeFetch = (async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith("/tokens")) return new Response(JSON.stringify(LIST));
+      sent = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({ quote: { amountIn: "20000000", amountInFormatted: "20.0", amountOut: "1", amountOutFormatted: "1", depositAddress: "abc123", deadline: "soon" } }));
+    }) as typeof fetch;
+    const c = intentsClient({ recipient: "o.testnet", fetchImpl: fakeFetch });
+    const usdc = (await c.pick("usdc", "from")).token!;
+    const near = (await c.pick("near", "to")).token!;
+    const q = await c.liveQuote(usdc, near, "20", { refundTo: "me.near", recipient: "me.near" });
+    expect(sent.dry).toBe(false);
+    expect(sent.depositType).toBe("ORIGIN_CHAIN");
+    expect(sent.refundTo).toBe("me.near");
+    expect(sent.recipientType).toBe("DESTINATION_CHAIN");
+    expect(q.depositAddress).toBe("abc123");
+    expect(q.dry).toBe(false);
+  });
+
+  it("keeps tokens from other chains inside NEAR Intents for you", async () => {
+    let sent: Record<string, unknown> = {};
+    const fakeFetch = (async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith("/tokens")) return new Response(JSON.stringify(LIST));
+      sent = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({ quote: { amountIn: "1", amountInFormatted: "1", amountOut: "1", amountOutFormatted: "1", depositAddress: "d" } }));
+    }) as typeof fetch;
+    const c = intentsClient({ recipient: "o.testnet", fetchImpl: fakeFetch });
+    await c.liveQuote((await c.pick("usdc", "from")).token!, (await c.pick("sol", "to")).token!, "1", { refundTo: "me.near", recipient: "me.near" });
+    expect(sent.recipientType).toBe("INTENTS");
+  });
+
+  it("refuses a live quote without a deposit address", async () => {
+    const fakeFetch = (async (url: string) =>
+      String(url).endsWith("/tokens") ? new Response(JSON.stringify(LIST)) : new Response(JSON.stringify({ quote: { amountIn: "1" } }))) as typeof fetch;
+    const c = intentsClient({ recipient: "o.testnet", fetchImpl: fakeFetch });
+    await expect(c.liveQuote((await c.pick("usdc", "from")).token!, (await c.pick("sol", "to")).token!, "1", { refundTo: "a", recipient: "a" })).rejects.toThrow(/no deposit address/);
+  });
+
+  it("reads a finished swap's status and its explorer links", async () => {
+    const fakeFetch = (async () =>
+      new Response(JSON.stringify({
+        status: "SUCCESS",
+        swapDetails: { amountOutFormatted: "0.58", originChainTxHashes: [{ explorerUrl: "https://nearblocks.io/txns/a" }], destinationChainTxHashes: [{ explorerUrl: "https://nearblocks.io/txns/b" }] },
+      }))) as typeof fetch;
+    const s = await intentsClient({ recipient: "x", fetchImpl: fakeFetch }).status("abc");
+    expect(s.done).toBe(true);
+    expect(s.amountOutFormatted).toBe("0.58");
+    expect(s.txs).toEqual(["https://nearblocks.io/txns/a", "https://nearblocks.io/txns/b"]);
+  });
+
+  it("treats a swap still waiting for its deposit as not done", async () => {
+    const fakeFetch = (async () => new Response(JSON.stringify({ status: "PENDING_DEPOSIT", swapDetails: {} }))) as typeof fetch;
+    expect((await intentsClient({ recipient: "x", fetchImpl: fakeFetch }).status("abc")).done).toBe(false);
+  });
+});
