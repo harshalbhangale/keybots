@@ -198,7 +198,10 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 
 ## Disclosures
 
-- Design references: Kall Markets (an AI keyboard) and Kallr, both built before this hackathon. No code from either is in this repo; AIRKEY is written from scratch.
+- **Pre-hackathon code (baseline).** Two earlier projects predate this hackathon and parts of them are in this repo:
+  - **Kall Markets** (an AI keyboard): the keyboard's core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and its `en.glyd` dictionary, the toolbar, menu, clipboard, emoji and notes surfaces in `Surfaces/`, and `Resources/` fonts, sounds and textures), adapted to AIRKEY.
+  - **Kall Markets** (a trading keyboard): the keyboard haptics, the hold-to-confirm pattern, and the app's visual design (masthead, cards, swap card), adapted to AIRKEY.
+  - Built during the hackathon: the leash contract, the server and its agents, Rhea and NEAR Intents swaps, the AIRKEY agent strip in the keyboard (`ios/AirKeyKeyboard/Agent/`), the money-safe typing rules, the vault, and the app.
 - Built with an AI coding assistant (Claude Code). Harshal chose the product, the rules and every trade-off; the assistant wrote code and tests to those decisions.
 - Testnet only so far. Never commit keys: `keys/` is gitignored.
 
