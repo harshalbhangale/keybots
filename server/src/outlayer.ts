@@ -3,7 +3,7 @@
 // (wk_..., in server/.env); the agents' NEAR keys stay in OutLayer's keystore.
 // Reads still go through near.ts. Only pay and swap change who signs.
 import type { Config } from "./config.js";
-import type { Chain, Decision } from "./near.js";
+import { sellArgs, type Chain, type Decision } from "./near.js";
 
 export interface OutLayerOptions {
   /** OutLayer API base. Testnet: https://testnet-api.outlayer.ai */
@@ -145,5 +145,6 @@ export function outlayerChain(cfg: Config, base: Chain, opts: Partial<OutLayerOp
       return { decision, txHash, events };
     },
     swap: (agent, args) => callLeash(agent, "swap", args, 200_000_000_000_000n),
+    swapToken: (agent, args) => callLeash(agent, "swap", sellArgs(args), 200_000_000_000_000n),
   };
 }
