@@ -12,10 +12,15 @@ struct LeashView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
+            Masthead(eyebrow: "AIRKEY · THE LEASH", title: "RULES")
             Text("Rules your agents can't change. A NEAR contract enforces them, not this app.")
                 .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             if let state = model.state {
                 killSwitch(state)
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionTitle("Agents", trailing: "\(state.agents.count)")
+                    ForEach(state.agents) { AgentCard(entry: $0, paused: state.paused, explorer: state.explorer) }
+                }
                 if !state.pending.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         SectionTitle("Waiting for you", trailing: "\(state.pending.count)")
@@ -30,7 +35,7 @@ struct LeashView: View {
                 ProgressView().tint(AK.muted).frame(maxWidth: .infinity).padding(.top, 40)
             }
         }
-        .navigationTitle("Leash")
+        .toolbarVisibility(.hidden, for: .navigationBar)
         .alert(adding == .allow ? "Allow someone" : "Block someone", isPresented: Binding(get: { adding != nil }, set: { if !$0 { adding = nil } })) {
             TextField("name.near", text: $account).textInputAutocapitalization(.never).autocorrectionDisabled()
             if adding == .block { TextField("Why (optional)", text: $reason) }

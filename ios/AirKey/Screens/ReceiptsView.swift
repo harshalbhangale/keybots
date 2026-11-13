@@ -17,6 +17,7 @@ struct ActivityView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
+            Masthead(eyebrow: "AIRKEY · EVERY COMMAND, ITS RECEIPT", title: "ACTIVITY")
             if model.receipts.isEmpty {
                 Panel {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
@@ -31,7 +32,7 @@ struct ActivityView: View {
                 }
             }
         }
-        .navigationTitle("Activity")
+        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 }
 
