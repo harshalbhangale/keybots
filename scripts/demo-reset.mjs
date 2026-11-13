@@ -73,4 +73,16 @@ else {
   else console.log(`! ${owner} has no NEAR to spare; the leash has ${fmt(have)}. Get testnet NEAR from a faucet.`);
 }
 
-console.log(`\nReady: ${fmt(await view(n.leash, "available"))} spendable, ${(await view(n.leash, "list_agents")).length} agents, nothing pending.`);
+// 8. No price orders left watching (the AIRKEY server, if it's running).
+const server = process.env.AIRKEY_SERVER ?? "http://localhost:8787";
+try {
+  const { orders } = await (await fetch(`${server}/v1/orders`, { signal: AbortSignal.timeout(5000) })).json();
+  for (const x of orders.filter((x) => x.status === "watching")) {
+    await fetch(`${server}/v1/orders/${x.id}`, { method: "DELETE" });
+    ok(`cancelled the order "${x.command}" (when ${x.symbol} is ${x.direction} $${x.price})`);
+  }
+} catch {
+  skip(`couldn't reach ${server} to clear price orders`);
+}
+
+console.log(`\nReady:${fmt(await view(n.leash, "available"))} spendable, ${(await view(n.leash, "list_agents")).length} agents, nothing pending.`);
