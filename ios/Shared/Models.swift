@@ -278,3 +278,93 @@ struct CallCheck: Decodable {
     let call: Call
     let route: Route
 }
+
+// MARK: - Trade panel (GET /v1/quote, GET /v1/tokens/list)
+
+/// Everything the keyboard's trade panel shows for one swap, before the
+/// hold. Every number is the server's: Rhea's pool, NEAR Intents' list and
+/// quote, and the leash's state on chain.
+struct TradeQuote: Decodable, Equatable {
+    struct Token: Decodable, Equatable {
+        let symbol: String
+        let assetId: String?
+        let price: Double?
+        let verified: Bool
+    }
+    /// "Rhea" with its pools, or "NEAR Intents" with how long it takes.
+    struct Route: Decodable, Equatable {
+        let venue: String
+        let pool: Int?
+        let pools: [Int]?
+        let seconds: Double?
+    }
+    struct Fee: Decodable, Equatable {
+        let amount: String
+        let symbol: String
+        let usd: String?
+    }
+    /// The Trading Agent's caps on chain, in NEAR.
+    struct Caps: Decodable, Equatable {
+        let agent: String
+        let perTrade: String
+        let leftToday: String
+        let paused: Bool
+        let valueNear: String?
+        let within: Bool
+    }
+    struct Balance: Decodable, Equatable {
+        let symbol: String
+        let amount: String
+        let enough: Bool
+    }
+    /// A price-triggered order: which token is watched, and for what price.
+    struct Order: Decodable, Equatable {
+        let kind: String
+        let symbol: String
+        let direction: String
+        let trigger: String
+        let now: Double?
+        let line: String
+    }
+
+    let from: Token
+    let to: Token
+    let amountIn: String
+    let amountOut: String
+    /// "1 NEAR = 2.10 USDC"
+    let rate: String
+    let minReceived: String
+    let slippagePct: Double
+    let route: Route
+    /// A hold would really swap on this network.
+    let executable: Bool
+    let reason: String?
+    let networkFee: Fee
+    /// Percent lost to the size of the trade.
+    let priceImpact: Double?
+    /// Percent above or below NEAR Intents' dollar prices.
+    let vsMarket: Double?
+    let valueUsd: String?
+    let caps: Caps?
+    let balance: Balance?
+    /// The exact text a hold sends to /v1/command.
+    let command: String
+    /// One plain line when the hold is off.
+    let problem: String?
+    let ready: Bool
+    let order: Order?
+}
+
+/// A row in the trade panel's token picker.
+struct PickerToken: Decodable, Identifiable, Equatable {
+    let symbol: String
+    let chain: String
+    let price: Double?
+    /// What the leash holds of it, when it holds any.
+    let balance: String?
+    /// A hold can really swap it on this network.
+    let tradable: Bool
+    var id: String { symbol }
+}
+
+struct PickerTokenList: Decodable { let tokens: [PickerToken] }
