@@ -74,6 +74,18 @@ group("reading", () => {
     expect(r.reader).toBe("near-ai-cloud");
   });
 
+  it("never asks OpenAI when the fallback is off", async () => {
+    const asked: string[] = [];
+    const readAi = async (_t: string, ai: { provider: string }) => {
+      asked.push(ai.provider);
+      throw new Error("NEAR AI Cloud answered 503");
+    };
+    const off = { ...cfg, nearAi: { apiKey: "n", model: "m", base: "b" }, openAi: { apiKey: "o", model: "m", base: "b" }, aiFallback: "off" as const };
+    const r = await readCommand({ cfg: off, readAi } as never, "swap like five bucks of near into usdc");
+    expect(asked).toEqual(["near-ai-cloud"]);
+    expect(r.reader).toBe("rules");
+  });
+
   it("reads dollar amounts the model returns", () => {
     expect(toAction('{"kind":"swap","amount_usd":"5","from":"near","to":"usdc"}')).toEqual({ kind: "swap", amount: "5", from: "NEAR", to: "USDC", usd: true });
   });

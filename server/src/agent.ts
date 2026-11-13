@@ -25,7 +25,7 @@ export interface Deps {
 export function aiReaders(cfg: Config): AiConfig[] {
   const out: AiConfig[] = [];
   if (cfg.nearAi.apiKey) out.push({ provider: "near-ai-cloud", ...cfg.nearAi });
-  if (cfg.openAi?.apiKey) out.push({ provider: "openai", ...cfg.openAi });
+  if (cfg.openAi?.apiKey && cfg.aiFallback !== "off") out.push({ provider: "openai", ...cfg.openAi });
   return out;
 }
 
