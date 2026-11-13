@@ -143,7 +143,11 @@ final class TradeModel {
         if q.ready { return nil }
         if !q.executable { return q.reason.map(Self.short) ?? "Quote only" }
         if q.caps?.paused == true { return "The kill switch is on" }
-        if let c = q.caps, !c.within, !isOrder || (Double(c.valueNear ?? "") ?? 0) > (Double(c.perTrade) ?? .infinity) { return "Over the Trading Agent's cap" }
+        if let c = q.caps, !c.within {
+            let over = (Double(c.valueNear ?? "") ?? 0) > (Double(c.perTrade) ?? .infinity)
+            if over { return "Over your \(c.perTrade) NEAR per-trade limit" }
+            if !isOrder { return "Only \(c.leftToday) NEAR left today" }
+        }
         if let b = q.balance, !b.enough, !isOrder { return "Not enough \(b.symbol)" }
         if let o = q.order, let now = o.now { return "\(o.symbol) is already \(o.direction) $\(o.trigger) (\(Fmt.usd(now)))" }
         return q.problem.map(Self.short) ?? (isOrder ? "Can't place this" : "Can't swap this")
@@ -151,6 +155,7 @@ final class TradeModel {
 
     /// The first sentence of a server message, to fit a button: "Testnet has no SOL".
     private static func short(_ message: String) -> String {
+        if message.hasPrefix("Can't reach") { return "Can't reach your AIRKEY server" }
         let first = message.split(separator: ".", maxSplits: 1).first.map(String.init) ?? message
         let colon = first.split(separator: ":", maxSplits: 1).first.map(String.init) ?? first
         return String((first.count <= 34 ? first : colon).prefix(40))

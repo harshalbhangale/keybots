@@ -287,7 +287,7 @@ export function quoter(deps: QuoteDeps) {
         reason = `The leash can't sell ${from} yet. Its owner sets that up; this is Rhea's live quote.`;
       } else if (path.sells && tokenCap && BigInt(unitsIn) > BigInt(tokenCap.max_per_trade)) {
         executable = false;
-        reason = `Over the leash's cap of ${tidy(unitsToNumber(tokenCap.max_per_trade, path.decimalsIn))} ${from} a trade.`;
+        reason = `Over your limit of ${tidy(unitsToNumber(tokenCap.max_per_trade, path.decimalsIn))} ${from} a trade.`;
       }
     } else {
       // No pool here: NEAR Intents' own dry quote, which is live mainnet pricing.
@@ -344,7 +344,7 @@ export function quoter(deps: QuoteDeps) {
     let problem: string | null = executable ? null : reason;
     const overTrade = caps && valueNear !== null && valueNear > Number(caps.perTrade);
     if (!problem && caps?.paused) problem = "The kill switch is on. Nothing trades until you turn it off.";
-    if (!problem && overTrade) problem = `Over the ${caps!.perTrade} NEAR per-trade cap: this is worth about ${tidy(valueNear!)} NEAR.`;
+    if (!problem && overTrade) problem = `Over your ${caps!.perTrade} NEAR per-trade limit: this is worth about ${tidy(valueNear!)} NEAR.`;
 
     if (ask.order) {
       const trigger = ask.trigger!.includes(".") ? ask.trigger!.replace(/0+$/, "").replace(/\.$/, "") : String(BigInt(ask.trigger!));
@@ -363,7 +363,7 @@ export function quoter(deps: QuoteDeps) {
         }
       }
     } else {
-      if (!problem && caps && !caps.within) problem = `Only ${caps.leftToday} NEAR is left of today's cap; this is worth about ${valueNear === null ? "more" : tidy(valueNear)} NEAR.`;
+      if (!problem && caps && !caps.within) problem = `Only ${caps.leftToday} NEAR is left of today's limit; this is worth about ${valueNear === null ? "more" : tidy(valueNear)} NEAR.`;
       if (!problem && balance && !balance.enough) problem = `Not enough ${from}: the leash holds ${balance.amount}.`;
     }
 

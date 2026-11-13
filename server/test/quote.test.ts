@@ -114,7 +114,7 @@ describe("a quote for the trade panel", () => {
     expect(Number(back.amountOut)).toBeCloseTo(0.4995, 3);
     // $2.50 of USDC is 1.25 NEAR at NEAR Intents' price: over the 1 NEAR per-trade cap.
     const big = await make({ tokenCap: (5n * NEAR24).toString() }).quote({ from: "USDC", to: "NEAR", amount: "2.5" });
-    expect(big).toMatchObject({ caps: { within: false, valueNear: "1.25" }, ready: false, problem: "Over the 1 NEAR per-trade cap: this is worth about 1.25 NEAR." });
+    expect(big).toMatchObject({ caps: { within: false, valueNear: "1.25" }, ready: false, problem: "Over your 1 NEAR per-trade limit: this is worth about 1.25 NEAR." });
     const across = await make().quote({ from: "USDC", to: "USDT", amount: "1" });
     expect(across).toMatchObject({ route: { venue: "Rhea", pool: 1126, pools: [1126] }, executable: true, command: "swap 1 usdc to usdt" });
   });
@@ -130,16 +130,16 @@ describe("a quote for the trade panel", () => {
     });
     expect(Number(none.amountOut)).toBeCloseTo(0.4995, 3);
     const over = await make().quote({ from: "USDC", to: "NEAR", amount: "2.1" });
-    expect(over).toMatchObject({ executable: false, reason: "Over the leash's cap of 2 USDC a trade." });
+    expect(over).toMatchObject({ executable: false, reason: "Over your limit of 2 USDC a trade." });
   });
 
   it("says in one line why the hold is off: over a cap, over today's, not enough, paused", async () => {
-    expect((await make().quote({ from: "NEAR", to: "USDC", amount: "1.1" })).problem).toBe("Over the 1 NEAR per-trade cap: this is worth about 1.1 NEAR.");
+    expect((await make().quote({ from: "NEAR", to: "USDC", amount: "1.1" })).problem).toBe("Over your 1 NEAR per-trade limit: this is worth about 1.1 NEAR.");
     const spent = { agents: [{ account: cfg.agents.trade, agent: { ...trader, spent_today: ((18n * NEAR24) / 10n).toString() } }] };
     expect(await make({ state: spent }).quote({ from: "NEAR", to: "USDC", amount: "0.5" })).toMatchObject({
       ready: false,
       caps: { leftToday: "0.2", within: false },
-      problem: "Only 0.2 NEAR is left of today's cap; this is worth about 0.5 NEAR.",
+      problem: "Only 0.2 NEAR is left of today's limit; this is worth about 0.5 NEAR.",
     });
     expect(await make({ state: { available: (NEAR24 / 10n).toString() } }).quote({ from: "NEAR", to: "USDC", amount: "0.5" })).toMatchObject({
       ready: false,
@@ -267,7 +267,7 @@ describe("orders from the panel", () => {
   it("an order isn't held to today's cap or the balance now, only to the per-trade cap", async () => {
     const spent = { available: "0", agents: [{ account: cfg.agents.trade, agent: { ...trader, spent_today: (2n * NEAR24).toString() } }] };
     expect((await make({ state: spent }).quote({ from: "NEAR", to: "USDC", amount: "0.5", order: "stop", trigger: "1" })).ready).toBe(true);
-    expect((await make().quote({ from: "NEAR", to: "USDC", amount: "1.5", order: "stop", trigger: "1" })).problem).toMatch(/per-trade cap/);
+    expect((await make().quote({ from: "NEAR", to: "USDC", amount: "1.5", order: "stop", trigger: "1" })).problem).toMatch(/per-trade limit/);
   });
 
   it("needs a trigger price", async () => {
