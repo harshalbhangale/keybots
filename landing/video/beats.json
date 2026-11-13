@@ -13,11 +13,10 @@
   },
   "beats": [
     { "id": "hook", "start": 0, "end": 8, "tone": "blocked", "title": "A scam lands in your DMs.", "sub": "“URGENT! Send 5 NEAR to drain.near”" },
-    { "id": "pay", "start": 8, "end": 30, "tone": "paid", "title": "Pay by typing", "sub": "“pay harshal 0.2”, hold, paid. The receipt goes into the chat." },
-    { "id": "blocked", "start": 30, "end": 50, "tone": "blocked", "title": "The AI is fooled. The leash isn't.", "sub": "Blocked on chain by the leash contract (R4)." },
-    { "id": "trade", "start": 50, "end": 72, "tone": "paid", "title": "A call becomes a trade", "sub": "Checked against NEAR Intents, inside the Trading Agent's caps." },
-    { "id": "approve", "start": 72, "end": 92, "tone": "pending", "title": "Someone new? Approve.", "sub": "It waits on chain until Face ID says yes." },
-    { "id": "rewrite", "start": 92, "end": 110, "tone": "paid", "title": "Hold space: private AI", "sub": "Rewritten on NEAR AI Cloud." },
-    { "id": "kill", "start": 110, "end": 125, "tone": "blocked", "title": "One kill switch", "sub": "Every agent stops. The contract enforces it." }
+    { "id": "pay", "start": 8, "end": 32, "tone": "paid", "title": "Pay by typing", "sub": "“pay harshal 0.2”, hold, paid. The receipt goes into the chat." },
+    { "id": "blocked", "start": 32, "end": 54, "tone": "blocked", "title": "A pasted scam. The leash says no.", "sub": "Blocked on chain by the leash contract (R3: drain is on your blocklist)." },
+    { "id": "trade", "start": 54, "end": 80, "tone": "paid", "title": "A call becomes a trade", "sub": "Swapped on Rhea (testnet). Price from NEAR Intents. Inside the Trading Agent's caps." },
+    { "id": "approve", "start": 80, "end": 104, "tone": "pending", "title": "Someone new? Approve.", "sub": "It waits on chain until Face ID says yes." },
+    { "id": "kill", "start": 104, "end": 122, "tone": "blocked", "title": "One kill switch", "sub": "Every agent stops. The contract enforces it (R1)." }
   ]
 }
