@@ -24,6 +24,8 @@ struct AgentStrip: View {
                 result(r, palette)
             } else if let notice = model.notice {
                 self.notice(notice, palette)
+            } else if let warning = model.pasteWarning {
+                self.warning(warning, palette)
             } else if let source = model.running {
                 working(source, palette)
             } else if model.vaultOpen {
@@ -96,7 +98,15 @@ struct AgentStrip: View {
                     .background(AK.accent, in: Circle())
                 VStack(alignment: .leading, spacing: 0) {
                     Text(intent.title).font(.footnote.weight(.semibold)).foregroundStyle(palette.text).lineLimit(1).minimumScaleFactor(0.8)
-                    if let detail = intent.detail {
+                    if !intent.lines.isEmpty {
+                        // A copied call's checks, one line at a time.
+                        TimelineView(.periodic(from: .now, by: 2.6)) { context in
+                            let i = Int(context.date.timeIntervalSinceReferenceDate / 2.6) % intent.lines.count
+                            Text(intent.lines[i]).font(.caption2).foregroundStyle(palette.soft).lineLimit(1).minimumScaleFactor(0.75)
+                                .contentTransition(.opacity)
+                                .animation(.easeInOut(duration: 0.35), value: i)
+                        }
+                    } else if let detail = intent.detail {
                         Text(detail).font(.caption2).foregroundStyle(palette.soft).lineLimit(1)
                     }
                 }
@@ -206,6 +216,20 @@ struct AgentStrip: View {
         .padding(.leading, 12)
         .frame(height: Self.height)
         .glassEffect(.regular, in: .capsule)
+    }
+
+    /// The paste guard: an address you don't know arrived whole.
+    private func warning(_ text: String, _ palette: StripPalette) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.shield.fill").foregroundStyle(AK.amber)
+            Text(text).font(.caption.weight(.medium)).foregroundStyle(palette.text).lineLimit(2).minimumScaleFactor(0.85)
+            Spacer(minLength: 4)
+            close(palette)
+        }
+        .padding(.leading, 12)
+        .frame(height: Self.height)
+        .glassEffect(.regular.tint(AK.amber.opacity(0.22)), in: .capsule)
+        .accessibilityElement(children: .combine)
     }
 
     private func close(_ palette: StripPalette) -> some View {
