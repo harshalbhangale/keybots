@@ -241,7 +241,7 @@ final class AgentModel {
 
     /// The hold on the strip's button: the command it shows.
     func runReady() {
-        Haptics.hold()
+        // The hold button has already played its rising ticks and its thud (HoldFeel).
         if intent == nil, readIntent == nil, let call = callIntent, let command = call.command {
             // A copied call's trade: the message box keeps whatever is in it.
             send(command, source: "typed")
@@ -290,29 +290,28 @@ final class AgentModel {
             guard let check, check.call.isCall else { send(text, source: "pasted"); return }
             let r = check.route
             guard r.status == "available", let command = r.command, let title = r.title else {
-                notice = r.reason ?? check.call.summary
+                notice = Plain.scrub(r.reason ?? check.call.summary)
                 Haptics.warning()
                 return
             }
             callIntent = Ready(kind: .swap, title: title, detail: nil, verb: r.side == "sell" ? "sell" : "buy",
                                command: command, lines: Self.callLines(check))
-            Haptics.letter()
+            Haptics.chip()
         }
     }
 
     private static func callLines(_ c: CallCheck) -> [String] {
         let r = c.route
-        var caps = "the leash checks the caps"
+        var caps = "your limits apply"
         if let k = r.caps {
-            caps = k.paused ? "the kill switch is on"
-                : (k.within ?? true) ? "within your caps" : "over today's cap (\(k.leftToday) NEAR left)"
+            caps = k.paused ? "Stop everything is on"
+                : (k.within ?? true) ? "within your limits" : "over today's limit (\(k.leftToday) NEAR left)"
         }
-        var lines = ["\(c.call.asset ?? "Token") verified on NEAR Intents · \(caps)"]
+        var lines = ["\(c.call.asset ?? "Token") is a real token · \(caps)"]
         if let q = r.quote {
-            let out = Double(q.amountOut).map { String(format: "%.4g", $0) } ?? q.amountOut
-            lines.append("NEAR Intents quote: \(q.amountIn) NEAR → \(out) \(q.symbolOut)")
+            lines.append("Live price: \(q.amountIn) NEAR gets about \(Plain.tidy(q.amountOut)) \(q.symbolOut)")
         }
-        if let s = r.standIn { lines.append(s) }
+        if let s = r.standIn { lines.append(Plain.scrub(s)) }
         return lines
     }
 
@@ -333,7 +332,7 @@ final class AgentModel {
     }
 
     private func send(_ text: String, source: String, clearing: String? = nil) {
-        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so your agents can reach the server."; return }
+        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so it can pay and swap for you."; return }
         notice = nil
         result = nil
         vaultOpen = false
@@ -355,11 +354,8 @@ final class AgentModel {
     /// Put the receipt into the chat, so the other person sees it too.
     func insertReceipt() {
         guard let r = result else { return }
-        // Most messages already say what happened ("Paid…", "Swapped…", "Blocked by the leash…");
-        // the outcome word goes first only when the message doesn't start with it.
-        let word = r.signal.word.capitalized
-        let says = r.signal == .allow || r.message.lowercased().hasPrefix(word.lowercased().trimmingCharacters(in: .punctuationCharacters))
-        var line = says ? "AIRKEY · \(r.message)" : "AIRKEY · \(word): \(r.message)"
+        // The plain line says what happened ("Paid 0.2 NEAR to harshal", "Blocked: …").
+        var line = "AIRKEY · \(Plain.line(r))"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         ownInsert = line
@@ -397,7 +393,8 @@ final class AgentModel {
         vaultOpen = false
         ownInsert = item.value
         host?.agentInsert(item.value, spaced: true)
-        UIDevice.current.playInputClick()
+        if SettingsStore.current.keyClicks { UIDevice.current.playInputClick() }
+        Haptics.letter()
     }
 
     private func feedback(for signal: Signal) {
@@ -405,7 +402,7 @@ final class AgentModel {
         case .allow: Haptics.success()
         case .warn: Haptics.warning()
         case .block: Haptics.error()
-        case .quote, .watch: Haptics.letter()
+        case .quote, .watch: Haptics.chip()
         case .neutral: break
         }
     }
