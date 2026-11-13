@@ -9,13 +9,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export function NearMark({ size = "0.8em" }: { size?: string | number }) {
   return (
     <span className="near-mark" style={{ width: size, height: size }} aria-label="NEAR">
-      <svg viewBox="0 0 24 24" aria-hidden>
+      <svg viewBox="0 0 20.2 19.6" aria-hidden>
         <path
-          d="M5 20V4h3.3l7.4 10.6V4H19v16h-3.3L8.3 9.4V20z"
+          d="M15.3 1.4 11.6 6.9c-.3.4.3.9.6.6l3.7-3.2c.1-.1.3 0 .3.1v9.9c0 .2-.2.2-.3.1L4.7.6C4.3.2 3.8 0 3.2 0h-.4C1.3 0 0 1.3 0 2.8v13.9c0 1.6 1.3 2.8 2.8 2.8.9 0 1.8-.5 2.3-1.3l3.7-5.5c.3-.4-.3-.9-.6-.6l-3.7 3.2c-.1.1-.3 0-.3-.1V5.4c0-.2.2-.2.3-.1l11.2 13.6c.4.4 1 .6 1.5.6h.4c1.6 0 2.8-1.3 2.8-2.8V2.8C20.2 1.3 18.9 0 17.4 0c-1 0-1.9.5-2.4 1.4z"
           fill="currentColor"
-          stroke="currentColor"
-          strokeWidth="0.6"
-          strokeLinejoin="round"
         />
       </svg>
     </span>
