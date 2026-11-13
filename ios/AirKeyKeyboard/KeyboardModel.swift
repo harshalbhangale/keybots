@@ -251,7 +251,13 @@ final class KeyboardModel {
     func refreshTokens() {
         guard hasFullAccess() else { return }
         if Tokens.stale { Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } } }
-        if Contacts.stale { Task { if let s = try? await API().state() { Contacts.save(s.contacts) } } }
+        if Contacts.stale || Vault.owner == nil {
+            Task {
+                guard let s = try? await API().state() else { return }
+                Contacts.save(s.contacts)
+                Vault.saveOwner(s.owner)
+            }
+        }
     }
 
     // MARK: agents
