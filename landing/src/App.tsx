@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import Phone, { SCENARIOS } from "./Phone";
+import { useEffect } from "react";
+import { Cards, HeroBar, NearMark, Try } from "./Sections";
 import { Downloads, E2E, GitHub, LEASH, Mark, REPO } from "./ui";
 
 function useReveal() {
@@ -13,147 +13,83 @@ function useReveal() {
   }, []);
 }
 
-/** The phone leans toward the pointer. */
-function useLean<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || matchMedia("(pointer: coarse)").matches) return;
-    const move = (e: PointerEvent) => {
-      const x = e.clientX / innerWidth - 0.5;
-      const y = e.clientY / innerHeight - 0.5;
-      el.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 8}deg)`;
-    };
-    addEventListener("pointermove", move);
-    return () => removeEventListener("pointermove", move);
-  }, []);
-  return ref;
-}
-
-const LEASH_FACTS = [
-  ["Caps", "0.5 NEAR a payment, 1 a day, per agent"],
-  ["Whose words", "What you paste goes to an agent that can't pay strangers"],
-  ["Kill switch", "One switch stops every agent"],
-];
-
 export default function App() {
   useReveal();
-  const [i, setI] = useState(0);
-  const lean = useLean<HTMLDivElement>();
-  const s = SCENARIOS[i];
-
   return (
     <>
       <nav className="nav">
         <a href="#top" className="brand">
           <Mark /> AIRKEY
         </a>
-        <a className="nav-gh" href={REPO} target="_blank" rel="noreferrer">
-          <GitHub size={16} /> GitHub
-        </a>
+        <span className="nav-end">
+          <a className="nav-link" href={REPO} target="_blank" rel="noreferrer">
+            <GitHub size={16} /> GitHub
+          </a>
+          <a className="nav-cta" href="#get">
+            Get AIRKEY
+          </a>
+        </span>
       </nav>
 
       <main id="top">
-        <section className="hero wrap">
-          <div className="hero-copy">
-            <span className="eyebrow">A keyboard, not an app</span>
-            <h1>
-              Pay, trade and stay safe <span className="lime">from the keyboard.</span>
+        <section className="hero">
+          <div className="aurora" aria-hidden />
+          <div className="hero-copy wrap">
+            <h1 className="hero-title">
+              <span>Type it.</span>
+              <span>
+                <NearMark /> <span className="lime">NEAR</span> does the rest.
+              </span>
             </h1>
-            <p className="sub">
-              Type “pay harshal 0.2” in any chat and hold. AI agents do it on NEAR, and a contract called the leash says no to
-              anything you didn't allow.
-            </p>
+            <p className="hero-sub">The AI keyboard that pays, trades and stops scams, in any chat.</p>
+            <HeroBar />
             <Downloads />
           </div>
-
-          <div className="hero-phone">
-            <div className="lean" ref={lean}>
-              <Phone scenario={s} onDone={() => setI((x) => (x + 1) % SCENARIOS.length)} />
-            </div>
-            <div className="tabs" role="tablist" aria-label="Try a chat">
-              {SCENARIOS.map((sc, k) => (
-                <button key={sc.id} role="tab" aria-selected={k === i} className={k === i ? "on" : ""} onClick={() => setI(k)}>
-                  {sc.tab}
-                </button>
-              ))}
-            </div>
-            <p className="tip">Hold the lime button, or let it play.</p>
-          </div>
         </section>
 
-        <section className="section wrap" id="what">
-          <h2 data-reveal>Everything happens in the keyboard.</h2>
-          <div className="rows">
-            {SCENARIOS.map((sc, k) => (
-              <button
-                key={sc.id}
-                className={`row ${k === i ? "on" : ""}`}
-                data-reveal
-                onClick={() => {
-                  setI(k);
-                  document.getElementById("top")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                <code>{sc.typed}</code>
-                <span className="arrow">→</span>
-                <span>{sc.shows}</span>
-              </button>
-            ))}
-            <div className="row static" data-reveal>
-              <code>100 usd to inr</code>
-              <span className="arrow">→</span>
-              <span>₹9,385.16 · Insert</span>
-            </div>
-            <div className="row static" data-reveal>
-              <code>sell 1 near if it drops below 2</code>
-              <span className="arrow">→</span>
-              <span>Watched every 15 s, runs when the price crosses</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="section wrap leash" id="leash">
-          <div data-reveal>
-            <h2>
-              NEAR is <span className="lime">the leash.</span>
+        <section className="section" id="try">
+          <div className="wrap">
+            <h2 className="sec-title center" data-reveal>
+              Type in the chat. <span className="lime">Watch it on NEAR.</span>
             </h2>
-            <p className="sub">
-              The keyboard never holds a key. Each agent's key can only ask a NEAR contract to pay, and the contract holds the
-              money and checks your rules first.
-            </p>
-          </div>
-          <div className="facts">
-            {LEASH_FACTS.map(([b, t]) => (
-              <div className="fact" key={b} data-reveal>
-                <b>{b}</b>
-                <span>{t}</span>
-              </div>
-            ))}
-          </div>
-          <div className="proof" data-reveal>
-            <a href={E2E} target="_blank" rel="noreferrer">
-              <b>9/9</b> end-to-end steps passed on testnet ↗
-            </a>
-            <a href={LEASH} target="_blank" rel="noreferrer">
-              leash.airkey-harshal.testnet ↗
-            </a>
+            <Try />
           </div>
         </section>
 
-        <section className="section wrap finale">
-          <h2 data-reveal>
-            Your AI. Your keys. <span className="lime">Your rules.</span>
-          </h2>
-          <div data-reveal>
-            <Downloads />
+        <section className="section tight">
+          <div className="wrap">
+            <Cards />
+          </div>
+        </section>
+
+        <section className="finale" id="get">
+          <div className="wrap">
+            <div className="proof" data-reveal>
+              <b>9/9</b>
+              <span>
+                end-to-end steps passed on NEAR testnet ·{" "}
+                <a href={E2E} target="_blank" rel="noreferrer">
+                  every transaction ↗
+                </a>{" "}
+                ·{" "}
+                <a href={LEASH} target="_blank" rel="noreferrer">
+                  the leash ↗
+                </a>
+              </span>
+            </div>
+            <h2 className="big-title" data-reveal>
+              Your keys. <span className="lime">Your rules.</span>
+            </h2>
+            <div data-reveal>
+              <Downloads />
+            </div>
           </div>
         </section>
       </main>
 
       <footer className="foot wrap">
         <span>
-          <Mark size={18} /> AIRKEY · built at NEAR HACKATHON 2026 by Harshal Bhangale
+          <Mark size={18} /> © 2026 AIRKEY · built at NEAR HACKATHON by Harshal Bhangale
         </span>
         <span>Testnet only · not financial advice</span>
       </footer>
