@@ -114,6 +114,7 @@
 		A0871BD366BBC2C165919F3B /* theme-synth-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 55B7D71F0B4D2AD30AE975A2 /* theme-synth-return.caf */; };
 		A4A0B702C7D8673160AE630E /* AccentPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8077B51153AD8CCA02CB55A8 /* AccentPopup.swift */; };
 		AA8C1C4DE6338FF3BA0AEFF0 /* theme-shutter-letter.caf in Resources */ = {isa = PBXBuildFile; fileRef = EA0136DD2E3B1DA25B33B71B /* theme-shutter-letter.caf */; };
+		AD7900466E6F03BE59F41A20 /* NOTICE.md in Resources */ = {isa = PBXBuildFile; fileRef = B88C67F9ADD10678D065B2E2 /* NOTICE.md */; };
 		AD9C78D7DCE5CF574F5B34A3 /* AppGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10AA8A4E6E95F4CD92688FCA /* AppGroupStore.swift */; };
 		AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE82DAB9B756AF51443152AD /* Instant.swift */; };
 		B306D3258734682B66A65CE5 /* HoldToConfirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CAF2A5A722343A1E75C0BF7 /* HoldToConfirm.swift */; };
@@ -285,6 +286,7 @@
 		B372D9B19A11E10D4CD1002D /* Vault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vault.swift; sourceTree = "<group>"; };
 		B621779FE7A43DAC8DC8C6E5 /* theme-synth-letter.caf */ = {isa = PBXFileReference; path = "theme-synth-letter.caf"; sourceTree = "<group>"; };
 		B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStrip.swift; sourceTree = "<group>"; };
+		B88C67F9ADD10678D065B2E2 /* NOTICE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NOTICE.md; sourceTree = "<group>"; };
 		B8B9D10578985615A1494259 /* Smart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Smart.swift; sourceTree = "<group>"; };
 		B8E73A3766E52604B95CAA05 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
 		BBF1D08237153F6932EEB86C /* Prata-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Prata-Regular.ttf"; sourceTree = "<group>"; };
@@ -430,6 +432,7 @@
 			isa = PBXGroup;
 			children = (
 				D99FE4AB7B6B57291405B0B2 /* en.glyd */,
+				B88C67F9ADD10678D065B2E2 /* NOTICE.md */,
 				6BABBBB976524CC990F56359 /* packs.json */,
 				800B64210BA145E55B616DD0 /* Fonts */,
 				090091A6610C1F3EE9B15359 /* Sounds */,
@@ -744,6 +747,7 @@
 				2D5B67D21B7D63048C979ACB /* Limelight-Regular.ttf in Resources */,
 				928D9A3257C61DC07070A1F2 /* Marcellus-OFL.txt in Resources */,
 				71C8642E3C49445A90EACB30 /* Marcellus-Regular.ttf in Resources */,
+				AD7900466E6F03BE59F41A20 /* NOTICE.md in Resources */,
 				60374E3C6A359DB0FBE8A917 /* Orbitron-OFL.txt in Resources */,
 				F35BE733DC13DCC584EEECF5 /* Orbitron[wght].ttf in Resources */,
 				F02E94897D6578F66B51E185 /* Prata-OFL.txt in Resources */,

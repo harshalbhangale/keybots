@@ -17,7 +17,7 @@ protocol ClipboardPanelDelegate: AnyObject {
 /// PINNED and RECENT as two columns of cards. Tap a card to paste it. Hold one
 /// and the rest dim while a menu offers Paste, Pin and Delete.
 ///
-/// Identical on Android (ClipboardPanel in GlyfIME.kt); only sizes follow each
+/// The same on every phone; only sizes follow each
 /// platform's own keyboard.
 final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
 
@@ -310,7 +310,7 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
         if !historyOn {
             y = addTip(at: y, width: w - M.side * 2,
                        icon: "doc.on.clipboard",
-                       text: "Clipboard history is off in the Glyf app.")
+                       text: "Clipboard history is off. Turn on Keep what I copy in Settings.")
             scroll.contentSize = CGSize(width: w, height: y + 12)
             return
         }
@@ -640,7 +640,7 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
         if fit.height < 24 { fit.height = control.intrinsicContentSize.height }
         if fit.width < 40 || fit.height < 24 { fit = CGSize(width: 104, height: 38) }
         Logger(subsystem: "tech.airkey.keyboard", category: "lifecycle")
-            .log("GLYF_KB pasteSize=\(fit.width)x\(fit.height)")
+            .log("KB pasteSize=\(fit.width)x\(fit.height)")
         return fit
     }
 
@@ -655,14 +655,14 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
         var out: [(String, String)] = []
         if filter != .image, SettingsStore.current.clipboardCaptureAll != true {
             out.append(("hand.raised",
-                        "Only what you Paste above is kept. To keep every copy, "
-                            + "turn on Capture everything you copy in the Glyf app."))
+                        "Only what you paste here is kept. To keep every copy, "
+                            + "turn on Keep every copy in Settings."))
         } else if filter != .image, ClipContext.isFresh() {
             // Something is sitting on the clipboard that we were not allowed
             // to read. One copy could be a coincidence; the setting is not.
             out.append(("hand.raised",
                         "iOS asks before a keyboard may read a copy. To stop it "
-                            + "asking: Settings → Glyf → Paste from Other Apps → Allow."))
+                            + "asking: Settings → Apps → AIRKEY → Paste from Other Apps → Allow."))
         }
         // Not while iOS is asking: opening the panel raises the prompt
         // (askForPhotosIfNeeded), and the tip under it said to go and turn
@@ -670,8 +670,8 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
         if filter.showsShots, SettingsStore.current.clipboardScreenshots == true,
            !Self.photosAllowed(), PHPhotoLibrary.authorizationStatus(for: .readWrite) != .notDetermined {
             out.append(("photo",
-                        "Screenshots need your photo library. Glyf app → Keyboard "
-                            + "→ Recent screenshots turns it on and asks."))
+                        "Screenshots need your photos: Settings → Apps → AIRKEY "
+                            + "→ Photos."))
         }
         return out
     }

@@ -43,5 +43,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).KeyboardViewController</string>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AIRKEY shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.</string>
 </dict>
 </plist>

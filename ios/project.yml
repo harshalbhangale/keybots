@@ -58,6 +58,7 @@ targets:
       path: AirKeyKeyboard/Info.plist
       properties:
         CFBundleDisplayName: AIRKEY
+        NSPhotoLibraryUsageDescription: AIRKEY shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSExtension:
