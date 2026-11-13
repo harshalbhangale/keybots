@@ -21,24 +21,31 @@ export interface Deps {
   rhea?: RheaClient;
 }
 
-/** Which AI reads what the rules can't: NEAR AI Cloud (private) first, else OpenAI, else none. */
-export function aiReader(cfg: Config): AiConfig | null {
-  if (cfg.nearAi.apiKey) return { provider: "near-ai-cloud", ...cfg.nearAi };
-  if (cfg.openAi?.apiKey) return { provider: "openai", ...cfg.openAi };
-  return null;
+/** The AIs that read what the rules can't, in order: NEAR AI Cloud (private) by default, OpenAI as the fallback. */
+export function aiReaders(cfg: Config): AiConfig[] {
+  const out: AiConfig[] = [];
+  if (cfg.nearAi.apiKey) out.push({ provider: "near-ai-cloud", ...cfg.nearAi });
+  if (cfg.openAi?.apiKey) out.push({ provider: "openai", ...cfg.openAi });
+  return out;
 }
 
-/** Read a command: rules first, an AI only for what the rules can't read. Runs nothing. */
+/**
+ * Read a command: rules first, an AI only for what the rules can't read.
+ * NEAR AI Cloud is asked first; if it isn't set up or doesn't answer, OpenAI.
+ * Runs nothing.
+ */
 export async function readCommand(deps: Deps, text: string): Promise<Receipt["interpretation"]> {
   const action = parse(text);
-  const ai = aiReader(deps.cfg);
-  if (action.kind !== "unknown" || !ai) return { action, reader: "rules" };
-  try {
-    const read = await (deps.readAi ?? readWithAi)(text, ai);
-    return { action: read.action, reader: ai.provider, ai: read.evidence };
-  } catch {
-    return { action, reader: "rules" };
+  if (action.kind !== "unknown") return { action, reader: "rules" };
+  for (const ai of aiReaders(deps.cfg)) {
+    try {
+      const read = await (deps.readAi ?? readWithAi)(text, ai);
+      return { action: read.action, reader: ai.provider, ai: read.evidence };
+    } catch {
+      // This one didn't answer: try the next.
+    }
   }
+  return { action, reader: "rules" };
 }
 
 /** What an action is, in words and as the exact command the rules read back the same way. */
