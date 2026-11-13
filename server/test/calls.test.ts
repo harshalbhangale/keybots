@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import { readCall, routeCall } from "../src/calls.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileCalls, memoryCalls, readCall, routeCall } from "../src/calls.js";
 import { loadConfig } from "../src/config.js";
 
 const tokens = {
@@ -117,5 +120,78 @@ describe("POST /v1/call", () => {
 
   it("needs text", async () => {
     expect((await app().inject({ method: "POST", url: "/v1/call", payload: {} })).statusCode).toBe(400);
+  });
+});
+
+describe("the calls book", () => {
+  const call = (text: string) => readCall(text);
+  const available = { status: "available", side: "buy", command: "buy $1 of near", title: "Buy $1 of NEAR", token: { symbol: "NEAR", assetId: "x", price: 3.5 }, quote: null, standIn: null, caps: null, note: "" } as const;
+
+  it("keeps one record per call, and a re-check of an open call updates its route", () => {
+    const book = memoryCalls();
+    const text = "$NEAR breakout 🚀";
+    const a = book.check(text, call(text), available, 3.5);
+    expect(a).toMatchObject({ text, asset: "NEAR", direction: "bullish", status: "available", command: "buy $1 of near", verified: true, priceThen: 3.5, trade: null, dismissed: false });
+    const b = book.check(text, call(text), { status: "unavailable", reason: "Token check failed: gone." }, 4);
+    expect(b.id).toBe(a.id);
+    expect(book.list()).toHaveLength(1);
+    expect(book.list()[0]).toMatchObject({ status: "unavailable", reason: "Token check failed: gone.", command: null, priceThen: 3.5 });
+  });
+
+  it("links the trade a hold ran, and a traded call checked again is a new record", () => {
+    const book = memoryCalls();
+    const text = "$NEAR breakout 🚀";
+    const a = book.check(text, call(text), available, 3.5);
+    book.traded(a.id, { at: "2026-11-13T00:00:00.000Z", receiptId: "r1", outcome: "swapped", message: "Swapped.", tx: { hash: "h", url: "u" } });
+    expect(book.get(a.id)?.trade).toMatchObject({ receiptId: "r1", outcome: "swapped", tx: { hash: "h" } });
+    expect(book.traded("nope", { at: "", receiptId: "", outcome: "", message: "" })).toBeUndefined();
+    const again = book.check(text, call(text), available, 3.6);
+    expect(again.id).not.toBe(a.id);
+    expect(book.list().map((c) => c.id)).toEqual([again.id, a.id]); // newest first
+  });
+
+  it("survives a restart on disk", () => {
+    const dir = mkdtempSync(join(tmpdir(), "airkey-calls-"));
+    const text = "$NEAR top is in, selling";
+    const a = fileCalls(dir).check(text, call(text), available, 3.5);
+    fileCalls(dir).dismiss(a.id);
+    expect(fileCalls(dir).list()).toMatchObject([{ id: a.id, dismissed: true, direction: "bearish" }]);
+    rmSync(dir, { recursive: true });
+  });
+});
+
+describe("GET /v1/calls", () => {
+  const cfg = loadConfig({ AIRKEY_OWNER: "x.testnet" });
+  const priced = { ...intents, price: async (s: string) => (s === "NEAR" ? 3.85 : undefined) };
+  const receipt = { id: "r1", at: "2026-11-13T00:00:00.000Z", outcome: "blocked", message: "Blocked by the leash.", input: {}, interpretation: {} };
+
+  it("lists every checked call with the price then and now, and skips what isn't a call", async () => {
+    const app = buildApp({ cfg, chain: chain as never, receipts: {} as never, intents: priced as never });
+    const a = (await app.inject({ method: "POST", url: "/v1/call", payload: { text: "$NEAR breakout 🚀" } })).json();
+    expect(a.id).toEqual(expect.any(String));
+    await app.inject({ method: "POST", url: "/v1/call", payload: { text: "long $NEAR 10x" } });
+    const none = (await app.inject({ method: "POST", url: "/v1/call", payload: { text: "see you at 7" } })).json();
+    expect(none.id).toBeUndefined();
+    const { calls } = (await app.inject({ method: "GET", url: "/v1/calls" })).json();
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toMatchObject({ text: "long $NEAR 10x", status: "unavailable", reason: expect.stringMatching(/perp/), command: null, priceThen: 3.85, priceNow: 3.85, trade: null });
+    expect(calls[1]).toMatchObject({ id: a.id, asset: "NEAR", direction: "bullish", confidence: "medium", status: "available", command: "buy $1 of near", priceThen: 3.5, priceNow: 3.85, trade: null });
+  });
+
+  it("records the trade when the hold's command carries the call's id", async () => {
+    const calls = memoryCalls();
+    const app = buildApp({ cfg, chain: chain as never, receipts: {} as never, intents: priced as never, calls });
+    const { id } = (await app.inject({ method: "POST", url: "/v1/call", payload: { text: "$NEAR breakout 🚀" } })).json();
+    // What POST /v1/command does once the command has run (running one needs the chain).
+    calls.traded(id, { at: receipt.at, receiptId: receipt.id, outcome: receipt.outcome, message: receipt.message });
+    const list = (await app.inject({ method: "GET", url: "/v1/calls" })).json().calls;
+    expect(list[0].trade).toMatchObject({ outcome: "blocked", message: "Blocked by the leash.", receiptId: "r1" });
+  });
+
+  it("puts a call away", async () => {
+    const app = buildApp({ cfg, chain: chain as never, receipts: {} as never, intents: priced as never });
+    const { id } = (await app.inject({ method: "POST", url: "/v1/call", payload: { text: "$NEAR breakout 🚀" } })).json();
+    expect((await app.inject({ method: "POST", url: `/v1/calls/${id}/dismiss` })).json()).toMatchObject({ id, dismissed: true });
+    expect((await app.inject({ method: "POST", url: "/v1/calls/nope/dismiss" })).statusCode).toBe(404);
   });
 });

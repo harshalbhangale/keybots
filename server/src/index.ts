@@ -9,6 +9,7 @@ import { rheaClient } from "./rhea.js";
 import { ratesClient } from "./rates.js";
 import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
+import { fileCalls } from "./calls.js";
 
 // server/.env (gitignored) for keys and switches, when it's there.
 try {
@@ -26,6 +27,7 @@ const deps = {
   rates: ratesClient(),
   orders: fileOrders(cfg.dataDir),
   rhea: rheaClient({ network: cfg.network, rpc: cfg.rpc }),
+  calls: fileCalls(cfg.dataDir), // the calls book: calls.jsonl
 };
 const app = buildApp(deps);
 
