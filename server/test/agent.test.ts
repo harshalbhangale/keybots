@@ -252,6 +252,16 @@ describe("swaps", () => {
     expect(r.message).toMatch(/Nothing was lost/);
   });
 
+  it("works out dollars as NEAR at today's price, then swaps that on Rhea", async () => {
+    const { chain, calls } = fakeChain();
+    chain.state = chainWithTrader().state;
+    // NEAR is $4 in the fake list: $2 of NEAR is 0.5 NEAR.
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 2$ of near to usdt", "typed");
+    expect(r.outcome).toBe("swapped");
+    expect(calls[0].args.amount).toBe("500000000000000000000000");
+    expect(r.message).toMatch(/^Swapped 0.5 NEAR for /);
+  });
+
   it("only quotes tokens Rhea has no pool for", async () => {
     const { chain, calls } = fakeChain();
     chain.state = chainWithTrader().state;
