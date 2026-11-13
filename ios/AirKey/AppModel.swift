@@ -34,6 +34,7 @@ final class AppModel {
             (state, receipts) = try await (s, r)
             error = nil
             if let state {
+                Fmt.roleNames = state.roleNames
                 Contacts.save(state.contacts)
                 Vault.saveOwner(state.owner)
             }

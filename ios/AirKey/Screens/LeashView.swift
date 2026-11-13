@@ -18,8 +18,8 @@ struct LeashView: View {
             if let state = model.state {
                 killSwitch(state)
                 VStack(alignment: .leading, spacing: 12) {
-                    SectionTitle("Agents", trailing: "\(state.agents.count)")
-                    ForEach(state.agents) { AgentCard(entry: $0, paused: state.paused, explorer: state.explorer) }
+                    SectionTitle("Agents", trailing: "\(state.shownAgents.count)")
+                    ForEach(state.shownAgents) { AgentCard(entry: $0, paused: state.paused, explorer: state.explorer) }
                 }
                 if !state.pending.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
@@ -103,7 +103,7 @@ struct LeashView: View {
                 Text("Agents spend from here, never from your own account.")
                     .font(.footnote).foregroundStyle(AK.muted)
                 Hairline()
-                ForEach(s.agents) { a in
+                ForEach(s.shownAgents) { a in
                     KeyValue(
                         key: Fmt.agentName(account: a.account),
                         value: "\(Fmt.near(a.agent.per_payment_cap, unit: false)) a payment · \(Fmt.near(a.agent.daily_cap, unit: false)) a day"

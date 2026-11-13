@@ -28,9 +28,13 @@ enum Fmt {
         tier == "trusted" ? "Payment Agent" : "Inbox Agent"
     }
 
-    /// Named by the account's first part: pay.<you> is the Payment Agent.
+    /// The server's agents by role (LeashState.roleNames), set when the state loads.
+    nonisolated(unsafe) static var roleNames: [String: String] = [:]
+
+    /// Named by role when the server says, else by the account's first part: pay.<you> is the Payment Agent.
     static func agentName(account: String) -> String {
-        switch short(account) {
+        if let name = roleNames[account] { return name }
+        return switch short(account) {
         case "pay": "Payment Agent"
         case "inbox": "Inbox Agent"
         case "trade", "trader": "Trading Agent"
