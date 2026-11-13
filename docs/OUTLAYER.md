@@ -1,8 +1,10 @@
 # OutLayer custody for the agents' keys
 
-Status: plan and code on branch `outlayer-custody`, testnet only. What is proven
-is listed in [evidence/outlayer-testnet.md](evidence/outlayer-testnet.md);
-anything not listed there is not proven.
+Status: on branch `outlayer-custody`, testnet only. The three agents now sign
+through OutLayer on testnet, with the OutLayer policy set. What is proven is
+listed in [evidence/outlayer-testnet.md](evidence/outlayer-testnet.md);
+anything not listed there is not proven. The server switch in `index.ts` is not
+merged yet.
 
 ## Why
 
@@ -29,7 +31,8 @@ characters) instead of `pay.<owner>`.
 | `scripts/setup-outlayer.mjs` | For each agent: read its address, send it 0.3 testnet NEAR for gas from the owner, and `add_agent` it on the leash with the same tier and caps as the current agent. |
 | `server/src/outlayer.ts` | A `Chain` that sends `pay` and `swap` through `POST /wallet/v1/call` and reads the result (decision, events, logs) from the transaction on NEAR RPC. Views still go through `near.ts`. |
 | `AIRKEY_SIGNER=outlayer` | Turns it on. Unset, the server uses the local keys exactly as before. |
-| `POST /wallet/v1/encrypt-policy` + `sign-policy` | Optional second lock: an OutLayer policy that only allows `call`, only to the leash. Not required for the leash's rules to hold. |
+| `POST /wallet/v1/encrypt-policy` + `sign-policy` | Optional second lock (`--policy`): an OutLayer policy that only allows `call`, only to the leash. The owner stores it on `outlayer.testnet` with `store_wallet_policy`. Not required for the leash's rules to hold. |
+| `scripts/prove-outlayer.ts` | The testnet proof: pay, pasted scam, over-cap, owner method, transfer out, other contract. Writes `docs/evidence/outlayer-testnet.json`. |
 
 Env when the switch is on (`server/.env`, gitignored):
 
@@ -49,13 +52,15 @@ OUTLAYER_KEY_TRADE=wk_...
 - The agent key is not on the AIRKEY server. Someone who steals `server/.env`
   gets the `wk_` keys, which can ask OutLayer to sign for that agent, so they
   can still do what the agent can do, within the leash's rules and any
-  OutLayer policy. A `wk_` key can be revoked at OutLayer; a leaked local key has
-  to be deleted on chain.
+  OutLayer policy. OutLayer documents revoking a `wk_` key
+  (`DELETE /wallet/v1/api-key/{hash}`); we have not tested it.
 - The agent's implicit account holds a full-access key (inside the TEE), not a
-  function-call key. It can spend its own gas balance (0.3 NEAR) anywhere. It
+  function-call key. Without a policy it could spend its own gas balance
+  (0.3 NEAR) anywhere. It
   cannot move the leash's money except through `pay`/`swap`, which the leash
   rules decide, and it cannot call owner methods (`add_agent`, `withdraw`,
-  `set_paused`...), which require the owner.
+  `set_paused`...), which require the owner. With the policy set, OutLayer
+  refuses to sign the gas transfer or any call that isn't to the leash.
 - OutLayer's API does not return a per-call attestation. Trust in the keystore
   comes from OutLayer's worker attestation (TDX quotes checked on chain by its
   register contract; see their WORKER_ATTESTATION.md). The evidence file
