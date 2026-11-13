@@ -140,7 +140,7 @@ struct CommandSheet: View {
         if running {
             HStack(spacing: 10) {
                 ProgressView().tint(AK.bone)
-                Text(pasted ? "Inbox Agent is checking it…" : intent?.kind == .swap ? "Trading Agent is getting a quote…" : "Asking the leash on NEAR…")
+                Text(pasted ? "Inbox Agent is checking it…" : intent?.kind == .swap ? "Trading Agent is on it…" : "Asking the leash on NEAR…")
                     .font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
             }
             .frame(maxWidth: .infinity)
