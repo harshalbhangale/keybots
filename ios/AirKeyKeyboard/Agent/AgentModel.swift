@@ -75,6 +75,19 @@ final class AgentModel {
     }
 
     @ObservationIgnored weak var host: AgentHost?
+
+    /// How the AIRKEY server read wording the phone's patterns don't know:
+    /// what the strip shows, and the exact command a hold sends.
+    struct Reading: Equatable {
+        let kind: Intent.Kind
+        let title: String
+        let verb: String
+        let command: String
+        /// Read by a model rather than the server's rules.
+        let byAI: Bool
+    }
+    /// Asks the server to read a line; nil when it isn't a command.
+    @ObservationIgnored var reader: ((String) async -> Reading?)?
     /// What the keyboard is looking up, so a late reply for old text is dropped.
     @ObservationIgnored private var asking: Ask?
     /// The field's text at the last read, and the text a sum or an answer
@@ -90,12 +103,53 @@ final class AgentModel {
         lastText = text
         let next = Intent.read(text)
         if next != intent { intent = next }
+        askServer(text)
         if let putAwayFor, putAwayFor == text { return }
         putAwayFor = nil
         // One thing at a time: a command first, then a lookup, then a sum.
-        look(up: intent == nil ? Ask.read(text) : nil)
-        let sum = intent == nil && asking == nil && !answered ? Instant.read(text) : nil
+        look(up: ready == nil ? Ask.read(text) : nil)
+        let sum = ready == nil && asking == nil && !answered ? Instant.read(text) : nil
         if sum != instant { instant = sum }
+    }
+
+    // MARK: Loose wording
+
+    /// Words a command starts with, when the phone's patterns don't read it.
+    private static let commandStarts: Set<String> = [
+        "pay", "send", "give", "tip", "transfer", "swap", "buy", "sell", "convert", "exchange", "trade",
+    ]
+    @ObservationIgnored private var readFor: String?
+    @ObservationIgnored private var readTask: Task<Void, Never>?
+
+    /// "swap 5 bucks of near into usdc": the phone's patterns miss it, but it
+    /// starts like a command, so the AIRKEY server reads it (its rules, or a
+    /// model) a moment after typing stops. Only with Full Access; a reply for
+    /// text that has moved on is dropped. The hold then sends the server's
+    /// exact command, never the loose words.
+    private func askServer(_ text: String) {
+        let line = text.split(whereSeparator: \.isNewline).last.map(String.init)?
+            .trimmingCharacters(in: .whitespaces) ?? ""
+        let first = line.split(separator: " ").first.map { $0.lowercased() } ?? ""
+        guard intent == nil, line.count >= 8, Self.commandStarts.contains(first),
+              host?.agentHasFullAccess == true, let reader else {
+            readTask?.cancel()
+            readTask = nil
+            readFor = nil
+            if readIntent != nil { readIntent = nil }
+            return
+        }
+        guard line != readFor else { return }
+        readFor = line
+        if readIntent != nil { readIntent = nil }
+        readTask?.cancel()
+        readTask = Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled, readFor == line else { return }
+            let reading = await reader(line)
+            guard !Task.isCancelled, readFor == line, let reading else { return }
+            readIntent = Ready(kind: reading.kind, title: reading.title, detail: reading.byAI ? "Read by AI" : nil,
+                               verb: reading.verb, command: reading.command)
+        }
     }
 
     /// Ask the server for a price or a conversion, a moment after typing stops.
