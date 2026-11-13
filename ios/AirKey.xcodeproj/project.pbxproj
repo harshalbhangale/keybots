@@ -76,6 +76,7 @@
 		69E1DDD3770611B4B4D5D71F /* EmojiData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09EC95D4D892D48A66E2F9FE /* EmojiData.swift */; };
 		6A21012BD031383586747449 /* theme-typewriter-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = A3DEF79ED1A588D9458E1D32 /* theme-typewriter-return.caf */; };
 		6A9C5A38A5383F57DA7BC3A5 /* KeyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A791BF76C4E67F6F86C158DF /* KeyView.swift */; };
+		6D36C8F67170601B792CB61C /* KeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C83B914356CC09E45DEEDA8 /* KeysView.swift */; };
 		6E4B0B95DF1C5C2613B678B6 /* paper.png in Resources */ = {isa = PBXBuildFile; fileRef = C60C275CEBFFF17F9C47E3A5 /* paper.png */; };
 		6FD68D4822232046C2CAED6C /* velvet.png in Resources */ = {isa = PBXBuildFile; fileRef = 5957797AF8BE643BD226581D /* velvet.png */; };
 		712D7A7617D2403BB2560E31 /* brushed.png in Resources */ = {isa = PBXBuildFile; fileRef = 2699AE2B52A6F8306B012510 /* brushed.png */; };
@@ -193,6 +194,7 @@
 		09D40447CC983DE204796FE7 /* Jost-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jost-OFL.txt"; sourceTree = "<group>"; };
 		09EC95D4D892D48A66E2F9FE /* EmojiData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiData.swift; sourceTree = "<group>"; };
 		0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuShell.swift; sourceTree = "<group>"; };
+		0C83B914356CC09E45DEEDA8 /* KeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeysView.swift; sourceTree = "<group>"; };
 		0E84AB7A0E48C96C34CE8765 /* CourierPrime-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "CourierPrime-OFL.txt"; sourceTree = "<group>"; };
 		1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTab.swift; sourceTree = "<group>"; };
 		10AA8A4E6E95F4CD92688FCA /* AppGroupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupStore.swift; sourceTree = "<group>"; };
@@ -417,6 +419,7 @@
 				235D82802F01F7286217056B /* AgentsView.swift */,
 				E1ED72AD170088D3999341D5 /* CommandSheet.swift */,
 				1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */,
+				0C83B914356CC09E45DEEDA8 /* KeysView.swift */,
 				FCC5173F4853BB06FDF38E4C /* LeashView.swift */,
 				50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */,
 				9BF871A3D5082D0B29BC2457 /* SettingsView.swift */,
@@ -892,6 +895,7 @@
 				AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */,
 				59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */,
 				2E256D8868B5317D3D70F172 /* KeyboardTab.swift in Sources */,
+				6D36C8F67170601B792CB61C /* KeysView.swift in Sources */,
 				CF12F7BC9D2F918CC62FB1DD /* Kit.swift in Sources */,
 				5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */,
 				DADE104895F822FF5FE891E0 /* Logo.swift in Sources */,
