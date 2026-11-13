@@ -117,3 +117,23 @@ enum Tokens {
         Settings.store.set(Date().timeIntervalSince1970, forKey: stamp)
     }
 }
+
+/// The names in your AIRKEY contacts ("harshal", "designer"), from the server's
+/// state, kept in the App Group so the keyboard can suggest them after "pay"
+/// and never autocorrect them.
+enum Contacts {
+    private static let key = "contactNames"
+    private static let stamp = "contactNamesAt"
+
+    static var names: Set<String> { Set(Settings.store.stringArray(forKey: key) ?? []) }
+
+    /// True when the saved names are missing or more than an hour old.
+    static var stale: Bool {
+        Date().timeIntervalSince1970 - Settings.store.double(forKey: stamp) > 3600
+    }
+
+    static func save(_ contacts: [String: String]) {
+        Settings.store.set(contacts.keys.map { $0.lowercased() }.sorted(), forKey: key)
+        Settings.store.set(Date().timeIntervalSince1970, forKey: stamp)
+    }
+}
