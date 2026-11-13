@@ -1,10 +1,11 @@
 // Turns a command into an action without any AI: fast, predictable, and the
-// same answer every time. Free-form text the rules can't read goes to NEAR AI
-// Cloud (src/ai.ts) instead.
+// same answer every time. Free-form text the rules can't read goes to an AI
+// reader (src/ai.ts: NEAR AI Cloud, or OpenAI) instead.
 
 export type Action =
   | { kind: "pay"; receiver: string; amountNear: string; memo?: string }
-  | { kind: "swap"; amount: string; from: string; to: string }
+  /** `usd`: the amount is dollars' worth of `from`, priced when the swap runs ("swap $5 of near to usdc"). */
+  | { kind: "swap"; amount: string; from: string; to: string; usd?: boolean }
   /** A trade to run later, when `symbol` crosses `price` (dollars). */
   | { kind: "watch"; command: string; trade: { amount: string; from: string; to: string }; symbol: string; direction: "below" | "above"; price: string }
   | { kind: "unknown"; reason: string };
@@ -25,6 +26,9 @@ const SWAP = new RegExp(String.raw`\bswap\s+${AMOUNT}\s*([a-z][a-z0-9]{1,9})\s+(
 
 // "buy $10 of near", "buy 10 usdc of sol": spend dollars (USDC) on a token.
 const SYMBOL = String.raw`\$?([a-z][a-z0-9]{1,9})`;
+// "swap $5 of near to usdc", "swap 5$ of near for usdc", "swap 5 dollars worth of near into sol"
+const DOLLARS = String.raw`(?:\$\s*${AMOUNT}|${AMOUNT}\s*(?:\$|usd|dollars?|bucks))`;
+const SWAP_USD = new RegExp(String.raw`\b(?:swap|convert|exchange|trade)\s+${DOLLARS}\s+(?:worth\s+)?(?:of\s+)?${SYMBOL}\s+(?:to|for|into)\s+${SYMBOL}\b`, "i");
 const BUY_DOLLAR = new RegExp(String.raw`\bbuy\s+\$\s*${AMOUNT}\s+(?:worth\s+)?(?:of\s+)?${SYMBOL}\b`, "i");
 const BUY_WORDS = new RegExp(String.raw`\bbuy\s+${AMOUNT}\s*(?:usdc?|dollars?|bucks)\s+(?:worth\s+)?(?:of\s+)?${SYMBOL}\b`, "i");
 // "sell 5 near", "sell 0.5 near for usdc": sell a token, for USDC unless said.
@@ -58,6 +62,10 @@ export function parse(text: string): Action {
         const direction = /below|under/i.test(w[2]) ? "below" : "above";
         return { kind: "watch", command: w[1].trim(), trade: { amount: trade.amount, from: trade.from, to: trade.to }, symbol, direction, price: normaliseAmount(w[3]) };
       }
+    }
+    const u = line.match(SWAP_USD);
+    if (u && u[3].toUpperCase() !== u[4].toUpperCase()) {
+      return { kind: "swap", amount: normaliseAmount(u[1] ?? u[2]), from: u[3].toUpperCase(), to: u[4].toUpperCase(), usd: true };
     }
     const s = line.match(SWAP);
     if (s) return { kind: "swap", amount: s[1], from: s[2].toUpperCase(), to: s[3].toUpperCase() };
