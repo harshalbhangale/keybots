@@ -89,7 +89,17 @@ final class KeyboardViewController: UIInputViewController {
 
     /// AIRKEY's agents: what the words would do, and what came back. They
     /// take the strip's place while they have something to say.
-    private let agent = AgentModel()
+    private let agent: AgentModel = {
+        let agent = AgentModel()
+        // Wording the phone's patterns miss goes to the AIRKEY server to read;
+        // the hold then sends the server's exact command.
+        agent.reader = { text in
+            guard let r = try? await API().read(text), r.kind == "pay" || r.kind == "swap",
+                  let title = r.title, let verb = r.verb, let command = r.command else { return nil }
+            return .init(kind: r.kind == "pay" ? .pay : .swap, title: title, verb: verb, command: command, byAI: r.reader != "rules")
+        }
+        return agent
+    }()
     private var agentHost: UIHostingController<AgentStrip>?
 
     /// Where holding space would hand what was typed to an assistant. AIRKEY
@@ -593,10 +603,11 @@ final class KeyboardViewController: UIInputViewController {
             host.view.isHidden = false
             toolbar.isHidden = true
             guard animated, !Glass.reduceMotion else { host.view.alpha = 1; return }
+            // The same soft spring every surface uses.
             host.view.alpha = 0
-            UIView.animate(withDuration: 0.16, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState]) {
+            UIViewPropertyAnimator(duration: 0.3, dampingRatio: 0.9) {
                 host.view.alpha = 1
-            }
+            }.startAnimation()
         } else {
             host.view.isHidden = true
             toolbar.isHidden = toolbarHiddenBySurface

@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +20,8 @@ export interface Config {
   /** Bearer token clients must send. Empty means no auth (local dev only). */
   apiToken: string;
   nearAi: { apiKey: string; model: string; base: string };
+  /** Used for reading only when NEAR AI Cloud isn't set up. The key lives in the env or keys/openai.key, never in git. */
+  openAi: { apiKey: string; model: string; base: string };
   port: number;
 }
 
@@ -61,6 +64,20 @@ export function loadConfig(env = process.env): Config {
       model: env.NEAR_AI_MODEL ?? "zai-org/GLM-5.1-FP8",
       base: env.NEAR_AI_BASE ?? "https://cloud-api.near.ai/v1",
     },
+    openAi: {
+      apiKey: env.OPENAI_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "openai.key")),
+      model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
+      base: env.OPENAI_BASE ?? "https://api.openai.com/v1",
+    },
     port: Number(env.PORT ?? 8787),
   };
+}
+
+/** A secret kept in a file (keys/ is gitignored); empty when there isn't one. */
+function keyFile(path: string): string {
+  try {
+    return existsSync(path) ? readFileSync(path, "utf8").trim() : "";
+  } catch {
+    return "";
+  }
 }

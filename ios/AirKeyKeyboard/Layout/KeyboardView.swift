@@ -379,11 +379,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             case .space:
                 st.mode = .space
                 st.space = SpaceGesture(x: p.x, y: p.y, time: touch.timestamp)
-                // The same accent ring a bound key shows, from the first
-                // moment (user, 2026-09-30: "the space bar should also have
-                // that accent ring on pressing like other bound keys"); it
-                // had waited 0.1 s, so a tap never showed it.
-                kv.startChargeRing(duration: SpaceGesture.holdThreshold)
+                // The accent ring a bound key shows, only while holding space
+                // does something (an assistant is plugged in): otherwise
+                // every space would flash a ring for nothing.
+                if delegate?.kbSpaceGestures().bar == true {
+                    kv.startChargeRing(duration: SpaceGesture.holdThreshold)
+                }
                 st.holdTimer = Timer.scheduledTimer(
                     withTimeInterval: SpaceGesture.holdThreshold, repeats: false
                 ) { [weak self, weak st] _ in

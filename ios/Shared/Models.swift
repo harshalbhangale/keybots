@@ -139,6 +139,16 @@ struct Receipt: Decodable, Identifiable {
 
 struct ReceiptList: Decodable { let receipts: [Receipt] }
 
+/// A command the server read without running it: what it is, and the exact
+/// command to send when you hold. `reader` is "rules", "openai" or "near-ai-cloud".
+struct ReadResult: Decodable {
+    let kind: String
+    let title: String?
+    let verb: String?
+    let command: String?
+    let reader: String
+}
+
 /// What a NEAR swap would get on Rhea right now.
 struct SwapQuote: Decodable {
     let venue: String
