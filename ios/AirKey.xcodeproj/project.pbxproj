@@ -37,6 +37,7 @@
 		C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1ED72AD170088D3999341D5 /* CommandSheet.swift */; };
 		C432680CE757B1F296C7A8AC /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
 		D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE30351773DFCF5713DBF24A /* DeviceKey.swift */; };
+		D3E21B1D6AA1AE8340A9B476 /* Words.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6ED6DB63E06B6DB3DB0A8 /* Words.swift */; };
 		DADE104895F822FF5FE891E0 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5313A4631B0C886CFD88DE0A /* Logo.swift */; };
 		DDA74E2BD4FEFDAC97BD1578 /* ReceiptsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */; };
 		E3CA1CFCBFE800F0AB8E8E11 /* KeyboardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA7930E7E3D9C9F9BB9D296 /* KeyboardModel.swift */; };
@@ -83,6 +84,7 @@
 		602E65F915BF5CB7CA8F9B37 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		6FA7930E7E3D9C9F9BB9D296 /* KeyboardModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardModel.swift; sourceTree = "<group>"; };
 		74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7AC6ED6DB63E06B6DB3DB0A8 /* Words.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Words.swift; sourceTree = "<group>"; };
 		7B15209E5CFB080BC92DA76D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		9BF871A3D5082D0B29BC2457 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A5B2568003C3CB91D9A04FB0 /* Ask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ask.swift; sourceTree = "<group>"; };
@@ -155,6 +157,7 @@
 				6FA7930E7E3D9C9F9BB9D296 /* KeyboardModel.swift */,
 				BE0A160B829D262A48C12542 /* KeyboardView.swift */,
 				41A268554547ABD1D29F4116 /* KeyboardViewController.swift */,
+				7AC6ED6DB63E06B6DB3DB0A8 /* Words.swift */,
 			);
 			path = AirKeyKeyboard;
 			sourceTree = "<group>";
@@ -292,6 +295,7 @@
 				BFDF1177B79E8A06313E81B7 /* Logo.swift in Sources */,
 				B3CF34DD5591AFC0E98EBC18 /* Models.swift in Sources */,
 				C432680CE757B1F296C7A8AC /* Theme.swift in Sources */,
+				D3E21B1D6AA1AE8340A9B476 /* Words.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
