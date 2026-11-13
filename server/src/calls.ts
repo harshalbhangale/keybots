@@ -36,8 +36,8 @@ export type CallRoute =
     }
   | { status: "unavailable"; reason: string };
 
-/** Dollars a prefilled trade spends: well under the Trading Agent's 1 NEAR a trade. */
-export const CALL_SIZE_USD = 2;
+/** Dollars a prefilled trade spends: well under the Trading Agent's 1 NEAR a trade, and the mainnet budget. */
+export const CALL_SIZE_USD = 1;
 
 const names: Record<string, string> = {
   near: "NEAR", "near protocol": "NEAR", aurora: "AURORA", bitcoin: "BTC", btc: "BTC",
