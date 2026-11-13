@@ -490,7 +490,9 @@ final class KeyboardViewController: UIInputViewController {
         // A keyboard coming back for a field starts on the letters: a menu,
         // clipboard or emoji panel left open last time would greet the next
         // field with something it never asked for.
-        if didBuild, surface != .none { setSurface(.none, animated: false) }
+        // GLYF AI HOOK: live translate stays up (Messages brings the keyboard
+        // back each time its field goes from empty to not, mid-typing).
+        if didBuild, surface != .none, aiBar?.isLive != true { setSurface(.none, animated: false) }
         agent.dismiss()
         keyboardView.context = fieldContext
         adoptFieldTraits(fresh: true)
@@ -1475,7 +1477,14 @@ final class KeyboardViewController: UIInputViewController {
         // no money strip has anything (money always wins).
         if let tip = aiSuggest.chip(for: agentFieldText, allowed: surface == .none && hasFullAccess
                                     && !isSecureField && !agent.isShowing && !smartFound) {
-            toolbar.showSmart(.action(label: tip.label))
+            // On the next turn of the loop: the strip was just cleared in
+            // this one, and tools hidden twice in one turn stay drawn.
+            let label = tip.label
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.surface == .none, self.toolbar.smartChip == nil,
+                      !self.agent.isShowing else { return }
+                self.toolbar.showSmart(.action(label: label))
+            }
             return
         }
         let policy = typingPolicy
