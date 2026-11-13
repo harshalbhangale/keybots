@@ -42,7 +42,7 @@ cd contracts/leash
 cargo test
 ```
 
-See 16 tests pass, one per rule plus approve, reject, report and the injection case (`untrusted_injection_is_blocked_by_cap_before_allowlist`).
+See 21 tests pass, one per rule plus approve, reject, report, the injection case (`untrusted_injection_is_blocked_by_cap_before_allowlist`) and five for swaps (caps, a fake wrap contract, the blocklist, and a swap never waiting for approval).
 
 ### 2. On NEAR testnet
 
