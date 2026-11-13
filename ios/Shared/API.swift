@@ -88,6 +88,21 @@ struct API {
     /// be. Runs nothing.
     func call(_ text: String) async throws -> CallCheck { try await post("/v1/call", ["text": text]) }
 
+    // MARK: The calls book (keyboard › Calls)
+
+    /// Every copied call that was checked, newest first, with the trade its hold ran.
+    func calls(limit: Int = 50) async throws -> [CallRecord] { try await (get("/v1/calls?limit=\(limit)") as CallList).calls }
+
+    /// The hold on a call's chip: its command, as typed, tied to the call so the book keeps the outcome.
+    func command(_ text: String, callId: String) async throws -> Receipt {
+        try await post("/v1/command", ["text": text, "source": "typed", "callId": callId])
+    }
+
+    /// Put a call away without trading it.
+    func dismissCall(_ id: String) async throws {
+        let _: CallRecord = try await post("/v1/calls/\(id)/dismiss", [:])
+    }
+
     private func request(_ path: String) throws -> URLRequest {
         guard let url = URL(string: base.trimmingCharacters(in: .whitespaces) + path) else {
             throw APIError(message: "The server address in Settings isn't a URL.")
