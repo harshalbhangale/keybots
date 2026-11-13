@@ -1,28 +1,19 @@
 import SwiftUI
 
-/// The AIRKEY mark: a keycap with a lime side tab. The tab is the "leash":
-/// the same tab marks agent keys on the keyboard.
+/// The AIRKEY mark: the mascot, a white keycap on its black switch with a lime light
+/// (the image is `Mascot.xcassets/MascotMark`). `tab` and `color` are kept so call sites don't change.
 struct KeycapMark: View {
     var size: CGFloat = 28
     var tab: Color = AK.accent
     var color: Color = AK.bone
 
     var body: some View {
-        ZStack(alignment: .trailing) {
-            RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
-                .strokeBorder(color, lineWidth: max(1.5, size * 0.085))
-                .frame(width: size, height: size)
-            Capsule()
-                .fill(tab)
-                .frame(width: max(2, size * 0.13), height: size * 0.46)
-                .offset(x: size * 0.065)
-            Text("A")
-                .font(.system(size: size * 0.5, weight: .bold))
-                .foregroundStyle(color)
-                .frame(width: size, height: size)
-        }
-        .frame(width: size + size * 0.07, height: size)
-        .accessibilityHidden(true)
+        Image("MascotMark")
+            .resizable()
+            .interpolation(.high)
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
     }
 }
 
