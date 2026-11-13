@@ -1,0 +1,164 @@
+import Foundation
+
+/// Text rules shared by the dictionary, the decoder and learning — the Swift
+/// half of shared/typing/FORMAT.md (Kotlin: ime/typing/TypingText.kt).
+enum TypingText {
+
+    /// Lookup key: NFC, lowercase, apostrophes and hyphens dropped
+    /// ("Don't" → "dont", "follow-up" → "followup").
+    static func key(_ word: String) -> String {
+        var out = String.UnicodeScalarView()
+        for u in word.precomposedStringWithCanonicalMapping.lowercased().unicodeScalars
+        where u != "'" && u != "\u{2019}" && u != "-" {
+            out.append(u)
+        }
+        return String(out)
+    }
+
+    static func scalars(_ s: String) -> [UInt32] { s.unicodeScalars.map(\.value) }
+
+    /// Lowercase base letter used for key matching: "É" → "e".
+    @inline(__always)
+    static func base(_ scalar: UInt32) -> UInt32 {
+        if scalar < UInt32(foldTable.count) { return foldTable[Int(scalar)] }
+        guard let u = Unicode.Scalar(scalar),
+              let lower = u.properties.lowercaseMapping.unicodeScalars.first else { return scalar }
+        return lower.value
+    }
+
+    private static let foldTable: [UInt32] = (0..<0x250).map { v -> UInt32 in
+        guard let u = Unicode.Scalar(UInt32(v)) else { return UInt32(v) }
+        let folded = String(Character(u))
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+        let scalars = folded.unicodeScalars
+        return scalars.count == 1 ? scalars.first!.value : UInt32(v)
+    }
+
+    /// How `typed` fits the start of `word`: the fewest edits (as
+    /// editDistance counts them) to some prefix of `word` within one letter
+    /// of `typed`'s length, and how many letters of `word` remain after that
+    /// prefix. Nil when `word` is too short to start with `typed`.
+    static func prefixFit(_ typed: [UInt32], _ word: [UInt32]) -> (edits: Int, added: Int)? {
+        guard !typed.isEmpty, word.count >= typed.count - 1 else { return nil }
+        let w = word.count + 1
+        var d = [Int](repeating: 0, count: (typed.count + 1) * w)
+        for i in 0...typed.count { d[i * w] = i }
+        for j in 0...word.count { d[j] = j }
+        if !word.isEmpty {
+            for i in 1...typed.count {
+                for j in 1...word.count {
+                    let cost = typed[i - 1] == word[j - 1] ? 0 : 1
+                    var v = min(d[(i - 1) * w + j] + 1, d[i * w + j - 1] + 1, d[(i - 1) * w + j - 1] + cost)
+                    if i > 1, j > 1, typed[i - 1] == word[j - 2], typed[i - 2] == word[j - 1] {
+                        v = min(v, d[(i - 2) * w + j - 2] + 1)
+                    }
+                    d[i * w + j] = v
+                }
+            }
+        }
+        var best: (edits: Int, added: Int)?
+        for j in max(0, typed.count - 1)...min(word.count, typed.count + 1) {
+            let edits = d[typed.count * w + j]
+            if best == nil || edits < best!.edits || (edits == best!.edits && word.count - j < best!.added) {
+                best = (edits, word.count - j)
+            }
+        }
+        return best
+    }
+
+    /// The same spelling, whichever apostrophe it was typed with.
+    static func sameSpelling(_ a: String, _ b: String) -> Bool {
+        a.replacingOccurrences(of: "’", with: "'") == b.replacingOccurrences(of: "’", with: "'")
+    }
+
+    /// Optimal-string-alignment Damerau-Levenshtein (AOSP's autocorrect weight).
+    static func editDistance(_ a: [UInt32], _ b: [UInt32]) -> Int {
+        if a.isEmpty { return b.count }
+        if b.isEmpty { return a.count }
+        let w = b.count + 1
+        var d = [Int](repeating: 0, count: (a.count + 1) * w)
+        for i in 0...a.count { d[i * w] = i }
+        for j in 0...b.count { d[j] = j }
+        for i in 1...a.count {
+            for j in 1...b.count {
+                let cost = a[i - 1] == b[j - 1] ? 0 : 1
+                var v = min(d[(i - 1) * w + j] + 1, d[i * w + j - 1] + 1, d[(i - 1) * w + j - 1] + cost)
+                if i > 1, j > 1, a[i - 1] == b[j - 2], a[i - 2] == b[j - 1] {
+                    v = min(v, d[(i - 2) * w + j - 2] + 1)
+                }
+                d[i * w + j] = v
+            }
+        }
+        return d[a.count * w + b.count]
+    }
+
+    static func capitalCount(_ s: String) -> Int {
+        s.unicodeScalars.reduce(0) { $0 + ($1.properties.isUppercase ? 1 : 0) }
+    }
+
+    /// A letter three or more times in a row: stretched for emphasis
+    /// ("sooo", "yesss"), which the writer means. TypingText.kt's twin.
+    static func isStretched(_ s: String) -> Bool {
+        var last: Character? = nil
+        var run = 0
+        for c in s.lowercased() {
+            run = c == last && c.isLetter ? run + 1 : 1
+            if run >= 3 { return true }
+            last = c
+        }
+        return false
+    }
+
+    static func hasDigit(_ s: String) -> Bool {
+        s.unicodeScalars.contains { $0.properties.numericType != nil }
+    }
+
+    /// Tokens that are addresses, handles or codes rather than words.
+    static func isWebish(_ s: String) -> Bool {
+        s.contains { "@#./:_".contains($0) }
+    }
+
+    static func isCapitalized(_ s: String) -> Bool {
+        s.unicodeScalars.first?.properties.isUppercase ?? false
+    }
+
+    static func hasUppercase(_ s: String) -> Bool { capitalCount(s) > 0 }
+
+    /// Typed in capitals throughout ("YES", "OMG"): two letters or more and
+    /// no small one. TypingText.kt's twin.
+    static func isShouting(_ s: String) -> Bool {
+        capitalCount(s) >= 2 && !s.unicodeScalars.contains { $0.properties.isLowercase }
+    }
+
+    /// "Delhi", not "HSA" or "iPhone": one capital, and it's the first letter.
+    static func isTitleCase(_ s: String) -> Bool { isCapitalized(s) && capitalCount(s) == 1 }
+
+    static func capitalizeFirst(_ s: String) -> String {
+        guard let first = s.first else { return s }
+        return first.uppercased() + s.dropFirst()
+    }
+
+    static func lowercaseFirst(_ s: String) -> String {
+        guard let first = s.first else { return s }
+        return first.lowercased() + s.dropFirst()
+    }
+
+    /// "Teh" + "the" → "The". Forms with capitals of their own ("I'm",
+    /// "Pune", "iPhone") are shown exactly as the dictionary spells them.
+    static func matchCase(typed: String, form: String) -> String {
+        if hasUppercase(form) { return form }
+        return isCapitalized(typed) ? capitalizeFirst(form) : form
+    }
+
+    /// The typed text is this form, as far as a reader can tell: exactly, or
+    /// a lowercase word with its first letter capitalized.
+    static func sameWord(typed: String, form: String) -> Bool {
+        if typed == form { return true }
+        return !hasUppercase(form) && typed == capitalizeFirst(form)
+    }
+
+    /// Days since 1970 — the clock learning decays by.
+    static func day(_ date: Date = Date()) -> Int {
+        Int(date.timeIntervalSince1970 / 86_400)
+    }
+}
