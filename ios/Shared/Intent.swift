@@ -11,8 +11,11 @@ struct Intent: Equatable {
     let title: String
     /// "for dinner", or which agent handles it
     let detail: String?
+    /// The word on the hold button: "Hold to pay", "Hold to buy".
+    var verb = "pay"
 
     var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
+    var holdLabel: String { "Hold to \(verb)" }
 
     static func read(_ text: String) -> Intent? {
         // The last line is the message being written.
@@ -21,20 +24,20 @@ struct Intent: Equatable {
         // "<a trade> if it drops below 2": an order for the Trading Agent to wait on.
         if let m = match(when, line), let trade = read(m[1]), trade.kind == .swap {
             let below = ["below", "under"].contains(m[2].lowercased())
-            return Intent(kind: .swap, title: trade.title, detail: "Runs when the price is \(below ? "below" : "above") $\(m[3])")
+            return Intent(kind: .swap, title: trade.title, detail: "Runs when the price is \(below ? "below" : "above") $\(m[3])", verb: "place")
         }
         if let m = match(swap, line) {
-            return Intent(kind: .swap, title: "Swap \(m[1]) \(m[2].uppercased()) to \(m[3].uppercased())", detail: nil)
+            return Intent(kind: .swap, title: "Swap \(m[1]) \(m[2].uppercased()) to \(m[3].uppercased())", detail: nil, verb: "swap")
         }
         // Buying and selling only light up for tokens NEAR Intents lists, so
         // "buy 2 tickets" or "sell 3 chairs" stays an ordinary message.
         if let m = match(buyDollar, line) ?? match(buyWords, line), Tokens.known.contains(m[2].uppercased()), m[2].uppercased() != "USDC" {
-            return Intent(kind: .swap, title: "Buy $\(m[1]) of \(m[2].uppercased())", detail: "Trading Agent gets a quote first")
+            return Intent(kind: .swap, title: "Buy $\(m[1]) of \(m[2].uppercased())", detail: "Trading Agent gets a quote first", verb: "buy")
         }
         if let m = match(sell, line), Tokens.known.contains(m[2].uppercased()) {
             let to = m[3].isEmpty ? "USDC" : m[3].uppercased()
             if to != m[2].uppercased(), Tokens.known.contains(to) {
-                return Intent(kind: .swap, title: "Sell \(m[1]) \(m[2].uppercased()) for \(to)", detail: "Trading Agent gets a quote first")
+                return Intent(kind: .swap, title: "Sell \(m[1]) \(m[2].uppercased()) for \(to)", detail: "Trading Agent gets a quote first", verb: "sell")
             }
         }
         if let m = match(amountFirst, line), usable(m[2]) {
