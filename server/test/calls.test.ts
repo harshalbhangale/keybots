@@ -6,18 +6,21 @@ import { loadConfig } from "../src/config.js";
 const tokens = {
   NEAR: { assetId: "nep141:wrap.near", symbol: "NEAR", blockchain: "near", decimals: 24, price: 3.5 },
   AURORA: { assetId: "nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near", symbol: "AURORA", blockchain: "near", decimals: 18, price: 0.1 },
+  SOL: { assetId: "nep141:sol.omft.near", symbol: "SOL", blockchain: "sol", decimals: 9, price: 80 },
 } as const;
 const intents = {
   pick: async (asked: string) => {
     const token = tokens[asked.toUpperCase() as keyof typeof tokens];
     return token ? { asked, verified: true, token, alsoOn: [], reason: "ok" } : { asked, verified: false, alsoOn: [], reason: `${asked} isn't on NEAR Intents` };
   },
+  quote: async (_from: unknown, to: { symbol: string }, amount: string) => ({ amountOutFormatted: to.symbol === "SOL" ? "0.0248" : "1", amountOutUsd: "1.98", amountIn: amount }),
 };
 const trader = { tier: "trusted" as const, per_payment_cap: (10n ** 24n).toString(), daily_cap: (2n * 10n ** 24n).toString(), spent_today: (5n * 10n ** 23n).toString(), day: 1 };
 const chain = {
   state: async () => ({ owner: "x.testnet", leash: "leash.x.testnet", paused: false, available: "1", agents: [{ account: "trader.x.testnet", agent: trader }], allowlist: [], blocklist: [] }),
 };
-const deps = { intents: intents as never, chain: chain as never, tradeAgent: "trader.x.testnet" };
+const rhea = { route: (s: string) => (["USDC", "USDT"].includes(s.toUpperCase()) ? { pool: 1 } : undefined) };
+const deps = { intents: intents as never, chain: chain as never, tradeAgent: "trader.x.testnet", network: "testnet", rhea };
 
 describe("reading a copied call", () => {
   it("reads a bullish cashtag call", () => {
@@ -47,13 +50,41 @@ describe("routing a call", () => {
       command: "buy $2 of near",
       title: "Buy $2 of NEAR",
       token: { symbol: "NEAR" },
-      caps: { agent: "trader.x.testnet", perTrade: "1", leftToday: "1.5", paused: false },
+      caps: { agent: "trader.x.testnet", perTrade: "1", leftToday: "1.5", paused: false, within: true },
+      standIn: null,
     });
+  });
+
+  it("on testnet, shows the real NEAR Intents quote for SOL and says the hold swaps NEAR to USDC instead", async () => {
+    const text = "$SOL breaking out, I'm buying";
+    const r = await routeCall(text, readCall(text), deps);
+    expect(r).toMatchObject({
+      status: "available",
+      title: "Buy $2 of SOL",
+      command: "swap $2 of near to usdc",
+      quote: { amountIn: "0.5714", amountOut: "0.0248", symbolOut: "SOL" },
+      standIn: "Testnet has no SOL, so the hold swaps NEAR to USDC on Rhea instead.",
+      caps: { within: true },
+    });
+  });
+
+  it("on mainnet, buys the token itself", async () => {
+    const text = "$SOL breaking out, I'm buying";
+    const r = await routeCall(text, readCall(text), { ...deps, network: "mainnet" });
+    expect(r).toMatchObject({ command: "swap $2 of near to sol", standIn: null });
+  });
+
+  it("says when the trade is over what's left today", async () => {
+    const spent = { ...trader, spent_today: (19n * 10n ** 23n).toString() };
+    const tight = { ...chain, state: async () => ({ ...(await chain.state()), agents: [{ account: "trader.x.testnet", agent: spent }] }) };
+    const text = "$NEAR breakout 🚀";
+    const r = await routeCall(text, readCall(text), { ...deps, chain: tight as never });
+    expect(r).toMatchObject({ caps: { leftToday: "0.1", within: false } });
   });
 
   it("buys other tokens with NEAR, and moves NEAR to USDC on a bearish NEAR call", async () => {
     const a = "$AURORA looking strong, buying";
-    expect(await routeCall(a, readCall(a), deps)).toMatchObject({ command: "swap $2 of near to aurora" });
+    expect(await routeCall(a, readCall(a), { ...deps, network: "mainnet" })).toMatchObject({ command: "swap $2 of near to aurora" });
     const b = "$NEAR top is in, selling";
     expect(await routeCall(b, readCall(b), deps)).toMatchObject({ side: "sell", command: "swap $2 of near to usdc" });
   });
