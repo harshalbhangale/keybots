@@ -20,7 +20,7 @@ struct RootView: View {
             Tab("Activity", systemImage: "clock.arrow.circlepath", value: AppTab.activity) {
                 NavigationStack { ActivityView(open: { receipt = $0 }) }
             }
-            Tab("Leash", systemImage: "lock.shield.fill", value: AppTab.leash) {
+            Tab("Limits", systemImage: "lock.shield.fill", value: AppTab.leash) {
                 NavigationStack { LeashView() }
             }
             .badge(model.state?.pending.count ?? 0)
@@ -71,6 +71,6 @@ struct CommandBar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Tell an agent what to do")
+        .accessibilityLabel("Pay, swap, or check a message")
     }
 }

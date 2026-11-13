@@ -17,11 +17,11 @@ struct ActivityView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
-            Masthead(eyebrow: "AIRKEY · EVERY COMMAND, ITS RECEIPT", title: "ACTIVITY")
+            Masthead(eyebrow: "AIRKEY · EVERYTHING YOUR AGENTS DID", title: "ACTIVITY")
             if model.receipts.isEmpty {
                 Panel {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
-                    Text("Every command gets a receipt here: what was said, how it was read, and what the leash decided.")
+                    Text("Everything you ask for gets a receipt here: what was said, how it was read, and what happened.")
                         .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -45,7 +45,7 @@ struct ReceiptDetail: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    OutcomeCard(signal: r.signal, message: r.message)
+                    OutcomeCard(signal: r.signal, title: Plain.title(r), message: Plain.body(r))
                     VStack(alignment: .leading, spacing: 0) {
                         said
                         read
@@ -53,7 +53,7 @@ struct ReceiptDetail: View {
                         if let sw = r.swap, r.order == nil { swap(sw) }
                         if let o = r.order { order(o) }
                         if let c = r.checks { checks(c) }
-                        if let d = r.decision { decided(d) }
+                        details
                     }
                 }
                 .padding(.horizontal, AK.gutter)
@@ -73,9 +73,9 @@ struct ReceiptDetail: View {
     }
 
     private var said: some View {
-        Step(title: r.input.source == "typed" ? "You typed" : "Someone sent") {
+        Step(title: r.input.source == "typed" ? "You typed" : "You copied") {
             Text("“\(r.input.text)”").font(.body).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
-            Text(r.input.source == "typed" ? "Your own words, so it's trusted." : "Not your words, so it's treated as untrusted.")
+            Text(r.input.source == "typed" ? "Your own words." : "Not your words, so the stricter limits apply.")
                 .font(.footnote).foregroundStyle(r.input.source == "typed" ? AK.muted : AK.amber)
         }
     }
@@ -106,10 +106,14 @@ struct ReceiptDetail: View {
     private var acted: some View {
         Step(title: "Who acted") {
             if let agent = r.agent {
-                KeyValue(key: Fmt.agentName(account: agent.account), value: agent.tier == "trusted" ? "Trusted" : "Untrusted", color: agent.tier == "trusted" ? AK.accent : AK.amber)
-                KeyValue(key: "Account", value: agent.account, mono: true)
+                KeyValue(key: "Agent", value: Fmt.agentName(account: agent.account), color: agent.tier == "trusted" ? AK.accent : AK.amber)
+                KeyValue(key: "Acting on", value: Plain.tier(agent.tier))
+                KeyValue(key: "Its account", value: agent.account, mono: true)
             }
-            if let rcv = r.receiver { KeyValue(key: "Paying", value: rcv.account, mono: true) }
+            if let rcv = r.receiver {
+                if Plain.name(rcv.account) != rcv.account { KeyValue(key: "Paying", value: Plain.name(rcv.account)) }
+                KeyValue(key: Plain.name(rcv.account) != rcv.account ? "Their account" : "Paying", value: rcv.account, mono: true)
+            }
         }
     }
 
@@ -120,57 +124,63 @@ struct ReceiptDetail: View {
             if let x = sw.executed {
                 Hairline()
                 KeyValue(key: "Swapped on", value: x.venue)
-                KeyValue(key: "Paid", value: "\(x.amountIn) NEAR from the leash")
-                if let out = x.amountOut { KeyValue(key: "Got", value: "\(out) \(x.symbolOut), back in the leash", color: AK.accent) }
-                KeyValue(key: "Mode", value: x.ok ? "Done on chain" : "Not filled, nothing lost", color: x.ok ? AK.accent : AK.amber)
+                KeyValue(key: "Paid", value: "\(x.amountIn) NEAR from your AIRKEY balance")
+                if let out = x.amountOut { KeyValue(key: "Got", value: "\(out) \(x.symbolOut), in your AIRKEY balance", color: AK.accent) }
+                KeyValue(key: "Result", value: x.ok ? "Done on NEAR" : "Not filled, nothing lost", color: x.ok ? AK.accent : AK.amber)
             } else if let q = sw.quote {
                 Hairline()
                 KeyValue(key: "Send", value: "\(q.amountInFormatted) \(sw.from.asked.uppercased())" + usd(q.amountInUsd))
                 KeyValue(key: "Receive", value: "\(q.amountOutFormatted) \(sw.to.asked.uppercased())" + usd(q.amountOutUsd))
                 if let t = q.timeEstimate { KeyValue(key: "Settles in", value: "about \(Int(t)) s") }
-                KeyValue(key: "Mode", value: "Quote only, nothing sent", color: AK.amber)
+                KeyValue(key: "Result", value: "A price only, nothing sent", color: AK.amber)
             }
             if let l = sw.leash {
                 Hairline()
                 KeyValue(key: "Worth", value: "\(l.valueNear) NEAR")
-                KeyValue(key: "Leash allows", value: "\(Fmt.near(l.perPaymentCap)) a payment · \(Fmt.near(l.leftToday)) left today")
-                KeyValue(key: "Within the leash", value: l.within ? "Yes" : "No", color: l.within ? AK.accent : AK.red)
+                KeyValue(key: "Your limit", value: "\(Fmt.near(l.perPaymentCap)) a trade · \(Fmt.near(l.leftToday)) left today")
+                KeyValue(key: "Within your limits", value: l.within ? "Yes" : "No", color: l.within ? AK.accent : AK.red)
             }
         }
     }
 
     private func order(_ o: Receipt.OrderRef) -> some View {
-        Step(title: "Left with the Trading Agent", last: true) {
+        Step(title: "Left watching the price") {
             KeyValue(key: "Watching", value: o.symbol)
             KeyValue(key: "Runs when it's", value: "\(o.direction) \(Fmt.usd(o.price))")
             KeyValue(key: "Price then", value: Fmt.usd(o.priceThen))
             KeyValue(key: "Then", value: o.command)
-            Text("When the price crosses, the trade runs like one you typed: same token checks, same caps, its own receipt. Cancel it from Home.")
+            Text("When the price gets there, the trade runs like one you typed: same token checks, same limits, its own receipt. Cancel it from Wallet.")
                 .font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private func checks(_ c: Receipt.Checks) -> some View {
-        Step(title: "Checks before asking the leash") {
+        Step(title: "Checks on who is being paid") {
             KeyValue(
                 key: "Verdict",
-                value: c.verdict == "allow" ? "Looks fine" : c.verdict == "warn" ? "Ask the owner" : "Stop",
+                value: c.verdict == "allow" ? "Looks fine" : c.verdict == "warn" ? "Ask you first" : "Stop",
                 color: c.verdict == "allow" ? AK.accent : c.verdict == "warn" ? AK.amber : AK.red
             )
             ForEach(c.reasons, id: \.self) { reason in
-                Text(reason).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+                Text(Plain.check(reason)).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    private func decided(_ d: Receipt.Decision) -> some View {
-        Step(title: "The leash decided", last: true, color: r.signal.color) {
-            KeyValue(key: "Decision", value: d.status.capitalized, color: r.signal.color)
-            if let rule = d.rule { KeyValue(key: "Rule", value: rule, mono: true) }
-            Text(d.reason).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+    /// The technical record, as the server and the contract wrote it: the
+    /// full message, the rule that decided, and the transaction.
+    private var details: some View {
+        Step(title: "Details", last: true, color: r.signal.color) {
+            if let d = r.decision {
+                KeyValue(key: "The contract said", value: d.status.capitalized, color: r.signal.color)
+                if let rule = d.rule { KeyValue(key: "Rule", value: rule, mono: true) }
+                Text(d.reason).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+            }
+            Text(r.message).font(.footnote.monospaced()).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
             if let tx = r.tx, let url = URL(string: tx.url) {
                 Link(destination: url) {
-                    Label("See it on NEAR", systemImage: "arrow.up.right").font(.subheadline.weight(.semibold)).foregroundStyle(AK.accent)
+                    Label("See the transaction on NEAR", systemImage: "arrow.up.right").font(.subheadline.weight(.semibold)).foregroundStyle(AK.accent)
                 }
                 .padding(.top, 2)
             }
