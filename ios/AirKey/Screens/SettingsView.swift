@@ -31,6 +31,8 @@ struct SettingsView: View {
                     Text("You")
                 }
 
+                VaultSection()
+
                 Section {
                     LabeledContent("Address") {
                         TextField("http://127.0.0.1:8787", text: $server)
@@ -97,5 +99,59 @@ struct SettingsView: View {
         Settings.token = token
         Settings.name = name
         Task { await model.refresh() }
+    }
+}
+
+/// What the keyboard's vault offers: your NEAR account, then addresses you add.
+private struct VaultSection: View {
+    @State private var items = Vault.items
+    @State private var adding = false
+    @State private var label = ""
+    @State private var value = ""
+    @State private var problem: String?
+
+    var body: some View {
+        Section {
+            if let owner = Vault.owner {
+                row("My NEAR", owner)
+            }
+            ForEach(items) { item in row(item.label, item.value) }
+                .onDelete { at in
+                    items.remove(atOffsets: at)
+                    Vault.save(items)
+                }
+            Button("Add an address") { label = ""; value = ""; adding = true }
+        } header: {
+            Text("Vault")
+        } footer: {
+            Text("In any chat, tap the wallet in the AIRKEY bar to put one of these in your message. Only add things that are safe to share; keys and recovery phrases are turned away.")
+        }
+        .alert("Add to the vault", isPresented: $adding) {
+            TextField("Name, like ETH or UPI", text: $label)
+            TextField("Address or ID", text: $value)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            Button("Add", action: add)
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Not added", isPresented: Binding(get: { problem != nil }, set: { if !$0 { problem = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(problem ?? "")
+        }
+    }
+
+    private func row(_ label: String, _ value: String) -> some View {
+        LabeledContent(label) {
+            Text(value).font(AK.mono).lineLimit(1).truncationMode(.middle)
+        }
+    }
+
+    private func add() {
+        let v = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let p = Vault.problem(with: v) { problem = p; return }
+        let name = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        items.append(Vault.Item(label: name.isEmpty ? "Address" : name, value: v))
+        Vault.save(items)
     }
 }
