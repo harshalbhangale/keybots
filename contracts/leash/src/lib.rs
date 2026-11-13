@@ -12,6 +12,16 @@ use near_sdk::{
 
 const NS_PER_DAY: u64 = 86_400_000_000_000;
 const GAS_FOR_CALLBACK: Gas = Gas::from_tgas(10);
+/// Wrapped-NEAR contracts a swap may use, so an agent can't name a fake one.
+const WRAP: [&str; 2] = ["wrap.near", "wrap.testnet"];
+const GAS_FOR_WRAP: Gas = Gas::from_tgas(10);
+const GAS_FOR_SEND: Gas = Gas::from_tgas(150);
+const GAS_FOR_STORAGE: Gas = Gas::from_tgas(10);
+/// Gas the step after wrapping gets: the send, storage if needed, and the last callback.
+const GAS_FOR_ON_WRAPPED: Gas = Gas::from_tgas(190);
+/// What a NEP-145 storage registration costs on wrap.near.
+const FT_STORAGE: NearToken = NearToken::from_micronear(1_250);
+const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 const MAX_MEMO: usize = 140;
 const MAX_EVIDENCE: usize = 280;
 
@@ -153,7 +163,7 @@ impl Leash {
     ) -> Decision {
         let agent_id = env::predecessor_account_id();
         let memo = clip(memo, MAX_MEMO);
-        let decision = self.decide(&agent_id, &receiver, amount, memo.clone(), ask_owner.unwrap_or(false));
+        let decision = self.decide(&agent_id, &receiver, amount, memo.clone(), ask_owner.unwrap_or(false), true);
         match decision.status {
             Status::Paid => {
                 emit(
@@ -171,6 +181,46 @@ impl Leash {
                 "blocked",
                 json!({"agent": agent_id, "receiver": receiver, "amount": amount, "memo": memo,
                        "rule": decision.rule, "reason": decision.reason}),
+            ),
+        }
+        decision
+    }
+
+    /// An agent asks to swap NEAR for a token. The same rules as `pay` decide,
+    /// with `venue` as the receiver, except that a swap never waits for the
+    /// owner. The leash wraps exactly `amount` into `wrap` (wrap.near or
+    /// wrap.testnet) and, once that worked, sends the wNEAR to the venue:
+    /// with `msg` by ft_transfer_call (an exchange like Rhea swaps and sends the
+    /// token back to the leash), without it by ft_transfer (a NEAR Intents
+    /// deposit address, registered on `wrap` first).
+    pub fn swap(
+        &mut self,
+        venue: AccountId,
+        amount: NearToken,
+        wrap: AccountId,
+        msg: Option<String>,
+        memo: Option<String>,
+    ) -> Decision {
+        let agent_id = env::predecessor_account_id();
+        require!(WRAP.contains(&wrap.as_str()), "Swaps go through wrap.near or wrap.testnet only");
+        let memo = clip(memo, MAX_MEMO);
+        let decision = self.decide(&agent_id, &venue, amount, memo.clone(), false, false);
+        match decision.status {
+            Status::Paid => {
+                emit("swap", json!({"agent": agent_id, "venue": venue, "amount": amount, "memo": memo}));
+                Promise::new(wrap.clone())
+                    .function_call("near_deposit", b"{}".to_vec(), amount, GAS_FOR_WRAP)
+                    .then(
+                        Self::ext(env::current_account_id())
+                            .with_static_gas(GAS_FOR_ON_WRAPPED)
+                            .on_wrapped(agent_id, venue, amount, wrap, msg, today()),
+                    )
+                    .detach();
+            }
+            _ => emit(
+                "blocked",
+                json!({"agent": agent_id, "receiver": venue, "amount": amount, "memo": memo,
+                       "rule": decision.rule, "reason": decision.reason, "swap": true}),
             ),
         }
         decision
@@ -308,6 +358,54 @@ impl Leash {
         ok
     }
 
+    /// Wrapping worked: send the wNEAR on. Wrapping failed: the NEAR came back,
+    /// so roll the spend back.
+    #[private]
+    pub fn on_wrapped(&mut self, agent: AccountId, venue: AccountId, amount: NearToken, wrap: AccountId, msg: Option<String>, day: u64) {
+        if env::promise_result_checked(0, 64).is_err() {
+            self.refund_spend(&agent, amount, day);
+            emit("swap_failed", json!({"agent": agent, "venue": venue, "amount": amount, "step": "wrap"}));
+            return;
+        }
+        let units = amount.as_yoctonear().to_string();
+        let send = match msg {
+            Some(msg) => Promise::new(wrap.clone()).function_call(
+                "ft_transfer_call",
+                json!({"receiver_id": venue, "amount": units, "msg": msg}).to_string().into_bytes(),
+                ONE_YOCTO,
+                GAS_FOR_SEND,
+            ),
+            None => Promise::new(wrap.clone())
+                .function_call(
+                    "storage_deposit",
+                    json!({"account_id": venue, "registration_only": true}).to_string().into_bytes(),
+                    FT_STORAGE,
+                    GAS_FOR_STORAGE,
+                )
+                .then(Promise::new(wrap.clone()).function_call(
+                    "ft_transfer",
+                    json!({"receiver_id": venue, "amount": units}).to_string().into_bytes(),
+                    ONE_YOCTO,
+                    GAS_FOR_STORAGE,
+                )),
+        };
+        send.then(Self::ext(env::current_account_id()).with_static_gas(GAS_FOR_CALLBACK).on_swapped(agent, venue, amount, day))
+            .detach();
+    }
+
+    /// The wNEAR reached the venue, or it didn't (then it stays with the leash as wNEAR).
+    #[private]
+    pub fn on_swapped(&mut self, agent: AccountId, venue: AccountId, amount: NearToken, day: u64) -> bool {
+        let ok = env::promise_result_checked(0, 64).is_ok();
+        if ok {
+            emit("swapped", json!({"agent": agent, "venue": venue, "amount": amount}));
+        } else {
+            self.refund_spend(&agent, amount, day);
+            emit("swap_failed", json!({"agent": agent, "venue": venue, "amount": amount, "step": "send"}));
+        }
+        ok
+    }
+
     // ---------- views ----------
 
     pub fn get_owner(&self) -> AccountId {
@@ -361,7 +459,7 @@ impl Leash {
     }
 
     /// RULES.md, in order. Records the spend when it decides "paid".
-    fn decide(&mut self, agent_id: &AccountId, receiver: &AccountId, amount: NearToken, memo: Option<String>, ask_owner: bool) -> Decision {
+    fn decide(&mut self, agent_id: &AccountId, receiver: &AccountId, amount: NearToken, memo: Option<String>, ask_owner: bool, can_wait: bool) -> Decision {
         // R1
         if self.paused {
             return Decision::blocked("R1", "Kill switch is on".into());
@@ -408,6 +506,11 @@ impl Leash {
             None
         };
         if let Some((rule, reason)) = wait {
+            // Approving later pays plain NEAR, which is wrong for a swap: swaps that
+            // would have to wait are stopped instead.
+            if !can_wait {
+                return Decision::blocked(rule, reason);
+            }
             let id = self.next_id;
             self.next_id += 1;
             self.pending.insert(
@@ -432,6 +535,14 @@ impl Leash {
         agent.spent_today = agent.spent_today.saturating_add(amount);
         self.agents.insert(agent_id.clone(), agent);
         Decision { status: Status::Paid, rule: None, reason: "Within your rules".into(), pending_id: None }
+    }
+
+    fn refund_spend(&mut self, agent: &AccountId, amount: NearToken, day: u64) {
+        if let Some(a) = self.agents.get_mut(agent) {
+            if a.day == day {
+                a.spent_today = a.spent_today.saturating_sub(amount);
+            }
+        }
     }
 
     fn transfer(&self, agent: AccountId, receiver: AccountId, amount: NearToken, pending_id: Option<u64>) {
@@ -644,5 +755,57 @@ mod tests {
         testing_env!(b.build());
         let d = l.pay(acc("friend.testnet"), milli(400), None, None);
         assert_eq!((d.status, d.rule.as_deref()), (Status::Blocked, Some("R0")));
+    }
+
+    // ---------- swaps ----------
+
+    const RHEA: &str = "ref-finance-101.testnet";
+
+    #[test]
+    fn trusted_agent_swaps_within_caps() {
+        let mut l = setup();
+        as_agent(PAY, 100);
+        let d = l.swap(acc(RHEA), milli(200), acc("wrap.testnet"), Some("{}".into()), None);
+        assert_eq!(d.status, Status::Paid);
+        assert_eq!(l.get_agent(acc(PAY)).unwrap().spent_today, milli(200));
+        assert!(get_logs().iter().any(|x| x.contains("\"event\":\"swap\"")));
+    }
+
+    #[test]
+    #[should_panic(expected = "Swaps go through wrap.near or wrap.testnet only")]
+    fn swaps_refuse_a_fake_wrap_contract() {
+        let mut l = setup();
+        as_agent(PAY, 100);
+        l.swap(acc(RHEA), milli(200), acc("wrap.evil.testnet"), None, None);
+    }
+
+    #[test]
+    fn swaps_obey_the_caps() {
+        let mut l = setup();
+        as_agent(PAY, 100);
+        let d = l.swap(acc(RHEA), milli(600), acc("wrap.testnet"), None, None);
+        assert_eq!((d.status, d.rule.as_deref()), (Status::Blocked, Some("R4")));
+    }
+
+    #[test]
+    fn swaps_never_wait_for_the_owner() {
+        // Approving later would pay plain NEAR to the venue, so an untrusted
+        // agent's swap to an unknown venue is stopped, not parked.
+        let mut l = setup();
+        as_agent(INBOX, 100);
+        let d = l.swap(acc(RHEA), milli(100), acc("wrap.testnet"), None, None);
+        assert_eq!((d.status, d.rule.as_deref()), (Status::Blocked, Some("R6")));
+        assert!(l.list_pending().is_empty());
+        assert_eq!(l.get_agent(acc(INBOX)).unwrap().spent_today, milli(0));
+    }
+
+    #[test]
+    fn swaps_to_a_blocked_venue_are_stopped() {
+        let mut l = setup();
+        testing_env!(ctx(OWNER, 1, 100).build());
+        l.block(acc(RHEA), "test".into());
+        as_agent(PAY, 100);
+        let d = l.swap(acc(RHEA), milli(100), acc("wrap.testnet"), None, None);
+        assert_eq!((d.status, d.rule.as_deref()), (Status::Blocked, Some("R3")));
     }
 }
