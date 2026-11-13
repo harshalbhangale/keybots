@@ -15,14 +15,20 @@ export const provider = new JsonRpcProvider({ url: RPC });
 export const near = (n) => nearToYocto(String(n));
 export const fmt = (y) => `${yoctoToNear(BigInt(y), 4)} NEAR`;
 
-/** The deployment's account names, all under the owner. */
+/**
+ * The deployment's account names, all under the owner. A second leash beside
+ * the first (to try new contract code) is named with the server's own env
+ * vars: AIRKEY_LEASH and AIRKEY_AGENT_TRUSTED / _UNTRUSTED / _TRADE. An agent's
+ * key works for one leash only, so a second leash needs its own agents.
+ */
 export function names(owner) {
+  const env = process.env;
   return {
     owner,
-    leash: `leash.${owner}`,
-    pay: `pay.${owner}`, // trusted agent: acts on what the owner types
-    inbox: `inbox.${owner}`, // untrusted agent: acts on pasted or inbound text
-    trade: `trader.${owner}`, // trusted agent for swaps, with its own caps (may call the leash's swap)
+    leash: env.AIRKEY_LEASH ?? `leash.${owner}`,
+    pay: env.AIRKEY_AGENT_TRUSTED ?? `pay.${owner}`, // trusted agent: acts on what the owner types
+    inbox: env.AIRKEY_AGENT_UNTRUSTED ?? `inbox.${owner}`, // untrusted agent: acts on pasted or inbound text
+    trade: env.AIRKEY_AGENT_TRADE ?? `trader.${owner}`, // trusted agent for swaps, with its own caps (may call the leash's swap)
     friend: `friend.${owner}`, // demo receiver on the allowlist
     vendor: `vendor.${owner}`, // demo receiver not on the allowlist
     drain: `drain.${owner}`, // demo scammer
