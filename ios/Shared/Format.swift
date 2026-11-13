@@ -33,7 +33,7 @@ enum Fmt {
         switch short(account) {
         case "pay": "Payment Agent"
         case "inbox": "Inbox Agent"
-        case "trade": "Trading Agent"
+        case "trade", "trader": "Trading Agent"
         case "copy": "Copy Agent"
         case let other: other.prefix(1).uppercased() + other.dropFirst() + " Agent"
         }
@@ -43,7 +43,7 @@ enum Fmt {
         switch short(account) {
         case "pay": "Pays for what you type, within its caps."
         case "inbox": "Reads messages other people send you. It can pay your allowlist; anyone else waits for you."
-        case "trade": "Swaps tokens you ask for, within its caps."
+        case "trade", "trader": "Swaps tokens you ask for, within its caps."
         default: tier == "trusted" ? "Acts on what you type, within its caps." : "Acts on other people's words. Anyone off your allowlist waits for you."
         }
     }
