@@ -24,6 +24,8 @@ export interface Config {
   openAi: { apiKey: string; model: string; base: string };
   /** "openai" (default): OpenAI answers when NEAR AI Cloud can't. "off": NEAR AI Cloud or nothing (the demo recording). */
   aiFallback: "openai" | "off";
+  /** Mainnet spends real money: no swap above this many dollars, whatever the command says. */
+  mainnetUsdCap: number;
   port: number;
 }
 
@@ -72,6 +74,7 @@ export function loadConfig(env = process.env): Config {
       base: env.OPENAI_BASE ?? "https://api.openai.com/v1",
     },
     aiFallback: env.AIRKEY_AI_FALLBACK === "off" ? "off" : "openai",
+    mainnetUsdCap: Number(env.AIRKEY_MAINNET_USD_CAP ?? 0.15),
     port: Number(env.PORT ?? 8787),
   };
 }
