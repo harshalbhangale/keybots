@@ -163,9 +163,10 @@ struct AgentBar: View {
         .padding(.leading, 8)
     }
 
-    /// Your words read as an action. One tap runs it.
+    /// Your words read as an action. Press and hold to run it, so a stray
+    /// tap while chatting never moves money.
     private func ready(_ intent: Intent) -> some View {
-        Button { model.runTyped() } label: {
+        HStack(spacing: 10) {
             HStack(spacing: 10) {
                 Image(systemName: intent.icon)
                     .font(.system(size: 12, weight: .bold))
@@ -179,21 +180,17 @@ struct AgentBar: View {
                     }
                 }
                 Spacer(minLength: 4)
-                Text("Run")
-                    .font(.footnote.weight(.bold))
-                    .foregroundStyle(AK.ink)
-                    .padding(.horizontal, 16)
-                    .frame(height: 30)
-                    .background(AK.accent, in: Capsule())
             }
-            .padding(.leading, 7)
-            .padding(.trailing, 7)
-            .frame(height: 44)
-            .contentShape(Capsule())
+            .accessibilityElement(children: .combine)
+            HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 30, font: .footnote.weight(.bold)) {
+                model.runTyped()
+            }
+            .fixedSize()
         }
-        .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: .capsule)
-        .accessibilityLabel("\(intent.title). Run with your Payment Agent.")
+        .padding(.leading, 7)
+        .padding(.trailing, 7)
+        .frame(height: 44)
+        .glassEffect(.regular, in: .capsule)
     }
 
     /// An answer the keyboard found: a price, a conversion or a sum. Tap it
