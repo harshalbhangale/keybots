@@ -60,7 +60,7 @@ enum SecretScanner {
         if text.contains("PRIVATE KEY-----") { return true }
         guard !text.contains(where: \.isWhitespace) else { return false }
         if keyPrefixes.contains(where: { text.hasPrefix($0) }) && text.count >= 16 { return true }
-        // A wallet ADDRESS is meant to be shared (Glyf's pay chip reads a
+        // A wallet ADDRESS is meant to be shared (a pay chip reads a
         // copied one): only its private key or seed is a secret.
         if looksLikeWalletAddress(text) { return false }
         // A JWT: three base64url parts, the first starting {" (eyJ).

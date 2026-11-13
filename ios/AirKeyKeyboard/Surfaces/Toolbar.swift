@@ -898,7 +898,7 @@ final class KeyToolbar: UIView {
         let left = markRight + (Glass.solidLook ? 11 : 17)
         if !smartCard.isHidden {
             // Level with the g key (user, 2026-09-30: "why did the ai strip
-            // fall below, have it at same level as glyf logo"; it sat 5pt
+            // fall below, have it at same level as the logo"; it sat 5pt
             // lower, clear of the top edge for its glow): centred on the
             // key's middle, as tall as the strip allows there, up to
             // chipHeight. The glow above it fades out at the keyboard's edge.
@@ -996,7 +996,7 @@ final class KeyToolbar: UIView {
 
 /// Every strip chip's magic (user, 2026-09-30: "a colourful glowy border so
 /// it feels like its magic, all types of strips", "we should make the
-/// suggestion strip glassy"): a conic gradient in Glyf's colours turning
+/// suggestion strip glassy"): a conic gradient in AIRKEY's lime turning
 /// under a 2pt stroke on the card's edge and, behind the card, under wider,
 /// fainter strokes that fade out 6pt past it (the glow, drawn outside the card
 /// only); and a glass face: a frosted fill the sheet shows through, the

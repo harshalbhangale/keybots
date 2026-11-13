@@ -3,7 +3,7 @@ import UIKit
 /// A keyboard cannot summon a keyboard: text fields inside the extension
 /// can't use the system input path. This is a label-backed mini editor —
 /// when active, the key grid routes characters here instead of the host app.
-/// Used by the Glyf Bar prompt and the emoji search row.
+/// Used by the note editor and the emoji search row.
 final class InlineEditor: UIView {
 
     private let label = UILabel()
@@ -35,7 +35,7 @@ final class InlineEditor: UIView {
     }
 
     /// `searchStyle` draws Apple's search pill: a magnifier, no outline.
-    /// `symbol` leads an outlined pill with an accent icon (Ask Glyf's sparkle).
+    /// `symbol` leads an outlined pill with an accent icon (a search glass).
     init(placeholder: String, searchStyle: Bool = false, symbol: String? = nil) {
         self.placeholder = placeholder
         self.searchStyle = searchStyle

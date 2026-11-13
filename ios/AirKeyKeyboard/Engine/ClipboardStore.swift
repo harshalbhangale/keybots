@@ -70,7 +70,7 @@ enum ClipboardStore {
     /// Set by the VC each appearance; static because screen builders are static.
     static var fullAccessHint = false
 
-    /// Glyf never reads the clipboard on its own.
+    /// The keyboard never reads the clipboard on its own.
     ///
     /// `changeCount` and `hasStrings` are probes — they tell us THAT there is
     /// something new without telling us what, and iOS asks nothing for them.
@@ -156,7 +156,7 @@ enum ClipboardStore {
     /// Everything, including prose — the read iOS may ask about.
     ///
     /// Only runs when "Capture everything you copy" is on. Left on Ask, iOS
-    /// raises "Allow Paste?" once per copy; set to Allow (Settings → Glyf →
+    /// raises "Allow Paste?" once per copy; set to Allow (Settings → Apps → AIRKEY →
     /// Paste from Other Apps) it never asks again and every copy lands here
     /// by itself. That choice belongs to the person, not to us, which is why
     /// this is opt-in and `captureDetected` is what runs by default.
@@ -220,7 +220,7 @@ enum ClipboardStore {
         types.contains("com.apple.is-remote-clipboard")
     }
 
-    /// A recovery phrase or private key Glyf's Wallet screen copied (marked
+    /// A recovery phrase or private key an app copied (marked
     /// tech.airkey.secret, local-only, expiring): never kept in history.
     static func isMarkedSecret(_ types: [String]) -> Bool {
         types.contains("tech.airkey.secret")
@@ -253,7 +253,7 @@ enum ClipboardStore {
     ///
     /// `NSDataDetector` is what iOS itself uses to find links in text, so a
     /// bare domain counts exactly as it does everywhere else on the phone:
-    /// tryglyf.com is a link without anyone typing https:// in front of it.
+    /// example.com is a link without anyone typing https:// in front of it.
     ///
     /// The match has to cover the WHOLE clip. A sentence that happens to
     /// mention a link is still a sentence, and Text and Link have to stay

@@ -111,7 +111,7 @@ struct VaultBook: Codable, Equatable {
     /// that. Decoding key by key is what stops the next addition repeating it.
     enum CodingKeys: String, CodingKey { case fields, combos, snippets, images }
 
-    /// `Swift.Decoder` qualified: Glyf has its own `Decoder` (the typing
+    /// `Swift.Decoder` qualified: the keyboard has its own `Decoder` (the typing
     /// engine's), which otherwise wins the name here.
     init(from decoder: Swift.Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

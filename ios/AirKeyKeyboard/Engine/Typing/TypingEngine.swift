@@ -544,7 +544,7 @@ final class TypingEngine {
     /// Tests only: the rule that kept the last suggestions() call from autocorrecting.
     private(set) var lastHeldBack: String?
 
-    /// FORMAT.md "When Glyf autocorrects".
+    /// FORMAT.md "When the keyboard autocorrects".
     private func decide(typed: String, key: String, known: Bool, sentenceStart: Bool,
                         exactForms: [Candidate], realForms: [Candidate], ranked: [Candidate],
                         previous: String? = nil) -> String? {
@@ -648,7 +648,7 @@ final class TypingEngine {
     }
 
     /// The best word a slip or two from what was typed, when it's sure enough
-    /// to put in (FORMAT.md "When Glyf autocorrects").
+    /// to put in (FORMAT.md "When the keyboard autocorrects").
     private func contender(typed: String, key: String, sentenceStart: Bool, ranked: [Candidate],
                            declined: Set<String> = []) -> Candidate? {
         func hold(_ reason: String) -> Candidate? {
