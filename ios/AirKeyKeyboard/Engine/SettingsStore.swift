@@ -5,7 +5,7 @@ import Foundation
 /// app can read them. Changed from the keyboard's Settings screen.
 struct KeyboardSettings: Codable, Equatable {
     /// Bumped when defaults change; load() migrates older files additively.
-    var schemaVersion: Int? = 1
+    var schemaVersion: Int? = 2
     var haptics: Bool = true
     var keyClicks: Bool = true
     var numberRow: Bool = false
@@ -66,16 +66,16 @@ struct KeyboardSettings: Codable, Equatable {
     /// Two-letter region, for dates, numbers and money; nil follows the phone.
     var region: String?
 
-    /// Hold N to open your notes and details. Nothing else is bound: a held
-    /// letter shows its accents.
-    static let defaultBindings: [String: String] = [
-        "n": "surface:notes",
-    ]
+    /// Nothing is bound by default: a held letter shows its accents, and
+    /// no key wears a dot. (A binding, "n": "surface:notes", opens a menu
+    /// screen from a held letter.)
+    static let defaultBindings: [String: String] = [:]
 
     enum Toolbar {
-        /// The strip: AIRKEY's wallet and copied-text check first, then the
-        /// tools the keys cannot reach. The emoji key is in the bottom row.
-        static let defaultOrder = ["wallet", "check", "clipboard", "notes"]
+        /// The strip: three tools at most, AIRKEY's wallet and copied-text
+        /// check first, then the clipboard. Notes, style, games and settings
+        /// live in the menu; the emoji key is in the bottom row.
+        static let defaultOrder = ["wallet", "check", "clipboard"]
 
         /// Tools that were renamed, so a saved strip keeps its place.
         static let retired: [String: String] = ["vault": "notes"]
@@ -119,6 +119,14 @@ enum SettingsStore {
     /// Additive migrations: new strip tools appear even for old files.
     static func migrated(_ old: KeyboardSettings) -> KeyboardSettings {
         var s = old
+        // v1 → v2: the strip starts over at three tools, and no letter is
+        // bound (the N key's dot was noise).
+        if (s.schemaVersion ?? 1) < 2 {
+            s.toolbarOrder = KeyboardSettings.Toolbar.defaultOrder
+            s.toolbarHidden = []
+            s.bindings = KeyboardSettings.defaultBindings
+            s.schemaVersion = 2
+        }
         for id in KeyboardSettings.Toolbar.defaultOrder where !s.toolbarOrder.contains(id) {
             s.toolbarOrder.append(id)
         }
