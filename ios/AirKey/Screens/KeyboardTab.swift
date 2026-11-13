@@ -26,6 +26,7 @@ struct KeyboardTab: View {
                 feature("hand.tap.fill", "Hold to pay or swap", "“pay harshal 0.2”, “swap $5 of near to usdc”")
                 feature("text.badge.checkmark", "Typing that knows money", "Never changes names, accounts or amounts")
                 feature("wallet.bifold", "Vault", "Your NEAR account in one tap")
+                NavigationLink { KeysView() } label: { KeysLink() }.buttonStyle(.plain)
             }
         }
         .toolbarVisibility(.hidden, for: .navigationBar)
