@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AirkeyServer</key>
+	<string>$(AIRKEY_SERVER)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -27,6 +29,8 @@
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>AIRKEY uses Face ID before your key signs an approval or flips the kill switch.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>AIRKEY talks to your AIRKEY server on this network to run your agents.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
