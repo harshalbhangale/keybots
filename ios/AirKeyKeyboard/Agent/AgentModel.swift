@@ -40,6 +40,8 @@ final class AgentModel {
         /// Short lines the strip turns through under the title, one at a
         /// time (a copied call's checks), in place of `detail`.
         var lines: [String] = []
+        /// CALLS HOOK: the copied call's record in the calls book, so its hold is kept with it.
+        var callId: String? = nil
 
         var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
         var holdLabel: String { "Hold to \(verb)" }
@@ -244,7 +246,7 @@ final class AgentModel {
         Haptics.hold()
         if intent == nil, readIntent == nil, let call = callIntent, let command = call.command {
             // A copied call's trade: the message box keeps whatever is in it.
-            send(command, source: "typed")
+            send(command, source: "typed", callId: call.callId) // CALLS HOOK
             callIntent = nil
         } else if let command = ready?.command { runCommand(command) } else { runTyped() }
     }
@@ -295,7 +297,7 @@ final class AgentModel {
                 return
             }
             callIntent = Ready(kind: .swap, title: title, detail: nil, verb: r.side == "sell" ? "sell" : "buy",
-                               command: command, lines: Self.callLines(check))
+                               command: command, lines: Self.callLines(check), callId: check.id)
             Haptics.letter()
         }
     }
@@ -332,7 +334,7 @@ final class AgentModel {
         Haptics.warning()
     }
 
-    private func send(_ text: String, source: String, clearing: String? = nil) {
+    private func send(_ text: String, source: String, clearing: String? = nil, callId: String? = nil) {
         guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so your agents can reach the server."; return }
         notice = nil
         result = nil
@@ -341,7 +343,8 @@ final class AgentModel {
         running = source
         Task {
             do {
-                let r = try await API().command(text, source: source)
+                // CALLS HOOK: a copied call's hold carries the call's id.
+                let r = if let callId { try await API().command(text, callId: callId) } else { try await API().command(text, source: source) }
                 result = r
                 feedback(for: r.signal)
                 if source == "typed", r.signal != .block, r.signal != .neutral { host?.agentClear(clearing ?? text) }
@@ -364,6 +367,14 @@ final class AgentModel {
         result = nil
         ownInsert = line
         host?.agentInsert(line, spaced: true)
+    }
+
+    /// WALLET/CALLS HOOK: words the Wallet or Calls panel puts in the message
+    /// (a receipt, an address, "pay vendor 0.2"), marked as the keyboard's
+    /// own so the paste guard lets them be.
+    func insertOwn(_ text: String) {
+        ownInsert = text
+        host?.agentInsert(text, spaced: true)
     }
 
     func dismiss() {

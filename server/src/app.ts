@@ -1,15 +1,25 @@
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
-import { readCall, routeCall } from "./calls.js";
+import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient };
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore };
 
 export function buildApp(deps: Deps) {
+  // The calls book (calls.jsonl in the data dir when index.ts gives one; in memory otherwise).
+  const calls = deps.calls ?? memoryCalls();
+  /** A token's dollar price on NEAR Intents, or null when it can't be had right now. */
+  const priceOf = async (symbol: string): Promise<number | null> => {
+    try {
+      return (await deps.intents?.price(symbol)) ?? null;
+    } catch {
+      return null;
+    }
+  };
   const app = Fastify({ logger: false });
 
   app.addHook("onRequest", async (req, reply) => {
@@ -64,7 +74,7 @@ export function buildApp(deps: Deps) {
   });
 
   /** Run one command. source: "typed" (from the owner) or "pasted" (from someone else). */
-  app.post<{ Body: { text?: unknown; source?: unknown } }>("/v1/command", async (req, reply) => {
+  app.post<{ Body: { text?: unknown; source?: unknown; callId?: unknown } }>("/v1/command", async (req, reply) => {
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
     const source = req.body?.source === "pasted" ? "pasted" : req.body?.source === "typed" ? "typed" : null;
     if (!text || !source) return reply.code(400).send({ error: 'Send {"text": "...", "source": "typed" | "pasted"}' });
@@ -72,7 +82,12 @@ export function buildApp(deps: Deps) {
     const client = String(req.headers["x-airkey-client"] ?? "unknown").slice(0, 20);
     console.log(`${new Date().toISOString()} command from ${client} (${source}): ${JSON.stringify(text.slice(0, 120))}`);
     try {
-      return await runCommand(deps, text, source);
+      const receipt = await runCommand(deps, text, source);
+      // A hold on a copied call's chip: the calls book keeps what it came back with.
+      if (typeof req.body?.callId === "string") {
+        calls.traded(req.body.callId, { at: receipt.at, receiptId: receipt.id, outcome: receipt.outcome, message: receipt.message, tx: receipt.tx });
+      }
+      return receipt;
     } catch (e) {
       return reply.code(502).send({ error: `NEAR didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
@@ -196,7 +211,34 @@ export function buildApp(deps: Deps) {
     if (!text) return reply.code(400).send({ error: 'Send {"text": "..."}' });
     const call = readCall(text);
     const route = await routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea });
-    return { call, route };
+    if (!call.isCall) return { call, route };
+    // Every call that was checked goes in the calls book, with the token's price at that moment.
+    let priceThen = route.status === "available" ? (route.token.price ?? null) : null;
+    if (priceThen === null && call.asset) priceThen = await priceOf(call.asset);
+    const record = calls.check(text, call, route, priceThen);
+    return { call, route, id: record.id };
+  });
+
+  /**
+   * The calls book, newest first: every copied call that was checked, the
+   * trade its hold ran (or null), and the token's price now beside its price
+   * at the call.
+   */
+  app.get<{ Querystring: { limit?: string } }>("/v1/calls", async (req) => {
+    const list = calls.list(Math.min(200, Number(req.query.limit ?? 50) || 50));
+    const now = new Map<string, number | null>();
+    const assets = [...new Set(list.map((c) => c.asset).filter((a): a is string => Boolean(a)))];
+    await Promise.race([
+      Promise.all(assets.map(async (a) => now.set(a, await priceOf(a)))),
+      new Promise((r) => setTimeout(r, 1500)), // A slow price list doesn't hold the book up.
+    ]);
+    return { calls: list.map((c) => ({ ...c, priceNow: (c.asset && now.get(c.asset)) ?? null })) };
+  });
+
+  /** Put a call away without trading it. */
+  app.post<{ Params: { id: string } }>("/v1/calls/:id/dismiss", async (req, reply) => {
+    const record = calls.dismiss(req.params.id);
+    return record ?? reply.code(404).send({ error: "No such call" });
   });
 
   return app;
