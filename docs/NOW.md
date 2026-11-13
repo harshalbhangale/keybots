@@ -8,44 +8,41 @@ One line each. Updated 13 Nov 2026.
 - [x] A pasted scam is blocked on chain; a new person waits for your Face ID; the kill switch stops every agent
 - [x] Swap NEAR → USDC/USDT on Rhea (testnet), from the keyboard and the app
 - [x] Copied crypto call → a trade chip with token check and limits
-- [x] Hold space for AI: rewrite, reply, translate, tone (NEAR AI first, OpenAI fallback)
+- [x] Hold space for AI: rewrite, reply, translate, tone, on NEAR AI Cloud (DeepSeek V4.1 Flash, ~3 s, signature verified); OpenAI only as fallback
 - [x] Contract can sell tokens it holds (USDC/USDT → NEAR, USDC ↔ USDT): proven on a test copy, 38 contract tests
-- [x] 130 server tests; demo script, reset command and evidence docs
+- [x] 192 server tests; demo script, reset command and evidence docs
 - [x] App installed on your iPhone 16 Pro Max
 - [x] Mainnet steps written for you to do by hand (docs/MAINNET-STEPS.md)
 
 ## Problems found
-- [ ] A swap is a one-line chip: no price, fee or minimum shown → being replaced by a full swap screen (builder 1)
-- [ ] Jargon on screen: "leash", "R3", "Inbox Agent", "Trading Agent is on it…" mean nothing to a new user → plain wording pass (builder 5)
-- [ ] Haptics are basic → a full haptic pass, better than Apple's keyboard (builder 5)
+- [x] Full swap screen: You pay / You get, rate, minimum, fee, route, limits; orders (limit, stop-loss, take-profit, bracket, trailing, TWAP)
+- [x] Plain wording on every screen (Plain.swift); details one tap away
+- [x] Haptic scheme in the keyboard (needs a feel-check on the phone)
 - [ ] Your phone can't reach the server on the Mac over its own hotspot
 - [ ] Free Apple signing: the app and keyboard can't share settings on your phone, so vault and contacts added in the app don't reach the keyboard, and the install expires in 7 days
-- [ ] No NEAR AI key: AI answers come from OpenAI, so the "private AI" claim isn't true yet
-- [ ] Your real contract isn't upgraded with token selling yet (waiting on the swap screen, then one careful upgrade)
+- [x] NEAR AI key in keys/near-ai.key. GLM-5.1 took ~43 s (past the 20 s timeout), so server/.env sets NEAR_AI_MODEL=deepseek-ai/DeepSeek-V4.1-Flash-1017
+- [x] Live leash upgraded with token selling; sold 0.5 USDC for NEAR from the swap screen (docs/evidence/token-swaps.md)
 - [ ] The dev server stops whenever the session restarts
 - [ ] Three of ten test runs failed on the network ("fetch failed"); the call chip was over 2 s twice
 - [ ] The paste guard (warning on a pasted unknown address) is built but not checked on screen
 - [ ] Kall Markets' letter-hold actions, vault shorthand and smart chips: landed earlier, never fully checked
 
-## In progress
-- [~] Full swap screen like Kall Markets: You pay / You get, picker, rate, minimum, fee, route, limits, Hold to swap; limit / stop-loss / take-profit / bracket / trailing / TWAP orders (builder 1)
-- [~] Wallet section like Kall: balances, agents, activity, orders, Pay someone; Calls section: copied calls and their trades (builder 3)
-- [~] All of Kall Markets' AI: search, live translate while typing, Act (streamed rewrites), Ask, smart suggestion chip, copied-text actions, saved assistants and Build your own (builder 4)
-- [~] Plain wording everywhere, and great haptics (builder 5)
+## Also landed
+- [x] Wallet like Kall, and a Calls section, in the keyboard
+- [x] All of Kall Markets' AI: streamed rewrite versions, Ask, live translate, suggestion chip, copied-text actions, search (Serper), saved assistants, Build your own; copied money text never goes to an AI action
+- [x] Everything merged to main (= ux-glass); old demo kept under tag `demo-ready`
 
 ## To do after that
-- [ ] Merge each builder, test, click through the demo by hand, push
-- [ ] Upgrade the real contract with token selling, then check it's unpaused and the balance is right
 - [ ] Pay screen like Kall Markets' (PaySurface)
 - [ ] Kall Markets extras: GIFs and stickers, voice through the app, calendar booking, temp mail, first-run tour, weather
 - [ ] Install the new build on your phone
 - [ ] README, STATUS and video captions match what's real; record the demo (freeze 14 Nov 14:00 UTC)
 
 ## Needed from you (blockers)
-- [ ] **NEAR AI Cloud API key**, so the AI is private and signed (put it in `server/.env` as `NEAR_AI_API_KEY=…`, or send it to me)
+- [x] NEAR AI Cloud API key
 - [ ] **Phone ↔ Mac**: put both on the same Wi-Fi (not the phone's hotspot), or say OK to a temporary public link to the server
-- [ ] **Search key**: Kall Markets' search uses Brave Search or Serper. OK to reuse Kall Markets' key from its own `.env`, or give a new one?
-- [ ] **GIF key**: Kall Markets' GIFs use Klipy. Same question.
+- [x] Search key (Serper, in server/.env)
+- [x] GIF key (Klipy, in server/.env as KLIPY_API_KEY; GIFs not built yet)
 - [ ] Optional: a paid Apple Developer account ($99/year) removes the 7-day expiry and lets the keyboard share settings with the app
 
 ## The next hour
