@@ -593,10 +593,11 @@ final class KeyboardViewController: UIInputViewController {
             host.view.isHidden = false
             toolbar.isHidden = true
             guard animated, !Glass.reduceMotion else { host.view.alpha = 1; return }
+            // The same soft spring every surface uses.
             host.view.alpha = 0
-            UIView.animate(withDuration: 0.16, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState]) {
+            UIViewPropertyAnimator(duration: 0.3, dampingRatio: 0.9) {
                 host.view.alpha = 1
-            }
+            }.startAnimation()
         } else {
             host.view.isHidden = true
             toolbar.isHidden = toolbarHiddenBySurface
