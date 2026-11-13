@@ -83,8 +83,8 @@ final class AgentModel {
         let title: String
         let verb: String
         let command: String
-        /// Read by a model rather than the server's rules.
-        let byAI: Bool
+        /// The model that read it ("NEAR AI", "OpenAI"), or nil when the server's rules did.
+        let readBy: String?
     }
     /// Asks the server to read a line; nil when it isn't a command.
     @ObservationIgnored var reader: ((String) async -> Reading?)?
@@ -147,7 +147,7 @@ final class AgentModel {
             guard !Task.isCancelled, readFor == line else { return }
             let reading = await reader(line)
             guard !Task.isCancelled, readFor == line, let reading else { return }
-            readIntent = Ready(kind: reading.kind, title: reading.title, detail: reading.byAI ? "Read by AI" : nil,
+            readIntent = Ready(kind: reading.kind, title: reading.title, detail: reading.readBy.map { "Read by \($0)" },
                                verb: reading.verb, command: reading.command)
         }
     }
