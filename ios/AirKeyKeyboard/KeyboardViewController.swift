@@ -29,7 +29,9 @@ final class KeyboardViewController: UIInputViewController {
         model.needsGlobe = needsInputModeSwitchKey
         watch()
         // Your text replacements and contacts' names, so autocorrect knows them.
-        requestSupplementaryLexicon { [weak self] lexicon in
+        // iOS answers on a background queue, so the closure must not assume
+        // the main actor (it traps if it does); it hops there for the work.
+        requestSupplementaryLexicon { @Sendable [weak self] lexicon in
             let entries = lexicon.entries.map { (input: $0.userInput, output: $0.documentText) }
             Task { @MainActor in self?.model.words.load(entries) }
         }
