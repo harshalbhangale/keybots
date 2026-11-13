@@ -1762,6 +1762,17 @@ extension KeyboardViewController: KeyboardViewDelegate {
             editor.append(" ")
             return
         }
+        // A glide already put its space in after the word: a space tapped
+        // right after it is taken as "yes, that word", never a second space
+        // ("Swap  1 near"), the way iOS absorbs it.
+        if let g = glide {
+            glide = nil
+            glideStrip = nil
+            if g.isCurrent(before: beforeContext), (beforeContext ?? "").hasSuffix(g.word + " ") {
+                scheduleCandidates()
+                return
+            }
+        }
         let s = SettingsStore.current
         let now = Date()
         // Double-space → ". " (§6.1)
