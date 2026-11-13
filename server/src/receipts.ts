@@ -13,7 +13,7 @@ export interface Receipt {
   id: string;
   at: string;
   input: { text: string; source: "typed" | "pasted" };
-  interpretation: { action: Action; reader: "rules" | "near-ai-cloud"; ai?: AiEvidence };
+  interpretation: { action: Action; reader: "rules" | "near-ai-cloud" | "openai"; ai?: AiEvidence };
   agent?: { account: string; tier: "trusted" | "untrusted" };
   receiver?: { asked: string; account: string; via: "contacts" | "account" };
   checks?: CheckResult;
