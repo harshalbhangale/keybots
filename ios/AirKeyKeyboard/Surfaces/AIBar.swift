@@ -65,6 +65,8 @@ final class AIBar: UIView {
         var glyfID: String?
         var glyfPrompt: String?
         var glyfName: String?
+        /// Search: YouTube videos instead of the web.
+        var youtube = false
     }
 
     private enum Phase { case actions, tones, prompting, live, working, versions, result, cards, glyfs, draft, failed, locked }
@@ -114,6 +116,9 @@ final class AIBar: UIView {
     // Header (the strip's row)
     private let closeButton = UIButton(type: .system)
     private let moreButton = UIButton(type: .system)
+    /// In the search strip: web or YouTube.
+    private let youtubeButton = UIButton(type: .system)
+    private var searchYouTube = false
     private let titleLabel = UILabel()
     private let directionButton = UIButton(type: .system)
     private let providerLabel = UILabel()
@@ -204,6 +209,13 @@ final class AIBar: UIView {
         moreButton.accessibilityLabel = "More"
         moreButton.addAction(UIAction { [weak self] _ in self?.moreTapped() }, for: .touchUpInside)
         addSubview(moreButton)
+
+        youtubeButton.setImage(UIImage(systemName: "play.rectangle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)), for: .normal)
+        youtubeButton.layer.cornerRadius = 10
+        youtubeButton.layer.cornerCurve = .continuous
+        youtubeButton.accessibilityIdentifier = "ai:youtube"
+        youtubeButton.addAction(UIAction { [weak self] _ in self?.toggleYouTube() }, for: .touchUpInside)
+        addSubview(youtubeButton)
 
         titleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
         titleLabel.textColor = Glass.textPrimary
@@ -399,7 +411,7 @@ final class AIBar: UIView {
         askEditor.clear()
         switch p {
         case .ask: askEditor.placeholder = subjectText == nil ? "Ask anything" : (onCopy ? "Ask about what you copied" : "Ask about your text")
-        case .search: askEditor.placeholder = "Search the web"
+        case .search: askEditor.placeholder = searchYouTube ? "Search YouTube" : "Search the web"
         case .build: askEditor.placeholder = "What should it do?"
         }
         sendButton.accessibilityLabel = p == .search ? "Search" : p == .build ? "Build" : "Ask"
@@ -431,11 +443,25 @@ final class AIBar: UIView {
             run(Request(action: .ask, text: q, context: subject.isEmpty ? nil : subject, copied: onCopy))
         case .search:
             leavePrompt()
-            run(Request(action: .search, text: q))
+            run(Request(action: .search, text: q, youtube: searchYouTube))
         case .build:
             leavePrompt()
             run(Request(action: .build, text: q))
         }
+    }
+
+    /// Web or YouTube, for the search you're typing.
+    private func toggleYouTube() {
+        Haptics.layer()
+        searchYouTube.toggle()
+        askEditor.placeholder = searchYouTube ? "Search YouTube" : "Search the web"
+        styleYouTube()
+    }
+
+    private func styleYouTube() {
+        youtubeButton.tintColor = searchYouTube ? .white : Glass.textPrimary
+        youtubeButton.backgroundColor = searchYouTube ? UIColor(red: 1, green: 0, blue: 0, alpha: 1) : Glass.fillSoft
+        youtubeButton.accessibilityLabel = searchYouTube ? "Searching YouTube" : "Search YouTube instead"
     }
 
     private func updateSend() {
@@ -657,7 +683,7 @@ final class AIBar: UIView {
     private func runSearch(_ r: Request, _ id: Int) {
         task = Task { [weak self] in
             do {
-                let found = try await AIClient().search(query: r.text)
+                let found = try await AIClient().search(query: r.text, youtube: r.youtube)
                 guard let self, self.runID == id else { return }
                 self.busy = false
                 self.search = found
@@ -679,6 +705,8 @@ final class AIBar: UIView {
     /// What Insert puts in for each search row: the answer, or the result's link.
     private var cardTexts: [String] {
         guard let s = search else { return [] }
+        // A video goes in as its link alone, so the chat shows YouTube's preview.
+        if s.provider == "youtube" { return s.cards.map(\.url) }
         return (s.answer.map { [$0.value] } ?? []) + s.cards.map { "\($0.title) \($0.url)" }
     }
 
@@ -1079,6 +1107,8 @@ final class AIBar: UIView {
         closeButton.setImage(UIImage(systemName: back ? "chevron.left" : "xmark"), for: .normal)
         closeButton.accessibilityLabel = back ? "Back" : "Close"
         moreButton.isHidden = !(p == .prompting && prompt == .ask && !hasTiles)
+        youtubeButton.isHidden = !(p == .prompting && prompt == .search)
+        styleYouTube()
         titleLabel.text = title(for: p)
         let quoting = p == .actions && !onCopy && !trimmedSource.isEmpty
         titleLabel.font = quoting ? .systemFont(ofSize: 14) : .systemFont(ofSize: 15, weight: .semibold)
@@ -1182,7 +1212,7 @@ final class AIBar: UIView {
             case .summarize: return "Summary"
             case .write: return "Write"
             case .glyf: return r.glyfName ?? "Glyf"
-            case .search: return "Search"
+            case .search: return r.youtube ? "YouTube" : "Search"
             case .build: return "New glyf"
             }
         }
@@ -1194,10 +1224,14 @@ final class AIBar: UIView {
     private func providerText() -> NSAttributedString? {
         if phase == .cards {
             guard let s = search else { return nil }
-            return Self.providerLine(s.provider == "brave" ? "Brave" : "Google", verified: false, size: 12)
+            return Self.providerLine(Self.searchName(s.provider), verified: false, size: 12)
         }
         guard let answer else { return nil }
         return Self.providerLine(answer.providerName, verified: answer.signature == "verified", size: 12)
+    }
+
+    private static func searchName(_ provider: String) -> String {
+        provider == "brave" ? "Brave" : provider == "youtube" ? "YouTube" : "Google"
     }
 
     private static func providerLine(_ name: String, verified: Bool, size: CGFloat) -> NSAttributedString {
@@ -1219,7 +1253,7 @@ final class AIBar: UIView {
     }
 
     private func providerSpoken() -> String? {
-        if phase == .cards { return search.map { "Results from \($0.provider == "brave" ? "Brave" : "Google")" } }
+        if phase == .cards { return search.map { "Results from \(Self.searchName($0.provider))" } }
         guard let answer else { return nil }
         return "Answered by \(answer.providerName)" + (answer.signature == "verified" ? ", signature verified" : "")
     }
@@ -1283,6 +1317,10 @@ final class AIBar: UIView {
         var left = pillW + 11
         if !moreButton.isHidden {
             moreButton.frame = CGRect(x: left, y: pill.y, width: pillW, height: pill.height)
+            left += pillW + 6
+        }
+        if !youtubeButton.isHidden {
+            youtubeButton.frame = CGRect(x: left, y: pill.y, width: pillW, height: pill.height)
             left += pillW + 6
         }
         let field = CGRect(x: left, y: pill.y, width: max(0, w - left - 6), height: pill.height)

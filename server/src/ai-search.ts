@@ -22,7 +22,7 @@ export interface SearchAnswer {
 }
 
 export interface SearchResult {
-  provider: "brave" | "google";
+  provider: "brave" | "google" | "youtube";
   answer: SearchAnswer | null;
   cards: SearchCard[];
 }
@@ -129,4 +129,43 @@ export async function searchWeb(query: string, env: SearchEnv = process.env, fet
   if (env.BRAVE_SEARCH_KEY) return braveWeb(q, env.BRAVE_SEARCH_KEY, fetchImpl);
   if (env.SERPER_API_KEY) return serperWeb(q, env.SERPER_API_KEY, fetchImpl);
   throw new SearchNeedsKey();
+}
+
+/** A YouTube link the keyboard can trust: youtube.com or youtu.be over https. */
+export function youtubeLink(url: string | undefined): url is string {
+  try {
+    const u = new URL(url ?? "");
+    return u.protocol === "https:" && /(^|\.)(youtube\.com|youtu\.be)$/.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * YouTube videos, through Serper's video search (the same key as web search).
+ * Each card is a video: title, "channel · 2:25", and its YouTube link, which
+ * Insert puts in the chat so the app shows its preview. Only YouTube links.
+ */
+export async function searchYouTube(query: string, env: SearchEnv = process.env, fetchImpl: typeof fetch = fetch): Promise<SearchResult> {
+  const q = query.trim().slice(0, 200);
+  if (!env.SERPER_API_KEY) throw new SearchNeedsKey();
+  const res = await fetchImpl("https://google.serper.dev/videos", {
+    method: "POST",
+    signal: AbortSignal.timeout(7000),
+    headers: { "x-api-key": env.SERPER_API_KEY, "content-type": "application/json" },
+    body: JSON.stringify({ q, num: 10 }),
+  });
+  if (!res.ok) throw new Error(`Serper answered ${res.status}`);
+  const data = (await res.json()) as { videos?: { title?: string; link?: string; channel?: string; duration?: string; date?: string }[] };
+  const cards = (data.videos ?? [])
+    .filter((v) => youtubeLink(v.link) && v.title)
+    .slice(0, 8)
+    .map((v, i) => ({
+      id: `youtube-${i}`,
+      title: stripTags(v.title!),
+      url: v.link!,
+      domain: [v.channel, v.duration].filter(Boolean).map((x) => stripTags(x!)).join(" · ") || "YouTube",
+      ...(v.date ? { snippet: stripTags(v.date) } : {}),
+    }));
+  return { provider: "youtube", answer: null, cards };
 }

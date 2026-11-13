@@ -182,8 +182,8 @@ struct AIClient {
         return r.suggestion
     }
 
-    func search(query: String) async throws -> Search {
-        try await send(request("/v1/search", body: ["query": query]))
+    func search(query: String, youtube: Bool = false) async throws -> Search {
+        try await send(request("/v1/search", body: youtube ? ["query": query, "kind": "youtube"] : ["query": query]))
     }
 
     func glyfs() async throws -> Glyfs { try await send(request("/v1/glyfs")) }
