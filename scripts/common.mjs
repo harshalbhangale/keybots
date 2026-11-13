@@ -22,7 +22,7 @@ export function names(owner) {
     leash: `leash.${owner}`,
     pay: `pay.${owner}`, // trusted agent: acts on what the owner types
     inbox: `inbox.${owner}`, // untrusted agent: acts on pasted or inbound text
-    trade: `trade.${owner}`, // trusted agent for swaps, with its own caps
+    trade: `trader.${owner}`, // trusted agent for swaps, with its own caps (may call the leash's swap)
     friend: `friend.${owner}`, // demo receiver on the allowlist
     vendor: `vendor.${owner}`, // demo receiver not on the allowlist
     drain: `drain.${owner}`, // demo scammer

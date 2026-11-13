@@ -184,7 +184,7 @@ describe("swaps", () => {
     const base = chain.state;
     chain.state = async () => {
       const s = await base();
-      return { ...s, agents: [...s.agents, { account: "trade.x.testnet", agent: { tier: "trusted" as const, per_payment_cap: "1000000000000000000000000", daily_cap: "2000000000000000000000000", spent_today: spent, day: 0 } }] };
+      return { ...s, agents: [...s.agents, { account: "trader.x.testnet", agent: { tier: "trusted" as const, per_payment_cap: "1000000000000000000000000", daily_cap: "2000000000000000000000000", spent_today: spent, day: 0 } }] };
     };
     return chain;
   };
@@ -193,8 +193,8 @@ describe("swaps", () => {
     // $3 is 0.75 NEAR: over the Payment Agent's 0.5 cap, inside the Trading Agent's 1.
     const r = await runCommand({ cfg, chain: chainWithTrader(), receipts: memoryStore(), intents: fakeIntents("3.00") as never }, "swap 3 usdc to sol", "typed");
     expect(r.outcome).toBe("quoted");
-    expect(r.agent?.account).toBe("trade.x.testnet");
-    expect(r.swap?.leash?.agent).toBe("trade.x.testnet");
+    expect(r.agent?.account).toBe("trader.x.testnet");
+    expect(r.swap?.leash?.agent).toBe("trader.x.testnet");
     expect(r.swap?.leash?.perPaymentCap).toBe("1000000000000000000000000");
   });
 
@@ -234,7 +234,7 @@ describe("swaps", () => {
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to usdt", "typed");
     expect(r.outcome).toBe("swapped");
     expect(r.message).toBe("Swapped 0.1 NEAR for 0.1241 USDT on Rhea. It's in the leash.");
-    expect(calls[0].agent).toBe("trade.x.testnet");
+    expect(calls[0].agent).toBe("trader.x.testnet");
     expect(calls[0].args.venue).toBe("ref-finance-101.testnet");
     expect(calls[0].args.wrap).toBe("wrap.testnet");
     const msg = JSON.parse(String(calls[0].args.msg));
