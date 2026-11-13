@@ -60,3 +60,20 @@ describe("resolveReceiver", () => {
     expect(resolveReceiver("stranger", contacts, "testnet")).toHaveProperty("error");
   });
 });
+
+describe("swaps in dollars", () => {
+  it("reads a dollar amount of a token, however the dollar sign is written", () => {
+    for (const t of ["swap 5$ of near to usdc", "swap $5 of near to usdc", "Swap 5 dollars worth of near for usdc", "swap 5 usd of near into usdc"]) {
+      expect(parse(t)).toEqual({ kind: "swap", amount: "5", from: "NEAR", to: "USDC", usd: true });
+    }
+  });
+
+  it("keeps plain token amounts as they were", () => {
+    expect(parse("swap 0.1 near to usdc")).toEqual({ kind: "swap", amount: "0.1", from: "NEAR", to: "USDC" });
+  });
+
+  it("reads decimals and other words for swap", () => {
+    expect(parse("convert $2.50 of near into sol")).toEqual({ kind: "swap", amount: "2.5", from: "NEAR", to: "SOL", usd: true });
+  });
+});
+
