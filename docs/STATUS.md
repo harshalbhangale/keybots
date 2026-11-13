@@ -97,4 +97,5 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] README with live transactions and test counts
 - [ ] Fresh clone of main builds (waits on the keyboard helper's commits)
 - [ ] Demo video
+- [ ] NEAR Builders directory profile for hellbuddy.near (later; paste the API key again then, it's never saved)
 - [ ] Submit before 14 Nov, 23:59 UTC
