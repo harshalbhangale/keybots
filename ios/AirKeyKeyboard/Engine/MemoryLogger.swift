@@ -1,7 +1,7 @@
 import Foundation
 import os.log
 
-/// §M0/§10.9: GLYF_MEM lines back the 45 MB extension budget guard, the
+/// §M0/§10.9: MEM lines back the 45 MB extension budget guard, the
 /// 6 MB shell budget, and the 4 MB ConnectorSurface budget.
 /// Logged at Default level — .info is stream-only and invisible to
 /// `log show` after the fact (M0 finding #6).
@@ -25,13 +25,13 @@ enum MemoryLogger {
     @discardableResult
     static func logAppearance(_ appearance: Int) -> Double {
         let mb = footprintMB()
-        log.log("GLYF_MEM appearance=\(appearance) footprint_mb=\(mb, format: .fixed(precision: 1))")
+        log.log("MEM appearance=\(appearance) footprint_mb=\(mb, format: .fixed(precision: 1))")
         return mb
     }
 
     /// Tagged samples for per-surface budget accounting (shell ≤6 MB, §6.3).
     static func logSurface(_ name: String) {
         let mb = footprintMB()
-        log.log("GLYF_MEM surface=\(name, privacy: .public) footprint_mb=\(mb, format: .fixed(precision: 1))")
+        log.log("MEM surface=\(name, privacy: .public) footprint_mb=\(mb, format: .fixed(precision: 1))")
     }
 }

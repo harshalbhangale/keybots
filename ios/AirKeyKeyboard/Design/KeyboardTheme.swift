@@ -49,7 +49,7 @@ struct ThemeVariant {
 
 /// A key class's material, drawn over its fill and clipped to the key.
 struct ThemeFace: Equatable {
-    /// A tile in GlyfKeyboard/Textures (<name>.png, grey + alpha), laid over
+    /// A tile in AirKeyKeyboard/Resources/Textures (<name>.png, grey + alpha), laid over
     /// the fill at `textureAlpha`, one image pixel to one screen pixel.
     let texture: String?
     let textureAlpha: Double
@@ -140,7 +140,7 @@ struct ThemeStyle {
     let ornaments: [ThemeOrnament]
 }
 
-/// A key-face font shipped in the keyboard's bundle (GlyfKeyboard/Fonts).
+/// A key-face font shipped in the keyboard's bundle (AirKeyKeyboard/Resources/Fonts).
 struct ThemeFont {
     let family: String
     /// Resource name and extension in the bundle.
@@ -160,7 +160,7 @@ enum ThemeGlyphStyle { case standard, light, bold }
 enum ThemeSoundRole: Hashable { case letter, space, delete, ret }
 
 /// A theme's sound pack: the roles it has a sample of its own for, as
-/// GlyfKeyboard/Sounds/theme-<name>-<role>.caf.
+/// AirKeyKeyboard/Resources/Sounds/theme-<name>-<role>.caf.
 struct ThemeSoundPack { let name: String; let roles: [ThemeSoundRole] }
 
 /// The one texture iOS draws on keys: Marble's veins, or Rose Gold's satin
@@ -299,7 +299,7 @@ final class ThemeSound {
             }
         }
         #if DEBUG
-        NSLog("GLYF_THEME_SOUND pack=%@ loaded=%d of %d allowed=%d", pack.name, ids.count, pack.roles.count, allowed ? 1 : 0)
+        NSLog("THEME_SOUND pack=%@ loaded=%d of %d allowed=%d", pack.name, ids.count, pack.roles.count, allowed ? 1 : 0)
         #endif
     }
 

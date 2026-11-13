@@ -10,7 +10,7 @@ import UIKit
 /// (390, 402, 420 and 440pt) rather than guessed: the margins and gaps are
 /// the same on every phone, the key width falls out of the screen width, and
 /// the row height steps up once on Plus/Max-class phones. Matching this is
-/// what makes Glyf feel like the keyboard people already know.
+/// what makes AIRKEY feel like the keyboard people already know.
 ///
 ///     width  margin  gap  key     pitch   row     key height
 ///     390    6.5     6    32.30   38.30   54      43
@@ -68,7 +68,7 @@ enum KeyMetrics {
 /// proportions:
 ///
 ///     Apple, 5 rows (sim)   row 38.4  column 46.0  glyph ink 29.3  first glyph x 15.3
-///     Glyf, 4 rows (402)    row 47.5  column 56.9  glyph ink 36.2  first glyph x 15.3
+///     AIRKEY, 4 rows (402)    row 47.5  column 56.9  glyph ink 36.2  first glyph x 15.3
 ///
 /// The chrome is Apple's own: a 40pt search field 9pt in from the edges,
 /// the section name 13.7pt under it in a lighter grey, nine category glyphs
@@ -174,7 +174,7 @@ enum Glass {
     /// iOS draws its own keyboard sheet behind every third-party keyboard:
     /// the rounded Liquid Glass tray in apps built for iOS 26, the classic
     /// backdrop before that. It cannot be turned off and its margins cannot
-    /// be painted over, so Glyf paints no board at all. Keys sit straight on
+    /// be painted over, so AIRKEY paints no board at all. Keys sit straight on
     /// the system's sheet the way Apple's do, and the sheet is whatever iOS
     /// makes it (light, dark, tinted, Reduce Transparency). A theme colours
     /// the keys, never a slab inside the tray, which is what used to show as
@@ -443,7 +443,6 @@ enum Glass {
         return .white
     }
     static var fillKeySpecial: UIColor { fillKeyFn }
-    static var fillKeyGlyf: UIColor { fillKey }
     /// Bound key wash — barely-there accent over the key surface.
     static var fillKeyBound: UIColor {
         isDark ? UIColor(red: 0.25, green: 0.28, blue: 0.17, alpha: 1)

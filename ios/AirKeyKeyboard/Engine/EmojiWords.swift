@@ -119,7 +119,7 @@ enum EmojiRuns {
         let word = WordTracker.currentWord(beforeContext: rest)
         guard word.count >= 2, word.allSatisfy({ $0.isLetter || $0 == "'" || $0 == "’" }),
               !WordTracker.insideLinkOrAddress(beforeContext: rest) else { return nil }
-        // A word of its own, not the tail of "tryglyf.com" or "v2.beta".
+        // A word of its own, not the tail of "example.com" or "v2.beta".
         if let c = rest.dropLast(word.count).last, !c.isWhitespace, !"(\"“‘".contains(c) { return nil }
         let previous = WordTracker.previousWord(beforeContext: rest)
             .flatMap { p in p.allSatisfy({ $0.isLetter || $0 == "'" || $0 == "’" }) ? p : nil }

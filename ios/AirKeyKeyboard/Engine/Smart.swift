@@ -3943,7 +3943,7 @@ extension Smart {
 extension Smart {
 
     /// The g menu's Style (user, 2026-10-03: "option to stylise text in
-    /// glyf menu like bold italic underline, cut, etc"): letters from
+    /// menu like bold italic underline, cut, etc"): letters from
     /// Unicode's styled alphabets, which show in any app because they are
     /// characters, not formatting (chats have no bold of their own). Screen
     /// readers read some letter by letter, so Plain puts text back.
