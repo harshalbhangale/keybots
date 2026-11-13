@@ -38,6 +38,11 @@ struct API {
         try await post("/v1/command", ["text": text, "source": source])
     }
 
+    /// What swapping `amount` NEAR into `to` gets on Rhea right now.
+    func swapQuote(amount: String, to: String) async throws -> SwapQuote {
+        try await get("/v1/swap/quote?amount=\(amount)&to=\(to)")
+    }
+
     /// A token's live price in dollars, from NEAR Intents' list.
     func price(_ symbol: String) async throws -> Price { try await get("/v1/price/\(symbol)") }
 
