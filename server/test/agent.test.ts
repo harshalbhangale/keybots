@@ -271,7 +271,7 @@ describe("swaps", () => {
   });
 
   // Mainnet: NEAR into a token without a Rhea route funds a NEAR Intents deposit address from the leash.
-  const mainnet = { ...loadConfig({ AIRKEY_OWNER: "x.near", NEAR_NETWORK: "mainnet" }), nearAi: { apiKey: "", model: "m", base: "b" } };
+  const mainnet = { ...loadConfig({ AIRKEY_OWNER: "x.near", NEAR_NETWORK: "mainnet" }), nearAi: { apiKey: "", model: "m", base: "b" }, mainnetUsdCap: 1 };
   const liveIntents = (status: string) => {
     const submitted: string[] = [];
     const i = {
@@ -282,6 +282,17 @@ describe("swaps", () => {
     };
     return { i, submitted };
   };
+
+  it("on mainnet, refuses anything over the dollar cap ($0.15 unless set)", async () => {
+    const { chain, calls } = fakeChain();
+    chain.state = chainWithTrader().state;
+    const capped = { ...mainnet, mainnetUsdCap: loadConfig({ AIRKEY_OWNER: "x.near", NEAR_NETWORK: "mainnet" }).mainnetUsdCap };
+    expect(capped.mainnetUsdCap).toBe(0.15);
+    const r = await runCommand({ cfg: capped, chain, receipts: memoryStore(), intents: liveIntents("SUCCESS").i as never }, "swap 0.1 near to sol", "typed");
+    expect(r.outcome).toBe("blocked");
+    expect(r.message).toMatch(/at most \$0.15/);
+    expect(calls).toEqual([]);
+  });
 
   it("on mainnet, funds a NEAR Intents deposit address from the leash and reports the payout", async () => {
     const { chain, calls } = fakeChain();
