@@ -42,5 +42,14 @@ setInterval(async () => {
     looking = false;
   }
 }, WATCH_MS).unref();
+// Keep the slow lookups warm so the keyboard's chips come up fast: NEAR
+// Intents' token list (refetched before it goes stale) and the leash's state.
+const warm = () => {
+  deps.intents.tokens(4 * 60_000).catch(() => {});
+  deps.chain.state().catch(() => {});
+};
+warm();
+setInterval(warm, 60_000).unref();
+
 await app.listen({ port: cfg.port, host: "0.0.0.0" });
 console.log(`AIRKEY server on :${cfg.port} · ${cfg.network} · leash ${cfg.leash} · AI ${cfg.nearAi.apiKey ? "NEAR AI Cloud (private)" : cfg.openAi.apiKey ? `OpenAI ${cfg.openAi.model}` : "off"} · auth ${cfg.apiToken ? "on" : "off"}`);

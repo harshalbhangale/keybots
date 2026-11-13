@@ -38,6 +38,8 @@ export type CallRoute =
 
 /** Dollars a prefilled trade spends: well under the Trading Agent's 1 NEAR a trade, and the mainnet budget. */
 export const CALL_SIZE_USD = 1;
+/** How long the chip waits for NEAR Intents' quote before it shows without one. */
+const QUOTE_WAIT_MS = 1300;
 
 const names: Record<string, string> = {
   near: "NEAR", "near protocol": "NEAR", aurora: "AURORA", bitcoin: "BTC", btc: "BTC",
@@ -153,19 +155,25 @@ export async function routeCall(
   const nearToken = (await deps.intents.pick("NEAR", "from")).token;
   const amountNear = nearToken?.price ? Number((CALL_SIZE_USD / nearToken.price).toFixed(4)) : null;
 
-  let quote: Extract<CallRoute, { status: "available" }>["quote"] = null;
-  if (side === "buy" && asset !== "near" && nearToken && amountNear) {
-    try {
-      const q = await deps.intents.quote(nearToken, check.token, String(amountNear));
-      quote = { amountIn: String(amountNear), amountOut: q.amountOutFormatted, symbolOut: call.asset, usdOut: q.amountOutUsd };
-    } catch {
-      // No quote right now; the chip goes without it.
-    }
-  }
+  // The quote and the leash's caps at the same time: the chip should be up in well under 2 seconds.
+  const intents = deps.intents;
+  const token = check.token;
+  const [quote, state] = await Promise.all([
+    side === "buy" && asset !== "near" && nearToken && amountNear
+      ? Promise.race([
+          intents
+            .quote(nearToken, token, String(amountNear))
+            .then((q) => ({ amountIn: String(amountNear), amountOut: q.amountOutFormatted, symbolOut: call.asset!, usdOut: q.amountOutUsd }))
+            .catch(() => null), // No quote right now; the chip goes without it.
+          new Promise<null>((r) => setTimeout(() => r(null), QUOTE_WAIT_MS)), // A slow quote doesn't hold the chip up.
+        ])
+      : Promise.resolve(null),
+    deps.chain.state().catch(() => null),
+  ]);
 
   let caps: Extract<CallRoute, { status: "available" }>["caps"] = null;
   try {
-    const state = await deps.chain.state();
+    if (!state) throw new Error("no state");
     const a = state.agents.find((x) => x.account === deps.tradeAgent)?.agent;
     if (a) {
       const left = BigInt(a.daily_cap) - BigInt(a.spent_today);
