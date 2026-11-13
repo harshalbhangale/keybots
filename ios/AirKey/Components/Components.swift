@@ -176,23 +176,27 @@ struct ApprovalCard: View {
                 Button(role: .destructive) {
                     Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(pending.receiver)") }
                 } label: {
-                    Text("Reject").frame(maxWidth: .infinity).padding(.vertical, 4)
+                    Text(model.busy == "reject" ? "Rejecting…" : "Reject")
+                        .font(.body.weight(.semibold))
+                        .padding(.horizontal, 22)
+                        .frame(height: 50)
+                        .contentShape(Capsule())
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.plain)
+                .foregroundStyle(AK.bone)
+                .glassEffect(.regular.interactive(), in: .capsule)
+                .disabled(working)
 
-                Button {
+                // Approving pays someone, so it takes a hold, then Face ID.
+                HoldToConfirm(
+                    label: model.busy == "approve" ? "Signing…" : "Hold to approve",
+                    icon: "faceid",
+                    height: 50,
+                    disabled: working
+                ) {
                     Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(pending.receiver)") }
-                } label: {
-                    Label(model.busy == "approve" ? "Signing…" : "Approve", systemImage: "faceid")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
                 }
-                .buttonStyle(.glassProminent)
-                .tint(AK.accent)
-                .foregroundStyle(AK.ink)
             }
-            .font(.body.weight(.semibold))
-            .disabled(working)
         }
         .padding(18)
         .glassEffect(.regular.tint(AK.amber.opacity(0.12)), in: .rect(cornerRadius: AK.radius))
