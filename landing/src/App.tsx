@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Backdrop, Callers, Features, Stickers, Try, WORKS } from "./Sections";
+import { Cards, HeroBar, NearMark, Try } from "./Sections";
 import { Downloads, E2E, GitHub, LEASH, Mark, REPO } from "./ui";
 
 function useReveal() {
@@ -33,78 +33,52 @@ export default function App() {
 
       <main id="top">
         <section className="hero">
-          <Backdrop />
+          <div className="aurora" aria-hidden />
           <div className="hero-copy wrap">
             <h1 className="hero-title">
-              <span>Type it.</span> <span className="lime">NEAR does it.</span>
+              <span>Type it.</span>
+              <span>
+                <NearMark /> <span className="lime">NEAR</span> does the rest.
+              </span>
             </h1>
-            <p className="hero-sub">The AI keyboard that pays, trades and says no to scams.</p>
+            <p className="hero-sub">The AI keyboard that pays, trades and stops scams, in any chat.</p>
+            <HeroBar />
             <Downloads />
           </div>
         </section>
 
-        <section className="section features" id="features">
-          <div className="wrap">
-            <Stickers>
-              <h2 className="big-title">
-                <span>One keyboard.</span> <span>Everything on NEAR.</span>
-              </h2>
-            </Stickers>
-            <Features />
-          </div>
-        </section>
-
-        <section className="section kol" id="follow">
-          <div className="wrap">
-            <div className="kol-head" data-reveal>
-              <span className="pill-soon">Soon</span>
-              <h2 className="sec-title">
-                Follow the callers <span className="lime">who are right.</span>
-              </h2>
-              <p className="sec-sub">Every call scored on NEAR. Copy the good ones, inside your caps.</p>
-            </div>
-            <Callers />
-          </div>
-        </section>
-
-        <section className="works wrap" data-reveal>
-          <h3>Works with</h3>
-          <ul>
-            {WORKS.map((w) => (
-              <li key={w}>{w}</li>
-            ))}
-          </ul>
-        </section>
-
         <section className="section" id="try">
           <div className="wrap">
-            <div className="try-cue" data-reveal>
-              <p>Try it here.</p>
-            </div>
+            <h2 className="sec-title center" data-reveal>
+              Type in the chat. <span className="lime">Watch it on NEAR.</span>
+            </h2>
             <Try />
           </div>
         </section>
 
-        <section className="section proof wrap" data-reveal>
-          <div className="proof-num">
-            <b>9/9</b>
-            <span>
-              end-to-end steps passed
-              <br />
-              on NEAR testnet
-            </span>
-          </div>
-          <div className="proof-links">
-            <a href={E2E} target="_blank" rel="noreferrer">See every transaction ↗</a>
-            <a href={LEASH} target="_blank" rel="noreferrer">leash.airkey-harshal.testnet ↗</a>
-            <a href={REPO} target="_blank" rel="noreferrer">Open source on GitHub ↗</a>
+        <section className="section tight">
+          <div className="wrap">
+            <Cards />
           </div>
         </section>
 
         <section className="finale" id="get">
           <div className="wrap">
+            <div className="proof" data-reveal>
+              <b>9/9</b>
+              <span>
+                end-to-end steps passed on NEAR testnet ·{" "}
+                <a href={E2E} target="_blank" rel="noreferrer">
+                  every transaction ↗
+                </a>{" "}
+                ·{" "}
+                <a href={LEASH} target="_blank" rel="noreferrer">
+                  the leash ↗
+                </a>
+              </span>
+            </div>
             <h2 className="big-title" data-reveal>
-              <span>Your keys.</span> <span className="lime">Your rules.</span>
+              Your keys. <span className="lime">Your rules.</span>
             </h2>
             <div data-reveal>
               <Downloads />

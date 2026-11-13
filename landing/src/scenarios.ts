@@ -40,6 +40,58 @@ export type Scenario = {
   steps: Step[];
 };
 
+export type ChainLine = [string, "ok" | "fail" | "info"];
+
+/** What happens on NEAR for each chat, shown next to the phone. */
+export const CHAIN: Record<string, ChainLine[]> = {
+  pay: [
+    ["pay.airkey-harshal.testnet → leash.pay(harshal.near, 0.2)", "info"],
+    ["R1 kill switch off", "ok"],
+    ["R3 harshal.near not blocklisted", "ok"],
+    ["R4 0.2 ≤ 0.5 per payment", "ok"],
+    ["R5 0.2 of 1.0 today", "ok"],
+    ["leash sends 0.2 NEAR → harshal.near", "ok"],
+    ["event paid · tx HRhR7pS9…", "info"],
+  ],
+  trade: [
+    ["NEAR Intents token list: NEAR, USDC listed", "ok"],
+    ["1Click quote: 2 USDC → 0.5861 NEAR", "info"],
+    ["Trading Agent cap: 0.59 ≤ 1 NEAR", "ok"],
+    ["quote only · nothing sent yet", "info"],
+  ],
+  scam: [
+    ["pasted → inbox.airkey-harshal.testnet (untrusted)", "info"],
+    ["leash.pay(drain.near, 5)", "info"],
+    ["R1 kill switch off", "ok"],
+    ["R3 drain.near not blocklisted yet", "ok"],
+    ["R4 5 > 0.5 per payment · blocked", "fail"],
+    ["report(drain.near) → blocklist", "info"],
+    ["event blocked · tx HMeo4MYz…", "info"],
+  ],
+  order: [
+    ["order: sell 1 NEAR when price < $2", "info"],
+    ["price now $3.39 from NEAR Intents", "ok"],
+    ["watcher checks every 15 s", "info"],
+    ["pasted text can never set an order", "ok"],
+  ],
+  split: [
+    ["236 ÷ 4 = 59", "ok"],
+    ["worked out on the phone", "info"],
+    ["nothing sent to NEAR", "info"],
+  ],
+  vault: [
+    ["vault holds addresses only", "ok"],
+    ["refuses keys and recovery phrases", "ok"],
+    ["inserted airkey-harshal.testnet", "info"],
+  ],
+  follow: [
+    ["@nearwhale: 14 of 20 calls hit", "info"],
+    ["each call scored on NEAR", "info"],
+    ["copies trade inside the Trading Agent's caps", "ok"],
+    ["coming soon", "info"],
+  ],
+};
+
 const words = (...w: string[]): Strip => ({ kind: "words", words: w });
 
 export const SCENARIOS: Scenario[] = [
