@@ -99,7 +99,7 @@ struct TradePanel: View {
         return HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
-                    Text(pay ? "You pay" : model.isOrder ? "You get (at today's rate)" : "You get")
+                    Text(pay ? "You pay" : model.isOrder ? "You'd get" : "You get")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(p.soft)
                     if let d = model.dollars(side) {
@@ -209,7 +209,7 @@ struct TradePanel: View {
             rows.append(("Route", q.map(Self.route) ?? "—"))
         }
         rows.append(("Network fee", q.map { "\($0.networkFee.amount) \($0.networkFee.symbol)" + ($0.networkFee.usd.map { " ≈ $\($0)" } ?? "") } ?? "—"))
-        rows.append(("Trading Agent cap", q?.caps.map { "\($0.perTrade) NEAR a trade · \($0.leftToday) left today" } ?? "—"))
+        rows.append(("Trading Agent limit", q?.caps.map { "\($0.perTrade) NEAR a trade · \($0.leftToday) left today" } ?? "—"))
         return VStack(spacing: 2) {
             ForEach(rows, id: \.0) { row in
                 HStack(spacing: 8) {
