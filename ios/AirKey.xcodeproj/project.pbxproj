@@ -13,6 +13,7 @@
 		0A0A135B774164E76FF284E1 /* BoundKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2880647D989BB0F3AA77435 /* BoundKeys.swift */; };
 		0B1D340680832271168DACA0 /* KeyboardThemes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3439DE21FF3E7715A1813D8 /* KeyboardThemes.swift */; };
 		0CA42FB6B22E9D40D5037805 /* Exo2-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5CE5F1BC992FF0DE6714E081 /* Exo2-Regular.ttf */; };
+		0E05EBF97E529CF07BD13CF4 /* AIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF0F14B13F988E165A29BB5 /* AIClient.swift */; };
 		0E2BA2708B079F16054185D0 /* Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E0846BE869104E6DBEA22D /* Decoder.swift */; };
 		101FBECEE63E631AA97C2EC6 /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
 		1169BD52B05DFE6411217DD8 /* GlideTyping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D74A09E78DC5274B51D938F /* GlideTyping.swift */; };
@@ -32,10 +33,12 @@
 		2BC32C817204A010C25A54CD /* AirKeyKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2D5B67D21B7D63048C979ACB /* Limelight-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CEFA8E56206BB79F68313692 /* Limelight-Regular.ttf */; };
 		2E256D8868B5317D3D70F172 /* KeyboardTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */; };
+		2E38D0DF32F921A320E8E687 /* AIList.swift in Sources */ = {isa = PBXBuildFile; fileRef = F519F5FF46CB3E32536C01EA /* AIList.swift */; };
 		32921FDEFAFE7478E0F6938A /* theme-wood-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 99149A26179B099AF88712C1 /* theme-wood-return.caf */; };
 		344ABDADCE51621C04B89A90 /* NoteEditSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C7502D7F5089AD801CCF86 /* NoteEditSurface.swift */; };
 		36698C65A8135BE044AFA613 /* herringbone.png in Resources */ = {isa = PBXBuildFile; fileRef = D8ED87229ECC9743CF0443D0 /* herringbone.png */; };
 		36DDFD6D148A12FF5E530569 /* PhraseMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EFC66EC9089F83D6FF6384 /* PhraseMemory.swift */; };
+		3C9E2A8EE49EB85D65E89314 /* Mascot.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D82843735C6F9608FC144101 /* Mascot.xcassets */; };
 		3D89726AC2B2766329C5F4AF /* GlideTrail.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55EA3185F3C9A7AB599371C /* GlideTrail.swift */; };
 		40A4EF9A990F8FF7B01D4A64 /* frost.png in Resources */ = {isa = PBXBuildFile; fileRef = D2F1AEE34AF790598CCACCED /* frost.png */; };
 		42C16123A2B152BC84C30BB1 /* wood.png in Resources */ = {isa = PBXBuildFile; fileRef = 13B2ADBA4BC711D6FD639FCF /* wood.png */; };
@@ -111,6 +114,7 @@
 		9718C0F36021A99174CFAFEB /* EmoticonCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1724C4A419232FE86A5CEA63 /* EmoticonCell.swift */; };
 		9947C11236F0D6EDFC1C3C8A /* AirKeyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2848176EB456D3E16DCE29B2 /* AirKeyApp.swift */; };
 		997DC9E25DB11FDE1E595D6A /* ChakraPetch-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 30457663FB17983A5CBF0343 /* ChakraPetch-Medium.ttf */; };
+		9A4011E27B0095FC2DA655A8 /* AISuggest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07858447593B7AAA8C336898 /* AISuggest.swift */; };
 		9BD375DE10165485127B0DFD /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F281D96CC601377703F9456D /* NotesStore.swift */; };
 		9C32A42F573E50D14DE86AA2 /* RatesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903AACEC21543E477BA83F58 /* RatesStore.swift */; };
 		9EB29FD3F340E36ED2ED720E /* KeyboardToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DFB34C7C6FBB8745B1F985 /* KeyboardToast.swift */; };
@@ -134,6 +138,7 @@
 		C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1ED72AD170088D3999341D5 /* CommandSheet.swift */; };
 		C432680CE757B1F296C7A8AC /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
 		C65503F552904E7CCC1B3D2F /* patina.png in Resources */ = {isa = PBXBuildFile; fileRef = 492181DA8C6DEF4030CADCC1 /* patina.png */; };
+		C6779732FBDF9F307B06425F /* Mascot.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D82843735C6F9608FC144101 /* Mascot.xcassets */; };
 		CA2130F8E526E86FD50A564D /* DMSerifDisplay-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */; };
 		CF12F7BC9D2F918CC62FB1DD /* Kit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */; };
 		CF383AE8E9C2FBFCC86CBEE6 /* Vault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372D9B19A11E10D4CD1002D /* Vault.swift */; };
@@ -192,6 +197,7 @@
 
 /* Begin PBXFileReference section */
 		03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSerifDisplay-Regular.ttf"; sourceTree = "<group>"; };
+		07858447593B7AAA8C336898 /* AISuggest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISuggest.swift; sourceTree = "<group>"; };
 		09D40447CC983DE204796FE7 /* Jost-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jost-OFL.txt"; sourceTree = "<group>"; };
 		09EC95D4D892D48A66E2F9FE /* EmojiData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiData.swift; sourceTree = "<group>"; };
 		0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuShell.swift; sourceTree = "<group>"; };
@@ -265,6 +271,7 @@
 		8703A48BC2C8CEDF93C4FD99 /* IMFellEnglish-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IMFellEnglish-OFL.txt"; sourceTree = "<group>"; };
 		877ECDEFFC7A4286B5B50EFA /* Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toolbar.swift; sourceTree = "<group>"; };
 		8879561B2F59D60F62F0A50A /* Limelight-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Limelight-OFL.txt"; sourceTree = "<group>"; };
+		8CF0F14B13F988E165A29BB5 /* AIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIClient.swift; sourceTree = "<group>"; };
 		8DAE64AFDBCDC87016FCA5FF /* Prata-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Prata-OFL.txt"; sourceTree = "<group>"; };
 		903AACEC21543E477BA83F58 /* RatesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatesStore.swift; sourceTree = "<group>"; };
 		923C5EFFF20EF449F93E8B1A /* KeyFaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyFaces.swift; sourceTree = "<group>"; };
@@ -319,6 +326,7 @@
 		D5F4865A4F6F27D45CCA18CA /* AirKeyKeyboard.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AirKeyKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D639A7CDC8F63328A5C78791 /* theme-mech-space.caf */ = {isa = PBXFileReference; path = "theme-mech-space.caf"; sourceTree = "<group>"; };
 		D8131A8647B255A69CE1934C /* GamesSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamesSurface.swift; sourceTree = "<group>"; };
+		D82843735C6F9608FC144101 /* Mascot.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Mascot.xcassets; sourceTree = "<group>"; };
 		D8ED87229ECC9743CF0443D0 /* herringbone.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = herringbone.png; sourceTree = "<group>"; };
 		D9851A9A472BEEA624723FBC /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		D99FE4AB7B6B57291405B0B2 /* en.glyd */ = {isa = PBXFileReference; path = en.glyd; sourceTree = "<group>"; };
@@ -338,6 +346,7 @@
 		F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kit.swift; sourceTree = "<group>"; };
 		F450FC9D20542665FEA11A43 /* theme-wood-letter.caf */ = {isa = PBXFileReference; path = "theme-wood-letter.caf"; sourceTree = "<group>"; };
 		F4E37A35D60CB1639593332E /* MemoryLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryLogger.swift; sourceTree = "<group>"; };
+		F519F5FF46CB3E32536C01EA /* AIList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIList.swift; sourceTree = "<group>"; };
 		F55EA3185F3C9A7AB599371C /* GlideTrail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlideTrail.swift; sourceTree = "<group>"; };
 		F55F915837EB735292FB7E43 /* Marcellus-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Marcellus-Regular.ttf"; sourceTree = "<group>"; };
 		F76815909587B9263F41E788 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -351,7 +360,6 @@
 				1C27100FB234C7ABEC38EB7B /* AgentModel.swift */,
 				B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */,
 				2A7505EE4ED5DF1E83292523 /* Protections.swift */,
-				91C217EA25E892B407ABFDEB /* .claude */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -385,13 +393,6 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-		0D67CEC6ECCD3EB698F5599E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		189699E195BCCCA4A9E0B0FB /* AirKey */ = {
 			isa = PBXGroup;
 			children = (
@@ -402,18 +403,10 @@
 				AE30351773DFCF5713DBF24A /* DeviceKey.swift */,
 				38827B21096CE8DA8AB2FE61 /* Info.plist */,
 				AF41A04D107BDF975DB721DC /* RootView.swift */,
-				0D67CEC6ECCD3EB698F5599E /* .claude */,
 				09770E26BBCCB4EA757F7D26 /* Components */,
 				22AAAB9198B7E413FE4CC2D8 /* Screens */,
 			);
 			path = AirKey;
-			sourceTree = "<group>";
-		};
-		1955E37AC411BC4F0D5B799E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		22AAAB9198B7E413FE4CC2D8 /* Screens */ = {
@@ -452,13 +445,6 @@
 				C70C41E6B9B22A5F3AD0E222 /* Textures */,
 			);
 			path = Resources;
-			sourceTree = "<group>";
-		};
-		5D25F608B8B8E403D70BBD2E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		800B64210BA145E55B616DD0 /* Fonts */ = {
@@ -500,17 +486,13 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
-		91C217EA25E892B407ABFDEB /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		98A81E83354111FC345F7EBB /* Surfaces */ = {
 			isa = PBXGroup;
 			children = (
 				CF6F4A59810137237EEEEADB /* AIBar.swift */,
+				8CF0F14B13F988E165A29BB5 /* AIClient.swift */,
+				F519F5FF46CB3E32536C01EA /* AIList.swift */,
+				07858447593B7AAA8C336898 /* AISuggest.swift */,
 				96F3CA247BD59F30C6A56517 /* ClipboardPanel.swift */,
 				A225E599C4173FF39DE0DBD6 /* ControlScrollView.swift */,
 				D2E771E266A49E43CB697AB1 /* EmojiBoard.swift */,
@@ -543,7 +525,6 @@
 				3AF49B41A807E6455291CD22 /* AirKeyKeyboard.entitlements */,
 				E1F81127BD0FC8E23110F7C6 /* Info.plist */,
 				41A268554547ABD1D29F4116 /* KeyboardViewController.swift */,
-				1955E37AC411BC4F0D5B799E /* .claude */,
 				07888C8DFF812A19F0FE10F3 /* Agent */,
 				C1E384945909F6681F522065 /* Design */,
 				B50FB382AF12A7C5EF088C9F /* Engine */,
@@ -576,7 +557,6 @@
 				5D3CFBB86938CDC8F30275EB /* StripPolicy.swift */,
 				DABA0E548446A1B47682D911 /* TextPDF.swift */,
 				994FF05E6C99D2F1D75113ED /* VaultStore.swift */,
-				5D25F608B8B8E403D70BBD2E /* .claude */,
 				BF754FBE26852779E64F5B3A /* Typing */,
 			);
 			path = Engine;
@@ -632,19 +612,12 @@
 				BE82DAB9B756AF51443152AD /* Instant.swift */,
 				53E174E7250C5963B6505C36 /* Intent.swift */,
 				5313A4631B0C886CFD88DE0A /* Logo.swift */,
+				D82843735C6F9608FC144101 /* Mascot.xcassets */,
 				602E65F915BF5CB7CA8F9B37 /* Models.swift */,
 				DF85E248A9A14144C071BC8E /* Theme.swift */,
 				B372D9B19A11E10D4CD1002D /* Vault.swift */,
-				C52C527F2FD4B6B2BDE238D0 /* .claude */,
 			);
 			path = Shared;
-			sourceTree = "<group>";
-		};
-		C52C527F2FD4B6B2BDE238D0 /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		C70C41E6B9B22A5F3AD0E222 /* Textures */ = {
@@ -756,6 +729,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				42E11D5013352DB96632C633 /* Assets.xcassets in Resources */,
+				3C9E2A8EE49EB85D65E89314 /* Mascot.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -787,6 +761,7 @@
 				2D5B67D21B7D63048C979ACB /* Limelight-Regular.ttf in Resources */,
 				928D9A3257C61DC07070A1F2 /* Marcellus-OFL.txt in Resources */,
 				71C8642E3C49445A90EACB30 /* Marcellus-Regular.ttf in Resources */,
+				C6779732FBDF9F307B06425F /* Mascot.xcassets in Resources */,
 				AD7900466E6F03BE59F41A20 /* NOTICE.md in Resources */,
 				60374E3C6A359DB0FBE8A917 /* Orbitron-OFL.txt in Resources */,
 				F35BE733DC13DCC584EEECF5 /* Orbitron[wght].ttf in Resources */,
@@ -838,6 +813,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				66D0C53BDFF1AA00A431871E /* AIBar.swift in Sources */,
+				0E05EBF97E529CF07BD13CF4 /* AIClient.swift in Sources */,
+				2E38D0DF32F921A320E8E687 /* AIList.swift in Sources */,
+				9A4011E27B0095FC2DA655A8 /* AISuggest.swift in Sources */,
 				4E7B527414E0A3454AFFECFC /* API.swift in Sources */,
 				A4A0B702C7D8673160AE630E /* AccentPopup.swift in Sources */,
 				93CD9FF5B5C6F85C1F49BF94 /* AgentModel.swift in Sources */,
