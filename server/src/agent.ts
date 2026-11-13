@@ -132,6 +132,13 @@ async function swap(
     return done({ outcome: "blocked", message: `Token check failed: ${bad.reason}.`, swap: { from, to } });
   }
 
+  // "$5 of near": how much NEAR that is at NEAR Intents' price right now.
+  if (action.usd) {
+    const price = from.token!.price;
+    if (!price) return done({ outcome: "not-sent", message: `NEAR Intents has no price for ${action.from} right now, so I can't work out $${action.amount} of it.`, swap: { from, to } });
+    action = { ...action, amount: String(Number((Number(action.amount) / price).toFixed(4))), usd: false };
+  }
+
   let quote;
   try {
     quote = await deps.intents.quote(from.token!, to.token!, action.amount);
