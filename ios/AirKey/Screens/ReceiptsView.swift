@@ -83,7 +83,7 @@ struct ReceiptDetail: View {
     private var read: some View {
         let a = r.interpretation.action
         return Step(title: "How it was read") {
-            KeyValue(key: "Read by", value: r.interpretation.reader == "rules" ? "Fixed rules, no AI" : "NEAR AI Cloud")
+            KeyValue(key: "Read by", value: Self.readerName(r.interpretation.reader), color: r.interpretation.reader == "openai" ? AK.amber : AK.bone)
             if a.kind == "pay" {
                 if let amt = a.amountNear { KeyValue(key: "Pay", value: "\(amt) NEAR") }
                 if let to = a.receiver { KeyValue(key: "To", value: to, mono: true) }
@@ -97,7 +97,7 @@ struct ReceiptDetail: View {
             }
             if let ai = r.interpretation.ai {
                 KeyValue(key: "Model", value: ai.model, mono: true)
-                KeyValue(key: "Reply signature", value: ai.signature.status, color: ai.signature.status == "verified" ? AK.accent : AK.amber)
+                KeyValue(key: "Reply signature", value: r.interpretation.reader == "openai" ? "Not signed" : ai.signature.status, color: ai.signature.status == "verified" ? AK.accent : AK.amber)
                 KeyValue(key: "Attestation", value: ai.attestation, color: AK.amber)
             }
         }
@@ -174,6 +174,16 @@ struct ReceiptDetail: View {
                 }
                 .padding(.top, 2)
             }
+        }
+    }
+
+    /// The reader that actually answered, named plainly.
+    static func readerName(_ reader: String) -> String {
+        switch reader {
+        case "rules": "Fixed rules, no AI"
+        case "near-ai-cloud": "NEAR AI Cloud, private"
+        case "openai": "OpenAI, not private"
+        default: reader
         }
     }
 
