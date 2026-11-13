@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// One agent on the Leash tab: who it is, what it may spend, and what it spent today.
+/// One agent on the Limits tab: who it is, what it may spend, and what it spent today.
 struct AgentCard: View {
     let entry: LeashState.AgentEntry
     let paused: Bool
@@ -22,7 +22,7 @@ struct AgentCard: View {
                     }
                 }
                 Spacer(minLength: 8)
-                if paused { Pill(text: "Stopped", color: AK.red) } else { Pill(text: trusted ? "Trusted" : "Untrusted", color: tierColor) }
+                if paused { Pill(text: "Stopped", color: AK.red) } else { Pill(text: Plain.tier(entry.agent.tier), color: tierColor) }
             }
 
             Text(Fmt.agentPurpose(account: entry.account, tier: entry.agent.tier))
@@ -39,7 +39,7 @@ struct AgentCard: View {
             Hairline()
             KeyValue(key: "Most per payment", value: Fmt.near(entry.agent.per_payment_cap))
             KeyValue(key: "Most per day", value: Fmt.near(entry.agent.daily_cap))
-            Label("Can't send NEAR on its own. Every payment goes through the leash.", systemImage: "lock.fill")
+            Label("Can't move money on its own. Every payment is checked against these limits.", systemImage: "lock.fill")
                 .font(.footnote).foregroundStyle(AK.accent).fixedSize(horizontal: false, vertical: true)
         }
     }

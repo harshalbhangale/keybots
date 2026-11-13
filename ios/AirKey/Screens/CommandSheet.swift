@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 /// Tell an agent what to do, from the app. The same thing the keyboard does:
-/// your own words go to the Payment Agent, someone else's to the Inbox Agent.
+/// your own words pay and trade; someone else's are only checked.
 struct CommandSheet: View {
     @Environment(AppModel.self) private var model
     let open: (Receipt) -> Void
@@ -33,10 +33,10 @@ struct CommandSheet: View {
                 field
 
                 if let result {
-                    Button { open(result) } label: { OutcomeCard(signal: result.signal, message: result.message) }
+                    Button { open(result) } label: { OutcomeCard(signal: result.signal, title: Plain.title(result), message: Plain.body(result)) }
                         .buttonStyle(.plain)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    Text("Tap for the full receipt.").font(.footnote).foregroundStyle(AK.muted).padding(.horizontal, 4)
+                    Text("Tap for the details.").font(.footnote).foregroundStyle(AK.muted).padding(.horizontal, 4)
                 } else if let error = model.error {
                     ErrorBanner(text: error)
                 } else if trimmed.isEmpty {
@@ -87,7 +87,7 @@ struct CommandSheet: View {
                     Label("Paste what you copied", systemImage: "doc.on.clipboard")
                 }
                 .buttonStyle(.glass)
-                Text("The Inbox Agent reads it. It can only pay people on your allowlist; anyone else waits for you.")
+                Text("AIRKEY reads it for you. It can only pay people on your allowed list; anyone else waits for you.")
                     .font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 4)
             } else {
                 Text("Try").font(.footnote.weight(.semibold)).foregroundStyle(AK.muted).padding(.horizontal, 4)
@@ -129,18 +129,18 @@ struct CommandSheet: View {
     }
 
     private var note: String {
-        if pasted { return "The Inbox Agent reads it and asks the leash. It can only pay people on your allowlist." }
-        if let intent { return intent.detail ?? "The leash checks it before anything moves." }
+        if pasted { return "AIRKEY reads it for you. It can only pay people on your allowed list." }
+        if let intent { return intent.detail ?? "Checked against your limits before anything moves." }
         return "Try “pay harshal 0.2 for dinner” or “buy $5 of near”."
     }
 
     /// Your own command that moves money takes a hold. Checking someone
-    /// else's message is a tap: the leash already treats it as untrusted.
+    /// else's message is a tap: it already gets the stricter limits.
     @ViewBuilder private var action: some View {
         if running {
             HStack(spacing: 10) {
                 ProgressView().tint(AK.bone)
-                Text(pasted ? "Inbox Agent is checking it…" : intent?.kind == .swap ? "Trading Agent is on it…" : "Asking the leash on NEAR…")
+                Text(Plain.working(pasted: pasted, swap: intent?.kind == .swap))
                     .font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
             }
             .frame(maxWidth: .infinity)
