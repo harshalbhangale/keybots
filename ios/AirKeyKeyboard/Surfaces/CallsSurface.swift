@@ -88,7 +88,7 @@ final class CallsModel {
                 await load()
                 let available = check.route.status == "available"
                 withAnimation(.snappy(duration: 0.2)) { tab = available ? .open : .done }
-                notice = available ? nil : check.route.reason
+                notice = available ? nil : check.route.reason.map(MoneyText.plain)
                 if available { Haptics.letter() } else { Haptics.warning() }
             } catch {
                 notice = error.localizedDescription
@@ -111,7 +111,7 @@ final class CallsModel {
             do {
                 let check = try await API().call(call.text)
                 guard check.route.status == "available", let command = check.route.command else {
-                    notice = check.route.reason ?? "That trade isn't on offer any more."
+                    notice = check.route.reason.map(MoneyText.plain) ?? "That trade isn't on offer any more."
                     Haptics.warning()
                     await load()
                     return
@@ -270,8 +270,10 @@ private struct CallRow: View {
                 }
                 Spacer(minLength: 4)
                 if let move = call.move {
-                    Text(String(format: "%+.2f%%", move)).font(.caption.weight(.bold).monospacedDigit())
-                        .foregroundStyle(move >= 0 ? p.good : p.bad)
+                    // Flat to two decimals is "0.00%", in no colour: never "-0.00%".
+                    let flat = abs(move) < 0.005
+                    Text(flat ? "0.00%" : String(format: "%+.2f%%", move)).font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundStyle(flat ? p.soft : move > 0 ? p.good : p.bad)
                         .contentTransition(.numericText())
                         .accessibilityLabel(String(format: "%+.2f percent since the call", move))
                 }
@@ -299,7 +301,7 @@ private struct CallRow: View {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(call.title ?? "").font(.caption.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
-                        Text(call.standIn ?? prices ?? "Nothing runs until you hold")
+                        Text(call.standIn.map(MoneyText.plain) ?? prices ?? "Nothing runs until you hold")
                             .font(.caption2).foregroundStyle(p.soft).lineLimit(1).minimumScaleFactor(0.7)
                     }
                     Spacer(minLength: 4)
@@ -323,7 +325,7 @@ private struct CallRow: View {
                     .foregroundStyle(trade.signal.plain ? p.text : AK.ink)
                     .frame(width: 20, height: 20)
                     .background(trade.signal.plain ? p.fill : trade.signal.color, in: Circle())
-                Text(trade.message).font(.caption).foregroundStyle(p.soft).lineLimit(2).minimumScaleFactor(0.85)
+                Text(MoneyText.plain(trade.message)).font(.caption).foregroundStyle(p.soft).lineLimit(2).minimumScaleFactor(0.85)
                 Spacer(minLength: 4)
                 if let tx = trade.tx, let url = URL(string: tx.url) {
                     small("Tx ↗", p) {
@@ -342,7 +344,7 @@ private struct CallRow: View {
         } else {
             HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "minus.circle").font(.caption).foregroundStyle(p.soft)
-                Text(call.dismissed == true ? "Put away, not traded." : call.reason ?? "No trade for this call.")
+                Text(call.dismissed == true ? "Put away, not traded." : call.reason.map(MoneyText.plain) ?? "No trade for this call.")
                     .font(.caption).foregroundStyle(p.soft).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }

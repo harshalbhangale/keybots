@@ -51,7 +51,7 @@ struct WalletView: View {
                 } else {
                     VStack(spacing: 10) {
                         ProgressView().tint(p.text)
-                        Text("Reading the leash on NEAR…").font(.footnote).foregroundStyle(p.soft)
+                        Text("Reading your wallet…").font(.footnote).foregroundStyle(p.soft)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -105,14 +105,14 @@ struct WalletView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    label("Agents · today", p)
+                    label("Spending limits · today", p)
                     ForEach(s.shownAgents) { entry in agent(entry, s, p) }
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
                     status(icon: s.paused ? "hand.raised.fill" : "checkmark.shield",
                            tint: s.paused ? p.bad : p.soft,
-                           title: s.paused ? "Kill switch is on. Agents are stopped." : "Kill switch is off",
+                           title: s.paused ? "All agents are stopped" : "Agents can spend within limits",
                            detail: "Change in the AIRKEY app", p)
                     status(icon: s.pending.isEmpty ? "tray" : "hourglass",
                            tint: s.pending.isEmpty ? p.soft : p.warn,
@@ -153,7 +153,7 @@ struct WalletView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(MoneyPress())
-        .accessibilityLabel("Copy the leash account, \(account)")
+        .accessibilityLabel("Copy your wallet account, \(account)")
     }
 
     private func token(_ symbol: String, _ amount: String, _ p: MoneyPalette) -> some View {
@@ -218,7 +218,7 @@ struct WalletView: View {
                         } label: {
                             HStack(spacing: 10) {
                                 mark(r.signal, p, size: 22)
-                                Text(r.message).font(.footnote).lineLimit(1)
+                                Text(MoneyText.plain(r.message)).font(.footnote).lineLimit(1)
                                 Spacer(minLength: 6)
                                 Text(Fmt.time(r.date)).font(.caption2.monospacedDigit()).foregroundStyle(p.soft)
                             }
@@ -227,7 +227,7 @@ struct WalletView: View {
                         }
                         .buttonStyle(MoneyPress())
                         .overlay(alignment: .bottom) { Rectangle().fill(p.line).frame(height: 1) }
-                        .accessibilityLabel("\(r.signal.title). \(r.message)")
+                        .accessibilityLabel("\(r.signal.title). \(MoneyText.plain(r.message))")
                     }
                 }
                 .padding(.bottom, 8)
@@ -267,7 +267,7 @@ struct WalletView: View {
             }
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(r.message).font(.footnote).fixedSize(horizontal: false, vertical: true)
+                    Text(MoneyText.plain(r.message)).font(.footnote).fixedSize(horizontal: false, vertical: true)
                     Text(detail(r)).font(.caption).foregroundStyle(p.soft).fixedSize(horizontal: false, vertical: true)
                     if let linkNote { Text(linkNote).font(.caption).foregroundStyle(p.soft) }
                 }
@@ -296,11 +296,10 @@ struct WalletView: View {
         .padding(.bottom, 6)
     }
 
-    /// "“pay drain 3” · Payment Agent · tx 9xQ…k2a"
+    /// "“pay drain 3” · Payment Agent · tx 9xQ…k2a" (no rule codes: the message says why in words)
     private func detail(_ r: Receipt) -> String {
         var parts = ["“\(r.input.text)”"]
         if let a = r.agent { parts.append(Fmt.agentName(account: a.account)) }
-        if let rule = r.decision?.rule { parts.append("rule: \(rule)") }
         if let tx = r.tx { parts.append("tx \(tx.hash.prefix(6))…\(tx.hash.suffix(4))") }
         return parts.joined(separator: " · ")
     }
