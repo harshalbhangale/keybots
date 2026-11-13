@@ -398,7 +398,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 ) { [weak self, weak st] _ in
                     guard let self, let st else { return }
                     st.mode = .holdFired
-                    self.feedback(impactStyle: .light)
+                    Haptics.modifier()
                     self.delegate?.kbReturnHeld()
                 }
             case .globe:
@@ -577,7 +577,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 st.glides = delegate?.kbSpaceGestures().glide ?? true
                 guard st.glides else { break }
                 setTrackpadLook(true)
-                feedback(impactStyle: .light, click: false)
+                Haptics.layer()
                 delegate?.kbCursorGlideBegan()
             case .moveCursor(let graphemes):
                 if st.glides { delegate?.kbMoveCursor(graphemes: graphemes) }
@@ -629,6 +629,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let now = Date()
             if now.timeIntervalSince(lastShiftTap) < 0.3 {
                 setShift(.capsLock, auto: false)
+                Haptics.capsLock()
             } else {
                 setShift(shift == .off ? .on : .off, auto: false)
             }
@@ -674,7 +675,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             addSubview(popup)
             popup.place(over: st.key.frame, in: bounds.insetBy(dx: 0, dy: -Glass.toolbarHeight))
             st.popup = popup
-            feedback(impactStyle: .light)
+            Haptics.letter()
         }
     }
 
@@ -688,6 +689,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func tickDeleteRepeat(_ st: TouchState) {
         delegate?.kbDeleteBackward()
         st.repeatCount += 1
+        // A quick ratchet that gets lighter the longer it runs.
+        Haptics.delete(repeatCount: st.repeatCount)
         // Accelerating repeat (§6.1): 90ms → 45ms after ~18 repeats.
         let interval: TimeInterval = st.repeatCount > 18 ? 0.045 : 0.09
         st.repeatTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self, weak st] _ in
@@ -703,7 +706,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     // MARK: Ripple (§5.3 — staggered per-key tint, LUT, no offscreen passes)
 
     func igniteRipple(from origin: KeyView) {
-        feedback(impactStyle: .medium)
+        Haptics.hold()
         if Glass.reduceMotion {
             // Accessibility path: haptic + 120ms origin flash, no propagation.
             origin.igniteOrigin()
@@ -735,28 +738,24 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     // MARK: Feedback
 
-    private let lightImpact = UIImpactFeedbackGenerator(style: .light)
-    private let mediumImpact = UIImpactFeedbackGenerator(style: .medium)
-
+    /// The key's sound and its own tap (Haptics), the moment a finger lands.
     private func feedback(impactStyle: UIImpactFeedbackGenerator.FeedbackStyle, click: Bool = true,
                           key: KeyView? = nil) {
         let s = SettingsStore.current
         if click, s.keyClicks {
-            // A theme's own sound on key down (docs/THEMES.md §4.3), else the
-            // system click.
+            // A theme's own sound on key down, else the system click.
             if !(key.map { ThemeSound.shared.play(Self.soundRole($0)) } ?? false) {
                 UIDevice.current.playInputClick()
             }
         }
-        guard s.haptics else { return }
-        switch impactStyle {
-        case .medium: mediumImpact.impactOccurred()
-        default: lightImpact.impactOccurred()
+        guard let key else { return impactStyle == .medium ? Haptics.modifier() : Haptics.letter() }
+        switch key.spec.kind {
+        case .char: Haptics.letter()
+        case .space: Haptics.space()
+        case .delete: Haptics.delete()
+        case .shift, .ret: Haptics.modifier()
+        case .mode, .globe, .emoji: Haptics.layer()
         }
-        // The Taptic Engine idles down between taps, and a cold one answers
-        // late — which reads as the key itself being late. Warming it for the
-        // next keystroke is what keeps fast typing feeling immediate.
-        warmHaptics()
     }
 
     /// Which of a sound pack's samples a key plays.
@@ -769,10 +768,4 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
-    /// Keep the engine ready while someone is typing. Cheap, and iOS drops
-    /// it back to idle on its own a moment after the last call.
-    private func warmHaptics() {
-        guard SettingsStore.current.haptics else { return }
-        lightImpact.prepare()
-    }
 }
