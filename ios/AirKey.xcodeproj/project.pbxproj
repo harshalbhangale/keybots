@@ -351,6 +351,7 @@
 				1C27100FB234C7ABEC38EB7B /* AgentModel.swift */,
 				B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */,
 				2A7505EE4ED5DF1E83292523 /* Protections.swift */,
+				91C217EA25E892B407ABFDEB /* .claude */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -453,6 +454,13 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		5D25F608B8B8E403D70BBD2E /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
+			sourceTree = "<group>";
+		};
 		800B64210BA145E55B616DD0 /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
@@ -490,6 +498,13 @@
 				555699AFA00E3909035F3EF8 /* Spectral-OFL.txt */,
 			);
 			path = Fonts;
+			sourceTree = "<group>";
+		};
+		91C217EA25E892B407ABFDEB /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
 			sourceTree = "<group>";
 		};
 		98A81E83354111FC345F7EBB /* Surfaces */ = {
@@ -561,6 +576,7 @@
 				5D3CFBB86938CDC8F30275EB /* StripPolicy.swift */,
 				DABA0E548446A1B47682D911 /* TextPDF.swift */,
 				994FF05E6C99D2F1D75113ED /* VaultStore.swift */,
+				5D25F608B8B8E403D70BBD2E /* .claude */,
 				BF754FBE26852779E64F5B3A /* Typing */,
 			);
 			path = Engine;
@@ -619,8 +635,16 @@
 				602E65F915BF5CB7CA8F9B37 /* Models.swift */,
 				DF85E248A9A14144C071BC8E /* Theme.swift */,
 				B372D9B19A11E10D4CD1002D /* Vault.swift */,
+				C52C527F2FD4B6B2BDE238D0 /* .claude */,
 			);
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		C52C527F2FD4B6B2BDE238D0 /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
 			sourceTree = "<group>";
 		};
 		C70C41E6B9B22A5F3AD0E222 /* Textures */ = {

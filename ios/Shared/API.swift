@@ -7,7 +7,7 @@ enum Settings {
     static var store: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 
     static var serverURL: String {
-        get { store.string(forKey: "serverURL") ?? "http://127.0.0.1:8787" }
+        get { store.string(forKey: "serverURL") ?? (Bundle.main.object(forInfoDictionaryKey: "AirkeyServer") as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "http://127.0.0.1:8787" }
         set { store.set(newValue, forKey: "serverURL") }
     }
     static var token: String {
