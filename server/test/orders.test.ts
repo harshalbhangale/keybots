@@ -62,7 +62,7 @@ const cfg = { ...loadConfig({ AIRKEY_OWNER: "x.testnet" }), nearAi: { apiKey: ""
 const chain = {
   state: async () => ({
     owner: "o", leash: "l", paused: false, available: "0", allowlist: [], blocklist: [], pending: [],
-    agents: [{ account: "trade.x.testnet", agent: { tier: "trusted" as const, per_payment_cap: "1000000000000000000000000", daily_cap: "2000000000000000000000000", spent_today: "0", day: 0 } }],
+    agents: [{ account: "trader.x.testnet", agent: { tier: "trusted" as const, per_payment_cap: "1000000000000000000000000", daily_cap: "2000000000000000000000000", spent_today: "0", day: 0 } }],
   }),
 } as unknown as Chain;
 
@@ -74,7 +74,7 @@ describe("a price-triggered order, start to finish", () => {
     const r = await runCommand(deps, "sell 1 near if it drops below 3", "typed");
     expect(r.outcome).toBe("watching");
     expect(r.message).toBe("Watching NEAR (now $3.4). When it's below $3: sell 1 near.");
-    expect(r.agent?.account).toBe("trade.x.testnet");
+    expect(r.agent?.account).toBe("trader.x.testnet");
     expect(deps.orders.list()).toHaveLength(1);
 
     const run = async (command: string) => (await runCommand(deps, command, "typed")).id;
