@@ -94,6 +94,16 @@ struct Receipt: Decodable, Identifiable {
         let to: TokenCheck
         let quote: Quote?
         let leash: SwapLeash?
+        /// Set when the swap really ran: on Rhea, from the leash.
+        let executed: Executed?
+    }
+    struct Executed: Decodable {
+        let venue: String
+        let exchange: String
+        let amountIn: String
+        let amountOut: String?
+        let symbolOut: String
+        let ok: Bool
     }
     struct TokenCheck: Decodable {
         let asked: String
