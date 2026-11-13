@@ -58,8 +58,8 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 ## AI and NEAR private compute
 - [x] NEAR AI Cloud reader with signature checks, in code
 - [x] OpenAI key saved on this Mac, outside git
-- [x] OpenAI reads loose wording while NEAR AI has no key (gpt-4.1-mini)
-- [ ] NEAR AI Cloud as the AI provider (key coming from NEAR Builders; OpenAI's place waiting on Harshal)
+- [x] NEAR AI Cloud by default, OpenAI as the fallback when NEAR AI has no key or doesn't answer (Harshal, 13 Nov)
+- [ ] NEAR AI Cloud key set (coming from NEAR Builders)
 - [ ] Hold space for AI: rewrite, reply, translate, on NEAR AI Cloud
 - [ ] AI receipts: model, signature verified yes or no, "attestation not checked"
 - [ ] Attestation check of the TEE, not just the signature
@@ -77,7 +77,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Agents: Payment (trusted), Inbox (untrusted), Trading
 - [x] Receiver checks: exists, blocked, allowlisted, account age, paid before
 - [x] Receipts for every command; server logs which client sent it
-- [x] 80 server tests
+- [x] 82 server tests
 - [ ] Host the server (waiting on Harshal's choice)
 
 ## Ship
