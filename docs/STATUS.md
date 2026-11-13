@@ -15,7 +15,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] After "pay" or "to", suggest contacts
 - [x] One backspace undoes an autocorrection and learns the word
 - [x] Space on the number layer goes back to letters
-- [ ] Haptics on every key like Kall: letter, space, delete, shift, layer, trade, success, error
+- [x] Haptics on every key like Kall: letter, space, delete, shift, layer, trade, success, error
 - [ ] Key sounds, number row and one-handed mode as settings
 - [ ] Tested end to end in Messages, light and dark, on AIRKEY's own keys
 
@@ -28,8 +28,8 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Currency conversion, sums and bill splits on the phone
 - [x] Vault: your NEAR account and saved addresses in one tap; keys and phrases refused
 - [x] Server reads swaps in dollars ("swap $5 of near to usdc", "5$")
-- [ ] Keyboard reads swaps in dollars too
-- [ ] Any wording works: AI reader when the rules can't read it (OpenAI key saved, not wired yet)
+- [x] Keyboard reads swaps in dollars too
+- [x] Any wording works: AI reader reads what the rules miss; the hold sends its exact command
 - [ ] Uniswap-style swap panel in the keyboard, after Kall's trade tab: pay side and get side, chain and token pickers, amount with MAX and presets, live quote, price impact, review card, hold to swap, haptics
 - [ ] Balances the leash holds, shown in the keyboard
 - [ ] Hold space for AI: rewrite, reply, ask
@@ -55,7 +55,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 ## AI and NEAR private compute
 - [x] NEAR AI Cloud reader with signature checks, in code
 - [x] OpenAI key saved on this Mac, outside git
-- [ ] OpenAI as the AI reader until NEAR AI is on
+- [x] OpenAI as the AI reader until NEAR AI is on (gpt-4.1-mini)
 - [ ] NEAR AI Cloud private inference on (needs your NEAR AI Cloud key)
 - [ ] Attestation check of the TEE, not just the signature
 - [ ] AI receipts: which model, signature, verified or not
@@ -74,7 +74,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Agents: Payment (trusted), Inbox (untrusted), Trading
 - [x] Receiver checks: exists, blocked, allowlisted, account age, paid before
 - [x] Receipts for every command; server logs which client sent it
-- [x] 72 server tests
+- [x] 80 server tests
 - [ ] Host the server (pick Vercel, AWS or Railway)
 
 ## More from Glyf
