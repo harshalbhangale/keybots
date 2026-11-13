@@ -245,7 +245,15 @@ export function Keys({ lit = "" }: { lit?: string }) {
 }
 
 /** A chat with the AIRKEY keyboard. It plays a scenario; the visitor can tap or hold the lime button. */
-export default function Phone({ scenario, onDone }: { scenario: Scenario; onDone?: () => void }) {
+export default function Phone({
+  scenario,
+  onDone,
+  onResult,
+}: {
+  scenario: Scenario;
+  onDone?: () => void;
+  onResult?: (p: Extract<Panel, { kind: "done" }>) => void;
+}) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [field, setField] = useState("");
   const [strip, setStrip] = useState<Strip>({ kind: "words", words: ["I", "the", "on"] });
@@ -335,6 +343,7 @@ export default function Phone({ scenario, onDone }: { scenario: Scenario; onDone
             break;
           case "panel":
             cur = s.panel;
+            if (s.panel.kind === "done") onResult?.(s.panel);
             setPanel(s.panel);
             await sleep(480);
             break;
