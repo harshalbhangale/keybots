@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import { runCommand, type Deps as CommandDeps } from "./agent.js";
+import { describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
@@ -44,6 +44,20 @@ export function buildApp(deps: Deps) {
     } catch (e) {
       return reply.code(502).send({ error: `Rhea didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
+  });
+
+  /**
+   * Read a command without running it, for the keyboard's chip: what it is in
+   * words, and the exact command to send when you hold. Rules first, an AI
+   * only for wording the rules can't read.
+   */
+  app.post<{ Body: { text?: unknown } }>("/v1/read", async (req, reply) => {
+    const text = typeof req.body?.text === "string" ? req.body.text.trim().slice(0, 500) : "";
+    if (!text) return reply.code(400).send({ error: 'Send {"text": "..."}' });
+    const read = await readCommand(deps, text);
+    const d = describe(read.action);
+    if (!d) return { kind: "unknown", reader: read.reader };
+    return { ...d, reader: read.reader };
   });
 
   /** Run one command. source: "typed" (from the owner) or "pasted" (from someone else). */
