@@ -1,6 +1,6 @@
 # AIRKEY landing page
 
-Vite + React + React Three Fiber.
+Vite + React, no 3D libraries.
 
 ```bash
 cd landing
@@ -9,6 +9,6 @@ npm run dev      # http://localhost:5180
 npm run build    # static site in landing/dist
 ```
 
-- `src/three/` — the 3D scenes: the typing keyboard (hero), the leash with its agents and payments (lab), the keycap (closing).
-- `src/lib/leash.ts` — a browser copy of the leash's decision order (RULES.md) that drives the "Try the leash" panel. It runs locally; the real decisions are on NEAR testnet and linked in the Testnet section.
-- Home and keyboard images are screenshots from `docs/screens/`; the Leash phone screen is drawn for the page.
+- `src/Phone.tsx` draws a chat with the AIRKEY keyboard and plays the demo chats; you can hold or tap the bar's button.
+- `src/scenarios.ts` holds the five chats. Each outcome matches a run recorded in the top-level README.
+- `src/ui.tsx` has the download badges. `APK_URL` is a placeholder until the AIRKEY Android build is on S3.
