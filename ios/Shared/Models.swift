@@ -216,3 +216,32 @@ struct ActResult: Decodable, Sendable {
         }
     }
 }
+
+/// A copied crypto call, read by the server's rules (POST /v1/call).
+struct CallCheck: Decodable {
+    struct Call: Decodable {
+        let isCall: Bool
+        let confidence: String
+        let asset: String?
+        let direction: String?
+        let summary: String
+    }
+    struct Caps: Decodable {
+        let agent: String
+        let perTrade: String
+        let leftToday: String
+        let paused: Bool
+    }
+    /// "available" with the command a hold would send, or "unavailable" with why not.
+    struct Route: Decodable {
+        let status: String
+        let side: String?
+        let command: String?
+        let title: String?
+        let caps: Caps?
+        let note: String?
+        let reason: String?
+    }
+    let call: Call
+    let route: Route
+}
