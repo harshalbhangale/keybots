@@ -463,7 +463,7 @@ final class AIBar: UIView {
         var items: [Item]
         if onCopy {
             items = [
-                ("summarize", "Summarize", "text.alignleft", nil, act(.summarize)),
+                ("summarize", "Summary", "text.alignleft", nil, act(.summarize)),
                 ("reply", "Reply", "arrowshape.turn.up.left", nil, act(.reply)),
                 ("translate", "Translate", "translate", nil, act(.translate)),
                 ask,
@@ -531,6 +531,7 @@ final class AIBar: UIView {
             }
             guard let c = copied, !c.isEmpty else {
                 copied = nil
+                request = nil
                 showFailure("AIRKEY couldn't read what you copied.\nSettings › Apps › AIRKEY › Paste from Other Apps › Allow.")
                 return nil
             }
@@ -680,8 +681,9 @@ final class AIBar: UIView {
     }
 
     private func retry() {
-        guard let request else { return }
         Haptics.layer()
+        // Nothing ran (the copy couldn't be read): back to the choices.
+        guard let request else { return show(.actions) }
         run(request)
     }
 
@@ -889,10 +891,11 @@ final class AIBar: UIView {
             liveSwapped = ""
             return renderLive()
         }
-        guard text != liveSource, text != liveSwapped else { return }
+        guard text != liveSource, liveSwapped.isEmpty || !text.hasSuffix(liveSwapped) else { return }
         liveSwapped = ""
         liveSource = text
         // The draft moved on: the old translation dims until the new one lands.
+        if liveTranslation.isEmpty { renderLive() }
         liveLabel.alpha = 0.45
         liveWork?.cancel()
         let target = liveTarget
@@ -940,14 +943,15 @@ final class AIBar: UIView {
     @objc private func liveTapped() {
         guard phase == .live, !liveTranslation.isEmpty else { return }
         let put = liveTranslation
-        // The space the draft ended on stays after the translation.
+        // The spaces around the draft stay around the translation.
+        let leading = String(liveWindow.prefix(while: { $0.isWhitespace }))
         let trailing = String(liveWindow.reversed().prefix(while: { $0.isWhitespace }).reversed())
         liveSwapped = put.trimmingCharacters(in: .whitespacesAndNewlines)
         liveSource = ""
         liveTranslation = ""
         Haptics.success()
-        delegate?.aiBarSwap(source: liveWindow, with: put + trailing)
-        liveLabel.text = "In"
+        delegate?.aiBarSwap(source: liveWindow, with: leading + put + trailing)
+        liveLabel.text = "Replaced"
         liveLabel.textColor = Glass.chipAccent
         providerLabel.attributedText = nil
         setNeedsLayout()

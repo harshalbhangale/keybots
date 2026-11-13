@@ -1418,7 +1418,14 @@ final class KeyboardViewController: UIInputViewController {
         // no money strip has anything (money always wins).
         if let tip = aiSuggest.chip(for: agentFieldText, allowed: surface == .none && hasFullAccess
                                     && !isSecureField && !agent.isShowing && !smartFound) {
-            toolbar.showSmart(.action(label: tip.label))
+            // On the next turn of the loop: the strip was just cleared in
+            // this one, and tools hidden twice in one turn stay drawn.
+            let label = tip.label
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.surface == .none, self.toolbar.smartChip == nil,
+                      !self.agent.isShowing else { return }
+                self.toolbar.showSmart(.action(label: label))
+            }
             return
         }
         let policy = typingPolicy
