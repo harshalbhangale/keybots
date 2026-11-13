@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { RHEA } from "../src/rhea.js";
 import { runCommand } from "../src/agent.js";
 import { judge } from "../src/checks.js";
 import { loadConfig } from "../src/config.js";
@@ -28,7 +29,7 @@ describe("judge", () => {
 });
 
 /** A fake chain that runs the leash's rules R3, R4 and R6/R7 so the flow can be tested offline. */
-function fakeChain(opts: { allow?: string[]; block?: Record<string, string>; missing?: string[] } = {}) {
+function fakeChain(opts: { allow?: string[]; block?: Record<string, string>; missing?: string[]; swapFails?: boolean } = {}) {
   const calls: { agent: string; args: Record<string, unknown> }[] = [];
   const chain: Chain = {
     state: async () => ({ owner: "o", leash: "l", paused: false, available: "0", agents: [], allowlist: [], blocklist: [], pending: [] }),
@@ -45,6 +46,13 @@ function fakeChain(opts: { allow?: string[]; block?: Record<string, string>; mis
       else if (args.ask_owner) d = { status: "pending", rule: "R7", reason: "asked", pending_id: 2 };
       else d = { status: "paid", rule: null, reason: "Within your rules", pending_id: null };
       return { decision: d, txHash: "HASH", events: [] };
+    },
+    // Rhea fills the swap unless told not to; its log says what came back.
+    swap: async (agent, args) => {
+      calls.push({ agent, args });
+      const d: Decision = { status: "paid", rule: null, reason: "Within your rules", pending_id: null };
+      if (opts.swapFails) return { decision: d, txHash: "SWAP", events: [{ event: "swap_failed" }], logs: [] };
+      return { decision: d, txHash: "SWAP", events: [{ event: "swapped" }], logs: [`Swapped ${args.amount} wrap.testnet for 124112944945096337934249 usdt.itachicara.testnet, total fee 30`] };
     },
     txUrl: (h) => `https://testnet.nearblocks.io/txns/${h}`,
   };
@@ -200,6 +208,56 @@ describe("swaps", () => {
     const r = await runCommand({ cfg, chain: chainWithTrader("1900000000000000000000000"), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "typed");
     expect(r.outcome).toBe("blocked");
     expect(r.message).toMatch(/only 0.1 NEAR is left today/);
+  });
+
+  // Rhea has a testnet pool for USDT: NEAR into USDT runs for real, from the leash.
+  const usdt = { assetId: "nep141:usdt.tether-token.near", symbol: "USDT", blockchain: "near", decimals: 6, price: 1 };
+  const intentsWithNear = () => {
+    const i = fakeIntents("0.40");
+    const list = [usdc, sol, wnear, usdt];
+    return {
+      ...i,
+      tokens: async () => list,
+      pick: async (asked: string) => {
+        const sym = asked.toUpperCase() === "NEAR" ? "WNEAR" : asked.toUpperCase();
+        const t = list.find((x) => x.symbol.toUpperCase() === sym);
+        return t ? { asked, verified: true, token: t, alsoOn: [], reason: "listed" } : { asked, verified: false, alsoOn: [], reason: "not listed" };
+      },
+    };
+  };
+  const fakeRhea = { network: RHEA.testnet, route: (s: string) => RHEA.testnet!.routes[s.toUpperCase()], quote: async () => "124112944945096337934249" };
+
+  it("swaps NEAR into USDT on Rhea for real, under the Trading Agent's caps", async () => {
+    const { chain, calls } = fakeChain();
+    const caps = chainWithTrader();
+    chain.state = caps.state;
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to usdt", "typed");
+    expect(r.outcome).toBe("swapped");
+    expect(r.message).toBe("Swapped 0.1 NEAR for 0.1241 USDT on Rhea. It's in the leash.");
+    expect(calls[0].agent).toBe("trade.x.testnet");
+    expect(calls[0].args.venue).toBe("ref-finance-101.testnet");
+    expect(calls[0].args.wrap).toBe("wrap.testnet");
+    const msg = JSON.parse(String(calls[0].args.msg));
+    expect(msg.actions[0].pool_id).toBe(1084);
+    // 1% under the pool's quote
+    expect(msg.actions[0].min_amount_out).toBe("122871815495645374554906");
+    expect(r.tx?.url).toBe("https://testnet.nearblocks.io/txns/SWAP");
+  });
+
+  it("says so when Rhea doesn't fill, and that nothing was lost", async () => {
+    const { chain } = fakeChain({ swapFails: true });
+    chain.state = chainWithTrader().state;
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to usdt", "typed");
+    expect(r.outcome).toBe("not-sent");
+    expect(r.message).toMatch(/Nothing was lost/);
+  });
+
+  it("only quotes tokens Rhea has no pool for", async () => {
+    const { chain, calls } = fakeChain();
+    chain.state = chainWithTrader().state;
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to sol", "typed");
+    expect(r.outcome).toBe("quoted");
+    expect(calls).toHaveLength(0);
   });
 
   it("blocks tokens NEAR Intents doesn't list", async () => {
