@@ -131,6 +131,8 @@ struct AgentBar: View {
                 )
             } else if let i = model.instant {
                 suggestion(icon: "equal", title: i.title, detail: i.detail, action: "Insert", primary: false, onTap: { model.insertInstant() }, onAction: { model.insertInstant() })
+            } else if !model.suggestions.isEmpty {
+                wordBar
             } else {
                 idle
             }
@@ -142,11 +144,13 @@ struct AgentBar: View {
     private var idle: some View {
         HStack(spacing: 8) {
             KeycapMark(size: 17, color: palette.text)
-            Text("Type “pay harshal 0.2 for dinner”")
-                .font(.footnote)
-                .foregroundStyle(palette.soft)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
+            if model.empty {
+                Text("Type “pay harshal 0.2 for dinner”")
+                    .font(.footnote)
+                    .foregroundStyle(palette.soft)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
             Spacer(minLength: 4)
             Button { model.runPasted() } label: {
                 Label("Check copied", systemImage: "doc.on.clipboard")
@@ -161,6 +165,44 @@ struct AgentBar: View {
             .accessibilityHint("Sends what you copied to the Inbox Agent to check")
         }
         .padding(.leading, 8)
+    }
+
+    /// Three word choices, like the system keyboard: what you typed, the fix
+    /// autocorrect would make (shaded, it goes in on space), and a completion.
+    /// After "pay" or "to", your contacts.
+    private var wordBar: some View {
+        let fixing = model.suggestions.contains { $0.kind == .correction }
+        return HStack(spacing: 0) {
+            ForEach(Array(model.suggestions.enumerated()), id: \.element) { i, s in
+                if i > 0 {
+                    Rectangle().fill(palette.soft.opacity(0.35)).frame(width: 1, height: 22)
+                }
+                Button { model.pick(s) } label: {
+                    HStack(spacing: 5) {
+                        if s.kind == .contact {
+                            Image(systemName: "person.crop.circle.fill").font(.system(size: 14)).foregroundStyle(palette.soft)
+                        }
+                        Text(s.kind == .typed && fixing ? "“\(s.text)”" : s.text)
+                            .font(.system(size: 16, weight: s.kind == .correction ? .semibold : .regular))
+                            .foregroundStyle(palette.text)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 38)
+                    .background {
+                        if s.kind == .correction { Capsule().fill(palette.function) }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(s.kind == .typed ? "Keep \(s.text)" : s.text)
+            }
+        }
+        .padding(3)
+        .frame(height: 44)
+        .glassEffect(.regular, in: .capsule)
     }
 
     /// Your words read as an action. Press and hold to run it, so a stray
