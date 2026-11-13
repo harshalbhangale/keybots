@@ -475,7 +475,7 @@ final class KeyToolbar: UIView {
             // The lines between suggestion slots go with the suggestions:
             // a panel's title never has slots.
             for line in slotLines { line.isHidden = true }
-            divider.isHidden = hideTools || Glass.solidLook
+            divider.isHidden = true
         } else {
             // Back to exactly one of tools or suggestions. Setting both here
             // (tools on, suggestions on) drew words over the icons after
@@ -759,7 +759,7 @@ final class KeyToolbar: UIView {
     private func applyCandidatesVisibility(toolsVisible: Bool) {
         guard panelTitle == nil else { return }   // a panel owns the strip
         scroll.isHidden = !toolsVisible
-        divider.isHidden = !toolsVisible || Glass.solidLook
+        divider.isHidden = true
         candidatesStack.isHidden = toolsVisible || !showingCandidates
         for (i, line) in slotLines.enumerated() { line.isHidden = candidatesStack.isHidden || i >= slotLineCount }
     }
@@ -894,7 +894,8 @@ final class KeyToolbar: UIView {
         // Whatever ends the row on the right ends as far in as the key starts
         // on the left, so the strip sits centred over the keys.
         let rightInk = bounds.width - inkX
-        divider.isHidden = Glass.solidLook
+        // No rule between the keycap and the tools: the space does that.
+        divider.isHidden = true
         let left = markRight + (Glass.solidLook ? 11 : 17)
         if !smartCard.isHidden {
             // Level with the g key (user, 2026-09-30: "why did the ai strip
@@ -1031,7 +1032,8 @@ final class ChipMagic {
         return bands
     }()
     /// The glow's strength over the sheet: a dark one needs more to show.
-    static var glowStrength: Float { Glass.chromeDark ? 0.55 : 0.40 }
+    /// No glow: a chip is a quiet card, not a light show.
+    static var glowStrength: Float { 0 }
 
     private let glowRing = CALayer()
     private let glowSpin = CAGradientLayer()
@@ -1087,7 +1089,7 @@ final class ChipMagic {
         borderMask.fillColor = nil
         borderMask.strokeColor = UIColor.black.cgColor
         // 2pt, the card's outermost edge (user: "expand border").
-        borderMask.lineWidth = 2
+        borderMask.lineWidth = 1
         borderRing.mask = borderMask
         borderRing.addSublayer(borderSpin)
         // Two runs of the colours side by side: sliding by one run loops.
@@ -1132,7 +1134,10 @@ final class ChipMagic {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         cardFill.fillColor = Glass.chipFace?.cgColor ?? white(dark ? 0.10 : 0.55)
-        glassWash.opacity = dark ? 0.14 : 0.10
+        // One quiet hairline round the card; no colours drifting through it.
+        let line = dark ? white(0.18) : UIColor.black.withAlphaComponent(0.10).cgColor
+        borderSpin.colors = [line, line]
+        glassWash.opacity = 0
         glassSheen.colors = [white(dark ? 0.12 : 0.6), white(0)]
         glassRim.colors = [white(dark ? 0.32 : 0.95), white(dark ? 0.05 : 0.3)]
         glowRing.opacity = Self.glowStrength
@@ -1187,11 +1192,7 @@ final class ChipMagic {
         let period = max(1, (card.width * 1.5).rounded())
         washFlow.bounds = CGRect(x: 0, y: 0, width: period * 2, height: card.height)
         washFlow.position = .zero
-        if period != washPeriod {
-            washPeriod = period
-            // A new width is a new run: start the drift over on it.
-            if washFlow.animation(forKey: "flow") != nil { startFlow() }
-        }
+        washPeriod = period
         // Inside the 2pt border; the rim's 1pt line just within it.
         sheenMask.path = inside(2)
         rimMask.path = inside(2.5)
@@ -1208,61 +1209,18 @@ final class ChipMagic {
         spin.position = CGPoint(x: rect.midX, y: rect.midY)
     }
 
-    /// With the card: one that has just appeared fades its glow in, and the
-    /// colours move only while one shows. Reduce Motion keeps them still.
+    /// With the card: a still, quiet card; nothing glows or turns.
     func show(_ showing: Bool, fresh: Bool) {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        glowRing.isHidden = !showing
-        glowRing.opacity = Self.glowStrength
+        glowRing.isHidden = true
         CATransaction.commit()
-        guard showing else { return stop() }
-        if fresh, !Glass.reduceMotion {
-            let fade = CABasicAnimation(keyPath: "opacity")
-            fade.fromValue = 0
-            fade.toValue = Self.glowStrength
-            fade.duration = 0.25
-            fade.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            glowRing.add(fade, forKey: "fade")
-        }
-        start()
     }
 
-    /// The keyboard went away, or came back: the colours move only on screen.
+    /// The keyboard went away, or came back. Kept for the toolbar's calls;
+    /// a still card has nothing to pause.
     func setRunning(_ running: Bool) {
         paused = !running
-        if running { start() } else { stop() }
-    }
-
-    private func start() {
-        guard !paused, !Glass.reduceMotion, card?.isHidden == false, !glowRing.isHidden,
-              glowSpin.animation(forKey: "turn") == nil else { return }
-        let turn = CABasicAnimation(keyPath: "transform.rotation.z")
-        turn.fromValue = 0
-        turn.toValue = CGFloat.pi * 2
-        turn.duration = 4
-        turn.repeatCount = .infinity
-        // A slow turn looks as smooth at 30 frames a second as at 120.
-        turn.preferredFrameRateRange = CAFrameRateRange(minimum: 20, maximum: 30, preferred: 30)
-        // Added in one go, so the border and the glow turn as one.
-        for spin in [glowSpin, borderSpin] { spin.add(turn, forKey: "turn") }
-        startFlow()
-    }
-
-    /// The colours inside drift one run to the left every 6 s, and loop.
-    private func startFlow() {
-        let flow = CABasicAnimation(keyPath: "transform.translation.x")
-        flow.fromValue = 0
-        flow.toValue = -washPeriod
-        flow.duration = 6
-        flow.repeatCount = .infinity
-        flow.preferredFrameRateRange = CAFrameRateRange(minimum: 20, maximum: 30, preferred: 30)
-        washFlow.add(flow, forKey: "flow")
-    }
-
-    private func stop() {
-        for spin in [glowSpin, borderSpin] { spin.removeAnimation(forKey: "turn") }
-        washFlow.removeAnimation(forKey: "flow")
     }
 }
 

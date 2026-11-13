@@ -71,7 +71,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 68 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, the full command flow
+npm test                       # 80 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
@@ -180,7 +180,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
 | A Trading Agent with its own identity and limits | **Built**: `trader.<you>` on testnet, function-call key only (pay, report, swap), its own caps (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
-| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 68 tests, live on testnet (table above) |
+| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 80 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | NEAR AI Cloud inference | **Code built, not yet run live** (needs an API key): used only for text the rules can't read; checks each reply's ECDSA response signature against the exact request and response bytes. The attestation report behind the signing key is *not* checked yet, and receipts say so. |

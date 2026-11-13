@@ -26,6 +26,13 @@ struct Intent: Equatable {
             let below = ["below", "under"].contains(m[2].lowercased())
             return Intent(kind: .swap, title: trade.title, detail: "Runs when the price is \(below ? "below" : "above") $\(m[3])", verb: "place")
         }
+        // "swap $5 of near to usdc", "swap 5$ of near for usdc", "5 dollars worth of near"
+        if let m = match(swapUsd, line) {
+            let amount = m[1].isEmpty ? m[2] : m[1]
+            if m[3].uppercased() != m[4].uppercased() {
+                return Intent(kind: .swap, title: "Swap $\(amount) of \(m[3].uppercased()) to \(m[4].uppercased())", detail: "Worked out at today's price", verb: "swap")
+            }
+        }
         if let m = match(swap, line) {
             return Intent(kind: .swap, title: "Swap \(m[1]) \(m[2].uppercased()) to \(m[3].uppercased())", detail: nil, verb: "swap")
         }
@@ -73,6 +80,8 @@ struct Intent: Equatable {
     private static let sell = regex(#"\bsell\s+"# + amount + #"\s*"# + symbol + #"(?:\s+(?:for|to|into)\s+"# + symbol + #")?\b"#)
 
     private static let when = regex(#"^(.+?)\s+(?:if|when|once|whenever)\s+(?:it|the\s+price|\$?[a-z][a-z0-9]{1,9})?\s*(?:drops?|falls?|dips?|goes|is|gets|rises?|climbs?|hits)?\s*(?:to\s+)?(below|under|above|over|past)\s+\$?"# + amount + #"\s*[.!?]*$"#)
+    private static let dollars = #"(?:\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:\$|usd|dollars?|bucks))"#
+    private static let swapUsd = regex(#"\b(?:swap|convert|exchange|trade)\s+"# + dollars + #"\s+(?:worth\s+)?(?:of\s+)?\$?([a-z][a-z0-9]{1,9})\s+(?:to|for|into)\s+\$?([a-z][a-z0-9]{1,9})\b"#)
     private static let swap = regex(#"\bswap\s+"# + amount + #"\s*([a-z][a-z0-9]{1,9})\s+(?:to|for|into)\s+([a-z][a-z0-9]{1,9})\b"#)
     private static let amountFirst = regex(#"\b"# + verb + #"\s+"# + amount + unit + #"\s+(?:to\s+)?"# + account + memo + #"\s*[.!?]*$"#)
     private static let receiverFirst = regex(#"\b"# + verb + #"\s+"# + account + #"\s+"# + amount + unit + memo + #"\s*[.!?]*$"#)
