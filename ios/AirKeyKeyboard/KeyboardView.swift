@@ -323,7 +323,7 @@ struct AgentBar: View {
     private func working(_ source: String) -> some View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(palette.text)
-            Text(source == "pasted" ? "Inbox Agent is checking it…" : model.runningKind == .swap ? "Trading Agent is getting a quote…" : "Asking the leash on NEAR…")
+            Text(source == "pasted" ? "Inbox Agent is checking it…" : model.runningKind == .swap ? "Trading Agent is on it…" : "Asking the leash on NEAR…")
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(palette.text)
             Spacer(minLength: 0)
