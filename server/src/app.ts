@@ -194,7 +194,7 @@ export function buildApp(deps: Deps) {
     const text = typeof req.body?.text === "string" ? req.body.text.trim().slice(0, 2000) : "";
     if (!text) return reply.code(400).send({ error: 'Send {"text": "..."}' });
     const call = readCall(text);
-    const route = await routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade });
+    const route = await routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea });
     return { call, route };
   });
 

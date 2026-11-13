@@ -26,7 +26,12 @@ export type CallRoute =
       command: string;
       title: string;
       token: { symbol: string; assetId: string; price?: number };
-      caps: { agent: string; perTrade: string; leftToday: string; paused: boolean } | null;
+      /** What NEAR Intents would give for it right now (a dry quote; nothing sent). */
+      quote: { amountIn: string; amountOut: string; symbolOut: string; usdOut?: string } | null;
+      /** Set when the hold runs something other than the title, saying what (testnet has no SOL). */
+      standIn: string | null;
+      /** The Trading Agent's caps on chain, and whether this trade fits them now. */
+      caps: { agent: string; perTrade: string; leftToday: string; paused: boolean; within: boolean } | null;
       note: string;
     }
   | { status: "unavailable"; reason: string };
@@ -106,7 +111,14 @@ export function readCall(text: string): Call {
 export async function routeCall(
   text: string,
   call: Call,
-  deps: { intents?: IntentsClient; chain: { state(): Promise<LeashState> }; tradeAgent: string },
+  deps: {
+    intents?: IntentsClient;
+    chain: { state(): Promise<LeashState> };
+    tradeAgent: string;
+    network: string;
+    /** Tokens Rhea can swap NEAR into here (testnet: USDC, USDT). */
+    rhea?: { route(symbol: string): unknown };
+  },
 ): Promise<CallRoute> {
   if (!call.isCall || !call.asset) return { status: "unavailable", reason: "This isn't a trade call." };
   if (contract.test(text)) {
@@ -127,9 +139,29 @@ export async function routeCall(
   const asset = call.asset.toLowerCase();
   const usd = `$${CALL_SIZE_USD}`;
   const side = call.direction === "bullish" ? "buy" : "sell";
+  // Testnet has no SOL (or most tokens): the hold swaps NEAR to USDC on Rhea
+  // instead, and the chip says so. The quote shown is NEAR Intents' real one.
+  const standIn =
+    side === "buy" && asset !== "near" && deps.network !== "mainnet" && !deps.rhea?.route(call.asset)
+      ? `Testnet has no ${call.asset}, so the hold swaps NEAR to USDC on Rhea instead.`
+      : null;
   const command =
-    side === "sell" ? `swap ${usd} of near to usdc` : asset === "near" ? `buy ${usd} of near` : `swap ${usd} of near to ${asset}`;
+    side === "sell" || standIn ? `swap ${usd} of near to usdc` : asset === "near" ? `buy ${usd} of near` : `swap ${usd} of near to ${asset}`;
   const title = side === "sell" ? `Sell ${usd} of NEAR for USDC` : `Buy ${usd} of ${call.asset}`;
+
+  // What it's worth in NEAR, at NEAR Intents' price.
+  const nearToken = (await deps.intents.pick("NEAR", "from")).token;
+  const amountNear = nearToken?.price ? Number((CALL_SIZE_USD / nearToken.price).toFixed(4)) : null;
+
+  let quote: Extract<CallRoute, { status: "available" }>["quote"] = null;
+  if (side === "buy" && asset !== "near" && nearToken && amountNear) {
+    try {
+      const q = await deps.intents.quote(nearToken, check.token, String(amountNear));
+      quote = { amountIn: String(amountNear), amountOut: q.amountOutFormatted, symbolOut: call.asset, usdOut: q.amountOutUsd };
+    } catch {
+      // No quote right now; the chip goes without it.
+    }
+  }
 
   let caps: Extract<CallRoute, { status: "available" }>["caps"] = null;
   try {
@@ -137,7 +169,9 @@ export async function routeCall(
     const a = state.agents.find((x) => x.account === deps.tradeAgent)?.agent;
     if (a) {
       const left = BigInt(a.daily_cap) - BigInt(a.spent_today);
-      caps = { agent: deps.tradeAgent, perTrade: near(BigInt(a.per_payment_cap)), leftToday: near(left > 0n ? left : 0n), paused: state.paused };
+      const value = amountNear ? BigInt(Math.round(amountNear * 1e6)) * 10n ** 18n : null;
+      const within = !state.paused && value !== null && value <= BigInt(a.per_payment_cap) && value <= left;
+      caps = { agent: deps.tradeAgent, perTrade: near(BigInt(a.per_payment_cap)), leftToday: near(left > 0n ? left : 0n), paused: state.paused, within };
     }
   } catch {
     // The chip still works without the caps; the leash checks them again on the hold.
@@ -148,6 +182,8 @@ export async function routeCall(
     command,
     title,
     token: { symbol: check.token.symbol, assetId: check.token.assetId, price: check.token.price },
+    quote,
+    standIn,
     caps,
     note: `From a copied call (${call.confidence}). ${call.asset} is on NEAR Intents. Nothing runs until you hold.`,
   };
