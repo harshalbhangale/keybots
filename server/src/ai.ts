@@ -111,7 +111,7 @@ export async function chatWithEvidence(
   return { content, evidence };
 }
 
-async function checkSignature(
+export async function checkSignature(
   chatId: string,
   cfg: { apiKey: string; model: string; base: string },
   requestHash: string,

@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
+import { aiRoutes, type AiRouteDeps } from "./ai-routes.js"; // GLYF AI HOOK
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { readCall, routeCall } from "./calls.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
@@ -7,7 +8,7 @@ import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient };
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient } & AiRouteDeps;
 
 export function buildApp(deps: Deps) {
   const app = Fastify({ logger: false });
@@ -198,6 +199,9 @@ export function buildApp(deps: Deps) {
     const route = await routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea });
     return { call, route };
   });
+
+  // GLYF AI HOOK: streamed act, ask, translate, suggest, search, glyfs. See ai-routes.ts.
+  aiRoutes(app, deps);
 
   return app;
 }
