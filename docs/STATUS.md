@@ -15,17 +15,17 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Kall Markets' keyboard core moved into AIRKEY: keys, layouts, accent popups, delete repeat
 - [x] Kall Markets' typing engine: autocorrect, 3 suggestions, next-word prediction, learning
 - [x] Glide (swipe) typing with a trail, checked in Messages; token tickers (usdc, usdt…) glide too
-- [~] Space-bar cursor glide (ported, not checked yet)
+- [x] Space-bar cursor: slide on space moves the cursor (checked in Messages)
 - [x] Toolbar strip: the mark and three tools; the rest in the menu
-- [~] Clipboard history panel and paste chip (ported, not checked yet)
-- [~] Emoji board, emoji next to words (ported, not checked yet)
-- [~] Themes: glass keys, light and dark from the chat app (light checked, dark not yet)
+- [x] Clipboard panel: All, Text, Link, Image; keeps every copy only if you turn that on
+- [x] Emoji board with search, categories and kaomoji
+- [x] Themes: light and dark follow the chat app (both checked)
 - [x] Autocorrect never touches names, NEAR accounts, token symbols, $tickers or numbers
 - [x] After "pay" or "to", suggest contacts
 - [x] One backspace undoes an autocorrection and learns the word
 - [x] Space on the number layer goes back to letters
 - [x] Haptics on every key like Kall: letter, space, delete, shift, layer, trade, success, error
-- [ ] Types smoothly in Messages, light and dark, checked end to end
+- [x] Types smoothly in Messages, light and dark: taps, glide, cursor, emoji, clipboard
 
 ## Keyboard: money
 - [x] Read "pay harshal 0.2" and show a chip
