@@ -117,6 +117,14 @@ final class GlideDecoder {
     /// An acronym ("DJ", "PST") ranks as if this much rarer: nobody glides
     /// one, and they crowded the word floating over the finger.
     static let acronymPenalty: Float = 40
+    /// Token tickers people glide in money commands, with a frequency on the
+    /// dictionary's 0–255 scale. Common words win where both fit the path.
+    static let tickers: [(String, Float)] = [
+        ("usdc", 225), ("usdt", 225), ("wnear", 190), ("eth", 200), ("btc", 200),
+        ("sol", 190), ("rhea", 180), ("aurora", 170),
+    ]
+    /// Marks a scored ticker (personal words are -1, dictionary words 0 and up).
+    static let tickerWord = -2
 
     private let trie: GlydTrie
 
@@ -542,6 +550,25 @@ final class GlideDecoder {
                     }
                 }
             }
+            // Tickers the dictionary hasn't got ("usdc"): glide-able like the
+            // person's own words, so "swap 1 near to usdc" can be swiped.
+            for (key, base) in Self.tickers {
+                let bytes = key.unicodeScalars.map { UInt8($0.value - 97) }
+                guard startKeys.contains(Int(bytes[0])), endKeys.contains(Int(bytes[bytes.count - 1])) else { continue }
+                bytes.withUnsafeBufferPointer { p in
+                    var total: Float = 0
+                    for i in 1..<p.count where p[i] != p[i - 1] {
+                        total += hypotf(g.kx[Int(p[i])] - g.kx[Int(p[i - 1])], g.ky[Int(p[i])] - g.ky[Int(p[i - 1])])
+                    }
+                    let ratio = max(total, Self.lengthFloor) / gestureLength
+                    guard ratio <= Self.lengthRatio, ratio >= 1 / Self.lengthRatio,
+                          Self.passes(letters: p, from: 0, to: p.count, gesture: g) else { return }
+                    let cost = Self.cost(letters: p, from: 0, to: p.count, gesture: g, template: template).total
+                        + Self.lengthWeight * abs(logf(ratio))
+                    scored.append(Scored(word: Self.tickerWord, cost: cost + Self.languageWeight * (255 - base) / 255,
+                                         letters: bytes, node: nil))
+                }
+            }
             // This person's own words the dictionary hasn't got ("cutee").
             if let personal = context.personal, !personal.words.isEmpty {
                 for (key, _) in personal.knownForms().prefix(2_000) {
@@ -580,6 +607,8 @@ final class GlideDecoder {
             if let node = s.node {
                 guard let f = form(at: node, letters: s.letters, previous: language.previousKey) else { continue }
                 spelled = f
+            } else if s.word == Self.tickerWord {
+                spelled = String(s.letters.map { Character(Unicode.Scalar($0 + 97)) })
             } else if let personal = context.personal,
                       let f = personal.word(String(s.letters.map { Character(Unicode.Scalar($0 + 97)) }))?.form {
                 spelled = f
