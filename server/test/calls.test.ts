@@ -47,8 +47,8 @@ describe("routing a call", () => {
     expect(r).toMatchObject({
       status: "available",
       side: "buy",
-      command: "buy $2 of near",
-      title: "Buy $2 of NEAR",
+      command: "buy $1 of near",
+      title: "Buy $1 of NEAR",
       token: { symbol: "NEAR" },
       caps: { agent: "trader.x.testnet", perTrade: "1", leftToday: "1.5", paused: false, within: true },
       standIn: null,
@@ -60,9 +60,9 @@ describe("routing a call", () => {
     const r = await routeCall(text, readCall(text), deps);
     expect(r).toMatchObject({
       status: "available",
-      title: "Buy $2 of SOL",
-      command: "swap $2 of near to usdc",
-      quote: { amountIn: "0.5714", amountOut: "0.0248", symbolOut: "SOL" },
+      title: "Buy $1 of SOL",
+      command: "swap $1 of near to usdc",
+      quote: { amountIn: "0.2857", amountOut: "0.0248", symbolOut: "SOL" },
       standIn: "Testnet has no SOL, so the hold swaps NEAR to USDC on Rhea instead.",
       caps: { within: true },
     });
@@ -71,7 +71,7 @@ describe("routing a call", () => {
   it("on mainnet, buys the token itself", async () => {
     const text = "$SOL breaking out, I'm buying";
     const r = await routeCall(text, readCall(text), { ...deps, network: "mainnet" });
-    expect(r).toMatchObject({ command: "swap $2 of near to sol", standIn: null });
+    expect(r).toMatchObject({ command: "swap $1 of near to sol", standIn: null });
   });
 
   it("says when the trade is over what's left today", async () => {
@@ -84,9 +84,9 @@ describe("routing a call", () => {
 
   it("buys other tokens with NEAR, and moves NEAR to USDC on a bearish NEAR call", async () => {
     const a = "$AURORA looking strong, buying";
-    expect(await routeCall(a, readCall(a), { ...deps, network: "mainnet" })).toMatchObject({ command: "swap $2 of near to aurora" });
+    expect(await routeCall(a, readCall(a), { ...deps, network: "mainnet" })).toMatchObject({ command: "swap $1 of near to aurora" });
     const b = "$NEAR top is in, selling";
-    expect(await routeCall(b, readCall(b), deps)).toMatchObject({ side: "sell", command: "swap $2 of near to usdc" });
+    expect(await routeCall(b, readCall(b), deps)).toMatchObject({ side: "sell", command: "swap $1 of near to usdc" });
   });
 
   it("gives no route rather than a stand-in", async () => {
@@ -112,7 +112,7 @@ describe("POST /v1/call", () => {
   it("returns the call and its route, and runs nothing", async () => {
     const r = await app().inject({ method: "POST", url: "/v1/call", payload: { text: "$NEAR breakout 🚀" } });
     expect(r.statusCode).toBe(200);
-    expect(r.json()).toMatchObject({ call: { isCall: true, asset: "NEAR" }, route: { status: "available", command: "buy $2 of near" } });
+    expect(r.json()).toMatchObject({ call: { isCall: true, asset: "NEAR" }, route: { status: "available", command: "buy $1 of near" } });
   });
 
   it("needs text", async () => {
