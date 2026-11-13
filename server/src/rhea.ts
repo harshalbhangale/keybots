@@ -92,6 +92,13 @@ export function rheaClient(opts: { network: string; rpc: string; fetchImpl?: typ
     /** What `amountIn` yocto of NEAR gets from the pool right now, in the token's units. */
     quote: (route: RheaRoute, amountIn: string) =>
       view<string>(net!.exchange, "get_return", { pool_id: route.pool, token_in: net!.wrap, amount_in: amountIn, token_out: route.token }),
+    /** The tokens `account` holds that AIRKEY trades in (swaps land back in the leash). */
+    async holdings(account: string): Promise<{ symbol: string; token: string; amount: string }[]> {
+      if (!net) return [];
+      const routes = Object.values(net.routes);
+      const units = await Promise.all(routes.map((r) => view<string>(r.token, "ft_balance_of", { account_id: account }).catch(() => "0")));
+      return routes.map((r, i) => ({ symbol: r.symbol, token: r.token, amount: fromUnits(units[i] ?? "0", r.decimals) }));
+    },
   };
 }
 
