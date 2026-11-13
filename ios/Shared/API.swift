@@ -103,6 +103,17 @@ struct API {
         let _: CallRecord = try await post("/v1/calls/\(id)/dismiss", [:])
     }
 
+    /// The vault as the server keeps it (the app saves it there; free signing has no App Group).
+    func vault() async throws -> [Vault.Item] { try await (get("/v1/vault") as VaultList).items }
+
+    func saveVault(_ items: [Vault.Item]) async throws {
+        var r = try request("/v1/vault")
+        r.httpMethod = "PUT"
+        r.setValue("application/json", forHTTPHeaderField: "content-type")
+        r.httpBody = try JSONEncoder().encode(VaultList(items: items))
+        let _: VaultList = try await send(r)
+    }
+
     private func request(_ path: String) throws -> URLRequest {
         guard let url = URL(string: base.trimmingCharacters(in: .whitespaces) + path) else {
             throw APIError(message: "The server address in Settings isn't a URL.")
@@ -162,3 +173,5 @@ extension API {
     /// The token picker: what trades here first, with prices and the leash's balances.
     func tokenList() async throws -> [PickerToken] { try await (get("/v1/tokens/list") as PickerTokenList).tokens }
 }
+
+struct VaultList: Codable { let items: [Vault.Item] }

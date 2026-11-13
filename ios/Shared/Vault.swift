@@ -25,8 +25,16 @@ enum Vault {
         return list
     }
 
-    static func save(_ items: [Item]) {
+    static func save(_ items: [Item], sync: Bool = true) {
         Settings.store.set(try? JSONEncoder().encode(items), forKey: key)
+        // Free signing has no App Group, so the keyboard reads the vault from the server.
+        if sync { Task { try? await API().saveVault(items) } }
+    }
+
+    /// Fetch the vault the app saved on the server, and keep it here.
+    static func pull() async {
+        guard let list = try? await API().vault() else { return }
+        save(list, sync: false)
     }
 
     /// Everything the keyboard offers: your NEAR account first, then what you saved.

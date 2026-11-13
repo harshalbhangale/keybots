@@ -10,6 +10,7 @@ import { ratesClient } from "./rates.js";
 import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
 import { fileCalls } from "./calls.js";
+import { fileVault } from "./vault.js";
 
 // server/.env (gitignored) for keys and switches, when it's there.
 try {
@@ -28,6 +29,7 @@ const deps = {
   orders: fileOrders(cfg.dataDir),
   rhea: rheaClient({ network: cfg.network, rpc: cfg.rpc }),
   calls: fileCalls(cfg.dataDir), // the calls book: calls.jsonl
+  vault: fileVault(cfg.dataDir), // vault.json: what the app saves for the keyboard
 };
 const app = buildApp(deps);
 

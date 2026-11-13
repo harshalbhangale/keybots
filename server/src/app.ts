@@ -8,8 +8,9 @@ import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
+import { memoryVault, parseVault, type VaultStore } from "./vault.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore; /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */ poolReturn?: PoolReturn } & AiRouteDeps;
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore; /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */ poolReturn?: PoolReturn; /** The vault the app saves and the keyboard reads. */ vault?: VaultStore } & AiRouteDeps;
 
 export function buildApp(deps: Deps) {
   // The calls book (calls.jsonl in the data dir when index.ts gives one; in memory otherwise).
@@ -27,7 +28,7 @@ export function buildApp(deps: Deps) {
   app.addHook("onRequest", async (req, reply) => {
     reply.header("access-control-allow-origin", "*");
     reply.header("access-control-allow-headers", "authorization, content-type");
-    reply.header("access-control-allow-methods", "GET, POST, DELETE, OPTIONS");
+    reply.header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
     if (req.method === "OPTIONS") return reply.code(204).send();
     if (req.url === "/health" || !deps.cfg.apiToken) return;
     if (req.headers.authorization !== `Bearer ${deps.cfg.apiToken}`) return reply.code(401).send({ error: "Missing or wrong token" });
@@ -270,6 +271,19 @@ export function buildApp(deps: Deps) {
     } catch (e) {
       if (e instanceof QuoteError) return reply.code(e.status).send({ error: e.message });
       return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  // The vault, shared through the server because free signing has no App Group.
+  const vault = deps.vault ?? memoryVault();
+  app.get("/v1/vault", async () => ({ items: vault.list() }));
+  app.put("/v1/vault", async (req, reply) => {
+    try {
+      const items = parseVault(req.body);
+      vault.save(items);
+      return { items };
+    } catch (e) {
+      return reply.code(400).send({ error: (e as Error).message });
     }
   });
 
