@@ -74,6 +74,8 @@ struct SwapCard: View {
                     .onChange(of: amount) { _, v in
                         let clean = Self.clean(v)
                         if clean != v { amount = clean }
+                        // A new amount clears the last result; the swap clearing the field doesn't.
+                        guard !clean.isEmpty else { return }
                         if case .done = step { step = .idle }
                         if case .failed = step { step = .idle }
                     }
