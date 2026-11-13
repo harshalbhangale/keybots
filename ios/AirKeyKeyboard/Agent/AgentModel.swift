@@ -107,7 +107,9 @@ final class AgentModel {
         if let putAwayFor, putAwayFor == text { return }
         putAwayFor = nil
         // One thing at a time: a command first, then a lookup, then a sum.
-        look(up: ready == nil ? Ask.read(text) : nil)
+        // A conversion the keyboard already worked out ("50 usd in inr") is
+        // not asked of the server again: its chip is up, with no flip.
+        look(up: ready == nil && !answered ? Ask.read(text) : nil)
         let sum = ready == nil && asking == nil && !answered ? Instant.read(text) : nil
         if sum != instant { instant = sum }
     }
