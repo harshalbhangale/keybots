@@ -69,11 +69,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
         case info(title: String, detail: String?)
         /// A section's title, in small capitals above the group it opens.
         case header(title: String)
-        /// Generic tap-to-insert row (notes, snippets…).
-        case insert(icon: String, title: String, text: String)
-        case clip(ClipItem)
         case vaultField(VaultField)
-        case vaultCombo(VaultCombo)
         /// A note: tap inserts, ✎ edits right here in the keyboard.
         case note(SavedNote)
         /// A ;shorthand: tap inserts its expansion.
@@ -87,8 +83,6 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
         var id: String
         var title: String
         var rows: [Row]
-        var showOpenInApp = true
-        var appPath = ""
     }
 
     // MARK: State
@@ -896,7 +890,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
         switch id {
         case "root":
             // Drawn as the tool grid, not as rows.
-            return Screen(id: id, title: rootTitle, rows: [], showOpenInApp: false)
+            return Screen(id: id, title: rootTitle, rows: [])
 
         case "settings":
             // No Appearance row: the keyboard follows the app it types into,
@@ -961,7 +955,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
                 .header(title: "Strip"),
                 .nav(icon: "slider.horizontal.3", title: "Toolbar items", detail: nil,
                      target: "toolbar"),
-            ], showOpenInApp: false)
+            ])
 
         case "themes":
             // A theme colours the keys, their glyphs, the press popup and
@@ -973,7 +967,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
                 rows.append(.nav(icon: theme.id == current ? "checkmark" : "circle", title: theme.name,
                                  detail: nil, target: "!theme:\(theme.id)"))
             }
-            return Screen(id: id, title: "Theme", rows: rows, showOpenInApp: false)
+            return Screen(id: id, title: "Theme", rows: rows)
 
         case "toolbar":
             // One row per item: its switch, and a ↑ that moves it a place
@@ -1000,7 +994,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
                     },
                     moveUp: moveUp))
             }
-            return Screen(id: id, title: "Toolbar", rows: rows, showOpenInApp: false)
+            return Screen(id: id, title: "Toolbar", rows: rows)
 
         case "notes", "vault":
             let vault = VaultStore.shared.load()
@@ -1020,7 +1014,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
                 rows.append(.vaultImage(image))
             }
             // Adding is the + floating over the list (layoutAddButton).
-            return Screen(id: "notes", title: "Notes", rows: rows, showOpenInApp: false)
+            return Screen(id: "notes", title: "Notes", rows: rows)
 
         case "style":
             // Each style shows what it makes of the words picked out, or of
@@ -1034,14 +1028,14 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
                 rows.append(.nav(icon: styleIcon(style), title: Smart.styled(text, style),
                                  detail: style.title, target: "!style:\(style.rawValue)"))
             }
-            return Screen(id: id, title: "Style", rows: rows, showOpenInApp: false)
+            return Screen(id: id, title: "Style", rows: rows)
 
         case "notes:detail":
             // The kinds; one tap and the strip over the keys takes its value.
             let rows: [Row] = DetailKind.addable(region: SettingsStore.current.region).map {
                 .nav(icon: $0.symbol, title: $0.title, detail: nil, target: "!detail:\($0.kind)")
             }
-            return Screen(id: id, title: "New detail", rows: rows, showOpenInApp: false)
+            return Screen(id: id, title: "New detail", rows: rows)
 
         default:
             return Screen(id: id, title: id, rows: [.info(title: "…", detail: nil)])
@@ -1151,14 +1145,8 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
         case .action(_, _, let handler):
             handler()
             render()
-        case .insert(_, _, let text):
-            delegate?.shellInsertText(text)
-        case .clip(let item):
-            delegate?.shellInsertText(item.text)
         case .vaultField(let field):
             delegate?.shellInsertText(field.value)
-        case .vaultCombo(let combo):
-            delegate?.shellInsertText(VaultStore.shared.comboText(combo))
         case .note(let note):
             delegate?.shellInsertText(note.text)
         case .snippet(_, let text):
@@ -1475,10 +1463,6 @@ private final class ShellCell: UITableViewCell {
             if target != "!none" { setTrailing(chevron()) }
             // "shell:key:v", "shell:detail:email", "shell:toolbar".
             readAsOne([t, detail], id: "shell:" + target.replacingOccurrences(of: "!", with: ""))
-        case .insert(let icon, let t, _):
-            setIcon(icon)
-            title.text = preview(t)
-            accessibilityIdentifier = "note:\(preview(t))"
         case .toggle(let t, let valueFn, let set, let moveUp):
             title.text = t
             let sw = UISwitch()
@@ -1542,34 +1526,12 @@ private final class ShellCell: UITableViewCell {
             case .plain:
                 title.textColor = Glass.textSecondary
             }
-        case .clip(let item):
-            // Website row: how long ago on the left, the text beside it.
-            if Glass.solidLook {
-                title.text = Self.age(item.ts)
-                value.text = preview(item.text)
-                value.isHidden = false
-            } else {
-                setIcon("doc.on.clipboard")
-                title.text = preview(item.text)
-            }
-            setTrailing(iconButton(item.pinned ? "pin.fill" : "pin",
-                                   tint: item.pinned ? Glass.chipAccent
-                                                     : Glass.textSecondary) { [weak self] in
-                ClipboardStore.togglePin(item.text)
-                self?.shell?.rowChanged(reload: true)
-            })
         case .vaultField(let field):
             setIcon("person.text.rectangle")
             title.text = field.title
             value.isHidden = false
             value.text = preview(field.masked)
             accessibilityIdentifier = "vault:\(field.label)"
-        case .vaultCombo(let combo):
-            setIcon("square.stack")
-            title.text = combo.label
-            value.isHidden = false
-            value.text = "\(combo.fieldIds.count) fields"
-            accessibilityIdentifier = "vault:\(combo.label)"
         case .note(let note):
             setIcon("note.text")
             let first = String(note.text.split(separator: "\n").first ?? "")
