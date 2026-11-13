@@ -24,6 +24,7 @@
 		1ACB72781DB409708C7CD1FE /* GamesSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8131A8647B255A69CE1934C /* GamesSurface.swift */; };
 		1CA372614F9358D10848B30C /* Jost-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 152817314DBFFD90AE3E215A /* Jost-Regular.ttf */; };
 		1D496D29A259E1FD6EFC3FBE /* KeyFaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 923C5EFFF20EF449F93E8B1A /* KeyFaces.swift */; };
+		1DB5131D097B70F473069C55 /* TradeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BABADD43F1722C35D07BC63C /* TradeModel.swift */; };
 		2015FDFFE606374ED9A7FEC1 /* crosshatch.png in Resources */ = {isa = PBXBuildFile; fileRef = BDC44251A61716A4EF88E949 /* crosshatch.png */; };
 		202A662AC2A67C19FF48A88E /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
 		205F7DA8AE00065BC648190E /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF89A02FA1B292BF5E5BE5A /* API.swift */; };
@@ -35,6 +36,7 @@
 		2E256D8868B5317D3D70F172 /* KeyboardTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */; };
 		32921FDEFAFE7478E0F6938A /* theme-wood-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 99149A26179B099AF88712C1 /* theme-wood-return.caf */; };
 		344ABDADCE51621C04B89A90 /* NoteEditSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C7502D7F5089AD801CCF86 /* NoteEditSurface.swift */; };
+		35F84B06F86CDEA9FCE87903 /* TradeSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F4D4492EC93316D0F4C5F4 /* TradeSurface.swift */; };
 		36698C65A8135BE044AFA613 /* herringbone.png in Resources */ = {isa = PBXBuildFile; fileRef = D8ED87229ECC9743CF0443D0 /* herringbone.png */; };
 		36DDFD6D148A12FF5E530569 /* PhraseMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EFC66EC9089F83D6FF6384 /* PhraseMemory.swift */; };
 		3D89726AC2B2766329C5F4AF /* GlideTrail.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55EA3185F3C9A7AB599371C /* GlideTrail.swift */; };
@@ -43,6 +45,7 @@
 		42E11D5013352DB96632C633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */; };
 		43EED8D57DC8A7C03D13B7D6 /* AgentStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */; };
 		440419E849A49FF480FF3458 /* Spectral-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 555699AFA00E3909035F3EF8 /* Spectral-OFL.txt */; };
+		44361B22675E42C1030E7A33 /* TradePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5071173E44CBD0BB4C42D8A9 /* TradePanel.swift */; };
 		4637ED0BC23E688CC832C860 /* Smart.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B9D10578985615A1494259 /* Smart.swift */; };
 		493F215D8AE2EF3CA2992694 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76815909587B9263F41E788 /* AppModel.swift */; };
 		49570D9016EF0087146309F2 /* Autocorrect.swift in Sources */ = {isa = PBXBuildFile; fileRef = C63C0A4FC1EDCF5498E9D862 /* Autocorrect.swift */; };
@@ -238,6 +241,7 @@
 		492181DA8C6DEF4030CADCC1 /* patina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = patina.png; sourceTree = "<group>"; };
 		4CFDCFD03DD341CF92FD9FE1 /* ChakraPetch-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ChakraPetch-OFL.txt"; sourceTree = "<group>"; };
 		4F1BACA15778279A088DF7EA /* theme-typewriter-letter.caf */ = {isa = PBXFileReference; path = "theme-typewriter-letter.caf"; sourceTree = "<group>"; };
+		5071173E44CBD0BB4C42D8A9 /* TradePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradePanel.swift; sourceTree = "<group>"; };
 		50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptsView.swift; sourceTree = "<group>"; };
 		52BE4E3C35B925FAAA3E4225 /* LibreBaskerville[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "LibreBaskerville[wght].ttf"; sourceTree = "<group>"; };
 		5313A4631B0C886CFD88DE0A /* Logo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logo.swift; sourceTree = "<group>"; };
@@ -274,6 +278,7 @@
 		903AACEC21543E477BA83F58 /* RatesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatesStore.swift; sourceTree = "<group>"; };
 		923C5EFFF20EF449F93E8B1A /* KeyFaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyFaces.swift; sourceTree = "<group>"; };
 		928E3A6C4316FF3EFE1F1C3B /* KeyBindings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindings.swift; sourceTree = "<group>"; };
+		92F4D4492EC93316D0F4C5F4 /* TradeSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradeSurface.swift; sourceTree = "<group>"; };
 		96C1B5D0FD6806D2E3F64B7A /* IMFeENrm28P.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = IMFeENrm28P.ttf; sourceTree = "<group>"; };
 		96F3CA247BD59F30C6A56517 /* ClipboardPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardPanel.swift; sourceTree = "<group>"; };
 		978F54121B99257287903C47 /* KeyboardTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTheme.swift; sourceTree = "<group>"; };
@@ -304,6 +309,7 @@
 		B88C67F9ADD10678D065B2E2 /* NOTICE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NOTICE.md; sourceTree = "<group>"; };
 		B8B9D10578985615A1494259 /* Smart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Smart.swift; sourceTree = "<group>"; };
 		B8E73A3766E52604B95CAA05 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
+		BABADD43F1722C35D07BC63C /* TradeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradeModel.swift; sourceTree = "<group>"; };
 		BBF1D08237153F6932EEB86C /* Prata-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Prata-Regular.ttf"; sourceTree = "<group>"; };
 		BDC44251A61716A4EF88E949 /* crosshatch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = crosshatch.png; sourceTree = "<group>"; };
 		BE82DAB9B756AF51443152AD /* Instant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Instant.swift; sourceTree = "<group>"; };
@@ -528,6 +534,9 @@
 				0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */,
 				B2C7502D7F5089AD801CCF86 /* NoteEditSurface.swift */,
 				877ECDEFFC7A4286B5B50EFA /* Toolbar.swift */,
+				BABADD43F1722C35D07BC63C /* TradeModel.swift */,
+				5071173E44CBD0BB4C42D8A9 /* TradePanel.swift */,
+				92F4D4492EC93316D0F4C5F4 /* TradeSurface.swift */,
 				6EC0285346B389EDAC16484E /* WalletModel.swift */,
 				013677326CEDB2AF96662698 /* WalletSurface.swift */,
 			);
@@ -907,6 +916,9 @@
 				F0B6532078ABE9F154F07A2C /* TextPDF.swift in Sources */,
 				C432680CE757B1F296C7A8AC /* Theme.swift in Sources */,
 				7608CAA377D4DAA2BB136395 /* Toolbar.swift in Sources */,
+				1DB5131D097B70F473069C55 /* TradeModel.swift in Sources */,
+				44361B22675E42C1030E7A33 /* TradePanel.swift in Sources */,
+				35F84B06F86CDEA9FCE87903 /* TradeSurface.swift in Sources */,
 				D231D09F0C0C907D349CFEE5 /* TypingEngine.swift in Sources */,
 				6636D8DC19FC7A73425FFDF5 /* TypingStore.swift in Sources */,
 				8F0E3E973F36F60D6BD32923 /* TypingText.swift in Sources */,

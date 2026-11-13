@@ -103,6 +103,7 @@ final class KeyToolbar: UIView {
         "wallet": "wallet.bifold",
         "calls": "chart.line.uptrend.xyaxis", // WALLET/CALLS HOOK: the calls book
         "check": "checkmark.shield",
+        "swap": "arrow.left.arrow.right",
         "clipboard": "doc.on.clipboard",
         "notes": "person.text.rectangle",
         "emoji": "face.smiling",

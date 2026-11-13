@@ -244,11 +244,38 @@ final class AgentModel {
     /// The hold on the strip's button: the command it shows.
     func runReady() {
         Haptics.hold()
+        // Trade panel hook: a swap, a buy or a sell opens the swap screen, filled in; it runs from there.
+        if reviewReady() { return }
         if intent == nil, readIntent == nil, let call = callIntent, let command = call.command {
             // A copied call's trade: the message box keeps whatever is in it.
             send(command, source: "typed", callId: call.callId) // CALLS HOOK
             callIntent = nil
         } else if let command = ready?.command { runCommand(command) } else { runTyped() }
+    }
+
+    // MARK: Trade panel (hook)
+
+    /// Opens the keyboard's swap screen on a command; false when it can't read it as a trade.
+    @ObservationIgnored var openTrade: ((_ command: String, _ origin: String?) -> Bool)?
+
+    /// The chip's trade goes to the swap screen instead of running: every
+    /// number is on screen before the hold. False for a payment.
+    @discardableResult
+    func reviewReady() -> Bool {
+        guard let ready, ready.kind == .swap, let openTrade else { return false }
+        let typed = (host?.agentFieldText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let fromCall = intent == nil && readIntent == nil && callIntent != nil
+        let line = typed.split(whereSeparator: \.isNewline).last.map(String.init) ?? typed
+        guard openTrade(ready.command ?? line, fromCall ? nil : typed) else { return false }
+        if fromCall { callIntent = nil }
+        return true
+    }
+
+    /// The swap screen's hold: its quote's own command, sent as typed, so the
+    /// receipt, Share and the haptics are the strip's as ever.
+    func runTrade(_ command: String, clearing: String?) {
+        send(command, source: "typed", clearing: clearing)
+        if running != nil { runningKind = .swap }
     }
 
     /// A command the server read out of what was typed: it runs, and what

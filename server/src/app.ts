@@ -6,8 +6,9 @@ import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
+import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore };
+export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore; /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */ poolReturn?: PoolReturn };
 
 export function buildApp(deps: Deps) {
   // The calls book (calls.jsonl in the data dir when index.ts gives one; in memory otherwise).
@@ -239,6 +240,36 @@ export function buildApp(deps: Deps) {
   app.post<{ Params: { id: string } }>("/v1/calls/:id/dismiss", async (req, reply) => {
     const record = calls.dismiss(req.params.id);
     return record ?? reply.code(404).send({ error: "No such call" });
+  });
+
+  // --- Trade panel (quote.ts) ---
+  const quotes = quoter({ cfg: deps.cfg, chain: deps.chain, intents: deps.intents, rhea: deps.rhea, poolReturn: deps.poolReturn ?? poolReturnFor(deps.cfg.network, deps.cfg.rpc) });
+
+  /**
+   * Everything the trade panel shows for one swap, before the hold: what it
+   * gets, the least it may get, the route, the fee, the caps and the balance,
+   * and the exact command the hold sends. `order` (limit | stop | take) with
+   * `trigger` makes it a price-triggered order instead. Sends nothing.
+   */
+  app.get<{ Querystring: { from?: string; to?: string; amount?: string; order?: string; trigger?: string } }>("/v1/quote", async (req, reply) => {
+    const { from = "", to = "", amount = "", order, trigger } = req.query;
+    if (order !== undefined && !["limit", "stop", "take"].includes(order)) return reply.code(400).send({ error: "order is limit, stop or take" });
+    try {
+      return await quotes.quote({ from, to, amount, order: order as OrderKind | undefined, trigger });
+    } catch (e) {
+      if (e instanceof QuoteError) return reply.code(e.status).send({ error: e.message });
+      return reply.code(502).send({ error: `The quote didn't come back: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** The token picker: symbol, price and what the leash holds. */
+  app.get("/v1/tokens/list", async (_req, reply) => {
+    try {
+      return await quotes.tokens();
+    } catch (e) {
+      if (e instanceof QuoteError) return reply.code(e.status).send({ error: e.message });
+      return reply.code(502).send({ error: `NEAR Intents didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
   });
 
   return app;

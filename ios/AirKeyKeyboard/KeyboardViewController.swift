@@ -87,6 +87,9 @@ final class KeyboardViewController: UIInputViewController {
     /// or ask). Built when it opens and let go when it closes.
     private var aiBar: AIBar?
     private var noteEdit: NoteEditSurface?
+    /// Trade panel hook: the swap screen, and what it opens on.
+    private var trade: TradeSurface?
+    private var pendingTrade: (seed: TradeModel.Seed?, origin: String?)?
     /// What the editor strip opens on (set right before setSurface(.noteEdit)).
     private var pendingEdit: NoteEditSurface.Edit?
     /// Text around the cursor, mirrored for the length of a space-bar glide.
@@ -113,7 +116,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai, wallet, calls }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai, wallet, calls, trade }
     private var surface: Surface = .none
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
@@ -204,6 +207,11 @@ final class KeyboardViewController: UIInputViewController {
         // Panels take the key area instead of growing the keyboard: the keys
         // never move, so muscle memory holds.
         case .none, .shell, .clipboard, .games, .ai, .wallet, .calls: return base
+        // Trade panel hook: the swap screen is its own height; typing a value
+        // folds it to a strip over the keys.
+        case .trade:
+            if let strip = trade?.stripHeight { return base + strip - Glass.toolbarHeight }
+            return max(base, TradeSurface.panelHeight)
         }
     }
 
@@ -230,6 +238,12 @@ final class KeyboardViewController: UIInputViewController {
         paste.addTypeIdentifiers(forAccepting: UIImage.self)
         pasteConfiguration = paste
         agent.host = self
+        // Trade panel hook: a trade's chip opens the swap screen.
+        agent.openTrade = { [weak self] command, origin in
+            guard let self, let seed = TradeModel.seed(from: command) else { return false }
+            self.openTrade(seed: seed, origin: origin)
+            return true
+        }
         refreshHaptics()
     }
 
@@ -824,6 +838,18 @@ final class KeyboardViewController: UIInputViewController {
                 keyboardView.isHidden = true
                 aiBar?.frame = CGRect(x: 0, y: 0, width: w, height: h)
             }
+        // Trade panel hook: the swap screen owns the whole keyboard, or a
+        // strip over the keys while a value is typed on them.
+        case .trade:
+            toolbarHiddenBySurface = true
+            if let strip = trade?.stripHeight {
+                keyboardView.isHidden = false
+                trade?.frame = CGRect(x: 0, y: 0, width: w, height: strip)
+                keyboardView.frame = CGRect(x: 0, y: strip, width: w, height: max(0, h - strip))
+            } else {
+                keyboardView.isHidden = true
+                trade?.frame = CGRect(x: 0, y: 0, width: w, height: h)
+            }
         }
         let agentUp = surface == .none && agent.isShowing && !isSecureField
         toolbar.isHidden = toolbarHiddenBySurface || agentUp
@@ -843,7 +869,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.games, self.aiBar, self.money] as [UIView?] {
+                            self.clipboardPanel, self.games, self.aiBar, self.money, self.trade] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
@@ -882,6 +908,10 @@ final class KeyboardViewController: UIInputViewController {
         case .games: games?.stop(); games?.removeFromSuperview(); games = nil
         case .wallet, .calls: money?.close(); money = nil // WALLET/CALLS HOOK: timers stop, the panel is let go.
         case .ai: aiBar?.removeFromSuperview(); aiBar = nil
+        // Trade panel hook.
+        case .trade:
+            if trade?.wantsDigits == true { keyboardView.setMode(.letters) }
+            trade?.detach(); trade = nil
         case .none: break
         }
         inlineTarget = nil
@@ -941,6 +971,16 @@ final class KeyboardViewController: UIInputViewController {
             prepareEntrance(b, animated: animated)
             aiBar = b
             MemoryLogger.logSurface("ai")
+        // Trade panel hook.
+        case .trade:
+            let t = TradeSurface(seed: pendingTrade?.seed, origin: pendingTrade?.origin, hasFullAccess: hasFullAccess)
+            pendingTrade = nil
+            t.delegate = self
+            t.attach(to: self)
+            content.addSubview(t)
+            prepareEntrance(t, animated: animated)
+            trade = t
+            MemoryLogger.logSurface("trade")
         case .none:
             break
         }
@@ -1866,6 +1906,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
             noteEdit?.returnPressed()
             return
         }
+        if inlineTarget != nil, surface == .trade {
+            // Trade panel hook: Return is Done.
+            trade?.returnPressed()
+            return
+        }
         if inlineTarget != nil, surface == .ai {
             // Return asks, as the arrow does.
             aiBar?.submitAsk()
@@ -2224,6 +2269,38 @@ extension KeyboardViewController: AgentHost {
     }
 }
 
+// MARK: - TradeSurfaceDelegate (trade panel hook)
+
+extension KeyboardViewController: TradeSurfaceDelegate {
+
+    /// The swap screen takes the keyboard, opened on `seed` (a chip's trade) or empty.
+    fileprivate func openTrade(seed: TradeModel.Seed?, origin: String?) {
+        if surface == .trade { setSurface(.none, animated: false) }
+        pendingTrade = (seed, origin)
+        agent.dismiss()
+        setSurface(.trade)
+    }
+
+    func tradeClosed() {
+        setSurface(.none)
+        syncAutoShift()
+    }
+
+    func tradeLayoutChanged(editor: InlineEditor?, digits: Bool) {
+        inlineTarget = editor
+        // An amount is typed on the keyboard's own digits; a token search on its letters.
+        keyboardView.setMode(digits ? .symbols1 : .letters)
+        if editor != nil, !digits { keyboardView.syncAutoShift(wantsCapital: false) }
+        applySurfaceLayout(animated: true)
+    }
+
+    func tradeRun(_ command: String, clearing: String?) {
+        setSurface(.none)
+        syncAutoShift()
+        agent.runTrade(command, clearing: clearing)
+    }
+}
+
 // MARK: - AIBarDelegate (hold space)
 
 extension KeyboardViewController: AIBarDelegate {
@@ -2383,6 +2460,8 @@ extension KeyboardViewController: ToolbarDelegate {
         case "calls": setSurface(.calls)
         // AIRKEY: what you copied, to the Inbox Agent.
         case "check": setSurface(.none); agent.runPasted()
+        // Trade panel hook: the swap screen, empty.
+        case "swap": openTrade(seed: nil, origin: nil)
         case "clipboard": setSurface(.clipboard)
         case "emoji": setSurface(.emoji)
         case "games": setSurface(.games)
