@@ -1207,6 +1207,21 @@ mod tests {
     }
 
     #[test]
+    fn reads_the_state_the_live_leash_wrote() {
+        // The STATE entry of leash.airkey-harshal.testnet on 13 Nov 2026 (view_state),
+        // written by the code from before token sales: this code must read it as is.
+        let hex = "160000006169726b65792d6861727368616c2e746573746e6574000600000002000000007602000000006d0100000002000000017602000000016d0100000002000000027602000000026d0000000002000000037602000000036d0c00000000000000";
+        let bytes: Vec<u8> = (0..hex.len()).step_by(2).map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap()).collect();
+        testing_env!(ctx(OWNER, 0, 100).build());
+        let l = Leash::try_from_slice(&bytes).unwrap();
+        assert_eq!(l.get_owner(), acc("airkey-harshal.testnet"));
+        assert!(!l.is_paused());
+        assert_eq!((l.agents.len(), l.allowlist.len(), l.blocklist.len(), l.pending.len(), l.next_id), (6, 1, 1, 0, 12));
+        // ...and writes it back byte for byte.
+        assert_eq!(near_sdk::borsh::to_vec(&l).unwrap(), bytes);
+    }
+
+    #[test]
     #[should_panic(expected = "Only the owner can do this")]
     fn agents_cannot_set_token_caps() {
         let mut l = setup();
