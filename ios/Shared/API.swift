@@ -38,6 +38,11 @@ struct API {
         try await post("/v1/command", ["text": text, "source": source])
     }
 
+    /// Read a command without running it (rules first, an AI for loose wording).
+    func read(_ text: String) async throws -> ReadResult {
+        try await post("/v1/read", ["text": text])
+    }
+
     /// What swapping `amount` NEAR into `to` gets on Rhea right now.
     func swapQuote(amount: String, to: String) async throws -> SwapQuote {
         try await get("/v1/swap/quote?amount=\(amount)&to=\(to)")
