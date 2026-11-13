@@ -2,6 +2,8 @@ import Fastify from "fastify";
 import { runCommand, type Deps as CommandDeps } from "./agent.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
+import { toYocto } from "./parse.js";
+import { fromUnits, minOut } from "./rhea.js";
 
 export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient };
 
@@ -19,8 +21,30 @@ export function buildApp(deps: Deps) {
 
   app.get("/health", async () => ({ ok: true, network: deps.cfg.network, leash: deps.cfg.leash }));
 
-  /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch. */
-  app.get("/v1/state", async () => ({ ...(await deps.chain.state()), explorer: deps.cfg.explorer, contacts: deps.cfg.contacts }));
+  /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch, and the tokens it holds. */
+  app.get("/v1/state", async () => {
+    const [state, holdings] = await Promise.all([deps.chain.state(), deps.rhea ? deps.rhea.holdings(deps.cfg.leash).catch(() => []) : []]);
+    return { ...state, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings };
+  });
+
+  /** What swapping `amount` NEAR into a token gets on Rhea right now, before you hold to swap. */
+  app.get<{ Querystring: { amount?: string; to?: string } }>("/v1/swap/quote", async (req, reply) => {
+    const route = deps.rhea?.route(String(req.query.to ?? ""));
+    if (!deps.rhea?.network || !route) return reply.code(404).send({ error: `AIRKEY can't swap NEAR into ${req.query.to ?? "that"} here` });
+    let amountIn: string;
+    try {
+      amountIn = toYocto(String(req.query.amount ?? ""));
+      if (BigInt(amountIn) <= 0n) throw new Error();
+    } catch {
+      return reply.code(400).send({ error: "Send an amount of NEAR, like 0.1" });
+    }
+    try {
+      const out = await deps.rhea.quote(route, amountIn);
+      return { venue: "Rhea", pool: route.pool, from: "NEAR", to: route.symbol, amountIn: req.query.amount, amountOut: fromUnits(out, route.decimals), minAmountOut: fromUnits(minOut(out), route.decimals) };
+    } catch (e) {
+      return reply.code(502).send({ error: `Rhea didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
 
   /** Run one command. source: "typed" (from the owner) or "pasted" (from someone else). */
   app.post<{ Body: { text?: unknown; source?: unknown } }>("/v1/command", async (req, reply) => {
