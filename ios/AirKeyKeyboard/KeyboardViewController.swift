@@ -1418,8 +1418,11 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         // "pay har": the contacts it could be, never a dictionary word.
-        let people = Protections.contacts(typed: word, after: WordTracker.previousWord(beforeContext: before))
-        if !people.isEmpty {
+        // "to har": the contact first, words beside it ("to have").
+        let previousWord = WordTracker.previousWord(beforeContext: before)
+        let people = Protections.contacts(typed: word, after: previousWord)
+        let payee = previousWord.map { Protections.payVerbs.contains($0.lowercased()) } ?? false
+        if !people.isEmpty, payee {
             toolbar.showSuggestions(people.prefix(3).map { .init(text: $0, kind: .contact) })
             return
         }
@@ -1452,6 +1455,9 @@ final class KeyboardViewController: UIInputViewController {
                 ?? EmojiWords.emoji(for: word) {
                 items = Array(items.prefix(2)) + [.init(text: e, kind: .emoji)]
             }
+        }
+        if let person = people.first {
+            items = [.init(text: person, kind: .contact)] + items.filter { $0.text.lowercased() != person }.prefix(2)
         }
         toolbar.showSuggestions(items)
     }
