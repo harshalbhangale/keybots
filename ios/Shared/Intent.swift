@@ -141,8 +141,13 @@ enum Contacts {
         Date().timeIntervalSince1970 - Settings.store.double(forKey: stamp) > 3600
     }
 
+    /// The accounts your contacts' names stand for, so a pasted one is known.
+    static var accounts: Set<String> { Set(Settings.store.stringArray(forKey: accountsKey) ?? []) }
+    private static let accountsKey = "contactAccounts"
+
     static func save(_ contacts: [String: String]) {
         Settings.store.set(contacts.keys.map { $0.lowercased() }.sorted(), forKey: key)
+        Settings.store.set(contacts.values.map { $0.lowercased() }.sorted(), forKey: accountsKey)
         Settings.store.set(Date().timeIntervalSince1970, forKey: stamp)
     }
 }
