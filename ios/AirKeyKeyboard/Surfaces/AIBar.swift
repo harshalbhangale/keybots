@@ -77,6 +77,8 @@ final class AIBar: UIView {
     /// Asking and live translate happen in the strip, with the keys under
     /// it; everything else covers the keys.
     var isStrip: Bool { phase == .prompting || phase == .live }
+    /// Live translate is on: the strip stays while the person types.
+    var isLive: Bool { phase == .live }
 
     /// What the field held before the cursor when the bar opened; empty
     /// when there was nothing to work on.
@@ -555,7 +557,7 @@ final class AIBar: UIView {
         runID += 1
         let id = runID
         busy = true
-        textView.text = r.context ?? r.text
+        textView.text = r.text
         textView.textColor = Glass.textSecondary
         textView.setContentOffset(.zero, animated: false)
         streamed = ""
@@ -631,7 +633,7 @@ final class AIBar: UIView {
         options = []
         list.set([])
         if phase == .versions { show(.working) }
-        textView.text = request?.context ?? request?.text
+        textView.text = request?.text
         textView.textColor = Glass.textSecondary
     }
 

@@ -473,7 +473,9 @@ final class KeyboardViewController: UIInputViewController {
         // A keyboard coming back for a field starts on the letters: a menu,
         // clipboard or emoji panel left open last time would greet the next
         // field with something it never asked for.
-        if didBuild, surface != .none { setSurface(.none, animated: false) }
+        // GLYF AI HOOK: live translate stays up (Messages brings the keyboard
+        // back each time its field goes from empty to not, mid-typing).
+        if didBuild, surface != .none, aiBar?.isLive != true { setSurface(.none, animated: false) }
         agent.dismiss()
         keyboardView.context = fieldContext
         adoptFieldTraits(fresh: true)
