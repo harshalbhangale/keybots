@@ -24,6 +24,15 @@ final class KeyboardModel {
     var running: String?  // "typed" or "pasted" while waiting
     var result: Receipt?
     var notice: String?
+    /// Word choices for the bar while a word is being typed.
+    var suggestions: [Words.Suggestion] = []
+    /// Nothing in the field yet.
+    var empty = true
+
+    /// Autocorrect and suggestions, worked out on the phone.
+    @ObservationIgnored let words = Words()
+    /// The last autocorrection, so one backspace right after it undoes it.
+    @ObservationIgnored private var lastFix: (original: String, fixed: String)?
 
     /// What was typed through this keyboard. iOS only hands a keyboard the
     /// text back to the last sentence break ("pay harshal 0.1" arrives as "1"),
@@ -38,6 +47,10 @@ final class KeyboardModel {
 
     func type(_ s: String) {
         let out = shift || capsLock ? s.uppercased() : s
+        lastFix = nil
+        // A comma or a question mark ends a word too. Not a full stop: it's
+        // part of NEAR accounts like harshal.near.
+        if [",", "!", "?", ";", ":"].contains(out) { autocorrect(); lastFix = nil }
         insert(out)
         if shift && !capsLock { shift = false }
         UIDevice.current.playInputClick()
@@ -45,6 +58,17 @@ final class KeyboardModel {
     }
 
     func delete() {
+        // Right after an autocorrection, backspace puts back what you typed
+        // and remembers it, so it isn't "fixed" again.
+        if let fix = lastFix, typed.hasSuffix(fix.fixed + " ") {
+            lastFix = nil
+            swapLast(fix.fixed.count + 1, with: fix.original)
+            Words.learn(fix.original)
+            UIDevice.current.playInputClick()
+            refreshContext()
+            return
+        }
+        lastFix = nil
         proxy()?.deleteBackward()
         if !typed.isEmpty { typed.removeLast() }
         UIDevice.current.playInputClick()
@@ -62,7 +86,9 @@ final class KeyboardModel {
             proxy()?.deleteBackward()
             if !typed.isEmpty { typed.removeLast() }
             insert(". ")
+            lastFix = nil
         } else {
+            if !autocorrect() { lastFix = nil }
             insert(" ")
         }
         UIDevice.current.playInputClick()
@@ -70,6 +96,8 @@ final class KeyboardModel {
     }
 
     func returnKey() {
+        autocorrect()
+        lastFix = nil
         insert("\n")
         refreshContext()
     }
@@ -97,6 +125,9 @@ final class KeyboardModel {
             shift = sentences && (before.isEmpty || before.hasSuffix(". ") || before.hasSuffix("? ") || before.hasSuffix("! ") || before.hasSuffix("\n"))
         }
         let text = fieldText
+        empty = text.isEmpty
+        let (word, previous) = currentWord
+        suggestions = words.suggestions(for: word, after: previous)
         intent = Intent.read(text)
         // One thing at a time: a command first, then a lookup, then a sum.
         look(up: intent == nil ? Ask.read(text) : nil)
@@ -110,6 +141,47 @@ final class KeyboardModel {
         case .join: "join"
         default: "return"
         }
+    }
+
+    // MARK: words
+
+    /// The word being typed (the run of non-spaces at the end) and the one before it.
+    private var currentWord: (word: String, previous: String?) {
+        guard let last = typed.last, !last.isWhitespace else { return ("", nil) }
+        let parts = typed.split(whereSeparator: \.isWhitespace)
+        return (String(parts.last ?? ""), parts.count > 1 ? String(parts[parts.count - 2]) : nil)
+    }
+
+    /// Fix the word just finished when the spell checker is sure. Fields that
+    /// turn autocorrection off (emails, links, codes) are left alone.
+    @discardableResult
+    private func autocorrect() -> Bool {
+        let p = proxy()
+        guard p?.autocorrectionType != .no, p?.keyboardType != .emailAddress, p?.keyboardType != .URL else { return false }
+        let (word, previous) = currentWord
+        guard !word.isEmpty, let fix = words.correction(for: word, after: previous), fix != word else { return false }
+        swapLast(word.count, with: fix)
+        lastFix = (word, fix)
+        return true
+    }
+
+    /// Tap on a word in the bar: it replaces the word being typed, then a space.
+    /// Picking what you typed teaches it.
+    func pick(_ s: Words.Suggestion) {
+        let (word, _) = currentWord
+        if s.kind == .typed { Words.learn(word) }
+        swapLast(word.count, with: s.text + " ")
+        lastFix = nil
+        UIDevice.current.playInputClick()
+        refreshContext()
+    }
+
+    /// Delete the last `count` characters and type `new` in their place.
+    private func swapLast(_ count: Int, with new: String) {
+        let n = min(count, typed.count)
+        for _ in 0..<n { proxy()?.deleteBackward() }
+        typed.removeLast(n)
+        insert(new)
     }
 
     // MARK: answers
