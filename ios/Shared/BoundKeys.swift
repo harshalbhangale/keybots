@@ -23,11 +23,11 @@ enum BoundKeys {
         /// What it does, in a few words.
         var detail: String {
             switch self {
-            case .pay: "Types “pay ” and offers your contacts"
-            case .swap: "Types “swap ”"
-            case .vault: "Your NEAR account and saved addresses"
+            case .pay: "Types pay, then offers your contacts"
+            case .swap: "Types swap"
+            case .vault: "Your NEAR account and addresses"
             case .clipboard: "What you copied"
-            case .check: "Reads what you copied for scams"
+            case .check: "Checks a copied message for scams"
             case .notes: "Your notes and shorthand"
             }
         }
@@ -76,4 +76,10 @@ enum BoundKeys {
     }
 
     static func reset() { Settings.store.removeObject(forKey: key) }
+
+    /// Letters in the order they sit on the keys (Q first, M last).
+    static func keyboardOrder(_ letters: some Sequence<String>) -> [String] {
+        let rows = Array("qwertyuiopasdfghjklzxcvbnm").map(String.init)
+        return letters.sorted { (rows.firstIndex(of: $0) ?? 99) < (rows.firstIndex(of: $1) ?? 99) }
+    }
 }

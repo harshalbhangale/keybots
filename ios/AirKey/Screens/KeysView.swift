@@ -6,14 +6,14 @@ import SwiftUI
 struct KeysView: View {
     @State private var map = BoundKeys.current
 
-    private var letters: [String] { map.keys.sorted() }
+    private var letters: [String] { BoundKeys.keyboardOrder(map.keys) }
     private var free: [String] { Self.alphabet.filter { map[$0] == nil } }
     private static let alphabet = "abcdefghijklmnopqrstuvwxyz".map(String.init)
 
     var body: some View {
         Screen {
             Masthead(eyebrow: "AIRKEY · GLYF KEYS", title: "KEYS")
-            Text("Hold a letter in any chat and it runs. The small dot marks the ones that do.")
+            Text("Hold a letter in any chat to run it. A small dot marks each one.")
                 .font(.subheadline)
                 .foregroundStyle(AK.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -138,11 +138,7 @@ struct KeysLink: View {
         .onAppear { map = BoundKeys.current }
     }
 
-    /// The bound letters in the order they sit on the keys.
-    private var ordered: [String] {
-        let order = Array("qwertyuiopasdfghjklzxcvbnm").map(String.init)
-        return map.keys.sorted { (order.firstIndex(of: $0) ?? 99) < (order.firstIndex(of: $1) ?? 99) }
-    }
+    private var ordered: [String] { BoundKeys.keyboardOrder(map.keys) }
 
     /// "P Pay · S Swap · C Clipboard · V Vault"
     private var summary: String {
