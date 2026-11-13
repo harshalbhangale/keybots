@@ -43,6 +43,10 @@ final class KeyView: UIControl {
     private var legendExtras: [LegendExtra] = []
     private var foilView: GradientView?
     let tintLayer = CALayer()          // ripple overlay, opacity 0 at rest
+    /// AIRKEY's lime side tab, on the P key only: the brand, as on the logo.
+    /// The key types a p and nothing else.
+    private let brandTab = CALayer()
+    private var hasBrandTab: Bool { spec.char == "p" && !spec.pad }
     private var chargeRing: CAShapeLayer?
 
     var isBound = false { didSet { updateBinding() } }
@@ -101,6 +105,10 @@ final class KeyView: UIControl {
         accentDot.isHidden = true
         layer.addSublayer(accentDot)
 
+        brandTab.backgroundColor = Glass.accentPrimary.cgColor
+        brandTab.isHidden = !hasBrandTab
+        layer.addSublayer(brandTab)
+
         updateFace()
         updateFill(pressed: false)
 
@@ -143,6 +151,11 @@ final class KeyView: UIControl {
         tintLayer.frame = bounds
         accentDot.frame = CGRect(x: bounds.width - 10.5, y: 5.5, width: 5, height: 5)
         accentDot.cornerRadius = 2.5
+        if hasBrandTab {
+            let h = min(16, bounds.height * 0.38)
+            brandTab.frame = CGRect(x: bounds.width - 6, y: (bounds.height - h) / 2, width: 3, height: h)
+            brandTab.cornerRadius = 1.5
+        }
         layer.shadowPath = UIBezierPath(
             roundedRect: bounds, cornerRadius: Glass.radiusKey).cgPath
     }
@@ -157,7 +170,7 @@ final class KeyView: UIControl {
     }
 
     /// Grey keys on the web: shift, delete, 123, emoji, globe, return.
-    /// The space bar keeps the letter colour and wears the "glyf" watermark.
+    /// The space bar keeps the letter colour and wears the "AIRKEY" watermark.
     private var isFunctionKey: Bool {
         switch spec.kind {
         case .char, .space: return false
@@ -258,9 +271,9 @@ final class KeyView: UIControl {
             // A theme's face keeps these sizes (docs/THEMES.md §0.2).
             label.font = Glass.keyFont(ofSize: shifted ? 22 : 24.5)
         case .space:
-            // Watermark, not a label (Acti-style restraint).
-            text = "glyf"
-            label.font = .systemFont(ofSize: 15, weight: .regular)
+            // Watermark, not a label: AIRKEY, wide and quiet.
+            text = "AIRKEY"
+            label.font = .systemFont(ofSize: 11, weight: .semibold, width: .expanded)
         case .ret:
             if let word = returnFace.text {
                 text = word
@@ -311,8 +324,8 @@ final class KeyView: UIControl {
         if case .ret = spec.kind, !returnEnabled { ink = base.withAlphaComponent(0.35) }
         label.textColor = ink
         icon.tintColor = ink
-        if case .space = spec.kind {
-            label.textColor = Glass.watermark
+        if case .space = spec.kind, let font = label.font, let text {
+            label.attributedText = Self.spaced(text, font: font, color: Glass.watermark, kern: 2)
         }
         if spec.pad, case .mode("+*#") = spec.kind, let font = label.font {
             label.attributedText = Self.spaced("+*#", font: font, color: ink, kern: 3)
@@ -342,6 +355,7 @@ final class KeyView: UIControl {
             self.foilView?.alpha = alpha
         }
         accentDot.opacity = Float(alpha)
+        brandTab.opacity = Float(alpha)
     }
 
     func setShiftState(_ state: ShiftState) {
