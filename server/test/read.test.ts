@@ -43,6 +43,37 @@ group("reading", () => {
     expect(describe(r.action)?.command).toBe("swap $5 of near to usdc");
   });
 
+  it("asks NEAR AI Cloud first, and OpenAI only when NEAR AI doesn't answer", async () => {
+    const asked: string[] = [];
+    const readAi = async (_t: string, ai: { provider: string }) => {
+      asked.push(ai.provider);
+      if (ai.provider === "near-ai-cloud") throw new Error("NEAR AI Cloud answered 503");
+      return {
+        action: { kind: "swap" as const, amount: "5", from: "NEAR", to: "USDC", usd: true },
+        evidence: { provider: "openai" as const, model: "m", chatId: null, signature: { status: "unavailable" as const, algo: "ecdsa" as const }, attestation: "not checked" as const },
+      };
+    };
+    const both = { ...cfg, nearAi: { apiKey: "n", model: "m", base: "b" }, openAi: { apiKey: "o", model: "m", base: "b" } };
+    const r = await readCommand({ cfg: both, readAi } as never, "swap like five bucks of near into usdc");
+    expect(asked).toEqual(["near-ai-cloud", "openai"]);
+    expect(r.reader).toBe("openai");
+  });
+
+  it("uses NEAR AI Cloud and never OpenAI when NEAR AI answers", async () => {
+    const asked: string[] = [];
+    const readAi = async (_t: string, ai: { provider: string }) => {
+      asked.push(ai.provider);
+      return {
+        action: { kind: "unknown" as const, reason: "none" },
+        evidence: { provider: "near-ai-cloud" as const, model: "m", chatId: "c", signature: { status: "verified" as const, algo: "ecdsa" as const }, attestation: "not checked" as const },
+      };
+    };
+    const both = { ...cfg, nearAi: { apiKey: "n", model: "m", base: "b" }, openAi: { apiKey: "o", model: "m", base: "b" } };
+    const r = await readCommand({ cfg: both, readAi } as never, "hello there friend");
+    expect(asked).toEqual(["near-ai-cloud"]);
+    expect(r.reader).toBe("near-ai-cloud");
+  });
+
   it("reads dollar amounts the model returns", () => {
     expect(toAction('{"kind":"swap","amount_usd":"5","from":"near","to":"usdc"}')).toEqual({ kind: "swap", amount: "5", from: "NEAR", to: "USDC", usd: true });
   });
