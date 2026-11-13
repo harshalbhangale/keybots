@@ -458,7 +458,13 @@ final class KeyboardViewController: UIInputViewController {
         TypingStore.shared.letterRows = LetterLayout(id: SettingsStore.current.keyLayout).rows
         TypingStore.shared.prepare(
             hasFullAccess: hasFullAccess,
-            lexicon: { [weak self] done in self?.requestSupplementaryLexicon(completion: done) },
+            // iOS answers on a background queue: the engine is the main
+            // queue's, so the words are handed over there.
+            lexicon: { [weak self] done in
+                self?.requestSupplementaryLexicon { @Sendable lexicon in
+                    DispatchQueue.main.async { done(lexicon) }
+                }
+            },
             ready: { [weak self] _ in
                 // The engine may load after viewWillAppear's seeding ran.
                 self?.seedOwnNames()
