@@ -10,6 +10,12 @@ import { ratesClient } from "./rates.js";
 import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
 
+// server/.env (gitignored) for keys and switches, when it's there.
+try {
+  process.loadEnvFile(new URL("../.env", import.meta.url));
+} catch {
+  // No .env: the environment and keys/ are enough.
+}
 const cfg = loadConfig();
 const deps = {
   cfg,

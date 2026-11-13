@@ -22,6 +22,8 @@ export interface Config {
   nearAi: { apiKey: string; model: string; base: string };
   /** Used for reading only when NEAR AI Cloud isn't set up. The key lives in the env or keys/openai.key, never in git. */
   openAi: { apiKey: string; model: string; base: string };
+  /** "openai" (default): OpenAI answers when NEAR AI Cloud can't. "off": NEAR AI Cloud or nothing (the demo recording). */
+  aiFallback: "openai" | "off";
   port: number;
 }
 
@@ -60,7 +62,7 @@ export function loadConfig(env = process.env): Config {
     ),
     apiToken: env.AIRKEY_API_TOKEN ?? "",
     nearAi: {
-      apiKey: env.NEAR_AI_API_KEY ?? "",
+      apiKey: env.NEAR_AI_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "near-ai.key")),
       model: env.NEAR_AI_MODEL ?? "zai-org/GLM-5.1-FP8",
       base: env.NEAR_AI_BASE ?? "https://cloud-api.near.ai/v1",
     },
@@ -69,6 +71,7 @@ export function loadConfig(env = process.env): Config {
       model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
       base: env.OPENAI_BASE ?? "https://api.openai.com/v1",
     },
+    aiFallback: env.AIRKEY_AI_FALLBACK === "off" ? "off" : "openai",
     port: Number(env.PORT ?? 8787),
   };
 }
