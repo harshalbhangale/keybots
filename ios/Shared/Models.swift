@@ -15,6 +15,29 @@ struct LeashState: Decodable {
     let contacts: [String: String]
     /// Tokens the leash holds (swaps land back in it). Missing on older servers.
     let holdings: [Holding]?
+    /// The agent accounts this server signs for, by role. Missing on older servers.
+    let active: Roles?
+
+    struct Roles: Decodable {
+        let trusted: String
+        let untrusted: String
+        let trade: String
+    }
+
+    /// The agents this server uses: the leash may list more (the named set
+    /// and OutLayer's), and only the active three are shown.
+    var shownAgents: [AgentEntry] {
+        guard let active else { return agents }
+        let mine = [active.trusted, active.untrusted, active.trade]
+        let shown = agents.filter { mine.contains($0.account) }
+        return shown.isEmpty ? agents : shown
+    }
+
+    /// Account → role name, for agents whose account name says nothing (OutLayer's hex accounts).
+    var roleNames: [String: String] {
+        guard let active else { return [:] }
+        return [active.trusted: "Payment Agent", active.untrusted: "Inbox Agent", active.trade: "Trading Agent"]
+    }
 
     struct Holding: Decodable, Identifiable {
         let symbol: String

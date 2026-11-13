@@ -26,7 +26,8 @@ export function buildApp(deps: Deps) {
   /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch, and the tokens it holds. */
   app.get("/v1/state", async () => {
     const [state, holdings] = await Promise.all([deps.chain.state(), deps.rhea ? deps.rhea.holdings(deps.cfg.leash).catch(() => []) : []]);
-    return { ...state, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings };
+    // `active`: the three agent accounts this server signs for (named, or OutLayer's when that's on).
+    return { ...state, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings, active: deps.cfg.agents };
   });
 
   /** What swapping `amount` NEAR into a token gets on Rhea right now, before you hold to swap. */

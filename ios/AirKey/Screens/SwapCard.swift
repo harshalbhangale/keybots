@@ -19,7 +19,7 @@ struct SwapCard: View {
 
     /// The Trading Agent's limits, as the leash has them on chain.
     private var trader: LeashState.AgentEntry? {
-        model.state?.agents.first { Fmt.agentName(account: $0.account) == "Trading Agent" }
+        model.state?.shownAgents.first { Fmt.agentName(account: $0.account) == "Trading Agent" }
     }
 
     /// The most one swap may be now: the per-trade cap, what's left today, what the leash holds.
