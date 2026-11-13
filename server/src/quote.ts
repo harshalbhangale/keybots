@@ -8,14 +8,15 @@
 import type { Config } from "./config.js";
 import { pickToken, toUnits, type IntentsClient, type IntentsToken } from "./intents.js";
 import type { LeashState } from "./near.js";
-import { minOut, RHEA, type RheaNetwork, type RheaRoute } from "./rhea.js";
+import { minOut, RHEA, sellRoute, type RheaNetwork, type RheaRoute } from "./rhea.js";
 
 /** What Rhea's pool `pool` returns for `amountIn` units of `tokenIn`, in `tokenOut` units. */
 export type PoolReturn = (pool: number, tokenIn: string, tokenOut: string, amountIn: string) => Promise<string>;
 
 export interface QuoteDeps {
   cfg: Pick<Config, "network" | "leash" | "agents" | "mainnetUsdCap">;
-  chain: { state(): Promise<LeashState> };
+  /** `tokenCap`: the owner's rule for selling a token; null (or absent) means the leash can't sell it. */
+  chain: { state(): Promise<LeashState>; tokenCap?(token: string): Promise<{ max_per_trade: string } | null> };
   intents?: Pick<IntentsClient, "tokens" | "quote">;
   /** The pools here, when the network has any (testnet). */
   rhea?: { network?: RheaNetwork; holdings(account: string): Promise<{ symbol: string; token: string; amount: string }[]> };
@@ -149,24 +150,18 @@ interface Hop {
   tokenOut: string;
 }
 
-/** The pools a pair goes through on Rhea here: one for NEAR on either side, two (through wNEAR) between tokens. */
-export function rheaHops(net: RheaNetwork | undefined, from: string, to: string): { hops: Hop[]; decimalsIn: number; decimalsOut: number } | null {
+/**
+ * The pool a pair goes through on Rhea here, as the leash would trade it:
+ * NEAR into a token, a token back to NEAR, or two tokens that share a pool
+ * (rhea.ts `sellRoute`). One pool each; anything else has no route.
+ */
+export function rheaHops(net: RheaNetwork | undefined, from: string, to: string): { hops: Hop[]; decimalsIn: number; decimalsOut: number; sells?: RheaRoute } | null {
   if (!net) return null;
-  const a: RheaRoute | undefined = net.routes[from];
   const b: RheaRoute | undefined = net.routes[to];
-  if (isNear(from) && b) return { hops: [{ pool: b.pool, tokenIn: net.wrap, tokenOut: b.token }], decimalsIn: NEAR_DECIMALS, decimalsOut: b.decimals };
-  if (a && isNear(to)) return { hops: [{ pool: a.pool, tokenIn: a.token, tokenOut: net.wrap }], decimalsIn: a.decimals, decimalsOut: NEAR_DECIMALS };
-  if (a && b && a !== b) {
-    return {
-      hops: [
-        { pool: a.pool, tokenIn: a.token, tokenOut: net.wrap },
-        { pool: b.pool, tokenIn: net.wrap, tokenOut: b.token },
-      ],
-      decimalsIn: a.decimals,
-      decimalsOut: b.decimals,
-    };
-  }
-  return null;
+  if (isNear(from)) return b ? { hops: [{ pool: b.pool, tokenIn: net.wrap, tokenOut: b.token }], decimalsIn: NEAR_DECIMALS, decimalsOut: b.decimals } : null;
+  const sell = sellRoute(net, from, isNear(to) ? "NEAR" : to);
+  if (!sell) return null;
+  return { hops: [{ pool: sell.pool, tokenIn: sell.from.token, tokenOut: sell.to.token }], decimalsIn: sell.from.decimals, decimalsOut: sell.to.decimals, sells: sell.from };
 }
 
 async function through(poolReturn: PoolReturn, hops: Hop[], amountIn: string): Promise<string> {
@@ -266,8 +261,13 @@ export function quoter(deps: QuoteDeps) {
       const small = (BigInt(unitsIn) / 1000n || 1n).toString();
       let out: string;
       let outSmall: string | null;
+      let tokenCap: { max_per_trade: string } | null = null;
       try {
-        [out, outSmall] = await Promise.all([through(deps.poolReturn!, path.hops, unitsIn), through(deps.poolReturn!, path.hops, small).catch(() => null)]);
+        [out, outSmall, tokenCap] = await Promise.all([
+          through(deps.poolReturn!, path.hops, unitsIn),
+          through(deps.poolReturn!, path.hops, small).catch(() => null),
+          path.sells && deps.chain.tokenCap ? timeout(deps.chain.tokenCap(path.sells.token), STATE_WAIT_MS) : Promise.resolve(null),
+        ]);
       } catch (e) {
         throw new QuoteError(`Rhea couldn't price ${amount} ${from} → ${to}: ${String((e as Error).message ?? e).slice(0, 160)}`, 502);
       }
@@ -281,6 +281,14 @@ export function quoter(deps: QuoteDeps) {
         priceImpact = Math.max(0, Number(((1 - here / marginal) * 100).toFixed(2)));
       }
       executable = true;
+      // Selling a token needs the owner's rule for it on the leash; without one the hold would only quote.
+      if (path.sells && !tokenCap) {
+        executable = false;
+        reason = `The leash can't sell ${from} yet. Its owner sets that up; this is Rhea's live quote.`;
+      } else if (path.sells && tokenCap && BigInt(unitsIn) > BigInt(tokenCap.max_per_trade)) {
+        executable = false;
+        reason = `Over the leash's cap of ${tidy(unitsToNumber(tokenCap.max_per_trade, path.decimalsIn))} ${from} a trade.`;
+      }
     } else {
       // No pool here: NEAR Intents' own dry quote, which is live mainnet pricing.
       const q = await timeout(deps.intents.quote(a.token!, b.token!, amount), INTENTS_WAIT_MS);

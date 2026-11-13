@@ -35,11 +35,15 @@ const pool: PoolReturn = async (_pool, tokenIn, _out, amountIn) => {
   return (BigInt(Math.round(out * 1e9)) * 10n ** 15n).toString();
 };
 const calls: string[] = [];
-function make(over: { state?: object; network?: "testnet" | "mainnet"; quote?: () => Promise<unknown> } = {}) {
+function make(over: { state?: object; network?: "testnet" | "mainnet"; quote?: () => Promise<unknown>; tokenCap?: string | null } = {}) {
   const mainnet = over.network === "mainnet";
   return quoter({
     cfg: { ...cfg, network: over.network ?? "testnet" },
-    chain: { state: async () => state(over.state) as never },
+    // The owner's rule for selling a token: 2 of it a trade unless a test says otherwise (null: no rule).
+    chain: {
+      state: async () => state(over.state) as never,
+      tokenCap: async () => (over.tokenCap === null ? null : { max_per_trade: over.tokenCap ?? (2n * NEAR24).toString() }),
+    },
     intents: {
       tokens: async () => list,
       quote: (async (from: { symbol: string }, to: { symbol: string }, amount: string) => {
@@ -62,10 +66,10 @@ function make(over: { state?: object; network?: "testnet" | "mainnet"; quote?: (
 }
 
 describe("the pools a pair goes through", () => {
-  it("one pool with NEAR on either side, two between tokens, none for a token Rhea doesn't have", () => {
+  it("one pool with NEAR on either side, the shared pool between two tokens, none for a token Rhea doesn't have", () => {
     expect(rheaHops(RHEA.testnet, "NEAR", "USDC")?.hops.map((h) => h.pool)).toEqual([1103]);
     expect(rheaHops(RHEA.testnet, "USDC", "NEAR")?.hops).toEqual([{ pool: 1103, tokenIn: "usdc.itachicara.testnet", tokenOut: "wrap.testnet" }]);
-    expect(rheaHops(RHEA.testnet, "USDC", "USDT")?.hops.map((h) => h.pool)).toEqual([1103, 1084]);
+    expect(rheaHops(RHEA.testnet, "USDC", "USDT")?.hops).toEqual([{ pool: 1126, tokenIn: "usdc.itachicara.testnet", tokenOut: "usdt.itachicara.testnet" }]);
     expect(rheaHops(RHEA.testnet, "NEAR", "SOL")).toBeNull();
     expect(rheaHops(undefined, "NEAR", "USDC")).toBeNull();
   });
@@ -104,15 +108,29 @@ describe("a quote for the trade panel", () => {
     expect(parse(q.command)).toEqual({ kind: "swap", amount: "0.25", from: "NEAR", to: "USDT" });
   });
 
-  it("a token back to NEAR, and token to token through wNEAR, are executable on Rhea", async () => {
+  it("a token back to NEAR, and token to token in their shared pool, are executable when the leash has a rule for the token", async () => {
     const back = await make().quote({ from: "USDC", to: "NEAR", amount: "1.05" });
     expect(back).toMatchObject({ route: { venue: "Rhea", pools: [1103] }, executable: true, command: "swap 1.05 usdc to near", balance: { symbol: "USDC", amount: "3.5", enough: true }, ready: true });
     expect(Number(back.amountOut)).toBeCloseTo(0.4995, 3);
     // $2.50 of USDC is 1.25 NEAR at NEAR Intents' price: over the 1 NEAR per-trade cap.
-    const big = await make().quote({ from: "USDC", to: "NEAR", amount: "2.5" });
+    const big = await make({ tokenCap: (5n * NEAR24).toString() }).quote({ from: "USDC", to: "NEAR", amount: "2.5" });
     expect(big).toMatchObject({ caps: { within: false, valueNear: "1.25" }, ready: false, problem: "Over the 1 NEAR per-trade cap: this is worth about 1.25 NEAR." });
     const across = await make().quote({ from: "USDC", to: "USDT", amount: "1" });
-    expect(across).toMatchObject({ route: { venue: "Rhea", pool: 1103, pools: [1103, 1084] }, executable: true, command: "swap 1 usdc to usdt" });
+    expect(across).toMatchObject({ route: { venue: "Rhea", pool: 1126, pools: [1126] }, executable: true, command: "swap 1 usdc to usdt" });
+  });
+
+  it("a token sale the leash has no rule for is Rhea's quote only, and one over the rule says so", async () => {
+    const none = await make({ tokenCap: null }).quote({ from: "USDC", to: "NEAR", amount: "1.05" });
+    expect(none).toMatchObject({
+      route: { venue: "Rhea", pools: [1103] },
+      executable: false,
+      ready: false,
+      reason: "The leash can't sell USDC yet. Its owner sets that up; this is Rhea's live quote.",
+      command: "swap 1.05 usdc to near",
+    });
+    expect(Number(none.amountOut)).toBeCloseTo(0.4995, 3);
+    const over = await make().quote({ from: "USDC", to: "NEAR", amount: "2.1" });
+    expect(over).toMatchObject({ executable: false, reason: "Over the leash's cap of 2 USDC a trade." });
   });
 
   it("says in one line why the hold is off: over a cap, over today's, not enough, paused", async () => {
@@ -272,7 +290,7 @@ describe("the routes", () => {
   const app = () =>
     buildApp({
       cfg: { ...loadConfig({}), ...cfg, apiToken: "" },
-      chain: { state: async () => state() } as never,
+      chain: { state: async () => state(), tokenCap: async () => null } as never,
       receipts: { add() {}, list: () => [], paidBefore: () => false },
       intents: { tokens: async () => list, quote: async () => null, pick: async () => ({}) } as never,
       rhea: { network: RHEA.testnet, route: () => undefined, holdings: async () => [] } as never,
