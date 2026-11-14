@@ -4,7 +4,7 @@
 
 *Your AI. Your keys. Your rules.*
 
-AIRKEY is a phone keyboard with AI agents in it. You type "pay friend.near 0.5 for dinner" in any chat and an agent pays. Each agent has its own NEAR account, and the only thing its key can do is ask the **leash**, a NEAR contract that holds the money and enforces your rules: caps, an allowlist, a blocklist, a kill switch. An agent that gets fooled by a scam message still can't move money the leash doesn't allow.
+AIRKEY extends [Kall Markets](https://github.com/harshalbhangale/Kall-Markets), the trading keyboard built at ETHGlobal Mumbai, into a phone keyboard with AI agents in it. You type "pay friend.near 0.5 for dinner" in any chat and an agent pays. Each agent has its own NEAR account, and the only thing its key can do is ask the **leash**, a NEAR contract that holds the money and enforces your rules: caps, an allowlist, a blocklist, a kill switch. An agent that gets fooled by a scam message still can't move money the leash doesn't allow.
 
 Built at NEAR HACKATHON (1–14 Nov 2026) by Harshal Bhangale. Status: **in progress**. This README only claims what is in the repo; anything planned says *next*.
 
@@ -95,7 +95,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 212 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
+npm test                       # 238 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
@@ -208,7 +208,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | AI reading | **Built**: used only for wording the rules can't read. **Private AI on NEAR AI Cloud** (runs in NEAR's TEE) answers by default. Every answer's ECDSA signature is verified against the exact request and response bytes, and its signer must be the address NEAR's hardware attests. Every 10 minutes the server checks the Intel TDX quote (Phala's verifier) and the NVIDIA GPU attestation (NVIDIA NRAS) against a fresh nonce, plus the compose hash and event log (`server/src/attest.ts`, `GET /v1/ai/attestation`). Receipts say verified, partial or failed. Limits: the TDX and GPU verdicts come from Phala and NVIDIA, not a local check; no Intel TCB policy and no TLS binding yet. **OpenAI** is the fallback when NEAR AI has no key or doesn't answer; it isn't private or signed. Every receipt, and the keyboard chip, names the one that actually answered. |
-| Hold-space AI bar in the keyboard | **Built**: hold the space bar to rewrite, reply, translate or change the tone; nothing goes into the message until you tap Replace, Insert or Copy. NEAR AI Cloud answers first; OpenAI is the fallback and is labelled as such, and `AIRKEY_AI_FALLBACK=off` turns it off. Private AI on NEAR AI Cloud (runs in NEAR's TEE; Qwen3-VL 30B Instruct, five rewrite versions in about 1–2 s): signature and hardware attestation verified, as in the row above. |
+| Assist panel in the keyboard | **Built**: hold the space bar and Fix starts on your draft; also Shorter, Warmer, Formal, Reply (three options), Translate, Ask and Search (web results and a one-line answer). Results stream word by word (first word in about 0.4 s, done in about 1–2 s); nothing goes into the message until Replace, Insert or Copy, and Replace can be undone for 5 seconds. A "Private · NEAR AI" badge opens the answer's receipt: model, signature verified, hardware attestation verified, time taken. Text that reads as a payment is never sent to the AI: the panel hands it to the agent instead. A "Fix this" chip appears when a draft looks rough (decided on the phone). Code: `ios/AirKeyKeyboard/Surfaces/Assist/`, `server/src/assist.ts`, `POST /v1/assist`. |
 | A copied crypto call becomes a trade chip | **Built and live on testnet**: Check copied, then a hold-to-confirm chip for the Trading Agent, token checked on NEAR Intents, inside its caps (see Swaps above) |
 | Agent keys held in OutLayer's TEE | **Built, off by default** (`AIRKEY_SIGNER=outlayer`): the agents' `pay` and `swap` are signed inside OutLayer and the leash still decides every payment; the signer works on testnet: a payment, a blocked scam and policy refusals ([evidence](docs/evidence/outlayer-testnet.md)). Each OutLayer-signed action took about 5.7 s (3.7 to 11.2 s) in a 10-run test ([runs](docs/evidence/outlayer-runs.md); that test overlapped a kill-switch test), so the demo signs with local function-call keys. OutLayer returned no attestation we verified. Not the production custody path. |
 | Price chips, buy and sell from the keyboard, sums and currency | **Built**: prices and token list from NEAR Intents; sums and splits on the phone |
@@ -229,6 +229,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 - **Pre-hackathon code (baseline).** Two earlier projects predate this hackathon and parts of them are in this repo:
   - **Glyf** (an AI keyboard): the keyboard's core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and its `en.glyd` dictionary, the toolbar, menu, clipboard, emoji and notes surfaces in `Surfaces/`, and `Resources/` fonts, sounds and textures), adapted to AIRKEY.
   - **Kall Markets** (a trading keyboard): the keyboard haptics, the hold-to-confirm pattern, and the app's visual design (masthead, cards, swap card), adapted to AIRKEY.
+  - Also adapted from Glyf during the hackathon: the letter-hold actions, the vault shorthand and the GIF tab. The keyboard's AI panel and its server were written from scratch for AIRKEY.
   - Built during the hackathon: the leash contract, the server and its agents, Rhea and NEAR Intents swaps, the AIRKEY agent strip in the keyboard (`ios/AirKeyKeyboard/Agent/`), the money-safe typing rules, the vault, and the app.
 - Built with an AI coding assistant (Claude Code). Harshal chose the product, the rules and every trade-off; the assistant wrote code and tests to those decisions.
 - Testnet only: the leash contract runs on NEAR testnet and has enforced no mainnet swap. Never commit keys: `keys/` and `server/.env` are gitignored.
