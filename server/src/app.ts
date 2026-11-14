@@ -1,3 +1,4 @@
+import { attestations } from "./attest.js";
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActMoney, ActUnavailable, act, type ActAction } from "./act.js";
 import { MONEY_REFUSAL, plainError, readAssistBody, runAssist } from "./assist.js";
@@ -271,6 +272,13 @@ export function buildApp(deps: Deps) {
    * done {task, text, options?, results?, receipt, note?} or error {error}.
    * Money is refused (409) before any AI sees it.
    */
+  // NEAR AI Cloud's hardware attestation as this server last checked it (every ten minutes): what passed, failed or was unavailable.
+  app.get("/v1/ai/attestation", async (_req, reply) => {
+    const r = attestations.get(deps.cfg.nearAi.model);
+    if (!r) return reply.code(503).send({ error: "The hardware attestation hasn't been checked yet. Try again in a minute.", status: "not checked" });
+    return r;
+  });
+
   app.post("/v1/assist", async (req, reply) => {
     const gate = readAssistBody(req.body);
     if (!gate.ok) return reply.code(gate.status).send(gate.body);
