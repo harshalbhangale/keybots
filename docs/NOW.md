@@ -17,7 +17,8 @@ Updated 14 Nov 2026, 05:35 UTC. Checked on the simulator against the hosted serv
 - [x] Plain words on every screen ("Blocked: drain.near is on your blocked list"; the tab is Limits)
 - [x] Haptic scheme (needs your feel-check on the phone)
 - [x] Server hosted with HTTPS (docs/HOSTING.md): the phone works on any network
-- [x] 196 server tests, 38 contract tests
+- [x] Follow people on X: Following in the keyboard's Calls and the app's Wallet, records from Kall, rules per person (dollars per call and per day, buy only, sure calls only, stop after 3 misses), hold to trade their latest call, Traded for you. One live auto-trade on testnet: @CryptoKaleo's ETH call → 0.295 NEAR for 0.6197 USDC (5MyPgFPD…). Auto-trading is off on the server until you turn it on
+- [x] 212 server tests, 38 contract tests
 
 ## Not done
 - [ ] Bracket, trailing and TWAP orders
@@ -28,4 +29,4 @@ Updated 14 Nov 2026, 05:35 UTC. Checked on the simulator against the hosted serv
 ## Before recording (needs your OK: these send testnet transactions)
 1. `npm run demo-reset` in scripts/: unpause, clear the waiting 0.01 NEAR payment, reset spend, top the leash up to 1.5 NEAR (it holds 0.49 now)
 2. Turn off the OpenAI fallback on the hosted server (command in docs/DEMO.md)
-3. Record docs/DEMO.md, beats 1–5 and the kill switch (about 2:14)
+3. Record docs/DEMO.md, beats 1–5 and following and the kill switch (about 2:28); beat 6 needs auto-trading on for the take

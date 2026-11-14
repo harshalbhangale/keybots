@@ -71,7 +71,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 196 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
+npm test                       # 212 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
@@ -180,7 +180,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
 | A Trading Agent with its own identity and limits | **Built**: `trader.<you>` on testnet, function-call key only (pay, report, swap), its own caps (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
-| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 196 tests, live on testnet (table above) |
+| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 212 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
 | AI reading | **Built**: used only for wording the rules can't read. **NEAR AI Cloud** (private inference) answers by default and each reply's ECDSA signature is checked against the exact request and response bytes; the attestation report behind the signing key is *not* checked yet, and receipts say so. **OpenAI** is the fallback when NEAR AI has no key or doesn't answer; it isn't private or signed. Every receipt, and the keyboard chip, names the one that actually answered. |
@@ -190,6 +190,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Price chips, buy and sell from the keyboard, sums and currency | **Built**: prices and token list from NEAR Intents; sums and splits on the phone |
 | Price-triggered orders | **Built**: typed orders, a 15-second watcher, cancel from Home; the triggered trade is a quote until swaps execute |
 | Swaps on NEAR | **Built and live on testnet**: the leash's `swap` wraps NEAR and swaps on Rhea, the token comes back to the leash; hold to swap from the keyboard or the app. NEAR Intents: token checks and quotes; mainnet execution waits for a funded mainnet leash. |
+| Follow people on X | **Built and live on testnet**: follow an X handle (records and calls from [Kall](https://kallmarkets.vercel.app)), set rules per person (dollars per call and per day, buy only, sure calls only, stop after 3 misses in a row); a new call that passes them is traded by the Trading Agent inside its caps on the leash. Off unless `AIRKEY_AUTO_TRADE=on`. Kall sees the posts its users see, not every post on X. One live trade: @CryptoKaleo's ETH call → 0.295 NEAR for 0.6197 USDC ([5MyPgFPD…](https://testnet.nearblocks.io/txns/5MyPgFPDiaUwR8EttJ9U6eUUAsxQ6c2TeCnvqLV16QNj)). Code: `server/src/follows.ts`, `server/src/kall.ts`. |
 | Mainnet | *Not done.* The leash runs on testnet only and has enforced no mainnet swap. |
 
 ## Next (not built yet)
