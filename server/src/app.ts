@@ -3,6 +3,7 @@ import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
 import { aiRoutes, type AiRouteDeps } from "./ai-routes.js"; // GLYF AI HOOK
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
+import { GifsUnavailable, gifClient, type GifClient } from "./gifs.js";
 import { followJson, followPoller, memoryFollows, parseFollow, recordOf, type FollowPoller, type FollowStore, type KolRecord } from "./follows.js";
 import { kallClient, type KallClient } from "./kall.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
@@ -26,6 +27,8 @@ export type Deps = CommandDeps & {
   kall?: KallClient;
   /** The same poller index.ts runs every minute, so "check now" and the timer never trade one call twice. */
   followPoller?: FollowPoller;
+  /** KLIPY's GIFs, through this server (the key stays here). Tests pass a client with a fake fetch. */
+  gifs?: GifClient;
 } & AiRouteDeps;
 
 /**
@@ -380,6 +383,22 @@ export function buildApp(deps: Deps) {
       return { trades: await poller.poll(req.params.handle, { latest: req.body?.latest === true }) };
     } catch (e) {
       return reply.code(502).send({ error: kallDown(e) });
+    }
+  });
+
+  // --- GIFs (gifs.ts): KLIPY through this server, so its key never reaches the phone ---
+  const gifs = deps.gifs ?? gifClient();
+  /** A page of GIFs for the emoji board: trending (no q) or a search. */
+  app.get<{ Querystring: { q?: string; page?: string } }>("/v1/gifs", async (req, reply) => {
+    if (!gifs.ready) return reply.code(503).send({ error: "GIFs aren't set up on this server" });
+    const q = String(req.query.q ?? "").trim().slice(0, 80);
+    const page = Math.max(1, Math.min(50, Math.floor(Number(req.query.page ?? 1)) || 1));
+    try {
+      return await gifs.page(q, page);
+    } catch (e) {
+      if (e instanceof GifsUnavailable) return reply.code(503).send({ error: e.message });
+      // A fixed message: KLIPY's URL holds the key, so nothing from the failure is passed on.
+      return reply.code(502).send({ error: "KLIPY didn't answer. Try again in a moment." });
     }
   });
 
