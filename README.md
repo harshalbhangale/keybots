@@ -1,10 +1,12 @@
-# AIRKEY
+# Keybots
 
 **Your keyboard is the AI. NEAR is the leash.**
 
 *Your AI. Your keys. Your rules.*
 
-AIRKEY extends [Kall Markets](https://github.com/harshalbhangale/Kall-Markets), the trading keyboard built at ETHGlobal Mumbai, into a phone keyboard with AI agents in it. You type "pay friend.near 0.5 for dinner" in any chat and an agent pays. Each agent has its own NEAR account, and the only thing its key can do is ask the **leash**, a NEAR contract that holds the money and enforces your rules: caps, an allowlist, a blocklist, a kill switch. An agent that gets fooled by a scam message still can't move money the leash doesn't allow.
+> **Name.** The project is called Keybots. Until the rename reaches the code, the iOS app, the folders and the commit history still say AIRKEY, and the steps below use the app's current name.
+
+Keybots extends [Kall Markets](https://github.com/harshalbhangale/Kall-Markets), the trading keyboard built at ETHGlobal Mumbai, into a phone keyboard with AI agents in it. You type "pay friend.near 0.5 for dinner" in any chat and an agent pays. Each agent has its own NEAR account, and the only thing its key can do is ask the **leash**, a NEAR contract that holds the money and enforces your rules: caps, an allowlist, a blocklist, a kill switch. An agent that gets fooled by a scam message still can't move money the leash doesn't allow.
 
 Built at NEAR HACKATHON (1–14 Nov 2026) by Harshal Bhangale. Status: **in progress**. This README only claims what is in the repo; anything planned says *next*.
 
