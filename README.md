@@ -64,13 +64,13 @@ Two sketches show how it fits together. You can edit them: the Excalidraw files 
 
 ![Calls from X, Telegram and copied text reach the Keybots keyboard. You hold to confirm, an agent asks the Spend Limits contract, and the result is paid or refused.](docs/diagrams/keybots-1-calls-and-limits.png)
 
-A call can come from X (through Kall's feed) or from text you copy. Telegram is drawn dashed: that source is built on a separate branch and is not part of this submission. The keyboard turns a call into one small trade, and nothing runs until you hold to confirm. The agent's key can only ask the Spend Limits contract (called the leash in the code), which pays, swaps or refuses on chain.
+X posts (through Kall's feed) and copied text go into the Keybots keyboard, an agent with its own NEAR account asks the Spend Limits contract on NEAR testnet, and the result is paid or refused on chain (Telegram is dashed: built on a branch, not in this submission).
 
 **Inside the keyboard**
 
 ![Typed money words go through fixed rules, NEAR Intents and Spend Limits. Wording help goes to NEAR AI Cloud and comes back as a signed answer with a receipt.](docs/diagrams/keybots-2-inside-the-keyboard.png)
 
-Money words are read by fixed rules with no AI, and text that reads as money is never sent to the AI. Wording help (fix, rewrite, translate, reply) uses NEAR AI Cloud when it is configured, with a receipt on the keyboard. If NEAR AI does not answer, OpenAI can step in, and the receipt says which one did.
+Money words go through fixed rules, NEAR Intents (token check and quote) and the Spend Limits contract, while wording help goes to Qwen3-VL 30B on NEAR AI Cloud (NEAR's TEE) and comes back as a signed answer with a receipt, with OpenAI as the fallback.
 
 ### How it works, one line each
 
