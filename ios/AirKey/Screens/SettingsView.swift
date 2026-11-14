@@ -64,7 +64,7 @@ struct SettingsView: View {
                         Text("It signs approvals after Face ID and never leaves this phone. Add it to your NEAR account once:")
                         Text("npm run add-device -- <owner> <key>").font(AK.mono)
                         if !DeviceKey.persisted {
-                            Text("This build can't save the key in the Keychain, so it lasts only until the app quits.").foregroundStyle(AK.amber)
+                            Text("This build can't save the key in the Keychain, so it lasts only until the app quits.").foregroundStyle(AK.amberText)
                         }
                     }
                 }
@@ -72,12 +72,12 @@ struct SettingsView: View {
                 if let state = model.state {
                     Section("Account") {
                         LabeledContent("Your account") { Text(state.owner).font(AK.mono) }
-                        LabeledContent("Limits contract") { Text(state.leash).font(AK.mono) }
+                        LabeledContent("Spend Limits contract") { Text(state.leash).font(AK.mono) }
                     }
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(AK.ink.ignoresSafeArea())
+            .background(AK.canvas.ignoresSafeArea())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
