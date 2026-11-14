@@ -16,6 +16,12 @@ struct AgentCard: View {
     private var limits: String { "Up to \(Fmt.near(a.per_payment_cap)) \(unit)" }
     private var used: String { "\(Fmt.near(a.spent_today, unit: false)) of \(Fmt.near(a.daily_cap))" }
     private var trusted: Bool { a.tier == "trusted" }
+    /// The lane's own colour and mark.
+    private var lane: (color: Color, icon: String) {
+        if name == Plain.trades { return (AK.laneTrade, "arrow.left.arrow.right") }
+        return a.tier == "trusted" ? (AK.lanePay, "arrow.up.right") : (AK.laneInbox, "doc.on.clipboard")
+    }
+
     /// What its key may call on Spend Limits: the Trading Agent also swaps.
     private var mayCall: String { name == Plain.trades ? "pay and swap" : "pay" }
 
@@ -40,6 +46,12 @@ struct AgentCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: lane.icon)
+                    .font(.caption.weight(.bold)).foregroundStyle(AK.ink)
+                    .frame(width: 26, height: 26)
+                    .background(lane.color, in: Circle())
+                    .alignmentGuide(.firstTextBaseline) { d in d[VerticalAlignment.center] + 5 }
+                    .accessibilityHidden(true)
                 Text(name).font(.body.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.85)
                 if paused {
                     Pill(text: "Stopped", color: AK.redText)
@@ -54,7 +66,7 @@ struct AgentCard: View {
             Text(Fmt.agentPurpose(account: entry.account, tier: a.tier))
                 .font(.subheadline).foregroundStyle(AK.muted)
                 .fixedSize(horizontal: false, vertical: true)
-            SpendBar(share: Fmt.share(a.spent_today, of: a.daily_cap), color: paused ? AK.faint : AK.accent)
+            SpendBar(share: Fmt.share(a.spent_today, of: a.daily_cap), color: paused ? AK.faint : lane.color)
             HStack(spacing: 6) {
                 Text(limits)
                 Spacer(minLength: 8)

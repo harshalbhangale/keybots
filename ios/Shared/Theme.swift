@@ -26,6 +26,16 @@ enum AK {
     static let amberText = Color(light: 0xB25E00, dark: 0xFFB224)
     static let redText = Color(light: 0xD70015, dark: 0xFF5A5C)
 
+    /// One colour per lane, so you can tell them apart at a glance: payments
+    /// lime, messages you copy sky, trades violet. Used for the lane's mark and
+    /// its spend bar, never for warnings.
+    static let lanePay = Color(hex: 0xC6F45B)
+    static let laneInbox = Color(hex: 0x5AC8FA)
+    static let laneTrade = Color(hex: 0xA78BFA)
+    /// The app icon's blue to teal, for the one card that holds the money.
+    static let brand = LinearGradient(colors: [Color(hex: 0x2B3A9B), Color(hex: 0x1E7FB8), Color(hex: 0x17A39A)],
+                                      startPoint: .topLeading, endPoint: .bottomTrailing)
+
     static let radius: CGFloat = 22
     static let gutter: CGFloat = 20
 
