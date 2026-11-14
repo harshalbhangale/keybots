@@ -26,6 +26,10 @@ export interface Config {
   aiFallback: "openai" | "off";
   /** Mainnet spends real money: no swap above this many dollars, whatever the command says. */
   mainnetUsdCap: number;
+  /** Kall Markets' API, where the calls of the KOLs you follow come from. */
+  kallApi: string;
+  /** Trades for KOLs you follow only run when AIRKEY_AUTO_TRADE=on. Off, the server still says what it would have done. */
+  autoTrade: boolean;
   port: number;
 }
 
@@ -75,6 +79,8 @@ export function loadConfig(env = process.env): Config {
     },
     aiFallback: env.AIRKEY_AI_FALLBACK === "off" ? "off" : "openai",
     mainnetUsdCap: Number(env.AIRKEY_MAINNET_USD_CAP ?? 0.15),
+    kallApi: env.KALL_API ?? "https://kallmarkets.vercel.app",
+    autoTrade: env.AIRKEY_AUTO_TRADE === "on",
     port: Number(env.PORT ?? 8787),
   };
 }
