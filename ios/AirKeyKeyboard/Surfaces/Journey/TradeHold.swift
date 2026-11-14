@@ -8,6 +8,9 @@ import SwiftUI
 struct TradeHold: View {
     let label: String
     let disabled: Bool
+    /// Grey instead of lime: the action is known to be refused. Lime stays
+    /// for actions that can succeed.
+    var neutral: Bool = false
     let palette: MoneyPalette
     let action: () -> Void
     var duration: Double = 1.2
@@ -28,12 +31,14 @@ struct TradeHold: View {
                 withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) { twoTap.toggle() }
             } label: {
                 Text(twoTap ? "Hold to confirm instead" : "Tap to confirm instead")
-                    .font(.caption2.weight(.medium)).underline()
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(palette.soft)
-                    .frame(height: 16)
+                    .lineLimit(1).minimumScaleFactor(0.85)
+                    .frame(height: 18)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .disabled(disabled || fired)
+            // Kept in place at opacity 0 so nothing moves when it goes.
             .opacity(disabled || fired ? 0 : 1)
             .accessibilityHidden(true)
         }
@@ -42,14 +47,15 @@ struct TradeHold: View {
 
     private var hold: some View {
         ZStack(alignment: .leading) {
-            Capsule().fill(AK.accent)
+            Capsule().fill(neutral ? palette.fill : AK.accent)
             GeometryReader { g in
-                Capsule().fill(AK.ink.opacity(0.24)).frame(width: g.size.width * progress)
+                Capsule().fill((neutral ? palette.text : AK.ink).opacity(neutral ? 0.12 : 0.24)).frame(width: g.size.width * progress)
             }
             Text(title)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(AK.ink)
-                .lineLimit(1)
+                .font(.subheadline.weight(neutral ? .semibold : .bold))
+                .foregroundStyle(neutral ? palette.text : AK.ink)
+                .lineLimit(1).minimumScaleFactor(0.85)
+                .padding(.horizontal, 10)
                 .frame(maxWidth: .infinity)
                 .contentTransition(.opacity)
         }
