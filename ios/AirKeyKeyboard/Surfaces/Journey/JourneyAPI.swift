@@ -51,6 +51,8 @@ struct TradeReview: Equatable {
         let text: String
         let asset: String
         let direction: String
+        /// A leveraged signal read as spot: "Leveraged call (10x): Keybots buys spot, no leverage."
+        var signalNote: String? = nil
     }
     struct Limits: Equatable {
         let agentName: String
@@ -233,7 +235,8 @@ struct JourneyAPI {
             expiresAt: Date().addingTimeInterval((j["ttlSeconds"] as? NSNumber)?.doubleValue ?? 30),
             call: .init(handle: J.str(author["handle"])?.replacingOccurrences(of: "@", with: ""), name: J.str(author["name"]),
                         postedAt: J.date(c["postedAt"]), url: J.str(c["url"]), text: J.str(c["text"]) ?? "",
-                        asset: J.str(c["asset"]) ?? receive.symbol, direction: J.str(c["direction"]) ?? "buy"),
+                        asset: J.str(c["asset"]) ?? receive.symbol, direction: J.str(c["direction"]) ?? "buy",
+                        signalNote: J.str(J.dict(c["signal"])["note"])),
             reading: J.str(J.dict(j["reading"])["detail"]) ?? "",
             network: J.str(t["network"]) ?? "NEAR testnet",
             venue: J.str(t["venue"]) ?? "",
