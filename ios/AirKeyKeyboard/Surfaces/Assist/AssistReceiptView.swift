@@ -15,7 +15,7 @@ struct AssistBadge: View {
                     Text("Private · NEAR AI").foregroundStyle(p.text)
                 } else if r.isNear {
                     Image(systemName: "seal").font(.system(size: 11, weight: .semibold)).foregroundStyle(p.soft)
-                    Text("NEAR AI · not verified").foregroundStyle(p.soft)
+                    Text("NEAR AI · partly verified").foregroundStyle(p.soft)
                 } else {
                     Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 10, weight: .semibold))
                     Text("OpenAI (not private)")
@@ -35,11 +35,12 @@ struct AssistBadge: View {
     }
 
     static func spoken(_ r: AssistReceipt) -> String {
-        r.isPrivate ? "Private, NEAR AI, verified. Show receipt." : r.isNear ? "NEAR AI, not verified. Show receipt." : "OpenAI, not private. Show receipt."
+        r.isPrivate ? "Private, NEAR AI, verified. Show receipt." : r.isNear ? "NEAR AI, partly verified. Show receipt." : "OpenAI, not private. Show receipt."
     }
 }
 
-/// The receipt: which model, what was checked and how long it took.
+/// The receipt: who answered, each check as passed, failed or unavailable,
+/// what is still taken on trust, and how to check it yourself.
 struct AssistReceiptCard: View {
     let receipt: AssistReceipt
     let note: String?
@@ -48,10 +49,16 @@ struct AssistReceiptCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Text(receipt.isNear ? "Answered on NEAR AI" : "Answered by OpenAI")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(p.text)
+            HStack(spacing: 8) {
+                Image(systemName: headerIcon)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(receipt.isPrivate ? p.mark : p.amber)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(header).font(.subheadline.weight(.semibold)).foregroundStyle(p.text)
+                    Text(receipt.isNear ? "NEAR AI · \(Self.shortModel(receipt.model))\(receipt.ms.map { " · \(Self.duration($0))" } ?? "")"
+                         : "OpenAI · \(Self.shortModel(receipt.model))")
+                        .font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                }
                 Spacer(minLength: 0)
                 Button(action: close) {
                     Text("Done").font(.footnote.weight(.semibold)).foregroundStyle(p.soft)
@@ -60,63 +67,89 @@ struct AssistReceiptCard: View {
                 }
                 .buttonStyle(.plain)
             }
-            ForEach(rows, id: \.text) { row in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Image(systemName: row.icon)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(row.tone == .good ? p.mark : row.tone == .bad ? p.amber : p.soft)
-                        .frame(width: 14)
-                    Text(row.text)
-                        .font(.footnote)
-                        .foregroundStyle(row.tone == .bad ? p.amber : p.text)
-                        .fixedSize(horizontal: false, vertical: true)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 6) {
+                    if receipt.isNear {
+                        ForEach(checkRows, id: \.name) { row in check(row) }
+                    } else {
+                        bullet("This text was answered by OpenAI. It left NEAR AI's sealed hardware, so it is not private.", tone: .bad)
+                    }
+                    Text("Only the text you choose is sent.")
+                        .font(.footnote).foregroundStyle(p.text).padding(.top, 2)
+                    if receipt.isNear {
+                        Text("What you still trust").font(.footnote.weight(.semibold)).foregroundStyle(p.text).padding(.top, 4)
+                        bullet("The Intel TDX and GPU verdicts come from Phala and NVIDIA; this phone doesn't check them itself.")
+                        bullet("NEAR's instances of a model share one signing key.")
+                        bullet("The connection isn't bound to the attested machine yet.")
+                        bullet("NEAR AI's data retention isn't verified by AIRKEY.")
+                        Text("How to check it yourself").font(.footnote.weight(.semibold)).foregroundStyle(p.text).padding(.top, 4)
+                        Text("GET /v1/ai/attestation on the AIRKEY server, and NEAR's own verifier at https://cloud.near.ai/verify")
+                            .font(.caption).foregroundStyle(p.soft)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let note, !note.isEmpty {
+                        bullet(note).padding(.top, 2)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(p.line, lineWidth: 0.5))
+    }
+
+    private var header: String {
+        guard receipt.isNear else { return "OpenAI, not private" }
+        return receipt.isPrivate ? "Verified" : "Partly verified"
+    }
+
+    private var headerIcon: String {
+        receipt.isPrivate ? "checkmark.seal.fill" : receipt.isNear ? "seal" : "exclamationmark.triangle.fill"
+    }
+
+    private struct CheckRow { let name: String; let state: AssistReceipt.CheckState }
+
+    private var checkRows: [CheckRow] {
+        let sig: AssistReceipt.CheckState = switch receipt.signature {
+        case "verified": .passed
+        case "mismatch", "failed": .failed
+        default: .unavailable
+        }
+        return [
+            CheckRow(name: "Signature on this answer", state: sig),
+            CheckRow(name: "Signer matches the attested enclave", state: receipt.state("signerMatch")),
+            CheckRow(name: "Intel TDX quote (verdict from Phala's verifier)", state: receipt.state("tdxQuote")),
+            CheckRow(name: "NVIDIA GPU (verdict from NVIDIA NRAS)", state: receipt.state("nvidia")),
+            CheckRow(name: "Fresh nonce", state: receipt.state("nonce")),
+            CheckRow(name: "Compose hash", state: receipt.state("composeHash")),
+        ]
+    }
+
+    private func check(_ row: CheckRow) -> some View {
+        let (icon, word, color): (String, String, Color) = switch row.state {
+        case .passed: ("checkmark", "passed", p.mark)
+        case .failed: ("xmark", "failed", p.amber)
+        case .unavailable: ("minus", "unavailable", p.soft)
+        }
+        return HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: icon).font(.system(size: 11, weight: .bold)).foregroundStyle(color).frame(width: 14)
+            Text(row.name).font(.footnote).foregroundStyle(p.text).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 4)
+            Text(word).font(.caption.weight(.semibold)).foregroundStyle(row.state == .failed ? p.amber : p.soft)
+        }
         .accessibilityElement(children: .combine)
     }
 
-    private enum Tone { case good, bad, plain }
-    private struct Row { let icon: String; let text: String; let tone: Tone }
+    private enum Tone { case plain, bad }
 
-    private var rows: [Row] {
-        var out: [Row] = []
-        out.append(Row(icon: "cpu", text: "Model: \(Self.shortModel(receipt.model))", tone: .plain))
-        if receipt.isNear {
-            switch receipt.signature {
-            case "verified": out.append(Row(icon: "checkmark", text: "Signature verified", tone: .good))
-            case "mismatch": out.append(Row(icon: "xmark", text: "Signature did not match", tone: .bad))
-            default: out.append(Row(icon: "minus", text: "Signature not available", tone: .plain))
-            }
-            out.append(attestationRow)
-        } else {
-            out.append(Row(icon: "exclamationmark.triangle", text: "OpenAI (not private): this text left NEAR AI's sealed hardware.", tone: .bad))
-        }
-        if let ms = receipt.ms { out.append(Row(icon: "clock", text: "Took \(Self.duration(ms))", tone: .plain)) }
-        if let note, !note.isEmpty { out.append(Row(icon: "info.circle", text: note, tone: .plain)) }
-        return out
-    }
-
-    private var attestationRow: Row {
-        let tdx = receipt.checks["tdxQuote"]
-        let gpu = receipt.checks["nvidia"]
-        switch receipt.attestation {
-        case "verified":
-            return Row(icon: "checkmark", text: "Hardware attestation verified (Intel TDX, NVIDIA GPU)", tone: .good)
-        case "partial":
-            var parts: [String] = []
-            if let tdx { parts.append(tdx ? "Intel TDX verified" : "Intel TDX not verified") }
-            if let gpu { parts.append(gpu ? "NVIDIA GPU verified" : "NVIDIA GPU not verified") }
-            let detail = parts.isEmpty ? "" : " (\(parts.joined(separator: ", ")))"
-            return Row(icon: "exclamationmark", text: "Hardware attestation partly verified\(detail)", tone: .bad)
-        case "failed":
-            return Row(icon: "xmark", text: "Hardware attestation failed", tone: .bad)
-        default:
-            return Row(icon: "minus", text: "Hardware attestation not checked", tone: .plain)
+    private func bullet(_ text: String, tone: Tone = .plain) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("·").font(.footnote.weight(.bold)).foregroundStyle(p.soft).frame(width: 14)
+            Text(text).font(.caption).foregroundStyle(tone == .bad ? p.amber : p.soft)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
