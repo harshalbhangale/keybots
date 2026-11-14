@@ -9,10 +9,17 @@ import type { Action } from "./parse.js";
 import type { Decision } from "./near.js";
 import type { SwapQuote, TokenCheck } from "./intents.js";
 
+/** "follow": the server built the command from a followed KOL's call, under the owner's rules for them. */
+export type Source = "typed" | "pasted" | "follow";
+
 export interface Receipt {
   id: string;
   at: string;
-  input: { text: string; source: "typed" | "pasted" };
+  /**
+   * Where the words came from: typed by the owner, pasted from someone else,
+   * or a call from a KOL the owner follows (with who posted it and where).
+   */
+  input: { text: string; source: Source; handle?: string; postUrl?: string };
   interpretation: { action: Action; reader: "rules" | "near-ai-cloud" | "openai"; ai?: AiEvidence };
   agent?: { account: string; tier: "trusted" | "untrusted" };
   receiver?: { asked: string; account: string; via: "contacts" | "account" };

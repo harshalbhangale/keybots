@@ -9,7 +9,7 @@ import type { IntentsClient } from "./intents.js";
 import type { OrderStore } from "./orders.js";
 import { amountOut, fromUnits, minOut, sellMsg, swapMsg, toUnits, type RheaClient, type RheaSell } from "./rhea.js";
 import { DOLLAR, parse, resolveReceiver, toYocto, type Action } from "./parse.js";
-import type { Receipt, ReceiptStore } from "./receipts.js";
+import type { Receipt, ReceiptStore, Source } from "./receipts.js";
 
 export interface Deps {
   cfg: Config;
@@ -79,9 +79,16 @@ export function describe(action: Action): { kind: "pay" | "swap"; title: string;
   }
 }
 
-export async function runCommand(deps: Deps, text: string, source: "typed" | "pasted"): Promise<Receipt> {
+/** The KOL and post behind a "follow" command, for its receipt. */
+export interface FollowSource {
+  handle: string;
+  postUrl: string;
+}
+
+export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
-  const base = { id: randomUUID(), at: new Date().toISOString(), input: { text: text.slice(0, 2000), source } };
+  const input = { text: text.slice(0, 2000), source, ...(source === "follow" && from ? { handle: from.handle, postUrl: from.postUrl } : {}) };
+  const base = { id: randomUUID(), at: new Date().toISOString(), input };
 
   // 1. Read it: rules first, an AI only for what the rules can't read.
   const interpretation = await readCommand(deps, text);
@@ -96,6 +103,8 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
   };
 
   if (action.kind === "unknown") return done({ outcome: "not-sent", message: action.reason });
+  // A followed KOL's call only ever becomes one swap: never a payment or a standing order.
+  if (source === "follow" && action.kind !== "swap") return done({ outcome: "blocked", message: "Only a swap runs for a KOL you follow." });
   if (action.kind === "swap") return swap(deps, action, source, done);
   if (action.kind === "watch") return watch(deps, action, text, source, done);
 
@@ -264,7 +273,7 @@ export const tidy = (n: string | number) => {
 async function swap(
   deps: Deps,
   action: Extract<Action, { kind: "swap" }>,
-  source: "typed" | "pasted",
+  source: Source,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
 ): Promise<Receipt> {
   const label = `${action.amount} ${action.from} → ${action.to}`;
@@ -553,7 +562,7 @@ async function watch(
   deps: Deps,
   action: Extract<Action, { kind: "watch" }>,
   text: string,
-  source: "typed" | "pasted",
+  source: Source,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
 ): Promise<Receipt> {
   const what = `${action.command} when ${action.symbol} is ${action.direction} $${action.price}`;
