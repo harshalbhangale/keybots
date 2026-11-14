@@ -33,12 +33,16 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
 | 1:20 | 4. Someone new | Type `pay vendor 0.4 for the logo` and hold. | Amber **Waiting for you** over *a new account you've never paid*. |
 | | | Open AIRKEY, go to Wallet › the approval, and hold **Hold to approve**. | Face ID, then paid. Back in the chat. |
 | 1:44 | 5. Private AI | Type a messy draft (`hey so i cant make it tmrw sry, maybe fri??`), hold the space bar, tap **Rewrite**. | Five versions with *NEAR AI ✓* at the top (about 1–2 s); tap **Replace**. |
-| 1:56 | Close: kill switch | In AIRKEY › Limits, tap **Stop everything**. | Face ID, then *Everything is stopped*. |
+| 1:56 | 6. Follow someone | Keyboard › Calls › Following: tap **@AltcoinSherpa** in the suggestions, open him, hold **Trade their latest call now**. | His record (hits, misses, average), then *Bought $1 of … for you (testnet: NEAR → USDC)* in Traded for you, with the post and the transaction. |
+| 2:10 | Close: kill switch | In AIRKEY › Limits, tap **Stop everything**. | Face ID, then *Everything is stopped*. |
 | | | In the chat, `pay harshal 0.2` and hold. | Red **Blocked** over *you turned on Stop everything*. End card: *Your keyboard is the AI. NEAR is the leash.* |
 
 After the take, tap the switch again (Face ID) to let the agents work, or just run `demo-reset`.
 
 **Beat 5 runs on NEAR AI Cloud** (Qwen3-VL 30B Instruct, `Qwen/Qwen3-VL-30B-A3B-Instruct`, run and signed inside NEAR AI's TEE; five versions in about 1–2 s). Each answer's signature is checked against the exact request and response; the attestation behind the signing key is not checked. If NEAR AI doesn't answer during the take, cut the beat rather than turn the fallback back on.
+
+**Beat 6 needs auto-trading on** for the take, and a person whose latest call hasn't been traded yet (a post trades once; @CryptoKaleo's already has). Turn it on before, and off after:
+`ssh -i ~/.ssh/airkey-server.pem ubuntu@13.126.207.245 'sudo sed -i "s/^AIRKEY_AUTO_TRADE=.*/AIRKEY_AUTO_TRADE=on/" /opt/airkey/app/.env && sudo systemctl restart airkey'` (and `=off` after). While it's on, the people you follow trade by themselves inside their rules ($3 a day each by default).
 
 ## Proof on testnet
 
@@ -50,6 +54,7 @@ Every one of these was done from the keyboard and app on an iPhone Air simulator
 | 2. Scam blocked (R3) | [HkM96rGV…](https://testnet.nearblocks.io/txns/HkM96rGVBx51xEJyDxmdwsRVhE29W6XFtRZ7zZDEEHN4) |
 | 3. Call → trade | [7XUq6MLF…](https://testnet.nearblocks.io/txns/7XUq6MLFCiPL15FynnKsyWp9KCx6Ki7pc2WsgTDqRUey): 0.2841 NEAR → 0.597 USDC on Rhea, from the call chip |
 | 4. Approve after Face ID | [GnS1FeRN…](https://testnet.nearblocks.io/txns/GnS1FeRNoGiNQSkaEW62xSaAwJkMPYAbJS4XzmGEYy52) (parked), [34yxQfVF…](https://testnet.nearblocks.io/txns/34yxQfVFKN9gytQoNYy74wChike3iMN3BdT63ejd6noJ) (approved) |
+| Follow → auto-trade | @CryptoKaleo's ETH call ([post](https://x.com/CryptoKaleo/status/2118378232730828998)) → the Trading Agent swapped 0.295 NEAR for 0.6197 USDC: [5MyPgFPD…](https://testnet.nearblocks.io/txns/5MyPgFPDiaUwR8EttJ9U6eUUAsxQ6c2TeCnvqLV16QNj) |
 | Kill switch | [7mBYVaBV…](https://testnet.nearblocks.io/txns/7mBYVaBVa7C1z2cahRXteXyDV5mcGVGbGnYT1uGJ8HfD) (paused, Face ID), [Hmk7LcjQ…](https://testnet.nearblocks.io/txns/Hmk7LcjQJsjaqnZL9WAgS4DmVxY6PrxhN121boMY8nuR) (keyboard pay blocked, R1), [GpVyiZvA…](https://testnet.nearblocks.io/txns/GpVyiZvArwSPDnMaHCuRkKpo4FJpksdSRDWAppsvkHu3) (unpaused) |
 
 Ten back-to-back runs of the whole script through the server, with chip timings, are in [evidence/demo-runs.md](evidence/demo-runs.md) (`npm run demo-runs -- 10`).
