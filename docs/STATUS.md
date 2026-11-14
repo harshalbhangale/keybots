@@ -24,7 +24,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] After "pay" or "to", suggest contacts
 - [x] One backspace undoes an autocorrection and learns the word
 - [x] Space on the number layer goes back to letters
-- [x] Haptics on every key like Kall: letter, space, delete, shift, layer, trade, success, error
+- [x] Haptics on every key: letter, space, delete, shift, layer, trade, success, error
 - [x] Types smoothly in Messages, light and dark: taps, glide, cursor, emoji, clipboard
 
 ## Keyboard: money
@@ -40,7 +40,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Any wording works: an AI reads what the rules miss; the hold sends its exact command
 - [x] A copied crypto call becomes a hold chip: token checked on NEAR Intents, Intents quote, inside the Trading Agent's caps; testnet runs NEAR → USDC on Rhea and says so ([7XUq6MLF…](https://testnet.nearblocks.io/txns/7XUq6MLFCiPL15FynnKsyWp9KCx6Ki7pc2WsgTDqRUey))
 - [~] Paste guard: an address that arrives whole and isn't yours, your vault's or a contact's gets a warning (built, not checked on screen yet)
-- [ ] Uniswap-style swap panel in the keyboard, after Kall's trade tab (waiting on Harshal: keyboard or app only)
+- [ ] Uniswap-style swap panel in the keyboard, with a trade tab (waiting on Harshal: keyboard or app only)
 - [ ] Balances the leash holds, shown in the keyboard
 
 ## Swaps and trading
@@ -66,7 +66,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [ ] Attestation check of the TEE, not just the signature
 
 ## App
-- [x] Kall-style design: masthead, cards, big lime numbers, uppercase buttons, badges
+- [x] Keybots design: masthead, cards, big lime numbers, uppercase buttons, badges
 - [x] Wallet: NEAR and token balances, leash address, approvals, swap card with hold to swap, recent
 - [x] Activity: every command with its receipt and badge
 - [x] Leash: kill switch, agents and caps, allow and block lists, signed after Face ID; kill switch proven: paused, keyboard pay blocked (R1), unpaused ([Hmk7LcjQ…](https://testnet.nearblocks.io/txns/Hmk7LcjQJsjaqnZL9WAgS4DmVxY6PrxhN121boMY8nuR))
@@ -85,7 +85,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 
 ## Ship
 - [x] Sole owner Harshal; history rewritten, no other names
-- [x] README lists the pre-hackathon code from Kall Markets as baseline
+- [x] README lists the pre-hackathon code from Kall Markets and the author's earlier keyboard as baseline
 - [x] README with live transactions and test counts
 - [ ] README as "do X, see Y" with real tx links for the demo path
 - [ ] Fresh clone of main builds, tests green

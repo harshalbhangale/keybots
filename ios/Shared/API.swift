@@ -251,7 +251,7 @@ extension API {
         try await sendIgnoringBody(r)
     }
 
-    /// Callers Kall tracks, to suggest when you add someone.
+    /// Callers Keybots tracks, to suggest when you add someone.
     func kols() async throws -> [Caller] { try await (get("/v1/kols") as CallerList).callers }
 
     /// Look at someone's calls now. `latest` asks the server to trade their

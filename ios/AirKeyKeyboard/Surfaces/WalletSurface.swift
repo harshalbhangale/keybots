@@ -112,7 +112,7 @@ struct WalletView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     status(icon: s.paused ? "hand.raised.fill" : "checkmark.shield",
                            tint: s.paused ? p.bad : p.soft,
-                           title: s.paused ? "All agents are stopped" : "Agents can spend within limits",
+                           title: s.paused ? "Everything is stopped" : "Spending within your limits",
                            detail: "Change in the Keybots app", p)
                     status(icon: s.pending.isEmpty ? "tray" : "hourglass",
                            tint: s.pending.isEmpty ? p.soft : p.warn,
@@ -207,7 +207,7 @@ struct WalletView: View {
         if let r = opened {
             receipt(r, p).transition(.move(edge: .trailing).combined(with: .opacity))
         } else if model.receipts.isEmpty {
-            MoneyEmpty(text: "Nothing yet. What your agents pay, swap or stop shows here.", palette: p)
+            MoneyEmpty(text: "Nothing yet. What you pay, swap or stop shows here.", palette: p)
         } else {
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 0) {

@@ -29,9 +29,9 @@ export interface Config {
   serperKey: string;
   /** Mainnet spends real money: no swap above this many dollars, whatever the command says (default $1). */
   mainnetUsdCap: number;
-  /** Kall Markets' API, where the calls of the KOLs you follow come from. */
-  kallApi: string;
-  /** Telegram's Bot API, read-only: a bot in a group, whose calls show next to Kall's. TELEGRAM_BOT_TOKEN or keys/telegram.token; no token means off. */
+  /** Keybots' API, where the calls of the KOLs you follow come from. */
+  xFeedApi: string;
+  /** Telegram's Bot API, read-only: a bot in a group, whose calls show next to the X feed's. TELEGRAM_BOT_TOKEN or keys/telegram.token; no token means off. */
   telegram: { token: string; chatIds: string[] };
   /** Trades for KOLs you follow only run when AIRKEY_AUTO_TRADE=on. Off, the server still says what it would have done. */
   autoTrade: boolean;
@@ -87,7 +87,7 @@ export function loadConfig(env = process.env): Config {
     aiFallback: env.AIRKEY_AI_FALLBACK === "off" ? "off" : "openai",
     serperKey: env.SERPER_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "serper.key")),
     mainnetUsdCap: mainnetCap(env.AIRKEY_MAINNET_USD_CAP),
-    kallApi: env.KALL_API ?? "https://kallmarkets.vercel.app",
+    xFeedApi: env.X_FEED_API ?? "https://kallmarkets.vercel.app",
     telegram: {
       token: cleanToken(env.TELEGRAM_BOT_TOKEN ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "telegram.token"))),
       chatIds: parseChatIds(env.TELEGRAM_CHAT_IDS),

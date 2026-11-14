@@ -14,7 +14,7 @@ struct LeashView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
-            Masthead(eyebrow: "Decides what each agent may spend.", title: "Spend Limits")
+            Masthead(eyebrow: "Decides what each lane may spend.", title: "Spend Limits")
             if let state = model.state {
                 stopControl(state)
                 if !state.pending.isEmpty {
@@ -64,7 +64,7 @@ struct LeashView: View {
         let on = s.paused
         let working = model.busy == "set_paused"
         return Button {
-            Task { await model.owner("set_paused", ["paused": !on], reason: on ? "Let your agents spend again" : "Stop every agent now") }
+            Task { await model.owner("set_paused", ["paused": !on], reason: on ? "Let payments and trades run again" : "Stop every payment and trade now") }
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: on ? "play.circle.fill" : "stop.circle")
@@ -75,7 +75,7 @@ struct LeashView: View {
                     Text(on ? "Everything is stopped" : "Stop everything")
                         .font(.headline)
                         .foregroundStyle(AK.redText)
-                    Text(on ? "Tap to let agents spend again" : "Pauses every agent at once")
+                    Text(on ? "Tap to let payments and trades run again" : "Pauses every payment and trade at once")
                         .font(.subheadline).foregroundStyle(AK.muted)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -100,12 +100,12 @@ struct LeashView: View {
         .buttonStyle(.plain)
         .disabled(model.busy != nil)
         .accessibilityLabel(on ? "Everything is stopped" : "Stop everything")
-        .accessibilityHint(on ? "Lets your agents spend again, after Face ID" : "Stops every agent from spending, after Face ID")
+        .accessibilityHint(on ? "Lets payments and trades run again, after Face ID" : "Stops every payment and trade, after Face ID")
     }
 
     private func agents(_ s: LeashState) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle("Agents")
+            SectionTitle("Lanes")
             VStack(spacing: 0) {
                 ForEach(Array(s.shownAgents.enumerated()), id: \.element.id) { i, a in
                     if i > 0 { Hairline().padding(.leading, 16) }
@@ -188,7 +188,7 @@ struct LeashView: View {
                 }
             }
             if let url = URL(string: "\(s.explorer)/address/\(s.leash)") {
-                Text("Spend Limits is a small program on NEAR that holds your money. Agents ask it before they spend, and only you can change it.")
+                Text("Spend Limits is a small program on NEAR that holds your money. Every payment and trade asks it first, and only you can change it.")
                     .font(.footnote).foregroundStyle(AK.muted)
                     .fixedSize(horizontal: false, vertical: true)
                 Link(destination: url) {

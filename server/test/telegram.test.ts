@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
-import { fakeKall } from "../src/kall.js";
+import { fakeXFeed } from "../src/xfeed.js";
 import { TOKEN, fakeBotApi, group, privateGroup, person, T0 } from "./telegram-fake.js";
 import { cleanToken, readAsCall, telegramSource, tidyText } from "../src/telegram.js";
 
@@ -169,7 +169,7 @@ describe("the token", () => {
     tg.start();
     await new Promise((r) => setTimeout(r, 80));
     tg.stop();
-    const app = buildApp({ cfg: { ...loadConfig({ AIRKEY_OWNER: "x.testnet" }), nearAi: { apiKey: "", model: "m", base: "b" }, openAi: { apiKey: "", model: "m", base: "b" } }, chain: {} as never, receipts: {} as never, kall: fakeKall({}), telegram: tg });
+    const app = buildApp({ cfg: { ...loadConfig({ AIRKEY_OWNER: "x.testnet" }), nearAi: { apiKey: "", model: "m", base: "b" }, openAi: { apiKey: "", model: "m", base: "b" } }, chain: {} as never, receipts: {} as never, xfeed: fakeXFeed({}), telegram: tg });
     const status = await app.inject("/v1/telegram/status");
     const everything = JSON.stringify([status.json(), (await app.inject("/v1/kol/feed")).json(), errors.mock.calls]);
     expect(status.json().error).toMatch(/fetch failed/);

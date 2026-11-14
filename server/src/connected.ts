@@ -1,6 +1,6 @@
 import { attestations } from "./attest.js";
 import type { Deps } from "./app.js";
-import type { KallClient } from "./kall.js";
+import type { XFeedClient } from "./xfeed.js";
 
 /**
  * What Keybots is connected to, checked live: each service gets one small
@@ -10,7 +10,7 @@ import type { KallClient } from "./kall.js";
 export type ServiceStatus = "live" | "down" | "off";
 
 export interface Service {
-  id: "spend-limits" | "rhea" | "near-intents" | "near-ai" | "kall" | "telegram";
+  id: "spend-limits" | "rhea" | "near-intents" | "near-ai" | "x" | "telegram";
   name: string;
   /** What Keybots uses it for, in one line. */
   role: string;
@@ -40,10 +40,10 @@ async function probe(run: () => Promise<string>): Promise<{ status: ServiceStatu
 
 const off = (detail: string) => ({ status: "off" as const, detail });
 
-export async function connected(deps: Deps, kallApi: KallClient | undefined = deps.kall): Promise<{ checkedAt: string; network: string; services: Service[] }> {
+export async function connected(deps: Deps, xFeedApi: XFeedClient | undefined = deps.xfeed): Promise<{ checkedAt: string; network: string; services: Service[] }> {
   const { cfg } = deps;
   const usdc = deps.rhea?.route("USDC");
-  const [limits, rhea, intents, kall, telegram] = await Promise.all([
+  const [limits, rhea, intents, xfeed, telegram] = await Promise.all([
     probe(async () => {
       const s = await deps.chain.state();
       return s.paused ? `${cfg.leash}: everything is stopped` : `${cfg.leash}: ${Object.keys(cfg.agents).length} agents, running`;
@@ -57,9 +57,9 @@ export async function connected(deps: Deps, kallApi: KallClient | undefined = de
     deps.intents
       ? probe(async () => `${(await deps.intents!.tokens()).length} tokens listed`)
       : Promise.resolve(off("Not set up on this server")),
-    kallApi
+    xFeedApi
       ? probe(async () => {
-          const f = await kallApi.feed();
+          const f = await xFeedApi.feed();
           return `${f.callers.length} callers, ${f.calls.length} calls`;
         })
       : Promise.resolve(off("Not set up on this server")),
@@ -89,7 +89,7 @@ export async function connected(deps: Deps, kallApi: KallClient | undefined = de
       { id: "rhea", name: "Rhea", role: "Where the Trading Agent's swaps run", ...rhea },
       { id: "near-intents", name: "NEAR Intents", role: "Checks a coin in a post is a real token, and its price", ...intents },
       { id: "near-ai", name: "NEAR AI Cloud", role: "The private AI behind hold space. Never sees money", ...ai },
-      { id: "kall", name: "X, via Kall", role: "Trade calls from people on X", ...kall },
+      { id: "x", name: "X", role: "Trade calls from people on X", ...xfeed },
       { id: "telegram", name: "Telegram", role: "Trade calls from your Telegram group", ...telegram },
     ],
   };
