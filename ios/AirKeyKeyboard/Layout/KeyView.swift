@@ -386,7 +386,7 @@ final class KeyView: UIControl {
             return
         }
         // Every key style: uniform keys, the small lime DOT alone marks a
-        // bound letter (Glyf Keys), in the glow theme too. The Gboard
+        // bound letter (bound keys), in the glow theme too. The Gboard
         // "borders" toggle firms the outline; NEVER an accent border. The site
         // look draws no outline at all, only the hard bottom edge.
         // A theme with a border of its own always draws it, inside the
