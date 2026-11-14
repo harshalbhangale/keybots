@@ -109,8 +109,8 @@ A keyboard requests iOS Full Access to communicate with the server. Do not enter
 You need Node.js 20+ and network access. This reads the live testnet leash's public state and simulates the rules; **it does not sign or send a transaction**.
 
 ```bash
-git clone https://github.com/harshalbhangale/near-hack.git
-cd near-hack/server
+git clone https://github.com/harshalbhangale/keybots.git
+cd keybots/server
 npm install
 npm run try -- "pay harshal 0.2 for dinner"
 npm run try -- "pay drain 5" --pasted
