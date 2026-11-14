@@ -54,7 +54,7 @@ export function publicLine(r: Receipt, cfg: Config): { at: string; agent: string
     line: plainSummary(r, cfg.contacts) ?? generic[r.outcome] ?? "Not sent",
     tx: r.tx?.url,
     outcome: r.outcome,
-    source: r.input.source === "pasted" ? "pasted" : r.input.source === "follow" ? "followed call" : "typed",
+    source: r.input.source === "pasted" ? "pasted" : r.input.source === "follow" ? "followed call" : r.input.source === "reviewed-call" ? "reviewed call" : "typed",
   };
 }
 
