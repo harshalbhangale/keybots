@@ -195,7 +195,7 @@ async function checkReport(r: Report, nonce: string, fetchImpl: typeof fetch, pr
   return out;
 }
 
-export function statusOf(c: AttestationChecks): AttestationResult["status"] {
+export function statusOf(c: AttestationChecks): "verified" | "partial" | "failed" {
   if (!c.nonce || !c.reportData || c.signerMatch === false || c.composeHash === false || c.tdxQuote === "failed" || c.nvidia === "failed") return "failed";
   if (c.tdxQuote === "unavailable" || c.nvidia === "unavailable" || c.composeHash === null) return "partial";
   return "verified";
