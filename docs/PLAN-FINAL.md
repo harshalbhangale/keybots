@@ -70,18 +70,31 @@ Nothing trades on its own. Posts are only ever displayed and read by fixed rules
 
 ## 7. The to-do list (in order; one at a time)
 
-| # | Task | Why |
-|---|---|---|
-| 1 | **Keyboard cleanup**: remove AI noise from the strip and menu; Calls (X + Telegram) is the main money screen; swap stays but is secondary | You asked: clean, no slop |
-| 2 | **App: Agents screen**: the three agents as clear cards (what each may do, its limit, today's spend, its last action) + Stop everything | Makes the agents understandable |
-| 3 | **App: Connected page**: NEAR Intents, Rhea, NEAR AI Cloud, Kall (X), Telegram, each with live status | Shows NEAR use clearly, like Glyf's |
-| 4 | **NEAR Intents view**: what it checked for a call (real token, price), shown on the review card in one line | You asked to show Intents properly |
-| 5 | **Telegram live check**: you post in the group; I confirm the card appears | Demo needs it |
-| 6 | **Short clips for the README**: screen recordings (5–10 s each): follow on X → post appears → review → hold → receipt; Telegram post → card; Stop everything | You asked for "how it works" clips |
-| 7 | **Screenshots everywhere** in the README, app and keyboard, light and dark | Judges skim |
-| 8 | **README rewrite** around sections 2–6 above | One page that explains it |
-| 9 | **Video**: tell the Social agent to replace the fake Telegram scene with the real group | Honesty |
-| 10 | **Push to GitHub** (needs your yes) | Nothing is pushed since this morning |
-| 11 | **Mainnet swap** (needs your yes) | One real trade |
+Status as of 14 Nov, ~12:50 UTC.
 
-On commits: every task above lands as many small, real commits (one per change). I won't make empty or fake commits to raise the count.
+| # | Task | Status |
+|---|---|---|
+| 1 | **Keyboard cleanup**: follows the phone's light/dark (dark if unknown), Calls panel readable in both; strip is Calls, Wallet, Clipboard; no hold dots on P/S/C/V | **Done**, on the phone |
+| 2 | **App: agent cards**: what each acts on, limits, NEAR account, today's spend, last action | **Done**, on the phone |
+| 3 | **App: Connected page**: Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, X, Telegram, each checked live (`/v1/connected`) | **Done**, deployed, all 6 live |
+| 4 | **NEAR Intents on the review**: "Checked by NEAR Intents" row; server line like "BTC is a listed token at $67,147 · NEAR $3.33, so $1.00 is 0.3003 NEAR" | **Done**, deployed |
+| 4b | **No Kall anywhere people see**: cards, server notes, Connected, README, docs, landing say X / Keybots | To do |
+| 4c | **Mainnet**: Testnet / Mainnet switch in the app (see section 8) | Deciding |
+| 5 | **Telegram live check**: add @kbgdbgjd_bot to a group, post "$NEAR buying here", the card appears | Needs you |
+| 6 | **Short clips for the README** (5–10 s each) | To do |
+| 7 | **Screenshots**, app and keyboard, light and dark | To do |
+| 8 | **README rewrite** (main's version still says "leash" and Kall) | To do |
+| 9 | **Video**: Social agent replaces the fake Telegram scene | To do |
+| 10 | **Push to GitHub** | **Ongoing**: main and ux-glass pushed after every task |
+| 11 | **Mainnet swap** (needs your yes) | Waiting |
+
+Also done along the way: `scripts/phone.sh` builds the app against the hosted server (fixes "can't reach the server"); main's 12 README/landing commits merged.
+
+## 8. Mainnet
+
+hellbuddy.near has 0.98 NEAR. NEAR locks about 0.01 NEAR per KB stored; the full Spend Limits contract is 215 KB (about 2.15 NEAR), so it doesn't fit.
+
+- **A. Spend Limits Lite on mainnet** (~0.3–0.5 NEAR locked): Stop everything, per-payment and daily limits, blocked list, three agents, owner-only changes. No swap, token caps or approvals. New code, tests, and a yes for each transaction.
+- **B. Mainnet without a contract**: the switch shows hellbuddy.near's real balance, live mainnet prices, and one real 0.15 NEAR → USDC swap after your yes. Spend Limits stays on testnet.
+
+Commits are real changes only, one per change.
