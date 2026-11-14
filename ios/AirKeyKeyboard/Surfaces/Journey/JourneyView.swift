@@ -217,6 +217,10 @@ struct JourneyView: View {
         // Name the trade that really runs, not the post's coin: on testnet a
         // "buy BTC" post swaps NEAR to USDC, and the button must say so.
         guard let r = model.review else { return "Hold to confirm" }
+        // A refusal ahead: the button says what will happen instead of a swap.
+        if r.limits.willRefuse != nil {
+            return r.limits.refusedBy == "server" ? "Hold to try · nothing will be sent" : "Hold to send · Spend Limits will refuse"
+        }
         return "Hold to swap \(r.pay.amount) \(r.pay.symbol) → \(r.receive.symbol)"
     }
 
@@ -417,8 +421,7 @@ struct ReviewCard: View {
     /// One amber line: a refusal ahead wins over the stand-in.
     private func callout(_ r: TradeReview, _ p: MoneyPalette) -> Callout? {
         if let refuse = r.limits.willRefuse {
-            let then = r.limits.refusedBy == "server" ? "Nothing will be sent." : "Spend Limits will refuse it on chain."
-            return Callout(icon: "hand.raised.fill", text: "\(Plain.scrub(refuse)) \(then)", tint: p.warn, palette: p)
+            return Callout(icon: "hand.raised.fill", text: Plain.scrub(refuse), tint: p.warn, palette: p)
         }
         if r.standIn != nil {
             return Callout(icon: "info.circle.fill",
@@ -461,7 +464,7 @@ struct ReceiptCard: View {
 
     var body: some View {
         let p = palette, r = receipt
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .bold))
@@ -496,32 +499,58 @@ struct ReceiptCard: View {
                 Text(Plain.scrub(r.summary)).font(.footnote).foregroundStyle(p.soft)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            VStack(spacing: 6) {
-                if let pay = r.pay {
-                    InfoRow(label: "Paid", value: r.swapped ? pay.line : r.unknown ? "Unknown" : "Nothing, \(pay.line) stayed", palette: p)
-                }
-                InfoRow(label: "Received", value: r.receive?.line ?? (r.unknown ? "Unknown" : "Nothing"), palette: p,
-                        tint: r.swapped ? p.good : nil)
-                if let venue = r.venue { InfoRow(label: "Venue", value: venue, palette: p) }
-                if let at = r.at { InfoRow(label: "Time", value: at.formatted(date: .abbreviated, time: .shortened), palette: p) }
-            }
-            if let post = r.postURL, let url = URL(string: post) {
-                Button {
-                    Haptics.letter()
-                    actions.open(url) { ok in if !ok { UIPasteboard.general.string = url.absoluteString } }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(r.postAuthor.map { "From @\($0.replacingOccurrences(of: "@", with: ""))'s post" } ?? "From a post")
-                        Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .semibold))
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 4) {
+                GridRow {
+                    if r.swapped || r.unknown {
+                        cell("Paid", r.unknown ? "Unknown" : (r.pay?.line ?? "—"), nil, p)
+                        cell("Got", r.receive?.line ?? "Unknown", r.swapped ? p.good : nil, p)
+                    } else {
+                        cell("Moved", "Nothing", nil, p)
+                        cell("Kept", r.pay?.line ?? "—", nil, p)
                     }
-                    .font(.caption.weight(.medium)).foregroundStyle(p.soft)
                 }
-                .buttonStyle(.plain)
+                GridRow {
+                    cell("Venue", r.venue ?? "—", nil, p)
+                    if let post = r.postURL, let url = URL(string: post) {
+                        Button {
+                            Haptics.letter()
+                            actions.open(url) { ok in if !ok { UIPasteboard.general.string = url.absoluteString } }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("From").foregroundStyle(p.soft)
+                                Spacer(minLength: 4)
+                                Text(r.postAuthor.map { "@\($0.replacingOccurrences(of: "@", with: ""))" } ?? "a post")
+                                    .fontWeight(.medium).foregroundStyle(p.text)
+                                Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(p.soft)
+                            }
+                            .font(.caption).lineLimit(1).minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Open the post\(r.postAuthor.map { " by \($0)" } ?? "")")
+                    } else {
+                        Color.clear.frame(height: 1)
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .padding(12)
         .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func cell(_ label: String, _ value: String, _ tint: Color?, _ p: MoneyPalette) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(label).foregroundStyle(p.soft)
+            Spacer(minLength: 4)
+            Text(value).fontWeight(.medium).foregroundStyle(tint ?? p.text)
+        }
+        .font(.caption)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
     }
 
     private var icon: String {
@@ -558,7 +587,7 @@ struct ReceiptCard: View {
                 Text("nearblocks").font(.caption).foregroundStyle(p.soft)
                 Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(p.soft)
             }
-            .padding(.horizontal, 12).frame(height: 40)
+            .padding(.horizontal, 12).frame(height: 36)
             .background(p.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .contentShape(Rectangle())
         }
