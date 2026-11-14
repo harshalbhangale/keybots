@@ -28,6 +28,8 @@ final class HomeModel {
     var doneToday: [Receipt] = []
     /// The newest thing Claude Code asked Keybots for (through the MCP server), if it was in the last 10 minutes.
     var claude: Receipt?
+    /// Payments waiting for the owner, newest first.
+    var pending: [LeashState.Pending] = []
     var stopped = false
     var network = ""
     var available: String?
@@ -44,6 +46,7 @@ final class HomeModel {
         bots = []
         recent = []
         claude = nil
+        pending = []
         available = nil
         stop()
         start()
@@ -72,6 +75,7 @@ final class HomeModel {
         if let state {
             Fmt.roleNames = state.roleNames
             stopped = state.paused
+            pending = state.pending.sorted { $0.id > $1.id }
             network = state.explorer.contains("testnet") ? "Testnet" : "Mainnet"
             available = Fmt.near(state.available)
             let all = receipts ?? []
@@ -117,6 +121,7 @@ struct HomeView: View {
             header(p)
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 14) {
+                    waiting(p)
                     bots(p)
                     today(p)
                     signals(p)
@@ -251,6 +256,46 @@ struct HomeView: View {
         else { parts.append(line) }
         if let ago = J.ago(r.date) { parts.append(ago) }
         return parts.joined(separator: " · ")
+    }
+
+    /// Payments waiting for you, each a tap from the app's approval and Face ID.
+    /// Mainnet runs Spend Limits Lite, which refuses instead of holding, so it says so.
+    @ViewBuilder private func waiting(_ p: MoneyPalette) -> some View {
+        if !model.pending.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(Array(model.pending.prefix(3).enumerated()), id: \.element.id) { i, w in
+                    if i > 0 { Rectangle().fill(p.line).frame(height: 0.5).padding(.leading, 40) }
+                    Button { open("approve:\(w.id)") } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "faceid").font(.subheadline.weight(.semibold)).foregroundStyle(AK.ink)
+                                .frame(width: 30, height: 30).background(p.warn, in: Circle())
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("\(Self.num((Double(w.amount) ?? 0) / 1e24)) NEAR to \(w.receiver)")
+                                    .font(.footnote.weight(.semibold)).foregroundStyle(p.text).lineLimit(1)
+                                Text([w.client == "claude-code" ? "From Claude Code" : nil, w.memo.flatMap { $0.isEmpty ? nil : "For \($0)" }, "Waiting for you"]
+                                        .compactMap { $0 }.joined(separator: " · "))
+                                    .font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                            }
+                            Spacer(minLength: 6)
+                            Text("Approve").font(.caption.weight(.bold)).foregroundStyle(AK.ink)
+                                .padding(.horizontal, 10).frame(height: 26).background(p.warn, in: Capsule())
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 9)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(MoneyPress())
+                    .accessibilityHint("Opens Keybots to approve with Face ID")
+                }
+            }
+            .background(p.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(p.warn.opacity(0.35), lineWidth: 0.5))
+        } else if model.choice == "mainnet", !model.bots.isEmpty {
+            Label("Approvals run on testnet. On mainnet, Spend Limits Lite refuses anything that would need you.", systemImage: "faceid")
+                .font(.caption).foregroundStyle(p.soft)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12).padding(.vertical, 9)
+                .background(p.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
     }
 
     /// What the bots did today, in numbers: paid, swapped, refused, waiting.

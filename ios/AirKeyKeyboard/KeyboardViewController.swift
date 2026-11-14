@@ -1060,7 +1060,13 @@ final class KeyboardViewController: UIInputViewController {
                                     guard let self else { return }
                                     Haptics.layer()
                                     self.setSurface(.none, animated: false)
-                                    if id == "calls-following" { self.pendingCallsTab = .following; self.setSurface(.calls) } else { self.openTool(id) }
+                                    if id.hasPrefix("approve:") {
+                                        // Face ID and the owner key live in the app: open it on this payment.
+                                        let pid = id.dropFirst("approve:".count)
+                                        if let url = URL(string: "keybots://approve?id=\(pid)&net=\(Settings.network)") {
+                                            self.moneyActions.open(url) { _ in }
+                                        }
+                                    } else if id == "calls-following" { self.pendingCallsTab = .following; self.setSurface(.calls) } else { self.openTool(id) }
                                 },
                                 customize: { [weak self] in Haptics.layer(); self?.setSurface(.shell) },
                                 close: { [weak self] in self?.setSurface(.none); self?.syncAutoShift() })

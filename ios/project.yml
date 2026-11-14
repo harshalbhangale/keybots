@@ -29,6 +29,9 @@ targets:
       path: AirKey/Info.plist
       properties:
         CFBundleDisplayName: Keybots
+        CFBundleURLTypes:
+          - CFBundleURLName: tech.airkey.app
+            CFBundleURLSchemes: [keybots]
         UILaunchScreen:
           UIColorName: LaunchInk
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
