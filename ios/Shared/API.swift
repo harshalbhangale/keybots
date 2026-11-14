@@ -151,6 +151,22 @@ struct API {
         return try await send(r)
     }
 
+    /// For calls whose answer doesn't matter (a DELETE may send nothing back).
+    private func sendIgnoringBody(_ r: URLRequest) async throws {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: r)
+        } catch {
+            throw APIError(message: "Can't reach the AIRKEY server at \(base).")
+        }
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(status) else {
+            let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            throw APIError(message: msg ?? "The server answered \(status).")
+        }
+    }
+
     private func send<T: Decodable>(_ r: URLRequest) async throws -> T {
         let data: Data
         let response: URLResponse
@@ -186,6 +202,46 @@ extension API {
 
     /// The token picker: what trades here first, with prices and the leash's balances.
     func tokenList() async throws -> [PickerToken] { try await (get("/v1/tokens/list") as PickerTokenList).tokens }
+}
+
+// MARK: - People you follow
+
+extension API {
+    /// Everyone you follow, and what their calls traded for you, newest first.
+    func follows() async throws -> FollowsList { try await get("/v1/follows") }
+
+    /// Follow someone, or change their rules: the whole set goes each time.
+    func follow(handle: String, rules: FollowRules) async throws -> Follow {
+        try await post("/v1/follows", [
+            "handle": Follow.clean(handle),
+            "auto": rules.auto,
+            "perCallUsd": rules.perCallUsd,
+            "perDayUsd": rules.perDayUsd,
+            "sides": rules.sides,
+            "highOnly": rules.highOnly,
+            "stopAfterMisses": rules.stopAfterMisses,
+        ])
+    }
+
+    func unfollow(handle: String) async throws {
+        var r = try request("/v1/follows/\(API.segment(handle))")
+        r.httpMethod = "DELETE"
+        try await sendIgnoringBody(r)
+    }
+
+    /// Callers Kall tracks, to suggest when you add someone.
+    func kols() async throws -> [Caller] { try await (get("/v1/kols") as CallerList).callers }
+
+    /// Look at someone's calls now. `latest` asks the server to trade their
+    /// latest call within your rules (a real trade on testnet when it allows it).
+    func checkFollow(handle: String, latest: Bool) async throws -> [AutoTrade] {
+        try await (post("/v1/follows/\(API.segment(handle))/check", ["latest": latest]) as FollowCheck).trades
+    }
+
+    /// A handle as one safe path segment.
+    private static func segment(_ handle: String) -> String {
+        Follow.clean(handle).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(CharacterSet(charactersIn: "/"))) ?? ""
+    }
 }
 
 struct VaultList: Codable { let items: [Vault.Item] }
