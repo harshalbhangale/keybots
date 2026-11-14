@@ -55,7 +55,7 @@ describe("dry run", () => {
     expect(why(r)).toBe("within 0.5 NEAR per payment and 1.0 NEAR today (0.0 spent)");
     const out = format(r);
     expect(out).toContain("Agent         Pay Agent (pay.airkey-harshal.testnet), trusted");
-    expect(out).toContain("Leash         leash.airkey-harshal.testnet: 1.20 NEAR, Stop everything off");
+    expect(out).toContain("Spend Limits  leash.airkey-harshal.testnet: 1.20 NEAR, Stop everything off");
     expect(out).toMatch(/Dry run: nothing was sent/);
   });
 
@@ -81,7 +81,7 @@ describe("dry run", () => {
   it("stops everything when the kill switch is on", async () => {
     const r = await dryRun(deps(leash({ paused: true })), "pay harshal 0.2");
     expect(verdict(r)).toBe("Would be blocked: Stop everything is on");
-    expect(r.lines.find(([k]) => k === "Leash")![1]).toMatch(/Stop everything on$/);
+    expect(r.lines.find(([k]) => k === "Spend Limits")![1]).toMatch(/Stop everything on$/);
   });
 
   it("holds to the per-payment and daily limits", async () => {
