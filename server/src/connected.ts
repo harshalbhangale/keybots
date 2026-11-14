@@ -46,7 +46,7 @@ export async function connected(deps: Deps, kallApi: KallClient | undefined = de
   const [limits, rhea, intents, kall, telegram] = await Promise.all([
     probe(async () => {
       const s = await deps.chain.state();
-      return s.paused ? `${cfg.leash}: everything is stopped` : `${cfg.leash}: ${s.agents.length} agents, running`;
+      return s.paused ? `${cfg.leash}: everything is stopped` : `${cfg.leash}: ${Object.keys(cfg.agents).length} agents, running`;
     }),
     deps.rhea?.network && usdc
       ? probe(async () => {
@@ -68,7 +68,7 @@ export async function connected(deps: Deps, kallApi: KallClient | undefined = de
           const t = await deps.telegram!.status();
           if (t.error) throw new Error(t.error);
           const groups = t.groups.length;
-          return `@${t.bot ?? "bot"}${groups ? ` in ${groups} group${groups === 1 ? "" : "s"}` : ", waiting to be added to a group"}`;
+          return `@${(t.bot ?? "bot").replace(/^@/, "")}${groups ? ` in ${groups} group${groups === 1 ? "" : "s"}` : ", waiting to be added to a group"}`;
         })
       : Promise.resolve(off("No bot token on this server")),
   ]);
