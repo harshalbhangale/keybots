@@ -10,9 +10,9 @@ struct MoneyButtons: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            button("Deposit", "arrow.down.circle", .deposit)
-            button("Withdraw", "arrow.up.circle", .withdraw)
-            button("Send", "paperplane", .send)
+            button("Deposit", "arrow.down", .deposit, AK.lanePay)
+            button("Withdraw", "arrow.up", .withdraw, AK.laneInbox)
+            button("Send", "paperplane.fill", .send, AK.laneTrade)
         }
         .sheet(item: $sheet) { kind in
             Group {
@@ -27,10 +27,11 @@ struct MoneyButtons: View {
         }
     }
 
-    private func button(_ title: String, _ icon: String, _ kind: Kind) -> some View {
+    private func button(_ title: String, _ icon: String, _ kind: Kind, _ color: Color) -> some View {
         Button { sheet = kind } label: {
             VStack(spacing: 6) {
-                Image(systemName: icon).font(.title3)
+                Image(systemName: icon).font(.subheadline.weight(.bold)).foregroundStyle(AK.ink)
+                    .frame(width: 34, height: 34).background(color, in: Circle())
                 Text(title).font(.footnote.weight(.medium))
             }
             .frame(maxWidth: .infinity).padding(.vertical, 12)
