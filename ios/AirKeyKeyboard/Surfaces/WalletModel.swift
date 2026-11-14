@@ -270,6 +270,10 @@ final class MoneyPanel: UIView {
 
     private let host: UIHostingController<AnyView>
     private let stop: () -> Void
+    /// The panel's view for a light or dark keyboard, so a flip of the
+    /// phone's appearance re-colours it without losing its state.
+    private let render: (ColorScheme) -> AnyView
+    private var dark: Bool
     /// Calls is showing a review: it takes the whole keyboard, strip and all.
     private(set) var full = false
     /// Called when `full` changes, so the keyboard lays itself out again.
@@ -277,19 +281,20 @@ final class MoneyPanel: UIView {
 
     /// `review`: a copied call's text, opened straight on its review.
     init(kind: Kind, actions: MoneyActions, dark: Bool, review: String? = nil) {
-        let scheme: ColorScheme = dark ? .dark : .light
         var calls: CallsModel?
         switch kind {
         case .wallet:
             let model = WalletModel()
-            host = UIHostingController(rootView: AnyView(WalletView(model: model, actions: actions).environment(\.colorScheme, scheme)))
+            render = { AnyView(WalletView(model: model, actions: actions).environment(\.colorScheme, $0)) }
             stop = { model.stop() }
         case .calls:
             let model = CallsModel()
-            host = UIHostingController(rootView: AnyView(CallsView(model: model, actions: actions).environment(\.colorScheme, scheme)))
+            render = { AnyView(CallsView(model: model, actions: actions).environment(\.colorScheme, $0)) }
             stop = { model.stop(); model.journey?.stop() }
             calls = model
         }
+        self.dark = dark
+        host = UIHostingController(rootView: render(dark ? .dark : .light))
         super.init(frame: .zero)
         if let calls {
             calls.onFull = { [weak self] on in
@@ -311,6 +316,13 @@ final class MoneyPanel: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         host.view.frame = bounds
+    }
+
+    /// The phone turned light or dark while the panel is open.
+    func setDark(_ on: Bool) {
+        guard on != dark else { return }
+        dark = on
+        host.rootView = render(on ? .dark : .light)
     }
 
     func attach(to parent: UIViewController) {
