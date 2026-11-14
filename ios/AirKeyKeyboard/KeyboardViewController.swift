@@ -95,6 +95,8 @@ final class KeyboardViewController: UIInputViewController {
     private var trade: TradeSurface?
     /// A typed payment's own screen, and the payment it opens on.
     private var pay: PaySurface?
+    /// What the Keybots key opens: the bots, what they did, the tools.
+    private var home: HomeSurface?
     private var pendingPay: PayRequest?
     private var pendingTrade: (seed: TradeModel.Seed?, origin: String?)?
     /// What the editor strip opens on (set right before setSurface(.noteEdit)).
@@ -123,7 +125,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, assist, wallet, calls, trade, pay }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, assist, wallet, calls, trade, pay, home }
     private var surface: Surface = .none
     /// A copied call's text for the Calls panel to open on its review.
     private var pendingCallReview: String?
@@ -233,7 +235,7 @@ final class KeyboardViewController: UIInputViewController {
         case .trade:
             if let strip = trade?.stripHeight { return base + strip - Glass.toolbarHeight }
             return max(base, TradeSurface.panelHeight)
-        case .pay:
+        case .pay, .home:
             return max(base, TradeSurface.panelHeight)
         }
     }
@@ -900,6 +902,10 @@ final class KeyboardViewController: UIInputViewController {
             toolbarHiddenBySurface = true
             keyboardView.isHidden = true
             pay?.frame = CGRect(x: 0, y: 0, width: w, height: h)
+        case .home:
+            toolbarHiddenBySurface = true
+            keyboardView.isHidden = true
+            home?.frame = CGRect(x: 0, y: 0, width: w, height: h)
         }
         let agentUp = surface == .none && agent.isShowing && !isSecureField
         toolbar.isHidden = toolbarHiddenBySurface || agentUp
@@ -919,7 +925,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.assist, self.money, self.trade, self.pay] as [UIView?] {
+                            self.clipboardPanel, self.assist, self.money, self.trade, self.pay, self.home] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
@@ -964,6 +970,7 @@ final class KeyboardViewController: UIInputViewController {
             if trade?.wantsDigits == true { keyboardView.setMode(.letters) }
             trade?.detach(); trade = nil
         case .pay: pay?.close(); pay = nil
+        case .home: home?.close(); home = nil
         case .none: break
         }
         inlineTarget = nil
@@ -1041,6 +1048,18 @@ final class KeyboardViewController: UIInputViewController {
             prepareEntrance(s, animated: animated)
             pay = s
             MemoryLogger.logSurface("pay")
+        case .home:
+            let short = ["check": "Check"]
+            let tools = MenuShell.tools.map { (id: $0.id, title: short[$0.id] ?? $0.title, icon: KeyToolbar.icons[$0.id] ?? "circle") }
+            let h = HomeSurface(dark: Glass.chromeDark, tools: tools,
+                                open: { [weak self] id in Haptics.layer(); self?.setSurface(.none, animated: false); self?.openTool(id) },
+                                customize: { [weak self] in Haptics.layer(); self?.setSurface(.shell) },
+                                close: { [weak self] in self?.setSurface(.none); self?.syncAutoShift() })
+            h.attach(to: self)
+            content.addSubview(h)
+            prepareEntrance(h, animated: animated)
+            home = h
+            MemoryLogger.logSurface("home")
         case .none:
             break
         }
@@ -2606,7 +2625,8 @@ extension KeyboardViewController: ToolbarDelegate {
 
     func toolbarBrandTapped() {
         Haptics.layer()
-        setSurface(surface == .shell ? .none : .shell)
+        // The Keybots key opens the bots and the tools; Customize there opens the full menu.
+        setSurface(surface == .home || surface == .shell ? .none : .home)
     }
 
     func toolbarItemTapped(_ id: String) {
