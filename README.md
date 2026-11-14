@@ -62,9 +62,9 @@ Two sketches show how it fits together. You can edit them: the Excalidraw files 
 
 **How a call becomes a safe trade**
 
-![Calls from X, Telegram and copied text reach the Keybots keyboard. You hold to confirm, an agent asks the Spend Limits contract, and the result is paid or refused.](docs/diagrams/keybots-1-calls-and-limits.png)
+![Posts from X, Telegram and copied text reach the Keybots keyboard. You hold to confirm, an agent asks the Spend Limits contract, and the result is paid or refused.](docs/diagrams/keybots-1-calls-and-limits.png)
 
-X posts (through Kall's feed) and copied text go into the Keybots keyboard, an agent with its own NEAR account asks the Spend Limits contract on NEAR testnet, and the result is paid or refused on chain (Telegram is dashed: built on a branch, not in this submission).
+X posts (through the Keybots feed) and copied text go into the Keybots keyboard, an agent with its own NEAR account asks the Spend Limits contract on NEAR testnet, and the result is paid or refused on chain (Telegram is dashed: built on a branch, not in this submission).
 
 **Inside the keyboard**
 
@@ -86,7 +86,7 @@ Money words go through fixed rules, NEAR Intents (token check and quote) and the
 | **Spend Limits (the leash)** | A Rust contract on NEAR holds the funds and decides every payment and swap in a fixed order: stop switch, blocklist, per-payment cap, daily cap, allowlist, owner approval. |
 | **NEAR Intents** | Checks that a token is real against its token list and gives live quotes, as dry runs that send nothing. |
 | **Swap** | `swap 0.1 near to usdc` makes the Trading Agent ask the contract, which swaps on Rhea on testnet and keeps the result inside the contract. |
-| **Calls** | A call from X (through Kall's feed) or from copied text becomes one small trade chip that waits for your hold, and auto-trading is off unless you turn it on. |
+| **Calls** | A call from X (through the Keybots feed) or from copied text becomes one small trade chip that waits for your hold, and auto-trading is off unless you turn it on. |
 | **Receipts** | Every decision, paid or refused, is an on-chain event with a testnet explorer link, and Share puts the receipt in your chat. |
 | **Where it runs** | Everything on NEAR testnet today, and no mainnet swap has been enforced. |
 
