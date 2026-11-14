@@ -72,23 +72,7 @@ X posts (through the Keybots feed) and copied text go into the Keybots keyboard,
 
 Money words go through fixed rules, NEAR Intents (token check and quote) and the Spend Limits contract, while wording help goes to Qwen3-VL 30B on NEAR AI Cloud (NEAR's TEE) and comes back as a signed answer with a receipt.
 
-### How it works, one line each
-
-| Piece | In one line |
-|---|---|
-| **Keyboard** | An iOS keyboard that shows what your words would do (`Pay 0.2 NEAR to harshal`) and only acts when you hold the button, never on a tap, and it never holds a key. |
-| **Typing stays safe** | Autocorrect never touches money, names, accounts, tickers or numbers, and text that reads as a payment is never sent to the AI. |
-| **Typed vs pasted** | What you type goes to the trusted Pay Agent, and text from someone else goes to the Inbox Agent, which can't trade and can only pay people you allowed. |
-| **AI model** | Qwen3-VL 30B Instruct (`Qwen/Qwen3-VL-30B-A3B-Instruct`) on NEAR AI Cloud, and the receipt on the keyboard shows which model answered. |
-| **Private AI** | Private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests; the TDX and GPU verdicts come from Phala and NVIDIA's verifiers. |
-| **AI help** | Hold space for fix, rewrite, tone, reply, translate, ask or search, and nothing enters your message until you tap Replace, Insert or Copy. |
-| **Agents** | Pay, Inbox and Trading are separate NEAR accounts whose only key can call a few contract methods, so a fooled agent still can't move money on its own. |
-| **Spend Limits (the leash)** | A Rust contract on NEAR holds the funds and decides every payment and swap in a fixed order: stop switch, blocklist, per-payment cap, daily cap, allowlist, owner approval. |
-| **NEAR Intents** | Checks that a token is real against its token list and gives live quotes, as dry runs that send nothing. |
-| **Swap** | `swap 0.1 near to usdc` makes the Trading Agent ask the contract, which swaps on Rhea on testnet and keeps the result inside the contract. |
-| **Calls** | A call from X (through the Keybots feed) or from copied text becomes one small trade chip that waits for your hold, and auto-trading is off unless you turn it on. |
-| **Receipts** | Every decision, paid or refused, is an on-chain event with a testnet explorer link, and Share puts the receipt in your chat. |
-| **Testnet and mainnet** | It runs on NEAR testnet today, where every payment and swap is enforced by the contract, and mainnet is next: the code path for live NEAR Intents quotes and deposits exists, but the contract is not deployed on mainnet and no mainnet swap has been enforced yet. |
+Today this runs on NEAR testnet. Mainnet is next: the code path for live NEAR Intents quotes and deposits exists, but the contract is not deployed on mainnet and no mainnet swap has been enforced yet.
 
 ### Why this matters
 
