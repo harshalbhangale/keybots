@@ -57,7 +57,7 @@ Why           within 0.5 NEAR per payment and 1.0 NEAR today (0.0 spent); the co
 Dry run: nothing was sent. The contract makes this decision on chain when the agent sends it; see the transactions in docs/DEMO.md.
 ```
 
-**The leash, live, in a browser.** The AIRKEY server serves a public read-only page at `GET /leash` (no token): the leash's NEAR, Stop everything, each agent's limits and today's spend, the blocked and allowed lists, anything waiting for the owner, and the last decisions as plain lines with their transactions. Run it locally with `cd server && npm run dev`, then open `http://localhost:8787/leash`. Screenshot: [docs/screens/leash-page.png](docs/screens/leash-page.png).
+**The leash, live, in a browser:** [13-126-207-245.sslip.io/leash](https://13-126-207-245.sslip.io/leash). The AIRKEY server serves this public read-only page at `GET /leash` (no token): the leash's NEAR, Stop everything, each agent's limits and today's spend, the blocked and allowed lists, anything waiting for the owner, and the last decisions as plain lines with their transactions. Run it locally with `cd server && npm run dev`, then open `http://localhost:8787/leash`. Screenshot: [docs/screens/leash-page.png](docs/screens/leash-page.png).
 
 ### 1. The leash's rules (no chain needed)
 
