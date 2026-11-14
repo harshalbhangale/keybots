@@ -1,3 +1,4 @@
+import { attestations } from "./attest.js";
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActMoney, ActUnavailable, act, type ActAction } from "./act.js";
 import { MONEY_REFUSAL, plainError, readAssistBody, runAssist } from "./assist.js";
@@ -12,6 +13,9 @@ import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
+import { TradeError, tradeFlow } from "./trade.js";
+import { connected } from "./connected.js";
+import type { TelegramSource } from "./telegram.js";
 import { cachedState, renderLeash } from "./leash-page.js";
 
 export type Deps = CommandDeps & {
@@ -26,12 +30,16 @@ export type Deps = CommandDeps & {
   follows?: FollowStore;
   /** Kall Markets' API, where their calls come from. */
   kall?: KallClient;
+  /** Telegram calls (telegram.ts): a bot in a group, read-only. Absent or without a token, the feed is Kall's alone. */
+  telegram?: TelegramSource;
   /** The same poller index.ts runs every minute, so "check now" and the timer never trade one call twice. */
   followPoller?: FollowPoller;
   /** KLIPY's GIFs, through this server (the key stays here). Tests pass a client with a fake fetch. */
   gifs?: GifClient;
   /** The network the keyboard AI uses (NEAR AI Cloud, OpenAI, Serper). Tests pass a fake. */
   aiFetch?: typeof fetch;
+  /** The clock reviews expire by (tests move it). */
+  now?: () => number;
 };
 
 /**
@@ -66,17 +74,17 @@ export function buildApp(deps: Deps) {
     reply.header("access-control-allow-headers", "authorization, content-type");
     reply.header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
     if (req.method === "OPTIONS") return reply.code(204).send();
-    // Public: /health, and /leash (only public chain data and plain receipt lines).
+    // Public: /health, and the Spend Limits page at /limits and /leash (only public chain data and plain receipt lines).
     const path = req.url.split("?")[0];
-    if (path === "/health" || path === "/leash" || !deps.cfg.apiToken) return;
+    if (path === "/health" || path === "/leash" || path === "/limits" || !deps.cfg.apiToken) return;
     if (req.headers.authorization !== `Bearer ${deps.cfg.apiToken}`) return reply.code(401).send({ error: "Missing or wrong token" });
   });
 
   app.get("/health", async () => ({ ok: true, network: deps.cfg.network, leash: deps.cfg.leash }));
 
-  /** The judge page: the leash live from chain (cached 15 s) and the last decisions, read-only. */
+  /** The judge page: Spend Limits live from chain (cached 15 s) and the last decisions, read-only. /leash is the old address. */
   const leashState = cachedState(deps.chain);
-  app.get("/leash", async (_req, reply) => {
+  const limitsPage = async (_req: unknown, reply: import("fastify").FastifyReply) => {
     let state = null;
     let readAt = Date.now();
     let error: string | undefined;
@@ -87,7 +95,9 @@ export function buildApp(deps: Deps) {
     }
     const html = renderLeash({ cfg: deps.cfg, state, readAt, receipts: deps.receipts.list(15), error });
     return reply.header("content-type", "text/html; charset=utf-8").header("cache-control", "public, max-age=15").send(html);
-  });
+  };
+  app.get("/limits", limitsPage);
+  app.get("/leash", limitsPage);
 
   /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch, and the tokens it holds. */
   app.get("/v1/state", async () => {
@@ -99,7 +109,7 @@ export function buildApp(deps: Deps) {
   /** What swapping `amount` NEAR into a token gets on Rhea right now, before you hold to swap. */
   app.get<{ Querystring: { amount?: string; to?: string } }>("/v1/swap/quote", async (req, reply) => {
     const route = deps.rhea?.route(String(req.query.to ?? ""));
-    if (!deps.rhea?.network || !route) return reply.code(404).send({ error: `AIRKEY can't swap NEAR into ${req.query.to ?? "that"} here` });
+    if (!deps.rhea?.network || !route) return reply.code(404).send({ error: `Keybots can't swap NEAR into ${req.query.to ?? "that"} here` });
     let amountIn: string;
     try {
       amountIn = toYocto(String(req.query.amount ?? ""));
@@ -266,6 +276,13 @@ export function buildApp(deps: Deps) {
    * done {task, text, options?, results?, receipt, note?} or error {error}.
    * Money is refused (409) before any AI sees it.
    */
+  // NEAR AI Cloud's hardware attestation as this server last checked it (every ten minutes): what passed, failed or was unavailable.
+  app.get("/v1/ai/attestation", async (_req, reply) => {
+    const r = attestations.get(deps.cfg.nearAi.model);
+    if (!r) return reply.code(503).send({ error: "The hardware attestation hasn't been checked yet. Try again in a minute.", status: "not checked" });
+    return r;
+  });
+
   app.post("/v1/assist", async (req, reply) => {
     const gate = readAssistBody(req.body);
     if (!gate.ok) return reply.code(gate.status).send(gate.body);
@@ -443,6 +460,40 @@ export function buildApp(deps: Deps) {
     } catch (e) {
       return reply.code(502).send({ error: kallDown(e) });
     }
+  });
+
+  // --- A KOL's call: feed -> review -> confirm -> the leash decides -> receipt (trade.ts) ---
+  const trade = tradeFlow({ ...deps, kall, telegram: deps.telegram, now: deps.now });
+
+  /** Kall's and Telegram's newest spot calls together (up to 10), or three labelled samples when there are none. */
+  app.get("/v1/kol/feed", async () => trade.feed());
+
+  /** What Keybots is connected to (Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, Kall, Telegram), each checked live. */
+  app.get("/v1/connected", async () => connected(deps, kall));
+
+  /** Is the Telegram bot set up and seeing messages? The bot's name and which groups it has read; never the token or message text. */
+  app.get("/v1/telegram/status", async () =>
+    deps.telegram ? deps.telegram.status() : { configured: false, bot: null, groups: [], lastMessageAt: null, error: null },
+  );
+
+  /** The exact trade a call would run, for 30 seconds. Sends nothing. */
+  app.post<{ Body: { callId?: unknown; text?: unknown; usd?: unknown } }>("/v1/trade/review", async (req, reply) => {
+    try {
+      return await trade.review(req.body ?? {});
+    } catch (e) {
+      if (e instanceof TradeError) return reply.code(e.status).send({ error: e.message, ...e.extra });
+      return reply.code(502).send({ error: `The review didn't come back: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** Run a review once, through the Trading Agent. The leash decides; a repeat gets the same receipt. */
+  app.post<{ Body: { reviewId?: unknown } }>("/v1/trade/confirm", async (req, reply) => {
+    const { code, body } = await trade.confirm(req.body?.reviewId);
+    if (code === 200 && "status" in body) {
+      const client = String(req.headers["x-airkey-client"] ?? "unknown").slice(0, 20);
+      if (!("repeat" in body)) console.log(`${new Date().toISOString()} reviewed trade from ${client}: ${body.status}`);
+    }
+    return reply.code(code).send(body);
   });
 
   // --- GIFs (gifs.ts): KLIPY through this server, so its key never reaches the phone ---

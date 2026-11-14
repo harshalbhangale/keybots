@@ -472,9 +472,9 @@ struct CallerRecord: Decodable, Equatable, Sendable {
         avgReturnBps = c.loose(.avgReturnBps, nil as Double?)
     }
 
-    /// "7 hits · 3 misses · avg +1.2%" (no average when Kall has none)
+    /// "7 of 10 calls up · avg +1.2%" (no average when Kall has none)
     var line: String {
-        var parts = ["\(hits) hit\(hits == 1 ? "" : "s")", "\(misses) miss\(misses == 1 ? "" : "es")"]
+        var parts = ["\(hits) of \(hits + misses) calls up"]
         if let bps = avgReturnBps {
             let avg = bps / 100
             parts.append("avg " + (abs(avg) < 0.05 ? "0%" : String(format: "%+.1f%%", avg)))
@@ -694,5 +694,21 @@ enum Dollars {
     /// "$1", "$2.50": whole dollars without the cents.
     static func text(_ v: Double) -> String {
         v.rounded() == v && abs(v) < 1e9 ? "$\(Int(v))" : Fmt.usd(v)
+    }
+}
+
+/// What Keybots is connected to, each service checked live by the server.
+struct Connected: Decodable {
+    let checkedAt: String
+    let network: String
+    let services: [Service]
+
+    struct Service: Decodable, Identifiable {
+        let id: String
+        let name: String
+        let role: String
+        /// live | down | off
+        let status: String
+        let detail: String
     }
 }

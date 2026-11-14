@@ -157,7 +157,7 @@ final class KeyView: UIControl {
     }
 
     /// Grey keys on the web: shift, delete, 123, emoji, globe, return.
-    /// The space bar keeps the letter colour and wears the "AIRKEY" watermark.
+    /// The space bar keeps the letter colour and wears the "KEYBOTS" watermark.
     private var isFunctionKey: Bool {
         switch spec.kind {
         case .char, .space: return false
@@ -357,7 +357,8 @@ final class KeyView: UIControl {
     }
 
     private func updateBinding() {
-        accentDot.isHidden = !isBound
+        // Holds still work; the dots were noise on a clean board.
+        accentDot.isHidden = true
         accentDot.backgroundColor = Glass.boundDot.cgColor
         updateFill(pressed: false)
     }

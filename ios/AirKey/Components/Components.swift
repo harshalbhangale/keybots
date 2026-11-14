@@ -28,16 +28,17 @@ struct SectionTitle: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(text.uppercased()).font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.muted)
+            Text(text).font(.title3.bold()).foregroundStyle(AK.bone)
             Spacer()
             if let trailing {
                 if let action {
-                    Button(trailing.uppercased(), action: action).font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.accent)
+                    Button(trailing, action: action).font(.subheadline.weight(.medium)).foregroundStyle(AK.accentText)
                 } else {
-                    Text(trailing).font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(AK.muted)
+                    Text(trailing).font(.subheadline.monospacedDigit()).foregroundStyle(AK.muted)
                 }
             }
         }
+        .padding(.horizontal, 4)
         .accessibilityAddTraits(.isHeader)
     }
 }
@@ -51,9 +52,11 @@ struct Pill: View {
         Text(text)
             .font(.caption.weight(.semibold))
             .foregroundStyle(color)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
+            .lineLimit(1)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
             .background(color.opacity(0.14), in: Capsule())
+            .fixedSize()
     }
 }
 
@@ -65,7 +68,7 @@ struct SignalBadge: View {
     var body: some View {
         Image(systemName: signal.icon)
             .font(.system(size: size * 0.42, weight: .bold))
-            .foregroundStyle(signal.plain ? AK.bone : AK.ink)
+            .foregroundStyle(signal.plain ? AK.bone : signal == .block ? Color.white : AK.ink)
             .frame(width: size, height: size)
             .background(signal.plain ? AK.raised : signal.color, in: Circle())
             .accessibilityLabel(signal.title)
@@ -83,38 +86,52 @@ struct OutcomeCard: View {
         HStack(alignment: .top, spacing: 14) {
             SignalBadge(signal: signal, size: 36)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title ?? signal.title).font(.headline).foregroundStyle(signal.plain ? AK.bone : signal.color)
-                Text(message).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
+                Text(title ?? signal.title).font(.title3.weight(.semibold)).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
+                Text(message).font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
         .padding(16)
-        .glassEffect(signal.plain ? .regular : .regular.tint(signal.color.opacity(0.16)), in: .rect(cornerRadius: AK.radius))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }
 
+/// A label and its value on one row; a long value moves under its label
+/// instead of being cut.
 struct KeyValue: View {
     let key: String
     let value: String
     var mono = false
     var color: Color = AK.bone
 
+    private var valueText: some View {
+        Text(value)
+            .font(mono ? .footnote.monospaced() : .subheadline.weight(.medium))
+            .foregroundStyle(color)
+    }
+
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(key).font(.subheadline).foregroundStyle(AK.muted)
-            Spacer(minLength: 16)
-            Text(value)
-                .font(mono ? AK.mono : .subheadline.weight(.medium))
-                .foregroundStyle(color)
-                .multilineTextAlignment(.trailing)
-                .lineLimit(2)
-                .truncationMode(.middle)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 16) {
+                Text(key).font(.subheadline).foregroundStyle(AK.muted).fixedSize()
+                Spacer(minLength: 0)
+                valueText.lineLimit(1).fixedSize()
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(key).font(.subheadline).foregroundStyle(AK.muted)
+                valueText.fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
 struct Hairline: View {
-    var body: some View { Rectangle().fill(AK.line).frame(height: 1) }
+    @Environment(\.displayScale) private var scale
+    var body: some View { Rectangle().fill(AK.line).frame(height: 1 / max(scale, 1)) }
 }
 
 /// Spend so far today against the daily cap.
@@ -125,11 +142,11 @@ struct SpendBar: View {
     var body: some View {
         GeometryReader { g in
             ZStack(alignment: .leading) {
-                Capsule().fill(AK.raised)
-                Capsule().fill(share > 0.85 ? AK.amber : color).frame(width: share > 0 ? max(6, g.size.width * share) : 0)
+                Capsule().fill(AK.line)
+                Capsule().fill(share > 0.85 ? AK.amber : color).frame(width: share > 0 ? max(4, g.size.width * share) : 0)
             }
         }
-        .frame(height: 6)
+        .frame(height: 5)
         .accessibilityLabel("\(Int(share * 100)) percent of today's limit used")
     }
 }
@@ -139,12 +156,12 @@ struct ErrorBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "wifi.exclamationmark").foregroundStyle(AK.amber)
+            Image(systemName: "wifi.exclamationmark").foregroundStyle(AK.amberText)
             Text(text).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .padding(14)
-        .background(AK.amber.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(AK.amber.opacity(0.14), in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
 
@@ -153,89 +170,118 @@ struct ErrorBanner: View {
 struct ApprovalCard: View {
     @Environment(AppModel.self) private var model
     let pending: LeashState.Pending
+    /// Off under a heading that already says "Waiting for you".
+    var tagged = true
 
     private var working: Bool { model.busy == "approve" || model.busy == "reject" }
 
     var body: some View {
+        let why = Plain.pendingParts(pending)
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text(Fmt.near(pending.amount)).font(AK.number(30)).foregroundStyle(AK.bone)
+                Text(Fmt.near(pending.amount)).font(AK.number(30)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.6)
                 Spacer()
-                Pill(text: "Waiting for you", color: AK.amber)
+                if tagged { Pill(text: "Waiting for you", color: AK.amberText) }
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("to \(Plain.name(pending.receiver))").font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("To").font(.subheadline).foregroundStyle(AK.muted)
+                    Text(Plain.name(pending.receiver)).font(.subheadline.monospaced()).foregroundStyle(AK.bone)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
                 if let memo = pending.memo, !memo.isEmpty {
-                    Text("for \(memo)").font(.subheadline).foregroundStyle(AK.muted)
+                    Text("For \(memo)").font(.subheadline).foregroundStyle(AK.muted)
                 }
             }
-            Text(Plain.pending(pending))
-                .font(.footnote)
-                .foregroundStyle(AK.muted)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                Button(role: .destructive) {
-                    Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
-                } label: {
-                    Text(model.busy == "reject" ? "…" : "REJECT")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(why.reason).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
+                if let from = why.from {
+                    Text(from).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(BigButtonStyle(primary: false, height: 50))
-                .frame(width: 104)
-                .disabled(working)
+            }
+            // Reject takes a third, approve two thirds, so neither label is cut.
+            GeometryReader { g in
+                let reject = (g.size.width - 10) / 3
+                HStack(spacing: 10) {
+                    Button(role: .destructive) {
+                        Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
+                    } label: {
+                        Text(model.busy == "reject" ? "…" : "Reject")
+                    }
+                    .buttonStyle(BigButtonStyle(primary: false, height: 50))
+                    .frame(width: reject)
+                    .disabled(working)
 
-                // Approving pays someone, so it takes a hold, then Face ID.
-                HoldToConfirm(
-                    label: model.busy == "approve" ? "SIGNING…" : "HOLD TO APPROVE",
-                    icon: "faceid",
-                    height: 50,
-                    font: .system(size: 14, weight: .heavy),
-                    disabled: working
-                ) {
-                    Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
+                    // Approving pays someone, so it takes a hold, then Face ID.
+                    HoldToConfirm(
+                        label: model.busy == "approve" ? "Signing…" : "Hold to approve",
+                        icon: "faceid",
+                        height: 50,
+                        font: .body.weight(.semibold),
+                        disabled: working
+                    ) {
+                        Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
+            .frame(height: 50)
         }
-        .padding(18)
-        .glassEffect(.regular.tint(AK.amber.opacity(0.12)), in: .rect(cornerRadius: AK.radius))
+        .padding(16)
+        .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
 
-/// One line of activity, as its own card: what happened, what was said, when, and a badge.
+/// One line of activity: the icon gives the verdict, a short title says what
+/// happened, the account sits whole on its own line, then what it was for,
+/// where it came from and when.
 struct ReceiptRow: View {
     let r: Receipt
 
     var body: some View {
-        let b = r.badge
+        let p = Plain.row(r)
+        let meta = [p.memo.map { "For \($0)" }, r.input.source == "typed" ? "Typed" : "Copied", Fmt.time(r.date)]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
         HStack(alignment: .top, spacing: 12) {
-            SignalBadge(signal: r.signal, size: 30)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(Plain.line(r)).font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
-                Text([r.input.source == "typed" ? "You typed “\(r.input.text)”" : "You copied “\(r.input.text)”", Fmt.time(r.date)].joined(separator: " · "))
-                    .font(.footnote)
-                    .foregroundStyle(AK.muted)
-                    .lineLimit(1)
+            SignalBadge(signal: r.signal, size: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(p.title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let account = p.account {
+                    let parts = account.split(separator: " ", maxSplits: 1).map(String.init)
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        if parts.count == 2 { Text(parts[0].prefix(1).uppercased() + parts[0].dropFirst()).font(.footnote).foregroundStyle(AK.muted) }
+                        Text(parts.last ?? account).font(.footnote.monospaced()).foregroundStyle(AK.bone)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                }
+                Text(meta).font(.footnote).foregroundStyle(AK.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 6)
-            Badge(text: b.text, color: b.color, filled: b.filled)
+            .padding(.top, 1)
+            Spacer(minLength: 0)
         }
-        .padding(12)
-        .background(AK.graphite.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(AK.hairline))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Opens the receipt")
     }
 }
 
-/// A list of receipts, one card each.
+/// A list of receipts in one grouped card, with hairlines between rows.
 struct ReceiptGroup: View {
     let receipts: [Receipt]
     let open: (Receipt) -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
-            ForEach(receipts) { r in
+        VStack(spacing: 0) {
+            ForEach(Array(receipts.enumerated()), id: \.element.id) { i, r in
+                if i > 0 { Hairline().padding(.leading, 60) }
                 Button { open(r) } label: { ReceiptRow(r: r) }.buttonStyle(.plain)
             }
         }
+        .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
 
@@ -247,15 +293,16 @@ struct Screen<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 28) {
                 if let error = model.error { ErrorBanner(text: error) }
                 content
             }
             .padding(.horizontal, AK.gutter)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
+            .padding(.top, 4)
+            .padding(.bottom, 32)
         }
         .scrollIndicators(.hidden)
+        .scrollEdgeEffectStyle(.hard, for: .bottom)
         .background { Ambient(tint: tint) }
         .refreshable { await model.refresh() }
     }

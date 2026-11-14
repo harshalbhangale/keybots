@@ -17,7 +17,7 @@ struct FollowingSection: View {
             SectionTitle("Following", trailing: model.follows.map { $0.isEmpty ? nil : "\($0.count)" } ?? nil)
             add
             if let notice = model.notice {
-                Text(notice).font(.footnote).foregroundStyle(AK.amber).fixedSize(horizontal: false, vertical: true)
+                Text(notice).font(.footnote).foregroundStyle(AK.amberText).fixedSize(horizontal: false, vertical: true)
                     .onTapGesture { model.notice = nil }
             }
             if let follows = model.follows {
@@ -52,22 +52,23 @@ struct FollowingSection: View {
 
     /// Type a handle, or pick a caller Kall tracks.
     private var add: some View {
-        Card(padding: 12, spacing: 10) {
+        Card(padding: 16, spacing: 12) {
             HStack(spacing: 10) {
-                Text("@").font(AK.mono).foregroundStyle(AK.muted)
-                TextField("", text: $handle, prompt: Text("handle on X").foregroundStyle(AK.faint))
-                    .font(AK.mono).foregroundStyle(AK.bone)
+                Text("@").font(.body).foregroundStyle(AK.muted)
+                TextField("", text: $handle, prompt: Text("Handle on X").foregroundStyle(AK.faint))
+                    .font(.body).foregroundStyle(AK.bone)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .submitLabel(.done)
                     .focused($typing)
                     .onSubmit(follow)
                 Button(action: follow) {
                     Group {
-                        if model.saving != nil { ProgressView().tint(AK.ink) } else { Text("FOLLOW") }
+                        if model.saving != nil { ProgressView().tint(AK.ink) } else { Text("Follow") }
                     }
-                    .font(.system(size: 12, weight: .heavy)).foregroundStyle(AK.ink)
-                    .padding(.horizontal, 12).frame(height: 30)
-                    .background(AK.accent.opacity(Follow.valid(Follow.clean(handle)) ? 1 : 0.4), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Follow.valid(Follow.clean(handle)) ? AK.ink : AK.faint)
+                    .padding(.horizontal, 14).frame(height: 32)
+                    .background(Follow.valid(Follow.clean(handle)) ? AK.accent : AK.fill, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .disabled(!Follow.valid(Follow.clean(handle)) || model.saving != nil)
@@ -81,16 +82,14 @@ struct FollowingSection: View {
                             } label: {
                                 VStack(alignment: .leading, spacing: 1) {
                                     HStack(spacing: 5) {
-                                        Text("@\(c.handle)").font(.system(size: 13, weight: .semibold)).foregroundStyle(AK.bone)
-                                        Text("\(c.record.hits) hits").font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(AK.muted)
+                                        Text("@\(c.handle)").font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
                                     }
                                     if let focus = c.focus {
-                                        Text(focus).font(.system(size: 11)).foregroundStyle(AK.muted).lineLimit(1)
+                                        Text(focus).font(.footnote).foregroundStyle(AK.muted).lineLimit(1)
                                     }
                                 }
                                 .padding(.horizontal, 10).frame(height: 40)
-                                .background(AK.graphite, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(AK.hairline))
+                                .background(AK.raised.opacity(0.6), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                             }
                             .buttonStyle(.plain)
                             .disabled(model.saving != nil)
@@ -104,7 +103,7 @@ struct FollowingSection: View {
 
     private func resume(_ f: Follow) -> some View {
         Button { Task { await model.setAuto(f.handle, true) } } label: {
-            Text("TURN BACK ON").font(.system(size: 11, weight: .heavy)).foregroundStyle(AK.ink)
+            Text("Turn back on").font(.footnote.weight(.semibold)).foregroundStyle(AK.ink)
                 .padding(.horizontal, 10).frame(height: 28)
                 .background(AK.accent, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
@@ -124,24 +123,26 @@ struct FollowingSection: View {
     }
 
     private func row(_ f: Follow) -> some View {
-        Card(padding: 12, spacing: 0) {
+        Card(padding: 16, spacing: 0) {
             HStack(spacing: 12) {
                 Button { opened = Opened(id: f.id) } label: {
                     HStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("@\(f.handle)").font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone).lineLimit(1)
+                            Text("@\(f.handle)").font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1)
                             if f.paused {
-                                Text(f.pausedReason ?? "").font(.system(size: 12, weight: .semibold)).foregroundStyle(AK.amber).lineLimit(2)
+                                Text(f.pausedReason ?? "").font(.footnote.weight(.semibold)).foregroundStyle(AK.amberText)
+                                    .fixedSize(horizontal: false, vertical: true)
                             } else {
-                                Text(f.recordLine).font(.system(size: 12, design: .monospaced)).foregroundStyle(AK.muted).lineLimit(1)
-                                    .minimumScaleFactor(0.8)
+                                Text("\(f.usedLine) today").font(.footnote.monospacedDigit())
+                                    .foregroundStyle(f.spentTodayUsd >= f.perDayUsd ? AK.amberText : AK.muted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if let record = f.record?.line {
+                                    Text(record).font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                         }
                         Spacer(minLength: 6)
-                        if !f.paused {
-                            Text(f.usedLine).font(.system(size: 11, weight: .semibold).monospacedDigit())
-                                .foregroundStyle(f.spentTodayUsd >= f.perDayUsd ? AK.amber : AK.muted).lineLimit(1)
-                        }
                     }
                     .contentShape(Rectangle())
                 }
@@ -178,8 +179,8 @@ struct AppTradedRow: View {
                     .background(trade.signal.plain ? AK.raised : trade.signal.color, in: Circle())
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(trade.message).font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(trade.traded ? AK.bone : trade.failed ? AK.amber : AK.muted)
+                    Text(trade.message).font(.subheadline.weight(.semibold))
+                        .foregroundStyle(trade.traded ? AK.bone : trade.failed ? AK.amberText : AK.muted)
                         .lineLimit(3).fixedSize(horizontal: false, vertical: true)
                     Text(byLine).font(.footnote).foregroundStyle(AK.muted).lineLimit(1)
                 }
@@ -188,23 +189,23 @@ struct AppTradedRow: View {
             }
             if trade.postUrl != nil || trade.txUrl != nil {
                 HStack(spacing: 16) {
-                    if let s = trade.postUrl, let url = URL(string: s) { link("THE POST", url) }
-                    if let s = trade.txUrl, let url = URL(string: s) { link("TRANSACTION", url) }
+                    if let s = trade.postUrl, let url = URL(string: s) { link("The post", url) }
+                    if let s = trade.txUrl, let url = URL(string: s) { link("Transaction", url) }
                     Spacer(minLength: 0)
                 }
                 .padding(.leading, 42)
             }
         }
         .padding(12)
-        .background(fresh ? AK.accent.opacity(0.12) : AK.graphite.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(fresh ? AK.accent.opacity(0.7) : AK.hairline))
+        .background(fresh ? AK.accent.opacity(0.12) : AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: AK.radius, style: .continuous).stroke(fresh ? AK.accent.opacity(0.7) : .clear))
     }
 
     private var badge: (text: String, color: Color, filled: Bool) {
         switch trade.status {
-        case "traded": ("TRADED", AK.accent, true)
-        case "failed": ("FAILED", AK.amber, false)
-        default: ("SKIPPED", AK.muted, false)
+        case "traded": ("Traded", AK.accent, true)
+        case "failed": ("Failed", AK.amberText, false)
+        default: ("Skipped", AK.muted, false)
         }
     }
 
@@ -222,7 +223,7 @@ struct AppTradedRow: View {
                 Text(title)
                 Image(systemName: "arrow.up.right")
             }
-            .font(.system(size: 11, weight: .heavy)).foregroundStyle(AK.accent)
+            .font(.footnote.weight(.semibold)).foregroundStyle(AK.accentText)
         }
         .buttonStyle(.plain)
     }
@@ -248,7 +249,7 @@ struct AppFollowRules: View {
             }
         }
         .scrollIndicators(.hidden)
-        .background(AK.ink)
+        .background(AK.canvas)
         .sensoryFeedback(trigger: resultTick) { _, _ in
             switch result?.status {
             case "traded": .success
@@ -262,26 +263,28 @@ struct AppFollowRules: View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 6) {
                 (Text("@\(f.handle)").foregroundColor(AK.bone) + Text(".").foregroundColor(AK.accent))
-                    .font(.system(size: 30, weight: .black)).tracking(-0.8).lineLimit(1).minimumScaleFactor(0.6)
-                Text(f.recordLine).font(.system(size: 12, design: .monospaced)).foregroundStyle(AK.muted)
-                Text("\(f.usedLine) today").font(.system(size: 12, design: .monospaced)).foregroundStyle(AK.muted)
+                    .font(.system(.title, design: .rounded, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.6)
+                if let record = f.record?.line {
+                    Text(record).font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
+                }
+                Text("\(f.usedLine) today").font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
             }
             .padding(.top, 12)
 
             Card(padding: 14) {
                 Toggle(isOn: binding(f, \.auto)) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Trade their calls for me").font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone)
+                        Text("Trade their calls for me").font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
                         Text("A new call that fits these rules trades by itself.").font(.footnote).foregroundStyle(AK.muted)
                     }
                 }
                 .tint(AK.accent)
                 if f.paused {
                     HStack(spacing: 10) {
-                        Text(f.pausedReason ?? "").font(.footnote).foregroundStyle(AK.amber).fixedSize(horizontal: false, vertical: true)
+                        Text(f.pausedReason ?? "").font(.footnote).foregroundStyle(AK.amberText).fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 4)
                         Button { set(f, \.auto, true, force: true) } label: {
-                            Text("TURN BACK ON").font(.system(size: 11, weight: .heavy)).foregroundStyle(AK.ink)
+                            Text("Turn back on").font(.footnote.weight(.semibold)).foregroundStyle(AK.ink)
                                 .padding(.horizontal, 10).frame(height: 28)
                                 .background(AK.accent, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
@@ -291,9 +294,9 @@ struct AppFollowRules: View {
             }
 
             Card(padding: 14, spacing: 14) {
-                choice("PER CALL", [1.0, 2, 5].map { (Dollars.text($0), $0) }, f.perCallUsd) { set(f, \.perCallUsd, $0) }
-                choice("PER DAY", [3.0, 5, 10].map { (Dollars.text($0), $0) }, f.perDayUsd) { set(f, \.perDayUsd, $0) }
-                choice("CALLS", [("Buy only", "buy"), ("Buy and sell", "both")], f.buyOnly ? "buy" : "both") { set(f, \.sides, $0) }
+                choice("Per call", [1.0, 2, 5].map { (Dollars.text($0), $0) }, f.perCallUsd) { set(f, \.perCallUsd, $0) }
+                choice("Per day", [3.0, 5, 10].map { (Dollars.text($0), $0) }, f.perDayUsd) { set(f, \.perDayUsd, $0) }
+                choice("Calls", [("Buy only", "buy"), ("Buy and sell", "both")], f.buyOnly ? "buy" : "both") { set(f, \.sides, $0) }
             }
 
             Card(padding: 14, spacing: 14) {
@@ -307,9 +310,9 @@ struct AppFollowRules: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HoldToConfirm(
-                    label: model.checking == f.handle ? "READING THEIR LATEST CALL…" : "HOLD TO TRADE THEIR LATEST CALL",
+                    label: model.checking == f.handle ? "Reading their latest call…" : "Hold to trade their latest call",
                     height: 50,
-                    font: .system(size: 14, weight: .heavy),
+                    font: .body.weight(.semibold),
                     disabled: model.checking != nil
                 ) {
                     Task {
@@ -324,11 +327,11 @@ struct AppFollowRules: View {
             if let result {
                 AppTradedRow(trade: result, fresh: false) { _ in }
             } else if resultTick > 0, let notice = model.notice {
-                Text(notice).font(.footnote).foregroundStyle(AK.amber)
+                Text(notice).font(.footnote).foregroundStyle(AK.amberText)
             }
 
             Button(role: .destructive) { confirmUnfollow = true } label: {
-                Text("UNFOLLOW").foregroundStyle(AK.red)
+                Text("Unfollow").foregroundStyle(AK.redText)
             }
             .buttonStyle(.bigSecondary)
             .confirmationDialog("Unfollow @\(f.handle)?", isPresented: $confirmUnfollow, titleVisibility: .visible) {
@@ -358,7 +361,7 @@ struct AppFollowRules: View {
     private func toggle(_ title: String, _ detail: String, _ on: Binding<Bool>) -> some View {
         Toggle(isOn: on) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.bone)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
                 Text(detail).font(.footnote).foregroundStyle(AK.muted)
             }
         }
@@ -367,13 +370,13 @@ struct AppFollowRules: View {
 
     private func choice<V: Equatable>(_ title: String, _ options: [(String, V)], _ selected: V, pick: @escaping (V) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(AK.muted)
+            Text(title).font(.footnote.weight(.medium).monospacedDigit()).foregroundStyle(AK.muted)
             HStack(spacing: 8) {
                 ForEach(options.indices, id: \.self) { i in
                     let (label, value) = options[i]
                     let on = value == selected
                     Button { if !on { pick(value) } } label: {
-                        Text(label).font(.system(size: 14, weight: .heavy).monospacedDigit())
+                        Text(label).font(.subheadline.weight(.semibold).monospacedDigit())
                             .foregroundStyle(on ? AK.ink : AK.bone)
                             .frame(maxWidth: .infinity).frame(height: 38)
                             .background(on ? AK.accent : AK.graphite, in: RoundedRectangle(cornerRadius: 10, style: .continuous))

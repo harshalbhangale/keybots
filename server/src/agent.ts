@@ -5,7 +5,7 @@ import { readWithAi, type AiConfig } from "./ai.js";
 import { judge } from "./checks.js";
 import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
-import type { IntentsClient } from "./intents.js";
+import { intentsLanding, type IntentsClient } from "./intents.js";
 import type { OrderStore } from "./orders.js";
 import { amountOut, fromUnits, minOut, sellMsg, swapMsg, toUnits, type RheaClient, type RheaSell } from "./rhea.js";
 import { DOLLAR, parse, resolveReceiver, toYocto, type Action } from "./parse.js";
@@ -82,12 +82,26 @@ export function describe(action: Action): { kind: "pay" | "swap"; title: string;
 /** The KOL and post behind a "follow" command, for its receipt. */
 export interface FollowSource {
   handle: string;
-  postUrl: string;
+  /** Not every source has a link: a Telegram call from a private group has none. */
+  postUrl?: string;
 }
 
-export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource): Promise<Receipt> {
+/** How a reviewed trade runs (trade.ts): the owner saw the numbers and confirmed them. */
+export interface SwapOptions {
+  /**
+   * Send it to the leash even when the server's own check says it's over a
+   * cap, so the contract decides and records the refusal on chain. Stop
+   * everything and the mainnet dollar ceiling still stop it here.
+   */
+  leashDecides?: boolean;
+  /** The least the owner was shown, in the token's units: the swap never accepts less. */
+  minOut?: string;
+}
+
+export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource, opts: SwapOptions = {}): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
-  const input = { text: text.slice(0, 2000), source, ...(source === "follow" && from ? { handle: from.handle, postUrl: from.postUrl } : {}) };
+  const withPost = (source === "follow" || source === "reviewed-call") && from;
+  const input = { text: text.slice(0, 2000), source, ...(withPost ? { handle: from.handle, ...(from.postUrl ? { postUrl: from.postUrl } : {}) } : {}) };
   const base = { id: randomUUID(), at: new Date().toISOString(), input };
 
   // 1. Read it: rules first, an AI only for what the rules can't read.
@@ -105,7 +119,8 @@ export async function runCommand(deps: Deps, text: string, source: Source, from?
   if (action.kind === "unknown") return done({ outcome: "not-sent", message: action.reason });
   // A followed KOL's call only ever becomes one swap: never a payment or a standing order.
   if (source === "follow" && action.kind !== "swap") return done({ outcome: "blocked", message: "Only a swap runs for a KOL you follow." });
-  if (action.kind === "swap") return swap(deps, action, source, done);
+  if (source === "reviewed-call" && action.kind !== "swap") return done({ outcome: "blocked", message: "Only a swap runs from a reviewed call." });
+  if (action.kind === "swap") return swap(deps, action, source, done, opts);
   if (action.kind === "watch") return watch(deps, action, text, source, done);
 
   // 2. Who is it for?
@@ -154,7 +169,7 @@ export async function runCommand(deps: Deps, text: string, source: Source, from?
   }
   return done({
     outcome: "blocked",
-    message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`,
+    message: `Blocked by Spend Limits (${decision.rule}): ${decision.reason}.`,
     agent,
     receiver,
     checks,
@@ -226,7 +241,7 @@ export function plainSummary(r: Receipt, contacts: Record<string, string> = {}):
       return cap ? `Blocked: over your ${cap} NEAR daily limit` : "Blocked: over your daily limit";
     }
     if (rule === "R6") return `Blocked: ${name} isn't on your allowed list`;
-    if (rule === "R0") return "Blocked: not enough NEAR in your AIRKEY balance";
+    if (rule === "R0") return "Blocked: not enough NEAR in your Keybots balance";
     if (rule) return undefined;
     // Stopped by the server before the chain was asked.
     if (r.input.source === "pasted" && (a.kind === "swap" || a.kind === "watch")) {
@@ -277,6 +292,7 @@ async function swap(
   action: Extract<Action, { kind: "swap" }>,
   source: Source,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+  opts: SwapOptions = {},
 ): Promise<Receipt> {
   const label = `${action.amount} ${action.from} → ${action.to}`;
   if (source === "pasted") {
@@ -312,7 +328,7 @@ async function swap(
   if (deps.cfg.network === "mainnet" && !(usd > 0 && usd <= deps.cfg.mainnetUsdCap)) {
     return done({
       outcome: "blocked",
-      message: `On mainnet AIRKEY swaps at most $${deps.cfg.mainnetUsdCap}${usd > 0 ? `; this is about $${usd.toFixed(2)}` : ", and NEAR Intents gave no dollar value"}.`,
+      message: `On mainnet Keybots swaps at most $${deps.cfg.mainnetUsdCap}${usd > 0 ? `; this is about $${usd.toFixed(2)}` : ", and NEAR Intents gave no dollar value"}.`,
       swap: { from, to, quote },
     });
   }
@@ -326,7 +342,8 @@ async function swap(
       const left = BigInt(a.daily_cap) - BigInt(a.spent_today);
       const within = !state.paused && value <= BigInt(a.per_payment_cap) && value <= left;
       leash = { agent, valueNear: yoctoToNear(value), perPaymentCap: a.per_payment_cap, leftToday: (left > 0n ? left : 0n).toString(), within };
-      if (!within) {
+      // A reviewed trade over a cap still goes to the leash: the contract refuses it and records why on chain.
+      if (!within && (state.paused || !opts.leashDecides)) {
         const why = state.paused
           ? "the kill switch is on"
           : value > BigInt(a.per_payment_cap)
@@ -334,7 +351,7 @@ async function swap(
             : `only ${tidy(yoctoToNear(left > 0n ? left : 0n))} NEAR is left today`;
         return done({
           outcome: "blocked",
-          message: `The leash would block this: ${why}.`,
+          message: `Spend Limits would block this: ${why}.`,
           agent: { account: agent, tier: "trusted" },
           swap: { from, to, quote, leash },
         });
@@ -344,7 +361,7 @@ async function swap(
   // NEAR into a token Rhea has a pool for: swap it for real, from the leash.
   const route = from.token!.assetId.endsWith("wrap.near") ? deps.rhea?.route(action.to) : undefined;
   if (route && deps.rhea?.network) {
-    return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done);
+    return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done, opts.minOut);
   }
   // A token the leash holds (USDC, USDT) into NEAR or the other one: sell it on Rhea, from the leash.
   // Only when the owner has set the leash's rule for that token; otherwise it stays a quote.
@@ -368,7 +385,7 @@ async function swap(
  * Mainnet: a live 1Click quote gives a deposit address; the leash wraps the
  * NEAR and sends the wNEAR there (registering it on wrap.near first). The
  * token goes to the owner (into NEAR Intents for other chains); a failed swap
- * is refunded to the leash. Waits up to a minute for NEAR Intents to finish.
+ * is refunded to Spend Limits. Waits up to a minute for NEAR Intents to finish.
  */
 async function swapOnIntents(
   deps: Deps,
@@ -395,10 +412,10 @@ async function swapOnIntents(
   });
   const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
   if (decision.status !== "paid") {
-    return done({ outcome: "blocked", message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
+    return done({ outcome: "blocked", message: `Blocked by Spend Limits (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
   }
   if (events.some((e) => (e as { event?: string }).event === "swap_failed")) {
-    return done({ outcome: "not-sent", message: `The deposit for ${label} didn't go out; the leash keeps the NEAR. Nothing was lost.`, agent: who, decision, tx, events, swap });
+    return done({ outcome: "not-sent", message: `The deposit for ${label} didn't go out; Spend Limits keeps the NEAR. Nothing was lost.`, agent: who, decision, tx, events, swap });
   }
   await intents.submitDeposit(txHash, live.depositAddress).catch(() => undefined);
   let progress: Awaited<ReturnType<typeof intents.status>> | undefined;
@@ -408,14 +425,18 @@ async function swapOnIntents(
     await new Promise((r) => setTimeout(r, wait.everyMs));
   }
   const ok = progress?.status === "SUCCESS";
+  const lands = intentsLanding(deps.cfg.owner, swap.to.token?.blockchain);
   // ok: the deposit went out and nothing failed (done, or still on its way).
   const executed = { venue: "NEAR Intents", exchange: live.depositAddress, amountIn: action.amount, amountOut: progress?.amountOutFormatted ?? live.amountOutFormatted, symbolOut: action.to.toUpperCase(), ok: ok || !progress?.done };
   if (ok) {
-    return done({ outcome: "swapped", message: `Swapped ${action.amount} NEAR for ${tidy(executed.amountOut)} ${executed.symbolOut} on NEAR Intents.`, agent: who, decision, tx, events, swap: { ...swap, executed } });
+    return done({ outcome: "swapped", message: `Swapped ${action.amount} NEAR for ${tidy(executed.amountOut)} ${executed.symbolOut} on NEAR Intents. ${lands}`, agent: who, decision, tx, events, swap: { ...swap, executed } });
   }
-  const why = progress?.status === "REFUNDED" ? "was refunded to the leash" : progress?.done ? "failed; NEAR Intents refunds the leash" : "is still running; it lands in a minute or so";
-  return done({ outcome: progress?.done ? "not-sent" : "swapped", message: `The swap of ${label} ${why}.`, agent: who, decision, tx, events, swap: { ...swap, executed } });
+  const why = progress?.status === "REFUNDED" ? "was refunded to Spend Limits" : progress?.done ? "failed; NEAR Intents refunds Spend Limits" : "is still running; it lands in a minute or so";
+  return done({ outcome: progress?.done ? "not-sent" : "swapped", message: `The swap of ${label} ${why}.${progress?.done ? "" : ` ${lands}`}`, agent: who, decision, tx, events, swap: { ...swap, executed } });
 }
+
+/** The higher of the pool's floor now and the least the owner was shown: never less than they saw. */
+const floor = (now: string, shown?: string) => (shown && BigInt(shown) > BigInt(now) ? shown : now);
 
 /** The leash wraps the NEAR and Rhea swaps it in one pool; the token comes back to the leash. */
 async function swapOnRhea(
@@ -425,6 +446,7 @@ async function swapOnRhea(
   route: NonNullable<ReturnType<RheaClient["route"]>>,
   swap: NonNullable<Receipt["swap"]>,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+  shownMin?: string,
 ): Promise<Receipt> {
   const net = deps.rhea!.network!;
   const label = `${action.amount} NEAR → ${route.symbol}`;
@@ -444,13 +466,13 @@ async function swapOnRhea(
     venue: net.exchange,
     amount: amountIn,
     wrap: net.wrap,
-    msg: swapMsg(net, route, amountIn, minOut(expected)),
+    msg: swapMsg(net, route, amountIn, floor(minOut(expected), shownMin)),
     memo: `swap ${label}`,
   });
   const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
   const who = { account: agent, tier: "trusted" as const };
   if (decision.status !== "paid") {
-    return done({ outcome: "blocked", message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
+    return done({ outcome: "blocked", message: `Blocked by Spend Limits (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
   }
   const failed = events.some((e) => (e as { event?: string }).event === "swap_failed");
   const out = amountOut(logs, route.token);
@@ -458,7 +480,7 @@ async function swapOnRhea(
   if (!executed.ok) {
     return done({
       outcome: "not-sent",
-      message: `Rhea didn't fill ${label}; the leash keeps the NEAR as wNEAR. Nothing was lost.`,
+      message: `Rhea didn't fill ${label}; Spend Limits keeps the NEAR as wNEAR. Nothing was lost.`,
       agent: who,
       decision,
       tx,
@@ -468,7 +490,7 @@ async function swapOnRhea(
   }
   return done({
     outcome: "swapped",
-    message: `Swapped ${action.amount} NEAR for ${executed.amountOut} ${route.symbol} on Rhea. It's in the leash.`,
+    message: `Swapped ${action.amount} NEAR for ${executed.amountOut} ${route.symbol} on Rhea. It's in Spend Limits (${deps.cfg.leash}).`,
     agent: who,
     decision,
     tx,
@@ -524,7 +546,7 @@ async function sellOnRhea(
   });
   const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
   if (decision.status !== "paid") {
-    return done({ outcome: "blocked", message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
+    return done({ outcome: "blocked", message: `Blocked by Spend Limits (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
   }
   const failed = events.some((e) => (e as { event?: string }).event === "swap_failed");
   const out = amountOut(logs, sell.to.token);
@@ -540,7 +562,7 @@ async function sellOnRhea(
   if (!executed.ok) {
     return done({
       outcome: "not-sent",
-      message: `Rhea didn't fill ${label}; the leash keeps the ${sell.from.symbol}. Nothing was lost.`,
+      message: `Rhea didn't fill ${label}; Spend Limits keeps the ${sell.from.symbol}. Nothing was lost.`,
       agent: who,
       decision,
       tx,
@@ -550,7 +572,7 @@ async function sellOnRhea(
   }
   return done({
     outcome: "swapped",
-    message: `Swapped ${action.amount} ${sell.from.symbol} for ${executed.amountOut} ${sell.to.symbol} on Rhea. It's in the leash.`,
+    message: `Swapped ${action.amount} ${sell.from.symbol} for ${executed.amountOut} ${sell.to.symbol} on Rhea. It's in Spend Limits (${deps.cfg.leash}).`,
     agent: who,
     decision,
     tx,

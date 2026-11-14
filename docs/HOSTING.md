@@ -20,9 +20,9 @@ COPYFILE_DISABLE=1 tar -cz --exclude node_modules --exclude .env --exclude .clau
 
 ```sh
 cd ios
-xcodebuild -project AirKey.xcodeproj -scheme AirKey -destination 'id=00008140-000C752C3CC3801C' \
+xcodebuild -project Keybots.xcodeproj -scheme Keybots -destination 'id=00008140-000C752C3CC3801C' \
   -derivedDataPath /tmp/airkey-dd-device -allowProvisioningUpdates \
   DEVELOPMENT_TEAM=R3D54PSMD2 CODE_SIGN_STYLE=Automatic CODE_SIGN_ENTITLEMENTS= \
   AIRKEY_SERVER=https://13-126-207-245.sslip.io AIRKEY_TOKEN=$(cat ../../airkey/keys/api-token) build
-xcrun devicectl device install app --device 00008140-000C752C3CC3801C /tmp/airkey-dd-device/Build/Products/Debug-iphoneos/AirKey.app
+xcrun devicectl device install app --device 00008140-000C752C3CC3801C /tmp/airkey-dd-device/Build/Products/Debug-iphoneos/Keybots.app
 ```

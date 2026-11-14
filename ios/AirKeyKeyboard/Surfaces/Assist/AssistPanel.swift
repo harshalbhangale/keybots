@@ -115,22 +115,27 @@ struct AssistView: View {
         VStack(spacing: 8) {
             header(p)
             // The receipt lies over the tasks and the answer, never pushing them.
+            // The receipt takes the answer's place: nothing is drawn behind
+            // it, so no chip or button shows through its corners.
             ZStack(alignment: .top) {
-                VStack(spacing: 8) {
-                    tasks(p)
-                    if model.task == .translate { languageRow(p) }
-                    content(p)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    actions(p)
-                }
                 if model.receiptOpen, let r = model.receipt {
                     AssistReceiptCard(receipt: r, note: model.note, p: p) { model.toggleReceipt() }
-                        .transition(.opacity.combined(with: .offset(y: 10)))
+                        .transition(.opacity)
+                } else {
+                    VStack(spacing: 8) {
+                        tasks(p)
+                        if model.task == .translate { languageRow(p) }
+                        content(p)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        actions(p)
+                    }
+                    .transition(.opacity)
                 }
             }
-            .animation(Glass.reduceMotion ? nil : .snappy(duration: 0.22), value: model.receiptOpen)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .animation(Glass.reduceMotion ? nil : .easeInOut(duration: 0.18), value: model.receiptOpen)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, MoneyPalette.inset)
         .padding(.top, 8)
         .padding(.bottom, 8)
     }
@@ -156,6 +161,8 @@ struct AssistView: View {
             }
             .buttonStyle(.plain)
             .disabled(model.receipt == nil)
+            // The open receipt says the same in its title.
+            .opacity(model.receiptOpen ? 0 : 1)
         }
         .frame(height: 28)
     }
@@ -203,6 +210,10 @@ struct AssistView: View {
                     }
                 }
             }
+            // The row runs to the panel's edges and scrolls under them; the
+            // first and last chips rest at the same inset as everything else.
+            .contentMargins(.horizontal, MoneyPalette.inset, for: .scrollContent)
+            .padding(.horizontal, -MoneyPalette.inset)
             .scrollEdgeEffectHidden(true)
             .onAppear { proxy.scrollTo(model.task, anchor: .center) }
             .onChange(of: model.task) { _, t in
@@ -410,7 +421,7 @@ struct AssistView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "lock.shield").font(.system(size: 14, weight: .semibold)).foregroundStyle(p.amber)
-                Text("This looks like a payment. AIRKEY's agents handle money, not the AI.")
+                Text("This looks like a payment. Keybots's agents handle money, not the AI.")
                     .font(.subheadline)
                     .foregroundStyle(p.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -444,9 +455,18 @@ struct AssistView: View {
             .buttonStyle(.plain)
             .disabled(model.phase == .working || model.phase == .waiting)
             .accessibilityLabel("Again")
-            pill(model.copiedFlash ? "Copied" : "Copy", primary: false, p) { model.copy() }
-            pill("Insert", primary: !model.canReplace, p) { model.insert() }
-            if model.canReplace { pill("Replace", primary: true, p) { model.replace() } }
+            if model.canReplace {
+                // Three items: Copy lives on a long press of Insert.
+                pill(model.copiedFlash ? "Copied" : "Insert", primary: false, p) { model.insert() }
+                    .contextMenu { Button("Copy", systemImage: "doc.on.doc") { model.copy() } }
+                    .accessibilityAction(named: "Copy") { model.copy() }
+                    .accessibilityHint("Adds it after your text. Touch and hold to copy.")
+                pill("Replace", primary: true, p) { model.replace() }
+                    .accessibilityHint("Swaps your text for this one.")
+            } else {
+                pill(model.copiedFlash ? "Copied" : "Copy", primary: false, p) { model.copy() }
+                pill("Insert", primary: true, p) { model.insert() }
+            }
         }
         .frame(height: 40)
         .opacity(hidden ? 0 : live ? 1 : 0.45)
@@ -486,7 +506,7 @@ struct AssistView: View {
             HStack(spacing: 6) {
                 Image(systemName: model.task == .search ? "magnifyingglass" : "text.bubble")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(p.mark)
+                    .foregroundStyle(p.soft)
                 TimelineView(.periodic(from: .now, by: 0.5)) { ctx in
                     let lit = Glass.reduceMotion || Int(ctx.date.timeIntervalSinceReferenceDate / 0.5) % 2 == 0
                     HStack(spacing: 1) {
@@ -506,15 +526,17 @@ struct AssistView: View {
             .frame(height: 38)
             .background(p.card, in: Capsule())
             .overlay(Capsule().stroke(p.line, lineWidth: 0.5))
+            let empty = model.question.trimmingCharacters(in: .whitespaces).isEmpty
             Button { model.submit() } label: {
+                // Lime only once there is something to send.
                 Image(systemName: "arrow.up")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(AK.ink)
+                    .foregroundStyle(empty ? p.soft : AK.ink)
                     .frame(width: 38, height: 38)
-                    .background(AK.accent, in: Circle())
+                    .background(empty ? p.function : AK.accent, in: Circle())
             }
             .buttonStyle(.plain)
-            .opacity(model.question.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+            .disabled(empty)
             .accessibilityLabel(model.task == .search ? "Search" : "Ask")
         }
         .padding(.horizontal, 10)

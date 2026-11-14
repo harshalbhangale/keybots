@@ -56,7 +56,7 @@ export function ownerActions(cfg: Config) {
       // Relay only what prepare() would have built: one owner call to the leash.
       const only = tx.actions.length === 1 ? (tx.actions[0] as { functionCall?: { methodName: string } }).functionCall : undefined;
       if (tx.signerId !== cfg.owner || tx.receiverId !== cfg.leash || !only || !OWNER_METHODS.includes(only.methodName as OwnerMethod)) {
-        throw new UserError("That isn't an AIRKEY owner action.");
+        throw new UserError("That isn't an Keybots owner action.");
       }
       const sig = new Uint8Array(Buffer.from(signatureB64, "base64"));
       const hash = createHash("sha256").update(bytes).digest();

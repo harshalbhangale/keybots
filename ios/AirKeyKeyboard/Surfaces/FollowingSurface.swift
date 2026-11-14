@@ -151,7 +151,7 @@ struct FollowingView: View {
     private func paste() {
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             model.notice = UIPasteboard.general.hasStrings
-                ? "To paste: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                ? "To paste: Settings › Apps › Keybots › Paste from Other Apps › Allow."
                 : "Copy someone's @handle or profile link first, or pick one here."
             Haptics.warning()
             return
@@ -172,7 +172,7 @@ struct FollowingView: View {
     }
 
     private func label(_ text: String, _ p: MoneyPalette) -> some View {
-        Text(text.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(0.6).foregroundStyle(p.soft)
+        Text(text).font(.footnote.weight(.semibold)).foregroundStyle(p.soft)
     }
 }
 
@@ -189,7 +189,7 @@ private struct FollowRow: View {
             Button(action: open) {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("@\(follow.handle)").font(.subheadline.weight(.heavy)).lineLimit(1)
+                        Text("@\(follow.handle)").font(.subheadline.weight(.semibold)).lineLimit(1)
                         if follow.paused {
                             Text(MoneyText.plain(follow.pausedReason ?? "")).font(.caption2.weight(.semibold)).foregroundStyle(p.warn).lineLimit(1)
                         } else {
@@ -217,7 +217,7 @@ private struct FollowRow: View {
             }
         }
         .padding(.horizontal, 12).frame(height: 48)
-        .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -299,7 +299,7 @@ private struct FollowRulesView: View {
                 .buttonStyle(MoneyPress())
                 .accessibilityLabel("Back to the people you follow")
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("@\(follow.handle)").font(.footnote.weight(.heavy)).lineLimit(1)
+                    Text("@\(follow.handle)").font(.footnote.weight(.semibold)).lineLimit(1)
                     Text(follow.recordLine).font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
                 }
                 Spacer(minLength: 4)

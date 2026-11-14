@@ -148,7 +148,7 @@ final class KeyToolbar: UIView {
         brandButton.addSubview(keycap)
         applyKeycapRing()
         brandButton.accessibilityIdentifier = "toolbar:brand"
-        brandButton.accessibilityLabel = "AIRKEY menu"
+        brandButton.accessibilityLabel = "Keybots menu"
         brandButton.addTarget(self, action: #selector(brandTapped), for: .touchUpInside)
         // Padded as a tool is, for when it is the ✕ (layoutSubviews).
         brandButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: Self.itemPad,
@@ -506,7 +506,7 @@ final class KeyToolbar: UIView {
             // button would stop taking touches at all (see init).
             brandButton.backgroundColor = Glass.touchableGrid
             brandButton.accessibilityIdentifier = "toolbar:brand"
-            brandButton.accessibilityLabel = "AIRKEY menu"
+            brandButton.accessibilityLabel = "Keybots menu"
             keycap.isHidden = false
         }
         panelOpen = open

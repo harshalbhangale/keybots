@@ -1,6 +1,6 @@
 import { NearMark } from "./Sections";
 
-/* ---------- how the leash works ---------- */
+/* ---------- how Spend Limits works ---------- */
 
 const RULES5: [string, string][] = [
   ["Kill switch", "One switch stops every agent at once."],
@@ -62,7 +62,7 @@ export function Proof({ e2e, leash }: { e2e: string; leash: string }) {
           Every transaction ↗
         </a>
         <a href={leash} target="_blank" rel="noreferrer">
-          The leash contract ↗
+          The Spend Limits contract ↗
         </a>
       </div>
     </div>
@@ -74,7 +74,7 @@ export function Proof({ e2e, leash }: { e2e: string; leash: string }) {
 export function TryYourself({ repo }: { repo: string }) {
   const steps: [string, string, string][] = [
     ["Read the code", "Contract, server, iOS app and keyboard.", repo],
-    ["Run the leash's tests", "cd contracts/leash && cargo test", `${repo}#1-the-leashs-rules-no-chain-needed`],
+    ["Run the Spend Limits tests", "cd contracts/leash && cargo test", `${repo}#1-the-leashs-rules-no-chain-needed`],
     ["Run it on testnet", "npm run setup, then npm run e2e", `${repo}#2-on-near-testnet`],
     ["The iPhone keyboard", "Build from source with Xcode. No TestFlight yet.", `${repo}#4-the-airkey-app-and-keyboard-ios`],
   ];

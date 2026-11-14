@@ -42,6 +42,8 @@ final class AgentModel {
         var lines: [String] = []
         /// CALLS HOOK: the copied call's record in the calls book, so its hold is kept with it.
         var callId: String? = nil
+        /// A copied call's own words: its chip opens the review card, never a trade.
+        var callText: String? = nil
 
         var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
         var holdLabel: String { "Hold to \(verb)" }
@@ -253,12 +255,26 @@ final class AgentModel {
     func runReady() {
         // The hold button has already played its rising ticks and its thud (HoldFeel).
         // Trade panel hook: a swap, a buy or a sell opens the swap screen, filled in; it runs from there.
+        if reviewCall() { return }
         if reviewReady() { return }
-        if intent == nil, readIntent == nil, let call = callIntent, let command = call.command {
-            // A copied call's trade: the message box keeps whatever is in it.
-            send(command, source: "typed", callId: call.callId) // CALLS HOOK
-            callIntent = nil
+        if intent == nil, readIntent == nil, callIntent != nil {
+            // A copied call only ever trades from its review card.
+            return
         } else if let command = ready?.command { runCommand(command) } else { runTyped() }
+    }
+
+    // MARK: A copied call's review
+
+    /// Opens Calls on the copied call's review card (keyboard's hook).
+    @ObservationIgnored var openCallReview: ((_ text: String) -> Void)?
+
+    /// The chip of a copied call opens its review: pay, get, limits, then the hold.
+    @discardableResult
+    func reviewCall() -> Bool {
+        guard intent == nil, readIntent == nil, let call = callIntent, let text = call.callText, let openCallReview else { return false }
+        callIntent = nil
+        openCallReview(text)
+        return true
     }
 
     // MARK: Trade panel (hook)
@@ -302,11 +318,11 @@ final class AgentModel {
 
     /// What's on the clipboard: someone else's words. Goes to the untrusted Inbox Agent.
     func runPasted() {
-        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY to check what you copied."; return }
+        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for Keybots to check what you copied."; return }
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             // A keyboard can't show iOS's "Allow Paste" prompt, so a refused read looks like an empty clipboard.
             notice = UIPasteboard.general.hasStrings
-                ? "To check copied text: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                ? "To check copied text: Settings › Apps › Keybots › Paste from Other Apps › Allow."
                 : "Copy a message first, then tap Check."
             return
         }
@@ -332,7 +348,7 @@ final class AgentModel {
                 return
             }
             callIntent = Ready(kind: .swap, title: title, detail: nil, verb: r.side == "sell" ? "sell" : "buy",
-                               command: command, lines: Self.callLines(check), callId: check.id)
+                               command: command, lines: Self.callLines(check), callId: check.id, callText: text)
             callFor = lastText
             Haptics.chip()
         }
@@ -370,7 +386,7 @@ final class AgentModel {
     }
 
     private func send(_ text: String, source: String, clearing: String? = nil, callId: String? = nil) {
-        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so it can pay and swap for you."; return }
+        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for Keybots so it can pay and swap for you."; return }
         notice = nil
         result = nil
         vaultOpen = false
@@ -394,7 +410,7 @@ final class AgentModel {
     func insertReceipt() {
         guard let r = result else { return }
         // The plain line says what happened ("Paid 0.2 NEAR to harshal", "Blocked: …").
-        var line = "AIRKEY · \(Plain.line(r))"
+        var line = "Keybots · \(Plain.line(r))"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         ownInsert = line
@@ -434,7 +450,7 @@ final class AgentModel {
             }
         }
         guard !vaultItems.isEmpty else {
-            notice = "Add addresses in the AIRKEY app, in Settings › Vault."
+            notice = "Add addresses in the Keybots app, in Settings › Vault."
             return
         }
         notice = nil

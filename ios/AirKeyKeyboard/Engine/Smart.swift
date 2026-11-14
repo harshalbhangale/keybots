@@ -47,7 +47,7 @@ enum Smart {
             case .calc, .money, .convert: return "="
             case .vault(let f): return f.title
             case .paste: return "Paste"
-            case .action: return "AIRKEY"
+            case .action: return "KEYBOTS"
             case .details(let fields, _): return fields.first?.title ?? "Email"
             }
         }

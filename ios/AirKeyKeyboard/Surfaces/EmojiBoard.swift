@@ -429,7 +429,7 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
         case .gifs:
             if !hasFullAccess {
                 sectionLabel.text = "GIFS"
-                statusText = "Turn on Allow Full Access to use GIFs\nSettings › Apps › AIRKEY › Keyboards"
+                statusText = "Turn on Allow Full Access to use GIFs\nSettings › Apps › Keybots › Keyboards"
             } else if changed || gifItems.isEmpty {
                 selectChip(selectedChip[new] ?? "trending")
             }

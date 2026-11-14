@@ -24,7 +24,7 @@ const REWRITES = new Set<Task>(["fix", "shorter", "warmer", "formal"]);
 /** The most text one request may carry, in characters. */
 export const ASSIST_MAX = 2000;
 
-export const MONEY_REFUSAL = "This looks like a payment. AIRKEY's agents handle money, not the AI.";
+export const MONEY_REFUSAL = "This looks like a payment. Keybots's agents handle money, not the AI.";
 export const KEPT_NOTE = "Kept your words: the AI changed a fact";
 
 export interface AssistRequest {

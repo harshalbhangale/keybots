@@ -24,8 +24,8 @@ export function NearMark({ size = "0.8em" }: { size?: string | number }) {
 const LINES: { type: string; tone: "paid" | "blocked" | "info"; result: string; meta: string }[] = [
   { type: "pay harshal 0.2 for dinner", tone: "paid", result: "Paid 0.2 NEAR to harshal.near", meta: "tx HRhR7pS9…" },
   { type: "$near", tone: "info", result: "NEAR $3.39", meta: "live · NEAR Intents" },
-  { type: "Send 5 NEAR to drain.near", tone: "blocked", result: "Blocked by the leash · R4", meta: "over the 0.5 cap" },
-  { type: "swap 0.1 near to usdc", tone: "paid", result: "Swapped 0.1 NEAR → 0.2101 USDC", meta: "on Rhea, inside the leash" },
+  { type: "Send 5 NEAR to drain.near", tone: "blocked", result: "Blocked by Spend Limits · R4", meta: "over the 0.5 cap" },
+  { type: "swap 0.1 near to usdc", tone: "paid", result: "Swapped 0.1 NEAR → 0.2101 USDC", meta: "on Rhea, inside Spend Limits" },
 ];
 
 export function HeroBar() {
@@ -198,7 +198,7 @@ export function Cards() {
             <span className="rm-verdict">Blocked. Nothing moved.</span>
           </div>
         </div>
-        <h3>The leash says no.</h3>
+        <h3>Spend Limits says no.</h3>
         <p>A NEAR contract holds the money and checks your rules first.</p>
       </article>
     </div>

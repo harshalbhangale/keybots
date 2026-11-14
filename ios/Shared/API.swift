@@ -45,6 +45,7 @@ struct API {
     var token: String = Settings.token
 
     func state() async throws -> LeashState { try await get("/v1/state") }
+    func connected() async throws -> Connected { try await get("/v1/connected") }
     func receipts(limit: Int = 50) async throws -> [Receipt] { try await (get("/v1/receipts?limit=\(limit)") as ReceiptList).receipts }
 
     /// source: "typed" (you wrote it) or "pasted" (someone else did).
@@ -158,7 +159,7 @@ struct API {
         do {
             (data, response) = try await URLSession.shared.data(for: r)
         } catch {
-            throw APIError(message: "Can't reach the AIRKEY server at \(base).")
+            throw APIError(message: "Can't reach the Keybots server at \(base).")
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
@@ -173,7 +174,7 @@ struct API {
         do {
             (data, response) = try await URLSession.shared.data(for: r)
         } catch {
-            throw APIError(message: "Can't reach the AIRKEY server at \(base).")
+            throw APIError(message: "Can't reach the Keybots server at \(base).")
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
