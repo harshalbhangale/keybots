@@ -151,13 +151,9 @@ struct TradePanel: View {
         .contentShape(Capsule())
     }
 
-    /// A token's mark: its first letter on a disc (no image files in a keyboard).
+    /// A token's mark: NEAR's and USDC's own, a letter on a disc for the rest.
     private func mark(_ symbol: String, _ p: StripPalette, size: CGFloat) -> some View {
-        Text(String(symbol.prefix(1)))
-            .font(.system(size: size * 0.55, weight: .bold, design: .rounded))
-            .foregroundStyle(symbol == "NEAR" ? AK.ink : p.text)
-            .frame(width: size, height: size)
-            .background(symbol == "NEAR" ? AK.accent : p.text.opacity(0.14), in: Circle())
+        TokenMark(symbol: symbol, size: size)
     }
 
     private func flip(_ p: StripPalette) -> some View {

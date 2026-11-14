@@ -104,11 +104,15 @@ struct AgentStrip: View {
     private func ready(_ intent: AgentModel.Ready, _ palette: StripPalette) -> some View {
         HStack(spacing: 10) {
             HStack(spacing: 10) {
-                Image(systemName: intent.icon)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(AK.ink)
-                    .frame(width: 28, height: 28)
-                    .background(AK.accent, in: Circle())
+                if intent.kind == .swap, let (from, to) = TokenPair.symbols(in: intent.title) {
+                    TokenPair(from: from, to: to, size: 22).frame(width: 34, height: 28)
+                } else {
+                    Image(systemName: intent.icon)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(AK.ink)
+                        .frame(width: 28, height: 28)
+                        .background(AK.accent, in: Circle())
+                }
                 VStack(alignment: .leading, spacing: 0) {
                     Text(intent.title).font(.footnote.weight(.semibold)).foregroundStyle(palette.text).lineLimit(1).minimumScaleFactor(0.8)
                     if !intent.lines.isEmpty {
@@ -207,6 +211,9 @@ struct AgentStrip: View {
     private func working(_ source: String, _ palette: StripPalette) -> some View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(palette.text)
+            if model.runningKind == .swap, let (from, to) = TokenPair.symbols(in: model.ready?.title ?? "") {
+                TokenPair(from: from, to: to, size: 18)
+            }
             Text(Plain.working(pasted: source == "pasted", swap: model.runningKind == .swap))
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(palette.text)
@@ -220,11 +227,15 @@ struct AgentStrip: View {
     private func result(_ r: Receipt, _ palette: StripPalette) -> some View {
         let plain = r.signal.plain
         return HStack(spacing: 8) {
-            Image(systemName: r.signal.icon)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(plain ? palette.text : AK.ink)
-                .frame(width: 28, height: 28)
-                .background(plain ? palette.function : r.signal.color, in: Circle())
+            if r.outcome == "swapped", let (from, to) = TokenPair.symbols(in: Plain.line(r)) {
+                TokenPair(from: from, to: to, size: 22).frame(width: 34, height: 28)
+            } else {
+                Image(systemName: r.signal.icon)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(plain ? palette.text : AK.ink)
+                    .frame(width: 28, height: 28)
+                    .background(plain ? palette.function : r.signal.color, in: Circle())
+            }
             // The plain line; a tap turns it over to the technical message, rule code and all.
             Button {
                 Haptics.layer()

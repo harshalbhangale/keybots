@@ -497,10 +497,15 @@ struct ReviewCard: View {
         let get = HStack(alignment: .firstTextBaseline, spacing: 5) {
             Text(r.receive.amount).font(.title.weight(.semibold).monospacedDigit())
                 .foregroundStyle(dim ? p.faint : p.text)
+            TokenMark(symbol: r.receive.symbol, size: 18).alignmentGuide(.firstTextBaseline) { d in d[VerticalAlignment.center] + 5 }
             Text(r.receive.symbol).font(.headline).foregroundStyle(dim ? p.faint : p.soft)
         }
-        let pay = Text("for \(r.pay.amount) \(r.pay.symbol)")
-            .font(.subheadline.monospacedDigit()).foregroundStyle(p.soft)
+        let pay = HStack(spacing: 4) {
+            Text("for \(r.pay.amount)")
+            TokenMark(symbol: r.pay.symbol, size: 14)
+            Text(r.pay.symbol)
+        }
+        .font(.subheadline.monospacedDigit()).foregroundStyle(p.soft)
         return VStack(alignment: .leading, spacing: 0) {
             Text(dim ? "Price expired" : "You get about")
                 .font(.caption.weight(dim ? .semibold : .regular))
