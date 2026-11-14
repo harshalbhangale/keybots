@@ -7,7 +7,7 @@ import { buildApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
 import { fakeXFeed } from "../src/xfeed.js";
 import { TOKEN, fakeBotApi, group, privateGroup, person, T0 } from "./telegram-fake.js";
-import { cleanToken, readAsCall, telegramSource, tidyText } from "../src/telegram.js";
+import { cleanToken, readAsCall, readSignal, telegramSource, tidyText } from "../src/telegram.js";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -207,5 +207,30 @@ describe("a restart", () => {
     writeFileSync(join(dir, "telegram-calls.jsonl"), `${raw}not json\n{"id":"x"}\n`);
     expect(telegramSource({ token: TOKEN, fetcher: api.fetcher, dataDir: dir }).calls()).toHaveLength(2);
     expect((await second.status()).groups.map((g) => g.title).sort()).toEqual(["Alpha Calls", "Friends"]);
+  });
+});
+
+describe("leveraged signals, read as spot", () => {
+  it("reads a signal-channel post with its leverage, targets and stop", () => {
+    const post = "TAO LONG 10x\n\n➡️Enter - at market \n\n📌Target - 215.45 - 219.49 - 223.98 - 235.02\n\n❌ Stop - 202.53";
+    expect(readSignal(post)).toEqual({ asset: "TAO", direction: "buy", signal: { leverage: "10x", targets: ["215.45", "219.49", "223.98", "235.02"], stop: "202.53" } });
+    expect(readAsCall(post)).toEqual(readSignal(post));
+  });
+
+  it("reads the common shapes", () => {
+    expect(readSignal("#BTC/USDT SHORT (20x)\nTP 61000 60000\nSL 64000")).toMatchObject({ asset: "BTC", direction: "sell", signal: { leverage: "20x", targets: ["61000", "60000"], stop: "64000" } });
+    expect(readSignal("LONG $ETH\nEntry 3100")).toMatchObject({ asset: "ETH", direction: "buy", signal: { leverage: null, targets: [], stop: null } });
+    expect(readSignal("SOLUSDT LONG cross 5x")).toMatchObject({ asset: "SOL", direction: "buy", signal: { leverage: "5x" } });
+  });
+
+  it("leaves ordinary words and plain spot calls alone", () => {
+    expect(readSignal("I'm going long on patience today")).toBeNull();
+    expect(readSignal("NEW SIGNAL LONG")).toBeNull();
+    expect(readSignal("how long until the market opens?")).toBeNull();
+    expect(readAsCall("$ETH breaking out, buying a small bag here")).toEqual({ asset: "ETH", direction: "buy" });
+  });
+
+  it("still refuses a post that names a contract address", () => {
+    expect(readAsCall("PEPE LONG 10x\nCA: 0x6982508145454ce325ddbe47a25d4ec3d2311933")).toBeNull();
   });
 });

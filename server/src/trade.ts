@@ -15,7 +15,7 @@ import type { XFeedClient } from "./xfeed.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import type { Receipt } from "./receipts.js";
-import type { TelegramSource, TgCall } from "./telegram.js";
+import type { Signal, TelegramSource, TgCall } from "./telegram.js";
 
 export interface FeedCall {
   id: string;
@@ -29,6 +29,13 @@ export interface FeedCall {
   asset: string;
   direction: "buy" | "sell";
   record: { hits: number; misses: number } | null;
+  /** A leveraged signal read as spot: what it said, and the line the card shows. */
+  signal?: Signal & { note: string };
+}
+
+/** "Leveraged call (10x): Keybots buys spot, no leverage." */
+export function signalNote(direction: "buy" | "sell", leverage: string | null): string {
+  return `Leveraged call${leverage ? ` (${leverage})` : ""}: Keybots ${direction === "buy" ? "buys" : "sells"} spot, no leverage.`;
 }
 
 export interface Feed {
@@ -161,6 +168,7 @@ function telegramCall(t: TgCall): FeedCall {
     text: t.text,
     asset: t.asset,
     direction: t.direction,
+    ...(t.signal ? { signal: { ...t.signal, note: signalNote(t.direction, t.signal.leverage) } } : {}),
     record: null,
   };
 }
@@ -261,7 +269,8 @@ export function tradeFlow(deps: TradeDeps) {
       if (!fc) throw new TradeError(404, "That call isn't in the feed any more. Pull the feed again.");
       text = fc.text ?? "";
       const read = fc.text ? readCall(fc.text) : null;
-      const perp = read?.instrument === "perp";
+      // A leveraged signal was already read as spot, on purpose: its words don't make it a perp here.
+      const perp = !fc.signal && read?.instrument === "perp";
       // the X feed's asset and direction are what was recorded; the words only decide if it's a perp.
       call = {
         isCall: true,
