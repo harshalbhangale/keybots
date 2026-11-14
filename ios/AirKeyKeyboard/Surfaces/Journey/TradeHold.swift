@@ -13,6 +13,8 @@ struct TradeHold: View {
     var neutral: Bool = false
     let palette: MoneyPalette
     let action: () -> Void
+    /// The tap-twice alternative's first word: "Confirm trade", "Confirm payment".
+    var confirmLabel: String = "Confirm trade"
     var duration: Double = 1.2
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -87,7 +89,7 @@ struct TradeHold: View {
 
     /// The accessible alternative: tap "Confirm trade", then tap it again.
     @ViewBuilder private var taps: some View {
-        TwoTapConfirm(disabled: disabled || fired, palette: palette) { fire() }
+        TwoTapConfirm(disabled: disabled || fired, palette: palette, label: confirmLabel) { fire() }
     }
 
     private func begin() {
@@ -136,6 +138,7 @@ struct TradeHold: View {
 private struct TwoTapConfirm: View {
     let disabled: Bool
     let palette: MoneyPalette
+    var label = "Confirm trade"
     let action: () -> Void
     @State private var armed = false
 
@@ -143,7 +146,7 @@ private struct TwoTapConfirm: View {
         Button {
             if armed { action() } else { Haptics.layer(); armed = true }
         } label: {
-            Text(armed ? "Tap again to confirm" : "Confirm trade")
+            Text(armed ? "Tap again to confirm" : label)
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(armed ? AK.ink : palette.text)
                 .frame(maxWidth: .infinity).frame(height: 44)
