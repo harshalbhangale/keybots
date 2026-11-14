@@ -9,7 +9,7 @@ import UIKit
 @Observable
 @MainActor
 final class CallsModel {
-    enum Tab: Hashable { case open, done }
+    enum Tab: Hashable { case open, done, following }
 
     var tab: Tab = .open
     /// nil until the first read lands.
@@ -22,6 +22,9 @@ final class CallsModel {
     /// The call whose hold is running, and what it is doing right now.
     var running: String?
     var stage = ""
+
+    /// The people you follow, whose calls trade for you within your rules.
+    let following = FollowsModel()
 
     @ObservationIgnored private var watching: Task<Void, Never>?
 
@@ -43,6 +46,7 @@ final class CallsModel {
     func stop() {
         watching?.cancel()
         watching = nil
+        following.stop()
     }
 
     func retry() {
@@ -156,9 +160,11 @@ struct CallsView: View {
         let p = MoneyPalette(dark: scheme == .dark)
         VStack(spacing: 6) {
             HStack(spacing: 6) {
-                MoneyTabs(tabs: [(.open, count("Open", model.open.count)), (.done, count("Done", model.done.count))],
+                MoneyTabs(tabs: [(.open, count("Open", model.open.count)), (.done, count("Done", model.done.count)),
+                                 (.following, "Following")],
                           selection: $model.tab, palette: p)
                 Spacer(minLength: 4)
+                if model.tab != .following {
                 Button { model.paste() } label: {
                     HStack(spacing: 5) {
                         if model.checking {
@@ -175,8 +181,10 @@ struct CallsView: View {
                 .buttonStyle(MoneyPress())
                 .disabled(model.checking || !actions.fullAccess())
                 .accessibilityHint("Checks the post you copied. Nothing runs.")
+                .transition(.opacity)
+                }
             }
-            if let notice = model.notice {
+            if let notice = model.notice, model.tab != .following {
                 Button { withAnimation(.snappy(duration: 0.2)) { model.notice = nil } } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "info.circle.fill").font(.caption).foregroundStyle(p.warn)
@@ -204,7 +212,9 @@ struct CallsView: View {
 
     @ViewBuilder
     private func content(_ p: MoneyPalette) -> some View {
-        if !actions.fullAccess() {
+        if model.tab == .following, actions.fullAccess() {
+            FollowingView(model: model.following, actions: actions, palette: p)
+        } else if !actions.fullAccess() {
             MoneyEmpty(text: "Turn on Allow Full Access for AIRKEY so Calls can reach your server.", palette: p)
         } else if model.calls == nil {
             if let problem = model.problem {
