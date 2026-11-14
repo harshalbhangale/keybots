@@ -6,6 +6,7 @@ import "./kb3.css";
 import "./phone2.css";
 import "./mk.css";
 import "./near.css";
+import "./hero.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

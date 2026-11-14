@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import Mascot from "./Mascot";
 import Keyboard3D from "./Keyboard3D";
 import Story, { Private } from "./Story";
-import { NearTile } from "./Icons";
+import { NearGlyph, NearTile } from "./Icons";
 import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
 
@@ -69,13 +69,20 @@ export default function App() {
           <div className="y-glow" aria-hidden />
           <div className="z-grid" aria-hidden />
           <div className="y-wrap z-hero-in">
-            <a className="y-badge" href="#proof">
-              <NearTile size={20} /> Live on NEAR testnet <span className="y-live" />
+            <a className="hx-badge" href="#proof">
+              <span className="y-live" /> Live on NEAR testnet
             </a>
-            <h1 className="y-h1">
-              Type it. <span className="y-nowrap"><NearTile size="0.82em" label={false} />NEAR</span> does the rest.
+            <h1 className="hx">
+              <span className="hx-l">Type it.</span>
+              <span className="hx-l">
+                <span className="hx-near">
+                  <NearGlyph />
+                  NEAR
+                </span>{" "}
+                does the rest.
+              </span>
             </h1>
-            <p className="y-sub">Your keyboard is the AI. NEAR sets the limits.</p>
+            <p className="hx-sub">Your keyboard is the AI. NEAR sets the limits.</p>
             <Keyboard3D />
             <Downloads />
           </div>
