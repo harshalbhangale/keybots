@@ -82,7 +82,9 @@ export default function App() {
                   does the rest.
                 </span>
               </h1>
-              <p className="hx-sub">Your keyboard is the AI. NEAR sets the limits.</p>
+              <p className="hx-sub">
+                <b>Your new AI keyboard, on NEAR.</b> Your keyboard is the AI. NEAR sets the limits.
+              </p>
               <Downloads />
             </div>
           }
