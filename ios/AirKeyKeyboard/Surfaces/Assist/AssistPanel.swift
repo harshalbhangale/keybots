@@ -421,13 +421,13 @@ struct AssistView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "lock.shield").font(.system(size: 14, weight: .semibold)).foregroundStyle(p.amber)
-                Text("This looks like a payment. Keybots's agents handle money, not the AI.")
+                Text("This looks like a payment. Payments go through your Spend Limits, not the AI.")
                     .font(.subheadline)
                     .foregroundStyle(p.text)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Button { model.useAgent() } label: {
-                Text("Use the agent")
+                Text("Review payment")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(AK.ink)
                     .padding(.horizontal, 16)
