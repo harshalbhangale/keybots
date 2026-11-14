@@ -173,7 +173,7 @@ struct AssistReceiptCard: View {
             Spacer(minLength: 6)
             Text(word).font(.caption.weight(.medium)).foregroundStyle(row.state == .failed ? p.amber : p.soft)
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
+        .padding(.horizontal, 10).padding(.vertical, 7)
         .accessibilityElement(children: .combine)
     }
 
@@ -184,7 +184,7 @@ struct AssistReceiptCard: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
+        .padding(.horizontal, 10).padding(.vertical, 7)
         .accessibilityElement(children: .combine)
     }
 

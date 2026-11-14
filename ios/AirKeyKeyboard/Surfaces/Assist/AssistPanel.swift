@@ -123,6 +123,8 @@ struct AssistView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     actions(p)
                 }
+                // Nothing peeks out from behind the receipt's rounded corners.
+                .opacity(model.receiptOpen && model.receipt != nil ? 0 : 1)
                 if model.receiptOpen, let r = model.receipt {
                     AssistReceiptCard(receipt: r, note: model.note, p: p) { model.toggleReceipt() }
                         .transition(.opacity.combined(with: .offset(y: 10)))
