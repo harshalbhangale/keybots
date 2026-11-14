@@ -114,18 +114,18 @@ All three spend from the one Spend Limits balance and hold only enough NEAR for 
   <tr>
     <td><img src="docs/screens/keyboard-bots-mainnet-dark.png" width="200" alt="Keybots panel on mainnet" /></td>
     <td><img src="docs/screens/kb-review-dark.png" width="200" alt="Reviewing a trading call" /></td>
-    <td><img src="docs/screens/keyboard-bots-testnet-dark.png" width="200" alt="Keybots panel on testnet" /></td>
+    <td><img src="docs/screens/keyboard-signals-dark.png" width="200" alt="Signals from X and Telegram in the keyboard" /></td>
     <td><img src="docs/screens/kb-assist-receipt-dark.png" width="200" alt="AI receipt with signature and attestation" /></td>
   </tr>
   <tr>
     <td align="center">Bots panel, mainnet</td>
     <td align="center">Review a call</td>
-    <td align="center">Bots panel, testnet</td>
+    <td align="center">Signals and follow</td>
     <td align="center">Private AI receipt</td>
   </tr>
   <tr>
-    <td><img src="docs/screens/app-wallet-money-dark.png" width="200" alt="Wallet with Deposit, Withdraw and Send" /></td>
-    <td><img src="docs/screens/app-lanes-dark.png" width="200" alt="Spend Limits and the three lanes" /></td>
+    <td><img src="docs/screens/app-wallet-color-dark.png" width="200" alt="Wallet with Deposit, Withdraw and Send" /></td>
+    <td><img src="docs/screens/app-lanes-color-dark.png" width="200" alt="Spend Limits and the three lanes" /></td>
     <td><img src="docs/screens/app-change-limits-dark.png" width="200" alt="Change limits with Face ID" /></td>
     <td><img src="docs/screens/app-activity-times-dark.png" width="200" alt="Activity with exact times" /></td>
   </tr>
