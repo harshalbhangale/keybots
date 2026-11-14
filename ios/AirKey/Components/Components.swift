@@ -246,7 +246,11 @@ struct ReceiptRow: View {
         let meta = [p.memo.map { "For \($0)" }, r.agent.map { Fmt.agentName(account: $0.account) }, r.input.source == "typed" ? "Typed" : "Copied", Fmt.when(r.date)]
             .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
         HStack(alignment: .top, spacing: 12) {
-            SignalBadge(signal: r.signal, size: 32)
+            if r.outcome == "swapped", let (from, to) = TokenPair.symbols(in: p.title) {
+                TokenPair(from: from, to: to, size: 24).frame(width: 32, height: 32)
+            } else {
+                SignalBadge(signal: r.signal, size: 32)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(p.title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
                     .fixedSize(horizontal: false, vertical: true)

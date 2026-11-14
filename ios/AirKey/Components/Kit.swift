@@ -89,10 +89,15 @@ struct Stat: View {
     let value: String?
     var sub: String?
     var color: Color = AK.bone
+    /// A token's mark beside the label (Wallet holdings).
+    var token: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.footnote.weight(.medium)).foregroundStyle(AK.muted).lineLimit(1)
+            HStack(spacing: 6) {
+                if let token { TokenMark(symbol: token, size: 18) }
+                Text(label).font(.footnote.weight(.medium)).foregroundStyle(AK.muted).lineLimit(1)
+            }
             Text(value ?? "–")
                 .font(.system(.title, design: .rounded, weight: .semibold).monospacedDigit())
                 .foregroundStyle(color)

@@ -115,7 +115,11 @@ struct SwapCard: View {
 
     private func review(_ q: SwapQuote) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(q.amountIn) NEAR → \(q.amountOut) \(q.to)").font(.system(.title2, design: .rounded, weight: .semibold).monospacedDigit()).foregroundStyle(AK.bone)
+            HStack(spacing: 10) {
+                TokenPair(from: "NEAR", to: q.to, size: 26)
+                Text("\(q.amountIn) NEAR → \(q.amountOut) \(q.to)").font(.system(.title2, design: .rounded, weight: .semibold).monospacedDigit()).foregroundStyle(AK.bone)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+            }
             line("You pay", "\(q.amountIn) NEAR from your Keybots balance")
             line("You get", "≈ \(q.amountOut) \(q.to)")
             line("At least", "\(q.minAmountOut) \(q.to), or it doesn't fill")
