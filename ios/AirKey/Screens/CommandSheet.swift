@@ -52,7 +52,7 @@ struct CommandSheet: View {
             .animation(.snappy(duration: 0.25), value: result?.id)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(AK.ink.ignoresSafeArea())
+        .background(AK.canvas.ignoresSafeArea())
         .onAppear { focused = true }
         .onChange(of: text) { result = nil }
         .onChange(of: pasted) { result = nil }
@@ -112,7 +112,7 @@ struct CommandSheet: View {
     @ViewBuilder private var preview: some View {
         HStack(spacing: 12) {
             Image(systemName: intent?.icon ?? (pasted ? "tray" : "questionmark"))
-                .font(.system(size: 13, weight: .bold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(AK.ink)
                 .frame(width: 28, height: 28)
                 .background(pasted ? AK.amber : intent == nil ? AK.muted : AK.accent, in: Circle())
