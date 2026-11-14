@@ -15,7 +15,7 @@ import type { XFeedClient } from "./xfeed.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import type { Receipt } from "./receipts.js";
-import type { Signal, TelegramSource, TgCall } from "./telegram.js";
+import { readSignal, type Signal, type TelegramSource, type TgCall } from "./telegram.js";
 
 export interface FeedCall {
   id: string;
@@ -31,6 +31,29 @@ export interface FeedCall {
   record: { hits: number; misses: number } | null;
   /** A leveraged signal read as spot: what it said, and the line the card shows. */
   signal?: Signal & { note: string };
+}
+
+/**
+ * A copied or pasted post, by the fixed rules: a spot call as it is, or a
+ * leveraged signal ("TAO LONG 10x") read as spot, with what it said.
+ */
+export function readPosted(text: string): { call: Call; signal?: Signal & { note: string } } {
+  const call = readCall(text);
+  if ((call.isCall && call.asset && call.direction && call.instrument === "spot") || namesContract(text)) return { call };
+  const sig = readSignal(text);
+  if (!sig) return { call };
+  return {
+    call: {
+      isCall: true,
+      confidence: "high",
+      asset: sig.asset,
+      direction: sig.direction === "buy" ? "bullish" : "bearish",
+      instrument: "spot",
+      leverage: null,
+      summary: `${sig.direction === "buy" ? "Bullish" : "Bearish"} signal on ${sig.asset}, read as spot.`,
+    },
+    signal: { ...sig.signal, note: signalNote(sig.direction, sig.signal.leverage) },
+  };
 }
 
 /** "Leveraged call (10x): Keybots buys spot, no leverage." */
@@ -50,7 +73,16 @@ export interface ReviewJson {
   expiresAt: string;
   /** Seconds the quote lasts from when the phone gets it: count down from this, not from expiresAt (clocks differ). */
   ttlSeconds: number;
-  call: { author: { handle: string; name: string | null } | null; postedAt: string | null; url: string | null; text: string; asset: string; direction: "buy" | "sell" };
+  call: {
+    author: { handle: string; name: string | null } | null;
+    postedAt: string | null;
+    url: string | null;
+    text: string;
+    asset: string;
+    direction: "buy" | "sell";
+    /** A leveraged signal read as spot (from the feed, or pasted): what it said and the line to show. */
+    signal?: Signal & { note: string };
+  };
   reading: { by: "rules"; detail: string };
   trade: {
     network: string;
@@ -262,6 +294,7 @@ export function tradeFlow(deps: TradeDeps) {
     const { cfg, chain, intents, rhea } = deps;
 
     let fc: FeedCall | undefined;
+    let pasted: (Signal & { note: string }) | undefined;
     let text: string;
     let call: Call;
     if (typeof body.callId === "string" && body.callId) {
@@ -283,7 +316,8 @@ export function tradeFlow(deps: TradeDeps) {
       };
     } else if (typeof body.text === "string" && body.text.trim()) {
       text = body.text.trim().slice(0, 2000);
-      call = readCall(text);
+      // A pasted signal-channel post ("TAO LONG 10x") is read as spot, on purpose, and says so.
+      ({ call, signal: pasted } = readPosted(text));
     } else {
       throw new TradeError(400, 'Send {"callId": "..."} from the feed, or {"text": "..."} with a copied post.');
     }
@@ -361,6 +395,7 @@ export function tradeFlow(deps: TradeDeps) {
         text: fc ? (fc.text ?? `Keybots recorded a ${fc.direction} call on ${fc.asset}. It has no post text.`) : text,
         asset,
         direction: route.side,
+        ...(fc?.signal ?? pasted ? { signal: fc?.signal ?? pasted } : {}),
       },
       reading: { by: "rules", detail: "Read on the Keybots server by fixed rules, not by AI" },
       trade: {
