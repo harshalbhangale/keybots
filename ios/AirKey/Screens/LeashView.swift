@@ -14,10 +14,7 @@ struct LeashView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
-            Masthead(
-                eyebrow: "Spend Limits is a NEAR contract that holds your money and decides what each agent may spend. You can stop it.",
-                title: "Spend Limits"
-            )
+            Masthead(eyebrow: "Decides what each agent may spend.", title: "Spend Limits")
             if let state = model.state {
                 stopControl(state)
                 if !state.pending.isEmpty {
@@ -34,7 +31,6 @@ struct LeashView: View {
                 ProgressView().tint(AK.muted).frame(maxWidth: .infinity).padding(.top, 40)
             }
         }
-        .toolbarVisibility(.hidden, for: .navigationBar)
         .alert(adding == .allow ? "Allow an account" : "Block an account", isPresented: Binding(get: { adding != nil }, set: { if !$0 { adding = nil } })) {
             TextField("name.near", text: $account).textInputAutocapitalization(.never).autocorrectionDisabled()
             if adding == .block { TextField("Why (optional)", text: $reason) }
@@ -71,28 +67,29 @@ struct LeashView: View {
             Task { await model.owner("set_paused", ["paused": !on], reason: on ? "Let your agents spend again" : "Stop every agent now") }
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: on ? "play.fill" : "stop.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(on ? AK.ink : .white)
-                    .frame(width: 44, height: 44)
-                    .background(on ? AK.accent : AK.red, in: Circle())
+                Image(systemName: on ? "play.circle.fill" : "stop.circle")
+                    .font(.title.weight(.regular))
+                    .foregroundStyle(on ? AK.accentText : AK.redText)
+                    .frame(width: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(on ? "Everything is stopped" : "Stop everything")
                         .font(.headline)
-                        .foregroundStyle(on ? AK.redText : AK.bone)
-                    Text(on ? "No agent can spend. Tap to start again." : "No agent can spend until you start again.")
+                        .foregroundStyle(AK.redText)
+                    Text(on ? "Tap to let agents spend again" : "No agent can spend until you start again")
                         .font(.subheadline).foregroundStyle(AK.muted)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                if working {
-                    ProgressView().tint(AK.muted)
-                } else {
-                    Image(systemName: "faceid").font(.body).foregroundStyle(AK.faint)
+                ZStack {
+                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(AK.faint)
+                        .opacity(working ? 0 : 1)
+                    if working { ProgressView().tint(AK.muted) }
                 }
+                .frame(width: 20)
             }
-            .padding(16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
             .overlay {
@@ -108,7 +105,7 @@ struct LeashView: View {
 
     private func agents(_ s: LeashState) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle("Agents", trailing: "\(Fmt.near(s.available)) held")
+            SectionTitle("Agents")
             VStack(spacing: 0) {
                 ForEach(Array(s.shownAgents.enumerated()), id: \.element.id) { i, a in
                     if i > 0 { Hairline().padding(.leading, 16) }
@@ -116,7 +113,7 @@ struct LeashView: View {
                 }
             }
             .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
-            Text("Agents can't change these limits. Only you can, with Face ID.")
+            Text("Only you can change these, with Face ID.")
                 .font(.footnote).foregroundStyle(AK.muted)
                 .padding(.horizontal, 4)
                 .fixedSize(horizontal: false, vertical: true)
@@ -160,11 +157,11 @@ struct LeashView: View {
             }
             ForEach(Array(rows.enumerated()), id: \.element.0) { i, row in
                 if i > 0 { Hairline().padding(.leading, 16) }
-                HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(row.0).font(.subheadline.monospaced()).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+                        Text(row.0).font(.subheadline.monospaced()).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.7)
                         if let note = row.1 {
-                            Text(note).font(.footnote).foregroundStyle(AK.muted).lineLimit(2)
+                            Text(note).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     Spacer(minLength: 8)
@@ -174,8 +171,8 @@ struct LeashView: View {
                         .accessibilityLabel("\(action) \(row.0)")
                 }
                 .padding(.horizontal, 16)
+                .padding(.vertical, 13)
                 .frame(minHeight: 48)
-                .padding(.vertical, row.1 == nil ? 0 : 8)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -191,10 +188,17 @@ struct LeashView: View {
                 }
             }
             if let url = URL(string: "\(s.explorer)/address/\(s.leash)") {
+                Text("Spend Limits is a small program on NEAR that holds your money. Agents ask it before they spend, and only you can change it.")
+                    .font(.footnote).foregroundStyle(AK.muted)
+                    .fixedSize(horizontal: false, vertical: true)
                 Link(destination: url) {
-                    Label("See the Spend Limits contract on NEAR", systemImage: "arrow.up.right")
-                        .font(.footnote).foregroundStyle(AK.muted)
+                    HStack(spacing: 4) {
+                        Text("See it on NEAR")
+                        Image(systemName: "arrow.up.right").font(.caption.weight(.semibold))
+                    }
+                    .font(.footnote.weight(.medium)).foregroundStyle(AK.accentText)
                 }
+                .accessibilityHint("Opens the NEAR explorer")
             }
         }
         .padding(.horizontal, 4)

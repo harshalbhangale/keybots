@@ -8,11 +8,11 @@ struct KeyboardTab: View {
 
     var body: some View {
         Screen {
-            Masthead(eyebrow: "Pay, swap and check messages from any chat", title: "Keyboard")
+            Masthead(eyebrow: "", title: "Keyboard")
             Card(spacing: 14) {
                 CardTitle(text: "Set up", icon: "keyboard")
-                NumberedStep(n: 1, text: "Settings › Apps › AIRKEY › Keyboards, and turn on AIRKEY.")
-                NumberedStep(n: 2, text: "Turn on Allow Full Access, so AIRKEY can pay and swap for you.")
+                NumberedStep(n: 1, text: "Turn on AIRKEY in Settings › Apps › AIRKEY › Keyboards.")
+                NumberedStep(n: 2, text: "Turn on Allow Full Access, so it can pay and swap.")
                 NumberedStep(n: 3, text: "In any chat, hold the globe key and pick AIRKEY.")
                 Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
@@ -25,11 +25,10 @@ struct KeyboardTab: View {
                 CardTitle(text: "In any chat")
                 feature("hand.tap.fill", "Hold to pay or swap", "“pay harshal 0.2”, “swap $5 of near to usdc”")
                 feature("text.badge.checkmark", "Typing that knows money", "Never changes names, accounts or amounts")
-                feature("wallet.bifold", "Vault", "Your NEAR account in one tap")
+                feature("wallet.bifold", "Your account", "Paste your NEAR account in one tap")
                 NavigationLink { KeysView() } label: { KeysLink() }.buttonStyle(.plain)
             }
         }
-        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 
     private func feature(_ icon: String, _ title: String, _ detail: String) -> some View {
