@@ -106,6 +106,10 @@ struct LeashView: View {
     private func agents(_ s: LeashState) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionTitle("Lanes")
+            Text("Every lane spends from your Spend Limits balance: \(Fmt.near(s.available)) available.")
+                .font(.subheadline).foregroundStyle(AK.bone)
+                .padding(.horizontal, 4)
+                .fixedSize(horizontal: false, vertical: true)
             VStack(spacing: 0) {
                 ForEach(Array(s.shownAgents.enumerated()), id: \.element.id) { i, a in
                     if i > 0 { Hairline().padding(.leading, 16) }
