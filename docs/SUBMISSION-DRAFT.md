@@ -22,7 +22,7 @@ The contract allows exactly these fields, and no others (`website` is a spam tra
 | `idea` | 20–2000 chars | section 2 |
 | `consent` | `true` only after the notice | Harshal reads: "I agree that the organizers may use these details to review our submission and contact us about this hackathon." |
 
-Other links (not API fields): landing page https://airkey-keyboard.vercel.app · demo video **PENDING** (recording planned 14 Nov 08:00–12:00 UTC).
+Other links (not API fields): landing page https://main.d35cbsqaz6y6pb.amplifyapp.com · demo video **PENDING** (recording planned 14 Nov 08:00–12:00 UTC).
 
 ## 2. `idea` (draft, about 1,700 characters)
 

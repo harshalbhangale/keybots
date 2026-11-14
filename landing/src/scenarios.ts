@@ -103,10 +103,10 @@ export const CHAIN: Record<string, ChainLine[]> = {
     ["inserted airkey-harshal.testnet", "info"],
   ],
   follow: [
-    ["@nearwhale: 14 of 20 calls hit", "info"],
-    ["each call scored on NEAR", "info"],
-    ["copies trade inside the Trading Agent's caps", "ok"],
-    ["next: not built yet", "info"],
+    ["follow @nearwhale: 1 NEAR a call, 3 a day, buy only", "info"],
+    ["a new call passes your rules", "ok"],
+    ["Trading Agent swaps inside its caps on the leash", "ok"],
+    ["live on testnet · tx 5MyPgFPD…", "info"],
   ],
 };
 
@@ -355,8 +355,7 @@ export const SCENARIOS: Scenario[] = [
     emoji: "🐋",
     tag: "Follow a caller",
     preview: "@nearwhale: $NEAR long, target $4",
-    headline: ["A call in the group?", "Check the caller first."],
-    soon: true,
+    headline: ["Follow a trader.", "Their calls trade for you."],
     steps: [
       { do: "them", text: "@nearwhale: $NEAR long here, target $4 🚀" },
       { do: "copied", text: "@nearwhale: $NEAR long, target $4" },

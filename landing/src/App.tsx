@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import Mascot from "./Mascot";
-import { HeroBar, NearMark, Try } from "./Sections";
-import { Bento, Follow, Ticker, WORKS } from "./Z";
+import Keyboard3D from "./Keyboard3D";
+import Story, { Private } from "./Story";
+import { NearMark } from "./Sections";
+import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Mark, REPO } from "./ui";
 
 /** Set to the demo video (an .mp4, or a YouTube embed URL) once it exists; until then the poster shows. */
@@ -53,8 +55,8 @@ export default function App() {
           <Mark size={30} /> Keybots
         </a>
         <span className="y-links">
-          <a href="#what">Features</a>
-          <a href="#follow">Follow</a>
+          <a href="#how">How it works</a>
+          <a href="#private">Private</a>
           <a href="#proof">Proof</a>
         </span>
         <a className="y-gh" href={REPO} target="_blank" rel="noreferrer">
@@ -70,12 +72,11 @@ export default function App() {
             <a className="y-badge" href="#proof">
               <span className="y-live" /> Live on NEAR testnet
             </a>
-            <Mascot size={300} />
             <h1 className="y-h1">
               Type it. <span className="y-nowrap">NEAR</span> does the rest.
             </h1>
             <p className="y-sub">Your keyboard is the AI. NEAR sets the limits.</p>
-            <HeroBar />
+            <Keyboard3D />
             <Downloads />
           </div>
         </section>
@@ -88,27 +89,11 @@ export default function App() {
           </div>
         </section>
 
-        <section className="z-sec" id="try">
-          <div className="y-wrap wide">
-            <h2 className="z-h2 center" data-reveal>
-              Type in the chat. <span className="grad">Watch it on NEAR.</span>
-            </h2>
-            <Try />
-          </div>
-        </section>
+        <Story />
 
-        <section className="z-sec" id="what">
+        <section className="z-sec" id="private">
           <div className="y-wrap wide">
-            <h2 className="z-h2 center" data-reveal>
-              One keyboard. <span className="grad">Everything on NEAR.</span>
-            </h2>
-            <Bento />
-          </div>
-        </section>
-
-        <section className="z-sec" id="follow">
-          <div className="y-wrap wide">
-            <Follow />
+            <Private />
           </div>
         </section>
 
