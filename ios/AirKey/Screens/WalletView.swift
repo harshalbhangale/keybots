@@ -31,6 +31,18 @@ struct WalletView: View {
                 if let s = model.state {
                     AddressRow(label: "Your Spend Limits account", address: s.leash)
                 }
+                NavigationLink { ConnectedView() } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "point.3.connected.trianglepath.dotted").foregroundStyle(AK.accentText)
+                        Text("Connected").font(.subheadline.weight(.medium)).foregroundStyle(AK.bone)
+                        Text("Rhea, NEAR Intents, NEAR AI, X, Telegram").font(.footnote).foregroundStyle(AK.muted).lineLimit(1)
+                        Spacer(minLength: 4)
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(AK.faint)
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 14)
+                    .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
+                }
+                .buttonStyle(.plain)
             }
             if let pending = model.state?.pending {
                 ForEach(pending) { ApprovalCard(pending: $0) }
