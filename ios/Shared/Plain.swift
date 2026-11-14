@@ -238,6 +238,10 @@ enum Plain {
         (#"\bcap\b"#, "limit"),
         (#"\buntrusted\b"#, "someone else's"),
         (#"\bwNEAR\b"#, "NEAR"),
+        // One wording for the per-trade limit everywhere.
+        (#"(?i)(this is )?over the per-trade limit of (\d+(?:\.\d+)?) NEAR"#, "Over your $2 NEAR limit per trade"),
+        (#"(?i)(this is )?over the (\d+(?:\.\d+)?) NEAR a trade limit"#, "Over your $2 NEAR limit per trade"),
+        (#"\bnearblocks\b(?!\.)"#, "the NEAR explorer"),
     ]
 
     // MARK: Numbers
