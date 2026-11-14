@@ -5,7 +5,7 @@ import Foundation
 /// app can read them. Changed from the keyboard's Settings screen.
 struct KeyboardSettings: Codable, Equatable {
     /// Bumped when defaults change; load() migrates older files additively.
-    var schemaVersion: Int? = 3
+    var schemaVersion: Int? = 4
     var haptics: Bool = true
     var keyClicks: Bool = true
     var numberRow: Bool = false
@@ -75,7 +75,9 @@ struct KeyboardSettings: Codable, Equatable {
         /// The strip: three tools at most, AIRKEY's wallet and copied-text
         /// check first, then the clipboard. Notes, style and settings
         /// live in the menu; the emoji key is in the bottom row.
-        static let defaultOrder = ["calls", "wallet", "clipboard"]
+        /// Only the Keybots key: the tools live in its panel, and the strip is
+        /// left to what you type (suggestions, the payment and price chips).
+        static let defaultOrder: [String] = []
 
         /// Tools that were renamed, so a saved strip keeps its place.
         static let retired: [String: String] = ["vault": "notes"]
@@ -133,6 +135,13 @@ enum SettingsStore {
             s.toolbarOrder = KeyboardSettings.Toolbar.defaultOrder
             s.toolbarHidden = []
             s.schemaVersion = 3
+        }
+        // v3 → v4: the strip is only the Keybots key; Calls, Wallet and the rest
+        // are in the Keybots panel (Customize can still put any back).
+        if (s.schemaVersion ?? 1) < 4 {
+            s.toolbarOrder = KeyboardSettings.Toolbar.defaultOrder
+            s.toolbarHidden = []
+            s.schemaVersion = 4
         }
         for id in KeyboardSettings.Toolbar.defaultOrder where !s.toolbarOrder.contains(id) {
             s.toolbarOrder.append(id)
