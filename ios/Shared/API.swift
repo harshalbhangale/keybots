@@ -45,6 +45,7 @@ struct API {
     var token: String = Settings.token
 
     func state() async throws -> LeashState { try await get("/v1/state") }
+    func connected() async throws -> Connected { try await get("/v1/connected") }
     func receipts(limit: Int = 50) async throws -> [Receipt] { try await (get("/v1/receipts?limit=\(limit)") as ReceiptList).receipts }
 
     /// source: "typed" (you wrote it) or "pasted" (someone else did).

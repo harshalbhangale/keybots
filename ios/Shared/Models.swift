@@ -696,3 +696,19 @@ enum Dollars {
         v.rounded() == v && abs(v) < 1e9 ? "$\(Int(v))" : Fmt.usd(v)
     }
 }
+
+/// What Keybots is connected to, each service checked live by the server.
+struct Connected: Decodable {
+    let checkedAt: String
+    let network: String
+    let services: [Service]
+
+    struct Service: Decodable, Identifiable {
+        let id: String
+        let name: String
+        let role: String
+        /// live | down | off
+        let status: String
+        let detail: String
+    }
+}
