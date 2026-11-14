@@ -130,9 +130,20 @@ struct AgentStrip: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 if intent.callText != nil, model.reviewCall() { Haptics.layer() }
+                else if intent.kind == .pay, model.reviewPay() { Haptics.layer() }
                 else if intent.kind == .swap, model.reviewReady() { Haptics.layer() }
             }
-            if intent.callText != nil {
+            if intent.kind == .pay, model.openPay != nil, model.intent?.payTo != nil {
+                // A typed payment: one tap opens its own screen; the hold is there.
+                Button { Haptics.layer(); model.reviewPay() } label: {
+                    Text("Review").font(.footnote.weight(.semibold)).foregroundStyle(AK.ink)
+                        .padding(.horizontal, 14).frame(height: 30)
+                        .background(AK.accent, in: Capsule()).contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+                .accessibilityHint("Shows who gets it, the fee and your limits. Nothing is sent yet.")
+            } else if intent.callText != nil {
                 // A copied call: one path to a trade, through its review card.
                 Button { Haptics.layer(); model.reviewCall() } label: {
                     Text("Review trade").font(.footnote.weight(.semibold)).foregroundStyle(AK.ink)
