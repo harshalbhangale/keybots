@@ -24,7 +24,14 @@ ffmpeg -loglevel error -y -i "$src/keyboard-hold.png" -i "$src/keyboard-bots-mai
   -i "$here/out/patch-back.png" -i "$here/out/patch-input.png" -filter_complex \
   "[0][2]overlay=18:112[h];[h][3]overlay=240:1506[h2];[h2]split[a][b];[a]crop=1260:800:0:0[t1];[b]crop=1260:712:0:948[t2];[1]crop=1260:1224:0:1512[p];[t1][t2][p]vstack=3,scale=630:-2" \
   -q:v 3 "$out/hero-chat.jpg"
-cp "$out/hero-${HERO:-spotlight}.jpg" "$out/hero.jpg"
+#   agent:     the Spotlight capture on testnet (same Keybots icon edit), with the panel's last
+#              row (Trades) replaced by the real "Claude Code · agent · Waiting for you" row from
+#              keyboard-claude-code-row. Agent approvals run on testnet, so this one shows Testnet.
+ffmpeg -loglevel error -y -i "$src/keyboard-bots-testnet-dark.png" -i "$here/out/patch-icon.png" -i "$here/out/patch-label.png" \
+  -i "$src/keyboard-claude-code-row.png" -filter_complex \
+  "[3]crop=1180:150:40:2102[row];[0][1]overlay=118:380[a];[a][2]overlay=111:594[b];[b][row]overlay=40:2102,scale=630:-2" \
+  -q:v 3 "$out/hero-agent.jpg"
+cp "$out/hero-${HERO:-agent}.jpg" "$out/hero.jpg"
 jpg keyboard-bots-testnet-dark testnet
 # The pay screen, with the two patches laid over the old labels.
 node "$here/patches.mjs"

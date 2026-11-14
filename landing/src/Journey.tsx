@@ -88,7 +88,7 @@ const CHAPTERS: Chapter[] = [
   },
 ];
 
-const HERO: Shot = { src: S("hero"), alt: "The Keybots keyboard on NEAR mainnet: three bots running, payments, messages you copy, trades" };
+const HERO: Shot = { src: S("hero"), alt: "The Keybots keyboard on NEAR testnet: Claude Code, an agent, is waiting for you to approve paying vendor.testnet 0.3 NEAR" };
 const NET_LABEL: Record<Net, string> = { mainnet: "Mainnet", testnet: "Testnet", both: "Mainnet + testnet" };
 
 function IPhone({ shots, active, rot }: { shots: Shot[]; active: number; rot: number }) {
