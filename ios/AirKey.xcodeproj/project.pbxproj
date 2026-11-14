@@ -177,6 +177,7 @@
 		E9FA7A2F6C132B55076DF72E /* Plain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA2017DC655AFC04315691F /* Plain.swift */; };
 		EA7791A5120E89B43830B4DE /* StripPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D3CFBB86938CDC8F30275EB /* StripPolicy.swift */; };
 		EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE82DAB9B756AF51443152AD /* Instant.swift */; };
+		EF66A9CAD3B09726D8F0E50E /* HomePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8CF5A2B03D8A4A8575E770B /* HomePanel.swift */; };
 		F02E94897D6578F66B51E185 /* Prata-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8DAE64AFDBCDC87016FCA5FF /* Prata-OFL.txt */; };
 		F0A9C1B239278B36F16D97B1 /* PersonalLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7F99D92F4BD595F413AA77 /* PersonalLexicon.swift */; };
 		F0B6532078ABE9F154F07A2C /* TextPDF.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABA0E548446A1B47682D911 /* TextPDF.swift */; };
@@ -387,6 +388,7 @@
 		F55EA3185F3C9A7AB599371C /* GlideTrail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlideTrail.swift; sourceTree = "<group>"; };
 		F55F915837EB735292FB7E43 /* Marcellus-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Marcellus-Regular.ttf"; sourceTree = "<group>"; };
 		F76815909587B9263F41E788 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		F8CF5A2B03D8A4A8575E770B /* HomePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePanel.swift; sourceTree = "<group>"; };
 		FCAC4026218CEA1A8E1168AB /* JourneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyView.swift; sourceTree = "<group>"; };
 		FCC5173F4853BB06FDF38E4C /* LeashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -564,6 +566,7 @@
 				1724C4A419232FE86A5CEA63 /* EmoticonCell.swift */,
 				87344F12402B9DBD828ABEC0 /* FollowingSurface.swift */,
 				B3223D0EDBDDFB3264414A21 /* GifGrid.swift */,
+				F8CF5A2B03D8A4A8575E770B /* HomePanel.swift */,
 				D1C1F862D81F889D32F099BF /* InlineEditor.swift */,
 				E0DFB34C7C6FBB8745B1F985 /* KeyboardToast.swift */,
 				0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */,
@@ -934,6 +937,7 @@
 				53479A81A27723E71F8DF346 /* GlydTrie.swift in Sources */,
 				BB50E01BA953AFF7EB3BE5D2 /* Haptics.swift in Sources */,
 				528304A5639284DD30BB2028 /* HoldToConfirm.swift in Sources */,
+				EF66A9CAD3B09726D8F0E50E /* HomePanel.swift in Sources */,
 				F85FAD38A4101292DFE21288 /* InlineEditor.swift in Sources */,
 				EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */,
 				555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */,
