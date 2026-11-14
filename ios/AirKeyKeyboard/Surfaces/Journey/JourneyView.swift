@@ -31,7 +31,7 @@ struct JourneyView: View {
         .onDisappear { model.stop() }
     }
 
-    static let bottomHeight: CGFloat = 100
+    static let bottomHeight: CGFloat = 96
 
     // MARK: Header: back, size, countdown
 
@@ -94,8 +94,9 @@ struct JourneyView: View {
                 .accessibilityLabel("Reviewing the trade")
         case .review, .sending, .expired:
             if let r = model.review {
-                postHeader(r, p)
+                // The numbers first, readable at a glance; the post they came from under them.
                 ReviewCard(review: r, palette: p, dim: model.phase == .expired)
+                postHeader(r, p)
             }
         case .receipt:
             if let r = model.receipt { ReceiptCard(receipt: r, palette: p, actions: actions) }
@@ -219,25 +220,30 @@ struct ReviewCard: View {
 
     var body: some View {
         let p = palette, r = review
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             (Text("You pay ").foregroundStyle(p.soft) + Text(r.pay.line).bold()
              + Text(" · You get about ").foregroundStyle(p.soft) + Text(r.receive.line).bold()
              + Text(" (at least \(r.receiveMin))").foregroundStyle(p.soft))
-                .font(.subheadline)
+                .font(.footnote)
                 .fixedSize(horizontal: false, vertical: true)
-            line("Slippage", "\(r.slippagePct)%", p)
-            line("Network", r.network, p)
-            if !r.venue.isEmpty { line("Venue", r.venue, p) }
-            if !r.fundsSit.isEmpty { line("Funds", r.fundsSit, p) }
-            if let m = r.mainnet {
-                line(m.label, "\(m.payAmount) \(r.pay.symbol) → \(m.receiveAmount) \(m.symbol)", p)
+            Text(([r.slippagePct + "% slippage", r.network, r.venue].filter { !$0.isEmpty }).joined(separator: " · "))
+                .font(.caption.weight(.medium)).foregroundStyle(p.text)
+                .fixedSize(horizontal: false, vertical: true)
+            if !r.fundsSit.isEmpty {
+                Text("Funds: \(r.fundsSit)").font(.caption).foregroundStyle(p.soft)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Divider().overlay(p.line)
-            Text(r.limits.sentence.isEmpty ? "\(r.limits.agentName): \(r.limits.perTrade) NEAR a trade, \(r.limits.daily) NEAR a day." : r.limits.sentence)
+            if let m = r.mainnet {
+                Text("\(m.label): \(m.payAmount) \(r.pay.symbol) → \(m.receiveAmount) \(m.symbol)")
+                    .font(.caption).foregroundStyle(p.soft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            (Text(r.limits.sentence.isEmpty ? "\(r.limits.agentName): \(r.limits.perTrade) NEAR a trade, \(r.limits.daily) NEAR a day." : r.limits.sentence)
+             + Text(r.limits.stopped ? " Stopped." : " Spent today: \(r.limits.spentToday) of \(r.limits.daily) NEAR.")
+                .foregroundStyle(r.limits.stopped ? p.bad : p.soft))
                 .font(.caption).foregroundStyle(p.text)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(r.limits.stopped ? "Stopped. Spent today: \(r.limits.spentToday) NEAR" : "Spent today: \(r.limits.spentToday) of \(r.limits.daily) NEAR")
-                .font(.caption.monospacedDigit()).foregroundStyle(r.limits.stopped ? p.bad : p.soft)
+                .padding(.top, 2)
             if let refuse = r.limits.willRefuse {
                 Label {
                     Text(refuse + " You can still hold: the contract will refuse it on chain.")
@@ -249,7 +255,7 @@ struct ReviewCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(10)
         .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .opacity(dim ? 0.5 : 1)
         .accessibilityElement(children: .combine)

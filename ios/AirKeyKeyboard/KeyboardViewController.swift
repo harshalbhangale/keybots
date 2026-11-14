@@ -212,6 +212,9 @@ final class KeyboardViewController: UIInputViewController {
         case .noteEdit: return base + NoteEditSurface.stripHeight - Glass.toolbarHeight
         // Panels take the key area instead of growing the keyboard: the keys
         // never move, so muscle memory holds.
+        // A call's review stands a little taller, so the numbers, the limits
+        // and the hold fit without scrolling; the keys come back unchanged.
+        case .calls where money?.full == true: return base + 72
         case .none, .shell, .clipboard, .wallet, .calls: return base
         // A question typed for Ask or Search: a strip over the keys.
         case .assist:
