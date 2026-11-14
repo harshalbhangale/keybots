@@ -95,6 +95,7 @@
 		74F1B4C2F01682D943DF3F36 /* BoundKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2880647D989BB0F3AA77435 /* BoundKeys.swift */; };
 		7517AE660EEE95353772FC4B /* LibreCaslonText-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CE390C9F4968A16B7546807E /* LibreCaslonText-Regular.ttf */; };
 		7608CAA377D4DAA2BB136395 /* Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877ECDEFFC7A4286B5B50EFA /* Toolbar.swift */; };
+		7697300315A6C82615C66F99 /* MoneySheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C53F6974637F7EC5DB40B8 /* MoneySheets.swift */; };
 		77224B6D0BBC688AB3B46C67 /* WalletSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013677326CEDB2AF96662698 /* WalletSurface.swift */; };
 		78167AAEA3D5284396FE8FD7 /* theme-typewriter-delete.caf in Resources */ = {isa = PBXBuildFile; fileRef = 1C14FA40F1A0366533BE145C /* theme-typewriter-delete.caf */; };
 		7A1485E83FC8324FB7F1CCC5 /* CourierPrime-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3A6F05819A38C99646C33906 /* CourierPrime-Regular.ttf */; };
@@ -341,6 +342,7 @@
 		BE82DAB9B756AF51443152AD /* Instant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Instant.swift; sourceTree = "<group>"; };
 		C22B467EE87642C649E4A5F9 /* KeycapMarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeycapMarkView.swift; sourceTree = "<group>"; };
 		C2880647D989BB0F3AA77435 /* BoundKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundKeys.swift; sourceTree = "<group>"; };
+		C3C53F6974637F7EC5DB40B8 /* MoneySheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneySheets.swift; sourceTree = "<group>"; };
 		C4782A4D14400643943A192D /* theme-shutter-return.caf */ = {isa = PBXFileReference; path = "theme-shutter-return.caf"; sourceTree = "<group>"; };
 		C60C275CEBFFF17F9C47E3A5 /* paper.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = paper.png; sourceTree = "<group>"; };
 		C63C0A4FC1EDCF5498E9D862 /* Autocorrect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Autocorrect.swift; sourceTree = "<group>"; };
@@ -480,6 +482,7 @@
 				1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */,
 				0C83B914356CC09E45DEEDA8 /* KeysView.swift */,
 				FCC5173F4853BB06FDF38E4C /* LeashView.swift */,
+				C3C53F6974637F7EC5DB40B8 /* MoneySheets.swift */,
 				50E1010F396ABB6CB91A1CE0 /* ReceiptsView.swift */,
 				9BF871A3D5082D0B29BC2457 /* SettingsView.swift */,
 				2C789ADED35D8C14B662DF37 /* SwapCard.swift */,
@@ -1004,6 +1007,7 @@
 				5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */,
 				DADE104895F822FF5FE891E0 /* Logo.swift in Sources */,
 				86F1F77CD21B8621B052801F /* Models.swift in Sources */,
+				7697300315A6C82615C66F99 /* MoneySheets.swift in Sources */,
 				A10E875CA40B3CBF83862A03 /* NetworkSwitch.swift in Sources */,
 				E9FA7A2F6C132B55076DF72E /* Plain.swift in Sources */,
 				DDA74E2BD4FEFDAC97BD1578 /* ReceiptsView.swift in Sources */,

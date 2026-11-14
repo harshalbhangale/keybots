@@ -189,6 +189,9 @@ struct ApprovalCard: View {
                     Text(Plain.name(pending.receiver)).font(.subheadline.monospaced()).foregroundStyle(AK.bone)
                         .lineLimit(1).minimumScaleFactor(0.7)
                 }
+                if let at = pending.createdAt {
+                    Text("Asked \(Fmt.when(at))").font(.footnote).foregroundStyle(AK.muted)
+                }
                 if let memo = pending.memo, !memo.isEmpty {
                     Text("For \(memo)").font(.subheadline).foregroundStyle(AK.muted)
                 }
@@ -240,7 +243,7 @@ struct ReceiptRow: View {
 
     var body: some View {
         let p = Plain.row(r)
-        let meta = [p.memo.map { "For \($0)" }, r.input.source == "typed" ? "Typed" : "Copied", Fmt.time(r.date)]
+        let meta = [p.memo.map { "For \($0)" }, r.agent.map { Fmt.agentName(account: $0.account) }, r.input.source == "typed" ? "Typed" : "Copied", Fmt.when(r.date)]
             .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
         HStack(alignment: .top, spacing: 12) {
             SignalBadge(signal: r.signal, size: 32)

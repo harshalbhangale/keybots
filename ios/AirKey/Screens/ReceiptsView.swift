@@ -18,6 +18,12 @@ struct ActivityView: View {
     var body: some View {
         Screen(tint: model.mood) {
             Masthead(eyebrow: "", title: "Activity")
+            if let pending = model.state?.pending, !pending.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionTitle("Waiting for you", trailing: "\(pending.count)")
+                    ForEach(pending) { ApprovalCard(pending: $0, tagged: false) }
+                }
+            }
             if model.receipts.isEmpty {
                 Panel {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.headline).foregroundStyle(AK.bone)
@@ -287,6 +293,27 @@ struct ReceiptDetail: View {
             }
             Text(Plain.scrub(r.message)).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
+            if let agent = r.agent {
+                KeyValue(key: "Agent", value: Fmt.agentName(account: agent.account))
+            }
+            KeyValue(key: "When", value: Fmt.when(r.date))
+            if let tx = r.tx {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("Transaction").font(.subheadline).foregroundStyle(AK.muted)
+                    Spacer(minLength: 8)
+                    Button {
+                        UIPasteboard.general.string = tx.hash
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    } label: {
+                        Label("Copy", systemImage: "doc.on.doc").font(.footnote.weight(.medium))
+                    }
+                    .foregroundStyle(AK.accentText)
+                    .accessibilityLabel("Copy the transaction hash")
+                }
+                Text(tx.hash).font(.footnote.monospaced()).foregroundStyle(AK.bone)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
