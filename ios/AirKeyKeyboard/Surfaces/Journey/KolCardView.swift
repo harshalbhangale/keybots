@@ -19,6 +19,9 @@ struct KolCardView: View {
     let sample: Bool
     /// "x" (X), "telegram" or "sample". For Telegram, `name` is the group.
     var source: String = "x"
+    /// A leveraged signal read as spot, and its targets and stop.
+    var signalNote: String? = nil
+    var signalLine: String? = nil
     let palette: MoneyPalette
     let actions: MoneyActions
     /// nil hides the button (the card is the header of a review).
@@ -101,6 +104,16 @@ struct KolCardView: View {
                         .accessibilityLabel("Record: \(hits) hits, \(misses) misses")
                 }
             }
+            if let signalNote {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(signalNote, systemImage: "exclamationmark.triangle")
+                        .font(.caption.weight(.medium)).foregroundStyle(p.warn)
+                    if let signalLine {
+                        Text(signalLine).font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
             if let reading {
                 Text(reading).font(.caption2).foregroundStyle(p.faint).lineLimit(2)
             }
@@ -127,6 +140,7 @@ extension KolCardView {
     init(call: KolCall, sample: Bool, palette: MoneyPalette, actions: MoneyActions, review: @escaping () -> Void) {
         self.init(handle: call.handle, name: call.name, postedAt: call.postedAt, url: call.url, text: call.text,
                   asset: call.asset, direction: call.direction, hits: call.hits, misses: call.misses,
-                  reading: nil, sample: sample, source: call.source, palette: palette, actions: actions, review: review)
+                  reading: nil, sample: sample, source: call.source, signalNote: call.signalNote, signalLine: call.signalLine,
+                  palette: palette, actions: actions, review: review)
     }
 }
