@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { cleanToken, parseChatIds } from "./telegram.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -26,10 +27,12 @@ export interface Config {
   aiFallback: "openai" | "off";
   /** Serper's web search, for the keyboard's search. SERPER_API_KEY or keys/serper.key; empty means search is off. */
   serperKey: string;
-  /** Mainnet spends real money: no swap above this many dollars, whatever the command says. */
+  /** Mainnet spends real money: no swap above this many dollars, whatever the command says (default $1). */
   mainnetUsdCap: number;
   /** Kall Markets' API, where the calls of the KOLs you follow come from. */
   kallApi: string;
+  /** Telegram's Bot API, read-only: a bot in a group, whose calls show next to Kall's. TELEGRAM_BOT_TOKEN or keys/telegram.token; no token means off. */
+  telegram: { token: string; chatIds: string[] };
   /** Trades for KOLs you follow only run when AIRKEY_AUTO_TRADE=on. Off, the server still says what it would have done. */
   autoTrade: boolean;
   port: number;
@@ -47,14 +50,16 @@ export function parseContacts(s: string | undefined): Record<string, string> {
 
 export function loadConfig(env = process.env): Config {
   const network = env.NEAR_NETWORK === "mainnet" ? "mainnet" : "testnet";
-  const owner = env.AIRKEY_OWNER ?? "airkey-harshal.testnet";
+  // Mainnet: the owner is hellbuddy.near and Spend Limits lives on limits.hellbuddy.near
+  // (scripts/setup-mainnet.mjs). Testnet keeps the leash.<owner> name it was deployed under.
+  const owner = env.AIRKEY_OWNER ?? (network === "mainnet" ? MAINNET_OWNER : "airkey-harshal.testnet");
   return {
     network,
     rpc: env.NEAR_RPC ?? (network === "mainnet" ? "https://free.rpc.fastnear.com" : "https://test.rpc.fastnear.com"),
     explorer: network === "mainnet" ? "https://nearblocks.io" : "https://testnet.nearblocks.io",
     nearblocksApi: network === "mainnet" ? "https://api.nearblocks.io/v3" : "https://api-testnet.nearblocks.io/v3",
     owner,
-    leash: env.AIRKEY_LEASH ?? `leash.${owner}`,
+    leash: env.AIRKEY_LEASH ?? (network === "mainnet" ? `limits.${owner}` : `leash.${owner}`),
     agents: {
       trusted: env.AIRKEY_AGENT_TRUSTED ?? `pay.${owner}`,
       untrusted: env.AIRKEY_AGENT_UNTRUSTED ?? `inbox.${owner}`,
@@ -81,11 +86,24 @@ export function loadConfig(env = process.env): Config {
     },
     aiFallback: env.AIRKEY_AI_FALLBACK === "off" ? "off" : "openai",
     serperKey: env.SERPER_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "serper.key")),
-    mainnetUsdCap: Number(env.AIRKEY_MAINNET_USD_CAP ?? 0.15),
+    mainnetUsdCap: mainnetCap(env.AIRKEY_MAINNET_USD_CAP),
     kallApi: env.KALL_API ?? "https://kallmarkets.vercel.app",
+    telegram: {
+      token: cleanToken(env.TELEGRAM_BOT_TOKEN ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "telegram.token"))),
+      chatIds: parseChatIds(env.TELEGRAM_CHAT_IDS),
+    },
     autoTrade: env.AIRKEY_AUTO_TRADE === "on",
     port: Number(env.PORT ?? 8787),
   };
+}
+
+/** The mainnet owner AIRKEY is set up for. */
+export const MAINNET_OWNER = "hellbuddy.near";
+
+/** The dollar ceiling for one mainnet swap: $1 unless set lower or higher; never negative, never NaN. */
+export function mainnetCap(v: string | undefined): number {
+  const n = Number(v ?? 1);
+  return Number.isFinite(n) && n >= 0 ? n : 1;
 }
 
 /** A secret kept in a file (keys/ is gitignored); empty when there isn't one. */

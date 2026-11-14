@@ -376,7 +376,7 @@ struct TradePanel: View {
             mark(token.symbol, p, size: 26)
             VStack(alignment: .leading, spacing: 0) {
                 Text(token.symbol).font(.subheadline.weight(.semibold)).foregroundStyle(p.text)
-                Text(token.tradable ? "Swaps from the leash" : "Quote only here · \(token.chain)")
+                Text(token.tradable ? "Swaps from Spend Limits" : "Quote only here · \(token.chain)")
                     .font(.caption2)
                     .foregroundStyle(p.soft)
             }

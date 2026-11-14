@@ -86,7 +86,7 @@ enum Plain {
             case "R5":
                 return near(in: r.decision?.reason).map { "Blocked: over your \($0) NEAR daily limit" } ?? "Blocked: over your daily limit"
             case "R6": return "Blocked: \(name) isn't on your allowed list"
-            case "R0": return "Blocked: not enough NEAR in your AIRKEY balance"
+            case "R0": return "Blocked: not enough NEAR in your Keybots balance"
             case .some: return nil
             case nil: break
             }
@@ -154,7 +154,7 @@ enum Plain {
         switch role {
         case "pay": "Pays when you type a payment, up to these limits."
         case "inbox": "Reads messages you copy. It can pay people on your allowed list; anyone else waits for you."
-        case "trade", "trader": "Swaps tokens when you ask, up to these limits."
+        case "trade", "trader": "Trades the calls you review from X and Telegram, on Rhea. Only after you hold to confirm."
         default: tier == "trusted" ? "Acts on what you type, up to these limits." : "Acts on other people's words. Anyone off your allowed list waits for you."
         }
     }
@@ -170,9 +170,43 @@ enum Plain {
     static func pending(_ p: LeashState.Pending) -> String {
         switch p.rule {
         case "R6": "It came from a message you copied, and \(name(p.receiver)) isn't on your allowed list."
-        case "R7": "AIRKEY doesn't know this account yet, so it asks you first."
+        case "R7": "Keybots doesn't know this account yet, so it asks you first."
         default: scrub(p.reason)
         }
+    }
+
+    /// Why a payment waits, split into the reason and where it came from:
+    /// ("Not on your allowed list", "From a message you copied").
+    static func pendingParts(_ p: LeashState.Pending) -> (reason: String, from: String?) {
+        let copied = "From a message you copied"
+        let fromInbox = p.agent.hasPrefix("inbox.")
+        switch p.rule {
+        case "R6": return ("Not on your allowed list", copied)
+        case "R7": return ("A new account, so Keybots asks you first", fromInbox ? copied : nil)
+        default:
+            var s = scrub(p.reason)
+            var from: String? = fromInbox ? copied : nil
+            for tail in [", from a message you copied", ". It came from a message you copied"] where s.lowercased().hasSuffix(tail.lowercased()) {
+                s = String(s.dropLast(tail.count))
+                from = copied
+            }
+            return (s.prefix(1).uppercased() + s.dropFirst(), from)
+        }
+    }
+
+    /// A receipt for a list row: a short title, the account on its own line
+    /// (so it never breaks mid-name), and the memo.
+    static func row(_ r: Receipt) -> (title: String, account: String?, memo: String?) {
+        var title = line(r)
+        let memo = r.interpretation.action.memo.flatMap { $0.isEmpty ? nil : $0 }
+        if let memo, title.hasSuffix(" for \(memo)") { title = String(title.dropLast(memo.count + 5)) }
+        var account: String?
+        if let m = title.range(of: #" (to|from) [a-z0-9_-]+(\.[a-z0-9_-]+)+$"#, options: .regularExpression) {
+            account = String(title[m]).trimmingCharacters(in: .whitespaces)
+            title = String(title[..<m.lowerBound])
+        }
+        if title.hasPrefix("Waiting: ") { title = "Waiting for you: " + title.dropFirst(9) }
+        return (title, account, memo)
     }
 
     /// Why an account is on your blocked list.
@@ -183,7 +217,27 @@ enum Plain {
             s = "Reported as a scam: " + why
         }
         if s == "Blocked by the owner" { return "You blocked it" }
-        return scrub(s)
+        // The section is already called Blocked, so say only why.
+        if let r = s.range(of: #"^Blocked by (the leash|Spend Limits)(\s*\(R\d+\))?:\s*"#, options: [.regularExpression, .caseInsensitive]) {
+            s = String(s[r.upperBound...])
+        }
+        s = scrub(s)
+        return s.prefix(1).uppercased() + s.dropFirst()
+    }
+
+    /// What a rule on Spend Limits means, from its id, so no rule id or
+    /// contract word reaches a person. Nil for an id this app doesn't know.
+    static func rule(_ id: String?) -> String? {
+        switch id {
+        case "R0": "Not enough NEAR in your Keybots balance"
+        case "R1": "Stop everything was on"
+        case "R3": "The receiver is on your blocked list"
+        case "R4": "Over the limit for one payment"
+        case "R5": "Over today's limit"
+        case "R6": "Not on your allowed list"
+        case "R7": "A new account, so you were asked first"
+        default: nil
+        }
     }
 
     /// A check on the receiver, reworded where it used a word from the contract.
@@ -220,23 +274,28 @@ enum Plain {
     }
 
     private static let rewrites: [(String, String)] = [
-        (#"Blocked by the leash \(R\d\): "#, "Blocked: "),
-        (#"The leash would block this: "#, "Blocked: "),
+        (#"Blocked by the leash \(R\d\): "#, "Blocked by Spend Limits: "),
+        (#"The leash would block this: "#, "Spend Limits would block this: "),
         (#"\s*\(R\d\)"#, ""),
         (#"The Inbox Agent can't (trade|set one)"#, "A copied message can't $1"),
         (#"(?i)the kill switch is on|kill switch is on"#, "Stop everything is on"),
-        (#"The leash"#, "Your AIRKEY balance"),
-        (#"the leash"#, "your AIRKEY balance"),
-        (#"(The|the) (Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
-        (#"(Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
-        (#"The agent asked you to approve this one"#, "AIRKEY asks you first for this one"),
-        (#"reported by [a-z0-9_-]+(\.[a-z0-9_-]+)+"#, "reported by AIRKEY"),
+        (#"(The|the) leash contract"#, "Spend Limits"),
+        (#"(The|the) leash"#, "Spend Limits"),
+        (#"(your|Your) leash"#, "Spend Limits"),
+        (#"(The|the) (Inbox|Trading|Payment|Copy) Agent"#, "KEYBOTS"),
+        (#"(Inbox|Trading|Payment|Copy) Agent"#, "KEYBOTS"),
+        (#"The agent asked you to approve this one"#, "Keybots asks you first for this one"),
+        (#"reported by [a-z0-9_-]+(\.[a-z0-9_-]+)+"#, "reported by Keybots"),
         (#"allowlist"#, "allowed list"),
         (#"blocklist"#, "blocked list"),
         (#"\bcaps\b"#, "limits"),
         (#"\bcap\b"#, "limit"),
         (#"\buntrusted\b"#, "someone else's"),
         (#"\bwNEAR\b"#, "NEAR"),
+        // One wording for the per-trade limit everywhere.
+        (#"(?i)(this is )?over the per-trade limit of (\d+(?:\.\d+)?) NEAR"#, "Over your $2 NEAR limit per trade"),
+        (#"(?i)(this is )?over the (\d+(?:\.\d+)?) NEAR a trade limit"#, "Over your $2 NEAR limit per trade"),
+        (#"\bnearblocks\b(?!\.)"#, "the NEAR explorer"),
     ]
 
     // MARK: Numbers

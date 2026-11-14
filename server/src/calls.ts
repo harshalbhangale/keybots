@@ -62,6 +62,8 @@ const perpCue =
 const tradeCue = /\b(trade|trading|entry|target|tp|sl|stop loss)\b/i;
 // A contract address in the post: the ticker can't be trusted to mean that token.
 const contract = /\b0x[a-fA-F0-9]{40}\b|\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/;
+/** The post has a contract address in it: routeCall won't trade a ticker in its place. */
+export const namesContract = (text: string) => contract.test(text);
 
 function findAsset(text: string): string | null {
   for (const m of text.matchAll(/\$([A-Za-z][A-Za-z0-9]{1,9})\b/g)) {
@@ -129,14 +131,14 @@ export async function routeCall(
 ): Promise<CallRoute> {
   if (!call.isCall || !call.asset) return { status: "unavailable", reason: "This isn't a trade call." };
   if (contract.test(text)) {
-    return { status: "unavailable", reason: "The post names a contract address. Check the token by hand; AIRKEY won't trade a ticker in its place." };
+    return { status: "unavailable", reason: "The post names a contract address. Check the token by hand; Keybots won't trade a ticker in its place." };
   }
   if (call.instrument === "perp") {
-    return { status: "unavailable", reason: `A ${call.leverage ? `${call.leverage}x ` : ""}perp call on ${call.asset}. AIRKEY trades spot through the leash, so there's no stand-in.` };
+    return { status: "unavailable", reason: `A ${call.leverage ? `${call.leverage}x ` : ""}perp call on ${call.asset}. Keybots trades spot through Spend Limits, so there's no stand-in.` };
   }
   if (!call.direction) return { status: "unavailable", reason: `The post names ${call.asset} but doesn't say buy or sell.` };
   if (call.direction === "bearish" && call.asset !== "NEAR") {
-    return { status: "unavailable", reason: `Bearish on ${call.asset}. AIRKEY doesn't short, and the leash holds no ${call.asset} to sell.` };
+    return { status: "unavailable", reason: `Bearish on ${call.asset}. Keybots doesn't short, and Spend Limits holds no ${call.asset} to sell.` };
   }
   if (!deps.intents) return { status: "unavailable", reason: "Token checks aren't set up on this server." };
 

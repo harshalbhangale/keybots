@@ -27,7 +27,7 @@ enum TextPDF {
             .font: UIFont.systemFont(ofSize: 11), .foregroundColor: UIColor.black, .paragraphStyle: style,
         ])
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: title(text), kCGPDFContextCreator as String: "AIRKEY"]
+        format.documentInfo = [kCGPDFContextTitle as String: title(text), kCGPDFContextCreator as String: "KEYBOTS"]
         let setter = CTFramesetterCreateWithAttributedString(body)
         return UIGraphicsPDFRenderer(bounds: page, format: format).pdfData { ctx in
             var at = 0

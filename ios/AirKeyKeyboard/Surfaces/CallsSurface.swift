@@ -9,9 +9,16 @@ import UIKit
 @Observable
 @MainActor
 final class CallsModel {
-    enum Tab: Hashable { case open, done, following }
+    enum Tab: Hashable { case posts, open, done, following }
 
-    var tab: Tab = .open
+    var tab: Tab = .posts
+    /// The callers' posts (GET /v1/kol/feed); nil until the first read lands.
+    var feed: KolFeed?
+    var feedProblem: String?
+    /// A call being reviewed, held and confirmed; the panel shows only it.
+    var journey: JourneyModel?
+    /// The panel wants the whole keyboard (a review) or just the key area.
+    @ObservationIgnored var onFull: ((Bool) -> Void)?
     /// nil until the first read lands.
     var calls: [CallRecord]?
     var problem: String?
@@ -56,6 +63,14 @@ final class CallsModel {
 
     func load() async {
         do {
+            let f = try await JourneyAPI().feed()
+            guard !Task.isCancelled else { return }
+            feed = f
+            feedProblem = nil
+        } catch {
+            if feed == nil, !Task.isCancelled { feedProblem = error.localizedDescription }
+        }
+        do {
             let list = try await API().calls()
             guard !Task.isCancelled else { return }
             calls = list
@@ -73,7 +88,7 @@ final class CallsModel {
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             // A keyboard can't show iOS's "Allow Paste" prompt, so a refused read looks like an empty clipboard.
             notice = UIPasteboard.general.hasStrings
-                ? "To check copied text: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                ? "To check copied text: Settings › Apps › Keybots › Paste from Other Apps › Allow."
                 : "Copy a post first, then tap Paste a call."
             Haptics.warning()
             return
@@ -137,6 +152,30 @@ final class CallsModel {
         }
     }
 
+    /// Review a feed post's trade. Nothing trades until the hold.
+    func review(_ post: KolCall) {
+        open(JourneyModel(callId: post.id, text: post.text, post: post))
+    }
+
+    /// Review a copied call's trade (the strip's chip, a call in the book).
+    func review(text: String) {
+        open(JourneyModel(callId: nil, text: text))
+    }
+
+    private func open(_ j: JourneyModel) {
+        journey?.stop()
+        notice = nil
+        withAnimation(.snappy(duration: 0.22)) { journey = j }
+        onFull?(true)
+    }
+
+    func closeJourney() {
+        journey?.stop()
+        withAnimation(.snappy(duration: 0.22)) { journey = nil }
+        onFull?(false)
+        Task { await load() }
+    }
+
     /// Put a call away without trading it.
     func dismiss(_ call: CallRecord) {
         Haptics.letter()
@@ -158,31 +197,39 @@ struct CallsView: View {
 
     var body: some View {
         let p = MoneyPalette(dark: scheme == .dark)
-        VStack(spacing: 6) {
-            HStack(spacing: 6) {
-                MoneyTabs(tabs: [(.open, count("Open", model.open.count)), (.done, count("Done", model.done.count)),
+        if let journey = model.journey {
+            JourneyView(model: journey, actions: actions, palette: p) { model.closeJourney() }
+                .transition(.opacity)
+        } else {
+            book(p)
+        }
+    }
+
+    private func book(_ p: MoneyPalette) -> some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                MoneyTabs(tabs: [(.posts, "Posts"), (.open, count("Open", model.open.count)), (.done, count("Done", model.done.count)),
                                  (.following, "Following")],
-                          selection: $model.tab, palette: p)
-                Spacer(minLength: 4)
-                if model.tab != .following {
+                          selection: $model.tab, palette: p, fill: true)
+                // Always in its place, so the tabs never shift between sections.
+                let canPaste = model.tab != .following
                 Button { model.paste() } label: {
-                    HStack(spacing: 5) {
+                    Group {
                         if model.checking {
-                            ProgressView().controlSize(.mini).tint(AK.ink)
+                            ProgressView().controlSize(.mini).tint(p.text)
                         } else {
-                            Image(systemName: "doc.on.clipboard").font(.system(size: 11, weight: .bold))
+                            Image(systemName: "doc.on.clipboard").font(.system(size: 13, weight: .semibold))
                         }
-                        Text("Paste a call").font(.footnote.weight(.bold))
                     }
-                    .foregroundStyle(AK.ink)
-                    .padding(.horizontal, 12).frame(height: 28)
-                    .background(AK.accent, in: Capsule()).contentShape(Capsule())
+                    .foregroundStyle(p.text)
+                    .frame(width: 32, height: 32)
+                    .background(p.fill, in: Circle()).contentShape(Circle())
                 }
                 .buttonStyle(MoneyPress())
-                .disabled(model.checking || !actions.fullAccess())
+                .disabled(!canPaste || model.checking || !actions.fullAccess())
+                .opacity(canPaste ? 1 : 0.3)
+                .accessibilityLabel("Paste a call")
                 .accessibilityHint("Checks the post you copied. Nothing runs.")
-                .transition(.opacity)
-                }
             }
             if let notice = model.notice, model.tab != .following {
                 Button { withAnimation(.snappy(duration: 0.2)) { model.notice = nil } } label: {
@@ -200,7 +247,7 @@ struct CallsView: View {
             }
             content(p)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, MoneyPalette.inset)
         .padding(.top, 4)
         .padding(.bottom, 4)
         .foregroundStyle(p.text)
@@ -210,12 +257,54 @@ struct CallsView: View {
 
     private func count(_ title: String, _ n: Int) -> String { n > 0 ? "\(title) \(n)" : title }
 
+    /// The callers' posts, newest first. Nothing trades when one appears.
+    @ViewBuilder
+    private func posts(_ p: MoneyPalette) -> some View {
+        if let feed = model.feed {
+            if feed.calls.isEmpty {
+                MoneyEmpty(text: "No posts from the callers right now.", palette: p)
+            } else {
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(spacing: 6) {
+                        if feed.sample {
+                            HStack(alignment: .top, spacing: 6) {
+                                Text("Sample posts").font(.caption.weight(.bold)).foregroundStyle(p.warn)
+                                Text(feed.note ?? "Kall's feed isn't reachable, so these are examples.")
+                                    .font(.caption).foregroundStyle(p.soft).fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                            }
+                        }
+                        ForEach(feed.calls) { call in
+                            KolCardView(call: call, sample: feed.sample, palette: p, actions: actions) { model.review(call) }
+                        }
+                        if !feed.sample, let note = feed.note {
+                            Text(note).font(.caption2).foregroundStyle(p.soft).frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 4)
+                        }
+                    }
+                    .padding(.bottom, 8)
+                }
+                .scrollEdgeEffectHidden(true, for: .all)
+            }
+        } else if let problem = model.feedProblem {
+            MoneyEmpty(text: problem, palette: p)
+        } else {
+            VStack(spacing: 10) {
+                ProgressView().tint(p.text)
+                Text("Reading the callers' posts…").font(.footnote).foregroundStyle(p.soft)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
     @ViewBuilder
     private func content(_ p: MoneyPalette) -> some View {
-        if model.tab == .following, actions.fullAccess() {
+        if model.tab == .posts, actions.fullAccess() {
+            posts(p)
+        } else if model.tab == .following, actions.fullAccess() {
             FollowingView(model: model.following, actions: actions, palette: p)
         } else if !actions.fullAccess() {
-            MoneyEmpty(text: "Turn on Allow Full Access for AIRKEY so Calls can reach your server.", palette: p)
+            MoneyEmpty(text: "Turn on Allow Full Access for Keybots so Calls can reach your server.", palette: p)
         } else if model.calls == nil {
             if let problem = model.problem {
                 VStack(spacing: 10) {
@@ -268,7 +357,7 @@ private struct CallRow: View {
         let p = palette
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
-                Text("$\(call.asset ?? "?")").font(.subheadline.weight(.heavy))
+                Text("$\(call.asset ?? "?")").font(.subheadline.weight(.semibold))
                 HStack(spacing: 2) {
                     Image(systemName: call.bearish ? "arrow.down.right" : "arrow.up.right").font(.system(size: 9, weight: .heavy))
                     Text(call.direction?.capitalized ?? "No direction").font(.caption.weight(.bold))
@@ -293,8 +382,8 @@ private struct CallRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             footer(p)
         }
-        .padding(.horizontal, 12).padding(.vertical, 9)
-        .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     @ViewBuilder
@@ -311,7 +400,7 @@ private struct CallRow: View {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(call.title ?? "").font(.caption.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
-                        Text(call.standIn.map(MoneyText.plain) ?? prices ?? "Nothing runs until you hold")
+                        Text(call.standIn.map(MoneyText.plain) ?? prices ?? "Nothing runs until you review and hold")
                             .font(.caption2).foregroundStyle(p.soft).lineLimit(1).minimumScaleFactor(0.7)
                     }
                     Spacer(minLength: 4)
@@ -321,11 +410,14 @@ private struct CallRow: View {
                     }
                     .buttonStyle(MoneyPress())
                     .accessibilityLabel("Put this call away")
-                    HoldToConfirm(label: "Hold to \(call.side == "sell" ? "sell" : "buy")", holding: nil, icon: nil,
-                                  height: 30, font: .footnote.weight(.bold), disabled: model.running != nil) {
-                        model.run(call)
+                    Button { Haptics.letter(); model.review(text: call.text) } label: {
+                        Text("Review trade").font(.footnote.weight(.bold)).foregroundStyle(AK.ink)
+                            .padding(.horizontal, 12).frame(height: 30)
+                            .background(AK.accent, in: Capsule()).contentShape(Capsule())
                     }
+                    .buttonStyle(MoneyPress())
                     .fixedSize()
+                    .accessibilityHint("Shows the trade first. Nothing trades yet.")
                 }
             }
         } else if let trade = call.trade {

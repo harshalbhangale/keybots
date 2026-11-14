@@ -107,7 +107,7 @@ struct AgentStrip: View {
                 Image(systemName: intent.icon)
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(AK.ink)
-                    .frame(width: 26, height: 26)
+                    .frame(width: 28, height: 28)
                     .background(AK.accent, in: Circle())
                 VStack(alignment: .leading, spacing: 0) {
                     Text(intent.title).font(.footnote.weight(.semibold)).foregroundStyle(palette.text).lineLimit(1).minimumScaleFactor(0.8)
@@ -128,13 +128,28 @@ struct AgentStrip: View {
             .accessibilityElement(children: .combine)
             // Trade panel hook: a tap on a trade's chip opens the swap screen too.
             .contentShape(Rectangle())
-            .onTapGesture { if intent.kind == .swap, model.reviewReady() { Haptics.layer() } }
-            HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 28, font: .footnote.weight(.bold)) {
-                model.runReady()
+            .onTapGesture {
+                if intent.callText != nil, model.reviewCall() { Haptics.layer() }
+                else if intent.kind == .swap, model.reviewReady() { Haptics.layer() }
             }
-            .fixedSize()
+            if intent.callText != nil {
+                // A copied call: one path to a trade, through its review card.
+                Button { Haptics.layer(); model.reviewCall() } label: {
+                    Text("Review trade").font(.footnote.weight(.semibold)).foregroundStyle(AK.ink)
+                        .padding(.horizontal, 12).frame(height: 30)
+                        .background(AK.accent, in: Capsule()).contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+                .accessibilityHint("Shows the trade first. Nothing trades yet.")
+            } else {
+                HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 30, font: .footnote.weight(.semibold)) {
+                    model.runReady()
+                }
+                .fixedSize()
+            }
         }
-        .padding(.leading, 6)
+        .padding(.leading, 5)
         .padding(.trailing, 5)
         .frame(height: Self.height)
         .glassEffect(.regular, in: .capsule)
@@ -150,7 +165,7 @@ struct AgentStrip: View {
                     Image(systemName: icon)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(palette.text)
-                        .frame(width: 26, height: 26)
+                        .frame(width: 28, height: 28)
                         .background(palette.function, in: Circle())
                     VStack(alignment: .leading, spacing: 0) {
                         Text(title).font(.footnote.weight(.semibold)).foregroundStyle(palette.text).lineLimit(1).minimumScaleFactor(0.8)
@@ -164,16 +179,16 @@ struct AgentStrip: View {
             .accessibilityLabel("\(title). \(detail). Tap to add it to your message.")
             Button(action: onAction) {
                 Text(action)
-                    .font(.footnote.weight(.bold))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(primary ? AK.ink : palette.text)
                     .padding(.horizontal, 14)
-                    .frame(height: 28)
+                    .frame(height: 30)
                     .background(primary ? AK.accent : palette.function, in: Capsule())
             }
             .buttonStyle(.plain)
             close(palette)
         }
-        .padding(.leading, 6)
+        .padding(.leading, 5)
         .frame(height: Self.height)
         .glassEffect(.regular.interactive(), in: .capsule)
     }
@@ -197,7 +212,7 @@ struct AgentStrip: View {
             Image(systemName: r.signal.icon)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(plain ? palette.text : AK.ink)
-                .frame(width: 26, height: 26)
+                .frame(width: 28, height: 28)
                 .background(plain ? palette.function : r.signal.color, in: Circle())
             // The plain line; a tap turns it over to the technical message, rule code and all.
             Button {
@@ -225,14 +240,14 @@ struct AgentStrip: View {
             if r.tx != nil, !showDetails {
                 Button { model.insertReceipt() } label: {
                     Text("Share").font(.footnote.weight(.semibold)).foregroundStyle(palette.text)
-                        .padding(.horizontal, 12).frame(height: 28).background(palette.function, in: Capsule())
+                        .padding(.horizontal, 12).frame(height: 30).background(palette.function, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("Puts the receipt in the chat")
             }
             close(palette)
         }
-        .padding(.leading, 6)
+        .padding(.leading, 5)
         .frame(height: Self.height)
         .glassEffect(plain ? .regular : .regular.tint(r.signal.color.opacity(0.22)), in: .capsule)
         .accessibilityElement(children: .contain)

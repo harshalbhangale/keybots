@@ -13,6 +13,7 @@ import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
 import { fileCalls } from "./calls.js";
 import { fileVault } from "./vault.js";
+import { telegramSource } from "./telegram.js";
 import { attestations } from "./attest.js";
 
 // server/.env (gitignored) for keys and switches, when it's there.
@@ -36,8 +37,11 @@ const deps = {
   follows: fileFollows(cfg.dataDir), // follows.json and follow-trades.jsonl
   kall: kallClient(cfg.kallApi),
 };
+// Telegram: only with a bot token (TELEGRAM_BOT_TOKEN or keys/telegram.token). Read-only.
+const telegram = telegramSource({ token: cfg.telegram.token, chatIds: cfg.telegram.chatIds, dataDir: cfg.dataDir });
+telegram.start();
 const followPoller = followsFor(deps);
-const app = buildApp({ ...deps, followPoller });
+const app = buildApp({ ...deps, followPoller, telegram });
 
 // Watch the prices that orders are waiting on. A crossed order runs its command as the owner's own words.
 const WATCH_MS = Number(process.env.AIRKEY_WATCH_MS ?? 15_000);
@@ -88,4 +92,4 @@ warm();
 setInterval(warm, 60_000).unref();
 
 await app.listen({ port: cfg.port, host: process.env.HOST ?? "0.0.0.0" });
-console.log(`AIRKEY server on :${cfg.port} · ${cfg.network} · leash ${cfg.leash} · AI ${cfg.nearAi.apiKey ? "NEAR AI Cloud (private)" : cfg.openAi.apiKey ? `OpenAI ${cfg.openAi.model}` : "off"} · auth ${cfg.apiToken ? "on" : "off"}`);
+console.log(`Keybots server on :${cfg.port} · ${cfg.network} · leash ${cfg.leash} · AI ${cfg.nearAi.apiKey ? "NEAR AI Cloud (private)" : cfg.openAi.apiKey ? `OpenAI ${cfg.openAi.model}` : "off"} · auth ${cfg.apiToken ? "on" : "off"} · Telegram ${telegram.configured ? "on" : "off"}`);

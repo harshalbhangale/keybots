@@ -101,12 +101,12 @@ final class TradeModel {
         return "≈ \(Fmt.usd(out * p))"
     }
 
-    /// "Leash: 0.61 NEAR" for a side.
+    /// "Spend Limits: 0.61 NEAR" for a side.
     func held(_ side: Side) -> String? {
         let symbol = side == .pay ? from : to
-        if side == .pay, let b = live?.balance { return "Leash: \(b.amount) \(b.symbol)" }
+        if side == .pay, let b = live?.balance { return "Spend Limits: \(b.amount) \(b.symbol)" }
         guard let t = token(symbol) else { return nil }
-        return "Leash: \(t.balance ?? "0") \(symbol)"
+        return "Spend Limits: \(t.balance ?? "0") \(symbol)"
     }
 
     /// The token an order watches, as the server would pick it.
@@ -155,7 +155,7 @@ final class TradeModel {
 
     /// The first sentence of a server message, to fit a button: "Testnet has no SOL".
     private static func short(_ message: String) -> String {
-        if message.hasPrefix("Can't reach") { return "Can't reach your AIRKEY server" }
+        if message.hasPrefix("Can't reach") { return "Can't reach your Keybots server" }
         let first = message.split(separator: ".", maxSplits: 1).first.map(String.init) ?? message
         let colon = first.split(separator: ":", maxSplits: 1).first.map(String.init) ?? first
         return String((first.count <= 34 ? first : colon).prefix(40))

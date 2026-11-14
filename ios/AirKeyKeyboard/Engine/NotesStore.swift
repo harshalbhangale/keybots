@@ -47,7 +47,7 @@ final class NotesStore {
         switch SecretScanner.scan(trimmed) {
         case .clean: break
         case .cardNumber: return "Card numbers can't be saved as notes"
-        case .seedPhrase: return "Seed phrases can't be saved anywhere in AIRKEY"
+        case .seedPhrase: return "Seed phrases can't be saved anywhere in Keybots"
         case .privateKeyOrToken: return "Keys and tokens can't be saved as notes"
         case .otpCode: return "One-time codes aren't worth a note"
         }

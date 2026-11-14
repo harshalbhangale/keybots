@@ -78,10 +78,10 @@ export async function dryRun(deps: DryRunDeps, text: string, opts: { pasted?: bo
   const agent = state.agents.find((a) => a.account === agentId)?.agent;
   const tier = agent?.tier ?? (opts.pasted ? "untrusted" : "trusted");
   lines.push(["Agent", `${agentName(cfg, agentId)} (${agentId}), ${tier}`]);
-  lines.push(["Leash", `${state.leash}: ${near(state.available, 2, 2)} NEAR, Stop everything ${state.paused ? "on" : "off"}`]);
+  lines.push(["Spend Limits", `${state.leash}: ${near(state.available, 2, 2)} NEAR, Stop everything ${state.paused ? "on" : "off"}`]);
 
   if (isSwap && opts.pasted) {
-    return finish("blocked", "Would be blocked: trades only run from what you type, never from a copied message", "the server stops it before asking the leash");
+    return finish("blocked", "Would be blocked: trades only run from what you type, never from a copied message", "the server stops it before asking Spend Limits");
   }
 
   // What is being sent where, and what it's worth in NEAR.
@@ -111,7 +111,7 @@ export async function dryRun(deps: DryRunDeps, text: string, opts: { pasted?: bo
   // The contract's order: Stop everything, registered agent, blocked list,
   // per-payment cap, daily cap, waiting for the owner, enough NEAR.
   if (state.paused) return finish("blocked", "Would be blocked: Stop everything is on", "the owner turned it on; no agent can move anything", extra);
-  if (!agent) return finish("blocked", `Would be refused: ${agentId} isn't one of the leash's agents`, undefined, extra);
+  if (!agent) return finish("blocked", `Would be refused: ${agentId} isn't one of Spend Limits' agents`, undefined, extra);
   if (amount <= 0n) return finish("unreadable", "Would not be sent", "the amount must be more than zero", extra);
   const blocked = state.blocklist.find((b) => b.account === receiver);
   if (blocked) {
@@ -145,7 +145,7 @@ export async function dryRun(deps: DryRunDeps, text: string, opts: { pasted?: bo
     }
   }
   if (amount > BigInt(state.available)) {
-    return finish("blocked", "Would be blocked: the leash doesn't hold enough NEAR", `it holds ${near(state.available, 2, 2)} NEAR`, extra);
+    return finish("blocked", "Would be blocked: Spend Limits doesn't hold enough NEAR", `it holds ${near(state.available, 2, 2)} NEAR`, extra);
   }
   if (isSwap && action.kind === "swap") {
     return finish("swap", `Would swap ${near(amount)} NEAR to ${action.to}`, limits, extra);
@@ -183,7 +183,7 @@ async function swapValue(
   if (route) {
     try {
       const out = await deps.rhea!.quote(route, value.toString());
-      quotes.push(["Rhea", `about ${fromUnits(out, route.decimals)} ${route.symbol} from pool ${route.pool} (where the leash swaps on ${deps.cfg.network})`]);
+      quotes.push(["Rhea", `about ${fromUnits(out, route.decimals)} ${route.symbol} from pool ${route.pool} (where Spend Limits swaps on ${deps.cfg.network})`]);
     } catch (e) {
       quotes.push(["Rhea", `no quote right now (${(e as Error).message.slice(0, 80)})`]);
     }
@@ -201,7 +201,7 @@ async function swapValue(
       quotes.push(["NEAR Intents", `no quote right now (${(e as Error).message.slice(0, 80)})`]);
     }
   }
-  if (!route && !deps.intents) return { error: `AIRKEY can't swap NEAR into ${action.to} here` };
+  if (!route && !deps.intents) return { error: `Keybots can't swap NEAR into ${action.to} here` };
   return { value, venue, quotes };
 }
 

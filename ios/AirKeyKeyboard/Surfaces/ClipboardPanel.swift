@@ -662,7 +662,7 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
             // to read. One copy could be a coincidence; the setting is not.
             out.append(("hand.raised",
                         "iOS asks before a keyboard may read a copy. To stop it "
-                            + "asking: Settings → Apps → AIRKEY → Paste from Other Apps → Allow."))
+                            + "asking: Settings → Apps → Keybots → Paste from Other Apps → Allow."))
         }
         // Not while iOS is asking: opening the panel raises the prompt
         // (askForPhotosIfNeeded), and the tip under it said to go and turn
@@ -670,7 +670,7 @@ final class ClipboardPanel: UIView, UIGestureRecognizerDelegate {
         if filter.showsShots, SettingsStore.current.clipboardScreenshots == true,
            !Self.photosAllowed(), PHPhotoLibrary.authorizationStatus(for: .readWrite) != .notDetermined {
             out.append(("photo",
-                        "Screenshots need your photos: Settings → Apps → AIRKEY "
+                        "Screenshots need your photos: Settings → Apps → Keybots "
                             + "→ Photos."))
         }
         return out

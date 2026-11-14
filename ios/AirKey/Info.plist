@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>AIRKEY</string>
+	<string>Keybots</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -30,9 +30,9 @@
 		<true/>
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
-	<string>AIRKEY uses Face ID before you approve a payment or change your limits.</string>
+	<string>Keybots uses Face ID before you approve a payment or change your limits.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>AIRKEY talks to your AIRKEY server on this network to run your agents.</string>
+	<string>Keybots talks to your Keybots server on this network to run your agents.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
@@ -42,7 +42,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>UIUserInterfaceStyle</key>
-	<string>Dark</string>
 </dict>
 </plist>

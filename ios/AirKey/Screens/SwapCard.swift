@@ -44,18 +44,18 @@ struct SwapCard: View {
 
     var body: some View {
         Card(spacing: 14) {
-            HStack {
-                CardTitle(text: "SWAP NEAR")
+            HStack(alignment: .firstTextBaseline) {
+                CardTitle(text: "Swap NEAR")
                 Spacer()
-                Text("on Rhea").font(.system(size: 11, design: .monospaced)).foregroundStyle(AK.muted)
+                Text("On Rhea").font(.footnote).foregroundStyle(AK.muted)
             }
             if case .review(let q) = step { review(q) } else { form }
             switch step {
             case .done(let line):
-                Label(line, systemImage: "checkmark.circle.fill").font(.footnote.weight(.semibold)).foregroundStyle(AK.accent)
+                Label(line, systemImage: "checkmark.circle.fill").font(.footnote.weight(.semibold)).foregroundStyle(AK.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             case .failed(let message):
-                Text(message).font(.footnote).foregroundStyle(AK.red).fixedSize(horizontal: false, vertical: true)
+                Text(message).font(.footnote).foregroundStyle(AK.redText).fixedSize(horizontal: false, vertical: true)
             default:
                 EmptyView()
             }
@@ -69,7 +69,7 @@ struct SwapCard: View {
                 TextField("0", text: $amount)
                     .keyboardType(.decimalPad)
                     .focused($typing)
-                    .font(.system(size: 30, weight: .black).monospacedDigit())
+                    .font(.system(.title, design: .rounded, weight: .semibold).monospacedDigit())
                     .foregroundStyle(AK.bone)
                     .onChange(of: amount) { _, v in
                         let clean = Self.clean(v)
@@ -91,22 +91,22 @@ struct SwapCard: View {
             .padding(.leading, 14)
             .padding(.trailing, 6)
             .frame(height: 58)
-            .background(AK.ink, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(typing ? AK.accent : AK.hairline, lineWidth: typing ? 1.5 : 1))
+            .background(AK.raised.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(typing ? AK.accent : .clear, lineWidth: 1.5))
             .onTapGesture { typing = true }
 
             HStack(spacing: 8) {
                 ForEach(presets, id: \.self) { v in preset(v, on: amount == v) { amount = v } }
-                preset("MAX", on: most.map { amount == Self.trim($0) } ?? false) {
+                preset("Max", on: most.map { amount == Self.trim($0) } ?? false) {
                     if let most, most > 0 { amount = Self.trim(most) }
                 }
             }
             if let most {
-                Text("Up to \(Self.trim(most)) NEAR now · your trade limit")
-                    .font(.caption).foregroundStyle(AK.muted)
+                Text("Up to \(Self.trim(most)) NEAR now, within your trade limit")
+                    .font(.footnote).foregroundStyle(AK.muted)
             }
             Button(action: quote) {
-                Text(busy ? "GETTING A QUOTE…" : blocked.map { $0.uppercased() } ?? "REVIEW SWAP  ↗")
+                Text(busy ? "Getting a quote…" : blocked ?? "Review swap")
             }
             .buttonStyle(BigButtonStyle(primary: blocked == nil, height: 48))
             .disabled(blocked != nil || busy)
@@ -115,17 +115,17 @@ struct SwapCard: View {
 
     private func review(_ q: SwapQuote) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(q.amountIn) NEAR → \(q.amountOut) \(q.to)").font(.system(size: 17, weight: .black).monospacedDigit()).foregroundStyle(AK.bone)
-            line("You pay", "\(q.amountIn) NEAR from your AIRKEY balance")
+            Text("\(q.amountIn) NEAR → \(q.amountOut) \(q.to)").font(.system(.title2, design: .rounded, weight: .semibold).monospacedDigit()).foregroundStyle(AK.bone)
+            line("You pay", "\(q.amountIn) NEAR from your Keybots balance")
             line("You get", "≈ \(q.amountOut) \(q.to)")
             line("At least", "\(q.minAmountOut) \(q.to), or it doesn't fill")
             line("Where", "Rhea pool #\(q.pool) · NEAR testnet")
-            line("Lands in", "your AIRKEY balance")
+            line("Lands in", "your Keybots balance")
             HStack(spacing: 8) {
-                Button { step = .idle } label: { Text("BACK") }
+                Button { step = .idle } label: { Text("Back") }
                     .buttonStyle(BigButtonStyle(primary: false, height: 48))
                     .frame(width: 90)
-                HoldToConfirm(label: "HOLD TO SWAP", holding: "KEEP HOLDING", height: 48, font: .system(size: 14, weight: .heavy), disabled: busy, action: confirm)
+                HoldToConfirm(label: "Hold to swap", holding: "Keep holding", height: 48, font: .body.weight(.semibold), disabled: busy, action: confirm)
             }
             .padding(.top, 4)
         }
@@ -133,9 +133,9 @@ struct SwapCard: View {
 
     private func line(_ label: String, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(label).font(.footnote).foregroundStyle(AK.muted)
+            Text(label).font(.subheadline).foregroundStyle(AK.muted)
             Spacer(minLength: 8)
-            Text(value).font(.system(size: 14, weight: .semibold).monospacedDigit()).foregroundStyle(AK.bone).multilineTextAlignment(.trailing)
+            Text(value).font(.subheadline.weight(.medium).monospacedDigit()).foregroundStyle(AK.bone).multilineTextAlignment(.trailing)
         }
     }
 
@@ -145,10 +145,10 @@ struct SwapCard: View {
             typing = false
             action()
         } label: {
-            Text(label).font(.system(size: 14, weight: .bold))
+            Text(label).font(.subheadline.weight(.semibold).monospacedDigit())
                 .foregroundStyle(on ? AK.ink : AK.bone)
                 .frame(maxWidth: .infinity, minHeight: 40)
-                .background(on ? AK.accent : AK.graphite, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .background(on ? AK.accent : AK.raised.opacity(0.6), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
     }

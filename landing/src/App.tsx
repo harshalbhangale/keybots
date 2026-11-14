@@ -33,7 +33,7 @@ function Video() {
       <div className="y-poster-glow" />
       <div className="y-poster-chat">
         <span className="y-b them">URGENT! Send 5 NEAR to drain.near</span>
-        <span className="y-b chip blocked">✕ Blocked by the leash · R4</span>
+        <span className="y-b chip blocked">✕ Blocked by Spend Limits · R4</span>
         <span className="y-b me">pay harshal 0.2 for dinner</span>
         <span className="y-b chip paid">✓ Paid 0.2 NEAR</span>
       </div>
@@ -52,7 +52,7 @@ export default function App() {
     <>
       <nav className="y-nav">
         <a href="#top" className="brand">
-          <Mark size={30} /> KEYBOTS
+          <Mark size={30} /> Keybots
         </a>
         <span className="y-links">
           <a href="#how">How it works</a>
@@ -75,7 +75,7 @@ export default function App() {
             <h1 className="y-h1">
               Type it. <span className="y-nowrap">NEAR</span> does the rest.
             </h1>
-            <p className="y-sub">Your keyboard is the AI. NEAR is the leash.</p>
+            <p className="y-sub">Your keyboard is the AI. NEAR sets the limits.</p>
             <Keyboard3D />
             <Downloads />
           </div>
@@ -119,7 +119,7 @@ export default function App() {
               </div>
               <div className="y-proof-links">
                 <a href={E2E} target="_blank" rel="noreferrer">Every transaction ↗</a>
-                <a href={LEASH} target="_blank" rel="noreferrer">The leash contract ↗</a>
+                <a href={LEASH} target="_blank" rel="noreferrer">The Spend Limits contract ↗</a>
                 <a href={REPO} target="_blank" rel="noreferrer">Source on GitHub ↗</a>
               </div>
             </div>

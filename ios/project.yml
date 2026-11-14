@@ -21,7 +21,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: tech.airkey.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
     entitlements:
       path: AirKey/AirKey.entitlements
       properties:
@@ -29,13 +28,12 @@ targets:
     info:
       path: AirKey/Info.plist
       properties:
-        CFBundleDisplayName: AIRKEY
+        CFBundleDisplayName: Keybots
         UILaunchScreen:
           UIColorName: LaunchInk
-        UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        NSFaceIDUsageDescription: AIRKEY uses Face ID before you approve a payment or change your limits.
-        NSLocalNetworkUsageDescription: AIRKEY talks to your AIRKEY server on this network to run your agents.
+        NSFaceIDUsageDescription: Keybots uses Face ID before you approve a payment or change your limits.
+        NSLocalNetworkUsageDescription: Keybots talks to your Keybots server on this network to run your agents.
         AirkeyServer: $(AIRKEY_SERVER)
         AirkeyToken: $(AIRKEY_TOKEN)
         NSAppTransportSecurity:
@@ -60,8 +58,8 @@ targets:
     info:
       path: AirKeyKeyboard/Info.plist
       properties:
-        CFBundleDisplayName: AIRKEY
-        NSPhotoLibraryUsageDescription: AIRKEY shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.
+        CFBundleDisplayName: Keybots
+        NSPhotoLibraryUsageDescription: Keybots shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.
         AirkeyServer: $(AIRKEY_SERVER)
         AirkeyToken: $(AIRKEY_TOKEN)
         NSAppTransportSecurity:

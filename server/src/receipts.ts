@@ -9,8 +9,11 @@ import type { Action } from "./parse.js";
 import type { Decision } from "./near.js";
 import type { SwapQuote, TokenCheck } from "./intents.js";
 
-/** "follow": the server built the command from a followed KOL's call, under the owner's rules for them. */
-export type Source = "typed" | "pasted" | "follow";
+/**
+ * "follow": the server built the command from a followed KOL's call, under the owner's rules for them.
+ * "reviewed-call": a KOL's call the owner reviewed (exact amounts, venue, limits) and confirmed (trade.ts).
+ */
+export type Source = "typed" | "pasted" | "follow" | "reviewed-call";
 
 export interface Receipt {
   id: string;

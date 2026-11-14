@@ -125,7 +125,7 @@ describe("a quote for the trade panel", () => {
       route: { venue: "Rhea", pools: [1103] },
       executable: false,
       ready: false,
-      reason: "The leash can't sell USDC yet. Its owner sets that up; this is Rhea's live quote.",
+      reason: "Spend Limits can't sell USDC yet. Its owner sets that up; this is Rhea's live quote.",
       command: "swap 1.05 usdc to near",
     });
     expect(Number(none.amountOut)).toBeCloseTo(0.4995, 3);
@@ -144,7 +144,7 @@ describe("a quote for the trade panel", () => {
     expect(await make({ state: { available: (NEAR24 / 10n).toString() } }).quote({ from: "NEAR", to: "USDC", amount: "0.5" })).toMatchObject({
       ready: false,
       balance: { amount: "0.1", enough: false },
-      problem: "Not enough NEAR: the leash holds 0.1.",
+      problem: "Not enough NEAR: Spend Limits holds 0.1.",
     });
     expect(await make({ state: { paused: true } }).quote({ from: "NEAR", to: "USDC", amount: "0.5" })).toMatchObject({
       ready: false,
@@ -217,7 +217,16 @@ describe("a quote for the trade panel", () => {
     }).quote({ from: "NEAR", to: "SOL", amount: "0.05" });
     expect(small).toMatchObject({ route: { venue: "NEAR Intents" }, executable: true, minReceived: "0.00099" });
     const big = await make({ network: "mainnet" }).quote({ from: "NEAR", to: "SOL", amount: "0.5" });
-    expect(big).toMatchObject({ executable: false, reason: "On mainnet AIRKEY swaps at most $0.15; this is about $1.00." });
+    expect(big).toMatchObject({ executable: false, reason: "On mainnet Keybots swaps at most $0.15; this is about $1.00." });
+  });
+
+  it("names the network and says where the token lands", async () => {
+    const m = await make({ network: "mainnet" }).quote({ from: "NEAR", to: "SOL", amount: "0.05" });
+    expect(m.network).toBe("NEAR mainnet");
+    expect(m.lands).toMatch(/NEAR Intents balance/);
+    const t = await make().quote({ from: "NEAR", to: "USDC", amount: "0.5" });
+    expect(t.network).toBe("NEAR testnet");
+    expect(t.lands).toBe("Lands in Spend Limits (leash.x.testnet).");
   });
 });
 
