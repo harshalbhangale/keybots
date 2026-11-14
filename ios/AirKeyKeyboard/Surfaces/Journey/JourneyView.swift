@@ -105,7 +105,9 @@ struct JourneyView: View {
                     .font(.footnote.weight(.semibold)).foregroundStyle(p.warn)
                 Text(message).font(.footnote).foregroundStyle(p.text)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
+                if !message.contains("check Wallet") {
+                    Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)

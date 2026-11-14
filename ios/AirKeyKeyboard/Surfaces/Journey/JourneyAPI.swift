@@ -110,6 +110,8 @@ enum ConfirmAnswer: Equatable {
     case expired(String)
     /// The same review is already on its way.
     case busy(String)
+    /// The server doesn't know this review (it restarted): review again.
+    case gone(String)
 }
 
 struct JourneyAPI {
@@ -139,6 +141,7 @@ struct JourneyAPI {
             let msg = Self.said(j, status)
             return J.bool(j["expired"]) == true ? .expired(msg) : .busy(msg)
         }
+        if status == 404 { return .gone(J.str(j["error"]) ?? "No such review. Review the trade again.") }
         guard (200..<300).contains(status) else { throw APIError(message: Self.said(j, status)) }
         let r = J.dict(j["receipt"])
         return .receipt(TradeReceipt(

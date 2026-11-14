@@ -24,12 +24,19 @@ struct KolCardView: View {
 
     @State private var expanded = false
 
+    /// Sample posts come as author "sample"; their tag says so instead.
+    private var isSampleAuthor: Bool { handle?.lowercased() == "sample" }
+
     var body: some View {
         let p = palette
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
-                Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.bold)).lineLimit(1)
-                if let name { Text(name).font(.caption).foregroundStyle(p.soft).lineLimit(1) }
+                if isSampleAuthor {
+                    Text(name ?? "Sample post").font(.footnote.weight(.bold)).lineLimit(1)
+                } else {
+                    Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.bold)).lineLimit(1)
+                    if let name { Text(name).font(.caption).foregroundStyle(p.soft).lineLimit(1) }
+                }
                 if let ago = J.ago(postedAt) {
                     Text("· \(ago)").font(.caption).foregroundStyle(p.soft).lineLimit(1).fixedSize()
                 }

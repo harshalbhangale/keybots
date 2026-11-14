@@ -274,11 +274,13 @@ struct CallsView: View {
                                     .font(.caption).foregroundStyle(p.soft).fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                             }
-                        } else if let note = feed.note {
-                            Text(note).font(.caption).foregroundStyle(p.soft).frame(maxWidth: .infinity, alignment: .leading)
                         }
                         ForEach(feed.calls) { call in
                             KolCardView(call: call, sample: feed.sample, palette: p, actions: actions) { model.review(call) }
+                        }
+                        if !feed.sample, let note = feed.note {
+                            Text(note).font(.caption2).foregroundStyle(p.soft).frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 4)
                         }
                     }
                     .padding(.bottom, 8)
