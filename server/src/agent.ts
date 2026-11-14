@@ -85,9 +85,22 @@ export interface FollowSource {
   postUrl: string;
 }
 
-export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource): Promise<Receipt> {
+/** How a reviewed trade runs (trade.ts): the owner saw the numbers and confirmed them. */
+export interface SwapOptions {
+  /**
+   * Send it to the leash even when the server's own check says it's over a
+   * cap, so the contract decides and records the refusal on chain. Stop
+   * everything and the mainnet dollar ceiling still stop it here.
+   */
+  leashDecides?: boolean;
+  /** The least the owner was shown, in the token's units: the swap never accepts less. */
+  minOut?: string;
+}
+
+export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource, opts: SwapOptions = {}): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
-  const input = { text: text.slice(0, 2000), source, ...(source === "follow" && from ? { handle: from.handle, postUrl: from.postUrl } : {}) };
+  const withPost = (source === "follow" || source === "reviewed-call") && from;
+  const input = { text: text.slice(0, 2000), source, ...(withPost ? { handle: from.handle, postUrl: from.postUrl } : {}) };
   const base = { id: randomUUID(), at: new Date().toISOString(), input };
 
   // 1. Read it: rules first, an AI only for what the rules can't read.
@@ -105,7 +118,8 @@ export async function runCommand(deps: Deps, text: string, source: Source, from?
   if (action.kind === "unknown") return done({ outcome: "not-sent", message: action.reason });
   // A followed KOL's call only ever becomes one swap: never a payment or a standing order.
   if (source === "follow" && action.kind !== "swap") return done({ outcome: "blocked", message: "Only a swap runs for a KOL you follow." });
-  if (action.kind === "swap") return swap(deps, action, source, done);
+  if (source === "reviewed-call" && action.kind !== "swap") return done({ outcome: "blocked", message: "Only a swap runs from a reviewed call." });
+  if (action.kind === "swap") return swap(deps, action, source, done, opts);
   if (action.kind === "watch") return watch(deps, action, text, source, done);
 
   // 2. Who is it for?
@@ -277,6 +291,7 @@ async function swap(
   action: Extract<Action, { kind: "swap" }>,
   source: Source,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+  opts: SwapOptions = {},
 ): Promise<Receipt> {
   const label = `${action.amount} ${action.from} → ${action.to}`;
   if (source === "pasted") {
@@ -326,7 +341,8 @@ async function swap(
       const left = BigInt(a.daily_cap) - BigInt(a.spent_today);
       const within = !state.paused && value <= BigInt(a.per_payment_cap) && value <= left;
       leash = { agent, valueNear: yoctoToNear(value), perPaymentCap: a.per_payment_cap, leftToday: (left > 0n ? left : 0n).toString(), within };
-      if (!within) {
+      // A reviewed trade over a cap still goes to the leash: the contract refuses it and records why on chain.
+      if (!within && (state.paused || !opts.leashDecides)) {
         const why = state.paused
           ? "the kill switch is on"
           : value > BigInt(a.per_payment_cap)
@@ -344,7 +360,7 @@ async function swap(
   // NEAR into a token Rhea has a pool for: swap it for real, from the leash.
   const route = from.token!.assetId.endsWith("wrap.near") ? deps.rhea?.route(action.to) : undefined;
   if (route && deps.rhea?.network) {
-    return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done);
+    return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done, opts.minOut);
   }
   // A token the leash holds (USDC, USDT) into NEAR or the other one: sell it on Rhea, from the leash.
   // Only when the owner has set the leash's rule for that token; otherwise it stays a quote.
@@ -417,6 +433,9 @@ async function swapOnIntents(
   return done({ outcome: progress?.done ? "not-sent" : "swapped", message: `The swap of ${label} ${why}.`, agent: who, decision, tx, events, swap: { ...swap, executed } });
 }
 
+/** The higher of the pool's floor now and the least the owner was shown: never less than they saw. */
+const floor = (now: string, shown?: string) => (shown && BigInt(shown) > BigInt(now) ? shown : now);
+
 /** The leash wraps the NEAR and Rhea swaps it in one pool; the token comes back to the leash. */
 async function swapOnRhea(
   deps: Deps,
@@ -425,6 +444,7 @@ async function swapOnRhea(
   route: NonNullable<ReturnType<RheaClient["route"]>>,
   swap: NonNullable<Receipt["swap"]>,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+  shownMin?: string,
 ): Promise<Receipt> {
   const net = deps.rhea!.network!;
   const label = `${action.amount} NEAR → ${route.symbol}`;
@@ -444,7 +464,7 @@ async function swapOnRhea(
     venue: net.exchange,
     amount: amountIn,
     wrap: net.wrap,
-    msg: swapMsg(net, route, amountIn, minOut(expected)),
+    msg: swapMsg(net, route, amountIn, floor(minOut(expected), shownMin)),
     memo: `swap ${label}`,
   });
   const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
