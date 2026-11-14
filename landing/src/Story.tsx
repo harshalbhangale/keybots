@@ -7,10 +7,13 @@ import { CHAIN, SCENARIOS } from "./scenarios";
 const STEPS: { id: string; icon: string; tag: string }[] = [
   { id: "pay", icon: "pay", tag: "Pay" },
   { id: "scam", icon: "shield", tag: "Scams" },
+  { id: "ai", icon: "chip", tag: "Private AI" },
+  { id: "swap", icon: "swap", tag: "Swap" },
+  { id: "call", icon: "spark", tag: "Telegram trade" },
   { id: "approve", icon: "face", tag: "Approve" },
-  { id: "call", icon: "swap", tag: "Trade a call" },
-  { id: "follow", icon: "follow", tag: "Follow" },
-];
+  { id: "agents", icon: "lock", tag: "Agents" },
+  { id: "follow", icon: "follow", tag: "Follow on X" },
+]
 const PICK = STEPS.map((s) => SCENARIOS.find((c) => c.id === s.id)!);
 
 export default function Story() {
@@ -54,7 +57,7 @@ export default function Story() {
   };
 
   return (
-    <section className="st" ref={sec} id="how" style={{ height: `${n * 85 + 40}vh` }}>
+    <section className="st" ref={sec} id="how" style={{ height: `${n * 70 + 40}vh` }}>
       <div className="st-pin">
         <div className="y-wrap wide st-grid">
           <div className="st-side">
