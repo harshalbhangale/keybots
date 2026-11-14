@@ -4,7 +4,7 @@ import Keyboard3D from "./Keyboard3D";
 import Story, { Private } from "./Story";
 import { NearMark } from "./Sections";
 import { Ticker, WORKS } from "./Z";
-import { Downloads, E2E, GitHub, LEASH, Mark, REPO } from "./ui";
+import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
 
 /** Set to the demo video (an .mp4, or a YouTube embed URL) once it exists; until then the poster shows. */
 const VIDEO_URL: string = "";
@@ -52,7 +52,7 @@ export default function App() {
     <>
       <nav className="y-nav">
         <a href="#top" className="brand">
-          <Mark size={30} /> Keybots
+          <Lockup />
         </a>
         <span className="y-links">
           <a href="#how">How it works</a>
@@ -141,7 +141,7 @@ export default function App() {
 
       <footer className="foot wrap">
         <span>
-          <Mark size={22} /> Keybots · built at NEAR HACKATHON 2026 by Harshal Bhangale
+          <Lockup small /> <span className="foot-note">built at NEAR HACKATHON 2026 by Harshal Bhangale</span>
         </span>
         <a className="built-near" href="https://near.org" target="_blank" rel="noreferrer">
           <NearMark size={18} /> Built on NEAR
