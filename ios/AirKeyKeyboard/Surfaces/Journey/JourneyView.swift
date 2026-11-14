@@ -29,6 +29,9 @@ struct JourneyView: View {
         .padding(.top, 6)
         .padding(.bottom, 4)
         .foregroundStyle(p.text)
+        // The keyboard's height is fixed: past Large the card would scroll,
+        // so like the system keyboard it stops growing there.
+        .dynamicTypeSize(...DynamicTypeSize.large)
         .onAppear { model.start() }
         .onDisappear { model.stop() }
     }
