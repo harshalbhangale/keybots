@@ -1,7 +1,7 @@
 // A small, read-only Telegram source for trade calls. A bot sits in a group
 // (or is an admin of a channel); this long-polls the Bot API's getUpdates,
 // keeps the messages that read as a spot buy or sell call, and the feed shows
-// them next to Kall's. It never sends anything, answers no commands, and the
+// them next to the X feed's. It never sends anything, answers no commands, and the
 // message text is only ever shown and read by the fixed rules in calls.ts:
 // it is never given to an AI and never put in a prompt.
 //
@@ -73,7 +73,7 @@ export function tidyText(s: string): string {
 
 /**
  * Does this message read as a spot buy or sell call? Same fixed rules as the
- * Kall feed: a ticker with a direction, not a perp, no contract address.
+ * the X feed: a ticker with a direction, not a perp, no contract address.
  */
 export function readAsCall(text: string): { asset: string; direction: "buy" | "sell" } | null {
   const c = readCall(text);

@@ -5,7 +5,7 @@
 import { loadConfig } from "./config.js";
 import { dryRun, format } from "./dryrun.js";
 import { intentsClient } from "./intents.js";
-import { kallClient } from "./kall.js";
+import { xFeedClient } from "./xfeed.js";
 import { nearChain } from "./near.js";
 import { memoryStore } from "./receipts.js";
 import { rheaClient } from "./rhea.js";
@@ -29,7 +29,7 @@ const deps = {
 };
 try {
   if (call) {
-    const flow = tradeFlow({ ...deps, receipts: memoryStore(), kall: kallClient(cfg.kallApi) });
+    const flow = tradeFlow({ ...deps, receipts: memoryStore(), xfeed: xFeedClient(cfg.xFeedApi) });
     const feed = await flow.feed();
     console.log(`Feed: ${feed.source}, ${feed.calls.length} calls. ${feed.note ?? ""}`.trim());
     // The first call that reviews; the ones before it say why they didn't.
