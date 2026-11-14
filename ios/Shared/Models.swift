@@ -425,3 +425,273 @@ struct PickerToken: Decodable, Identifiable, Equatable {
 }
 
 struct PickerTokenList: Decodable { let tokens: [PickerToken] }
+
+// MARK: - People you follow (GET/POST/DELETE /v1/follows, GET /v1/kols)
+//
+// Decoded loosely: every field but the handle (and a trade's id) has a
+// default, and unknown keys are ignored, so a small server difference
+// leaves the list on screen instead of an error.
+
+private extension KeyedDecodingContainer {
+    func loose<T: Decodable>(_ key: Key, _ fallback: T) -> T {
+        ((try? decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
+    }
+}
+
+/// A list that drops the items it can't read instead of failing whole.
+struct LooseList<T: Decodable>: Decodable {
+    let items: [T]
+    init(from decoder: Swift.Decoder) throws {
+        var c = try decoder.unkeyedContainer()
+        var out: [T] = []
+        while !c.isAtEnd {
+            // A failed decode doesn't move the cursor; Skip does.
+            if let item = try? c.decode(T.self) { out.append(item) } else if (try? c.decode(Skip.self)) == nil { break }
+        }
+        items = out
+    }
+    /// Reads any value and keeps nothing, so the list moves past a bad item.
+    private struct Skip: Decodable { init(from decoder: Swift.Decoder) throws {} }
+}
+
+/// A caller's record from Kall: calls that hit, missed, are still open, and the average return.
+struct CallerRecord: Decodable, Equatable, Sendable {
+    var hits: Int
+    var misses: Int
+    var open: Int
+    /// nil when Kall has no return for them yet.
+    var avgReturnBps: Double?
+
+    enum CodingKeys: String, CodingKey { case hits, misses, open, avgReturnBps }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        hits = c.loose(.hits, 0)
+        misses = c.loose(.misses, 0)
+        open = c.loose(.open, 0)
+        avgReturnBps = c.loose(.avgReturnBps, nil as Double?)
+    }
+
+    /// "7 hits · 3 misses · avg +1.2%" (no average when Kall has none)
+    var line: String {
+        var parts = ["\(hits) hit\(hits == 1 ? "" : "s")", "\(misses) miss\(misses == 1 ? "" : "es")"]
+        if let bps = avgReturnBps {
+            let avg = bps / 100
+            parts.append("avg " + (abs(avg) < 0.05 ? "0%" : String(format: "%+.1f%%", avg)))
+        }
+        return parts.joined(separator: " · ")
+    }
+}
+
+/// Someone you follow, with the rules their calls trade under.
+struct Follow: Decodable, Identifiable, Equatable, Sendable {
+    let handle: String
+    var auto: Bool
+    var perCallUsd: Double
+    var perDayUsd: Double
+    /// "buy" or "both".
+    var sides: String
+    var highOnly: Bool
+    var stopAfterMisses: Int
+    let addedAt: String?
+    var spentTodayUsd: Double
+    let lastCallAt: String?
+    var pausedReason: String?
+    let record: CallerRecord?
+    /// Misses since their last hit.
+    let missesInRow: Int
+
+    var id: String { handle.lowercased() }
+
+    enum CodingKeys: String, CodingKey {
+        case handle, auto, perCallUsd, perDayUsd, sides, highOnly, stopAfterMisses, addedAt, spentTodayUsd, lastCallAt, pausedReason, record, missesInRow
+    }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        handle = Follow.clean(try c.decode(String.self, forKey: .handle))
+        auto = c.loose(.auto, false)
+        perCallUsd = c.loose(.perCallUsd, 1)
+        perDayUsd = c.loose(.perDayUsd, 3)
+        sides = c.loose(.sides, "buy")
+        highOnly = c.loose(.highOnly, true)
+        stopAfterMisses = c.loose(.stopAfterMisses, 3)
+        addedAt = c.loose(.addedAt, nil as String?)
+        spentTodayUsd = c.loose(.spentTodayUsd, 0)
+        lastCallAt = c.loose(.lastCallAt, nil as String?)
+        pausedReason = c.loose(.pausedReason, nil as String?)
+        missesInRow = c.loose(.missesInRow, 0)
+        record = c.loose(.record, nil as CallerRecord?)
+    }
+
+    /// "@CryptoKaleo", "x.com/CryptoKaleo" or "CryptoKaleo" → "CryptoKaleo".
+    static func clean(_ handle: String) -> String {
+        var h = handle.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let q = h.firstIndex(of: "?") { h = String(h[..<q]) }
+        while h.hasSuffix("/") { h.removeLast() }
+        if let slash = h.lastIndex(of: "/") { h = String(h[h.index(after: slash)...]) }
+        while h.hasPrefix("@") { h.removeFirst() }
+        return h
+    }
+
+    /// A handle X would accept: 1 to 15 letters, digits or underscores.
+    static func valid(_ handle: String) -> Bool {
+        !handle.isEmpty && handle.count <= 15 && handle.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_") }
+    }
+
+    /// The record line, or a quiet stand-in while Kall is slow.
+    var recordLine: String { record?.line ?? "Record loading" }
+    /// Auto was turned off for them (three misses in a row, say).
+    var paused: Bool { !(pausedReason ?? "").isEmpty }
+
+    /// "$1 of $3 used"
+    var usedLine: String { "\(Dollars.text(spentTodayUsd)) of \(Dollars.text(perDayUsd)) used" }
+    var buyOnly: Bool { sides != "both" }
+
+    var rules: FollowRules {
+        FollowRules(auto: auto, perCallUsd: perCallUsd, perDayUsd: perDayUsd, sides: sides, highOnly: highOnly, stopAfterMisses: stopAfterMisses)
+    }
+
+    mutating func apply(_ r: FollowRules) {
+        auto = r.auto
+        perCallUsd = r.perCallUsd
+        perDayUsd = r.perDayUsd
+        sides = r.sides
+        highOnly = r.highOnly
+        stopAfterMisses = r.stopAfterMisses
+    }
+}
+
+/// What you set for one person: sent as POST /v1/follows.
+struct FollowRules: Equatable, Sendable {
+    var auto: Bool = false
+    var perCallUsd: Double = 1
+    var perDayUsd: Double = 3
+    var sides: String = "buy"
+    var highOnly: Bool = true
+    var stopAfterMisses: Int = 3
+}
+
+/// A trade made (or not) for you because someone you follow posted a call.
+struct AutoTrade: Decodable, Identifiable, Equatable, Sendable {
+    let id: String
+    let handle: String
+    let postId: String?
+    let postUrl: String?
+    let asset: String?
+    let side: String
+    let at: String
+    /// "traded", "skipped" or "failed".
+    let status: String
+    let reason: String?
+    let message: String
+    let usd: Double?
+    let receiptId: String?
+    let txUrl: String?
+    let onRequest: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id, handle, postId, postUrl, asset, side, at, status, reason, message, usd, receiptId, txUrl, onRequest
+    }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let postId = c.loose(.postId, nil as String?)
+        let at = c.loose(.at, "")
+        let id = c.loose(.id, nil as String?) ?? postId ?? at
+        guard !id.isEmpty else { throw DecodingError.dataCorruptedError(forKey: .id, in: c, debugDescription: "A trade without an id.") }
+        self.id = id
+        handle = Follow.clean(c.loose(.handle, ""))
+        self.postId = postId
+        postUrl = c.loose(.postUrl, nil as String?)
+        asset = c.loose(.asset, nil as String?)
+        side = c.loose(.side, "buy")
+        self.at = at
+        status = c.loose(.status, "skipped")
+        let reason = c.loose(.reason, nil as String?)
+        self.reason = reason
+        let message = c.loose(.message, "")
+        self.message = message.isEmpty ? (reason ?? "No trade.") : message
+        usd = c.loose(.usd, nil as Double?)
+        receiptId = c.loose(.receiptId, nil as String?)
+        txUrl = c.loose(.txUrl, nil as String?)
+        onRequest = c.loose(.onRequest, false)
+    }
+
+    var traded: Bool { status == "traded" }
+    var failed: Bool { status == "failed" }
+    /// The mark a row gets: a check when it traded, a warning when it failed, a dash when skipped.
+    var icon: String {
+        switch status {
+        case "traded": "checkmark"
+        case "failed": "exclamationmark"
+        default: "minus"
+        }
+    }
+    /// traded: lime, failed: amber, skipped: quiet.
+    var signal: Signal {
+        switch status {
+        case "traded": .allow
+        case "failed": .warn
+        default: .neutral
+        }
+    }
+    var date: Date? { ISO8601DateFormatter.withFraction.date(from: at) ?? ISO8601DateFormatter().date(from: at) }
+    /// "just now" for the last minute (or a server clock a little ahead), else "4 min. ago".
+    var ago: String {
+        guard let date else { return "" }
+        return date.timeIntervalSinceNow > -60 ? "just now" : Fmt.time(date)
+    }
+}
+
+struct FollowsList: Decodable {
+    let follows: [Follow]
+    let trades: [AutoTrade]
+    enum CodingKeys: String, CodingKey { case follows, trades }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        follows = c.loose(.follows, nil as LooseList<Follow>?)?.items ?? []
+        trades = c.loose(.trades, nil as LooseList<AutoTrade>?)?.items ?? []
+    }
+}
+
+/// A caller Kall tracks, to suggest when you add someone.
+struct Caller: Decodable, Identifiable, Equatable, Sendable {
+    let handle: String
+    let name: String?
+    /// What they mostly call: "majors", "SOL memes". Missing for some.
+    let focus: String?
+    let record: CallerRecord
+    var id: String { handle.lowercased() }
+
+    enum CodingKeys: String, CodingKey { case handle, name, focus }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        handle = Follow.clean(try c.decode(String.self, forKey: .handle))
+        name = c.loose(.name, nil as String?)
+        focus = c.loose(.focus, nil as String?).flatMap { $0.isEmpty ? nil : $0 }
+        record = try CallerRecord(from: decoder)
+    }
+}
+
+struct CallerList: Decodable {
+    let callers: [Caller]
+    enum CodingKeys: String, CodingKey { case callers }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        callers = c.loose(.callers, nil as LooseList<Caller>?)?.items ?? []
+    }
+}
+
+struct FollowCheck: Decodable {
+    let trades: [AutoTrade]
+    enum CodingKeys: String, CodingKey { case trades }
+    init(from decoder: Swift.Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        trades = c.loose(.trades, nil as LooseList<AutoTrade>?)?.items ?? []
+    }
+}
+
+enum Dollars {
+    /// "$1", "$2.50": whole dollars without the cents.
+    static func text(_ v: Double) -> String {
+        v.rounded() == v && abs(v) < 1e9 ? "$\(Int(v))" : Fmt.usd(v)
+    }
+}
