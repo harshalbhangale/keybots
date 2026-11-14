@@ -37,6 +37,8 @@ struct Masthead<Trailing: View>: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.large)
+        // Once content scrolls under it, the inline title sits on a solid bar.
+        .toolbarBackground(AK.canvas, for: .navigationBar)
         .toolbar {
             if hasTrailing {
                 ToolbarItem(placement: .topBarTrailing) { trailing }
