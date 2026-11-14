@@ -72,6 +72,24 @@ A call can come from X (through Kall's feed) or from text you copy. Telegram is 
 
 Money words are read by fixed rules with no AI, and text that reads as money is never sent to the AI. Wording help (fix, rewrite, translate, reply) uses NEAR AI Cloud when it is configured, with a receipt on the keyboard. If NEAR AI does not answer, OpenAI can step in, and the receipt says which one did.
 
+### How it works, one line each
+
+| Piece | In one line |
+|---|---|
+| **Keyboard** | An iOS keyboard that shows what your words would do (`Pay 0.2 NEAR to harshal`) and only acts when you hold the button, never on a tap, and it never holds a key. |
+| **Typing stays safe** | Autocorrect never touches money, names, accounts, tickers or numbers, and text that reads as a payment is never sent to the AI. |
+| **Typed vs pasted** | What you type goes to the trusted Pay Agent, and text from someone else goes to the Inbox Agent, which can't trade and can only pay people you allowed. |
+| **AI model** | Qwen3-VL 30B Instruct (`Qwen/Qwen3-VL-30B-A3B-Instruct`) on NEAR AI Cloud, with OpenAI `gpt-4.1-mini` as a fallback that is not private or signed, and the receipt says which one answered. |
+| **Private AI** | Private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests; the TDX and GPU verdicts come from Phala and NVIDIA's verifiers. |
+| **AI help** | Hold space for fix, rewrite, tone, reply, translate, ask or search, and nothing enters your message until you tap Replace, Insert or Copy. |
+| **Agents** | Pay, Inbox and Trading are separate NEAR accounts whose only key can call a few contract methods, so a fooled agent still can't move money on its own. |
+| **Spend Limits (the leash)** | A Rust contract on NEAR holds the funds and decides every payment and swap in a fixed order: stop switch, blocklist, per-payment cap, daily cap, allowlist, owner approval. |
+| **NEAR Intents** | Checks that a token is real against its token list and gives live quotes, as dry runs that send nothing. |
+| **Swap** | `swap 0.1 near to usdc` makes the Trading Agent ask the contract, which swaps on Rhea on testnet and keeps the result inside the contract. |
+| **Calls** | A call from X (through Kall's feed) or from copied text becomes one small trade chip that waits for your hold, and auto-trading is off unless you turn it on. |
+| **Receipts** | Every decision, paid or refused, is an on-chain event with a testnet explorer link, and Share puts the receipt in your chat. |
+| **Where it runs** | Everything on NEAR testnet today, and no mainnet swap has been enforced. |
+
 **A payment's path:** the keyboard previews a typed command → the server selects the agent and checks the receiver → the agent's restricted key calls the leash → the contract pays, blocks or records an approval request → Keybots shows the outcome and transaction receipt.
 
 **Important trust boundary:** the server relies on the client-supplied `typed` or `pasted` source to select a trust tier. The contract enforces the tier assigned to the agent account, but cannot independently prove where the text originated. Restricted keys and contract rules reduce risk; they do not guarantee detection of every scam or prevent losses within allowed limits.
