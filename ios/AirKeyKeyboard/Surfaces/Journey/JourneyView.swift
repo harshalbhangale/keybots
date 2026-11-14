@@ -10,12 +10,14 @@ struct JourneyView: View {
     let palette: MoneyPalette
     let close: () -> Void
 
+    @State private var sourceOpen = false
+
     var body: some View {
         let p = palette
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             header(p)
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 6) { content(p) }
+                VStack(spacing: 8) { content(p) }
                     .padding(.bottom, 4)
             }
             .scrollEdgeEffectHidden(true, for: .all)
@@ -31,54 +33,77 @@ struct JourneyView: View {
         .onDisappear { model.stop() }
     }
 
-    static let bottomHeight: CGFloat = 96
+    static let bottomHeight: CGFloat = 88
 
     // MARK: Header: back, size, countdown
 
     private func header(_ p: MoneyPalette) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Button { Haptics.layer(); close() } label: {
-                HStack(spacing: 3) {
-                    Image(systemName: "chevron.left").font(.system(size: 11, weight: .bold))
-                    Text(model.phase == .receipt ? "Calls" : "Back").font(.footnote.weight(.semibold))
-                }
-                .padding(.horizontal, 10).frame(height: 28)
-                .background(p.fill, in: Capsule()).contentShape(Capsule())
+                Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
+                    .frame(width: 32, height: 32)
+                    .background(p.fill, in: Circle()).contentShape(Circle())
             }
             .buttonStyle(MoneyPress())
-            if model.phase != .receipt {
-                ForEach(JourneyModel.sizes, id: \.self) { size in
-                    let on = size == model.usd
-                    Button { model.pick(size) } label: {
-                        Text("$\(size)").font(.footnote.weight(.semibold).monospacedDigit())
-                            .foregroundStyle(on ? AK.ink : p.text)
-                            .frame(width: 38, height: 28)
-                            .background(on ? AK.accent : p.fill, in: Capsule()).contentShape(Capsule())
-                    }
-                    .buttonStyle(MoneyPress())
-                    .disabled(model.phase == .sending || model.confirmed)
-                    .accessibilityLabel("Trade \(size) dollars")
-                    .accessibilityAddTraits(on ? .isSelected : [])
-                }
+            .accessibilityLabel(model.phase == .receipt ? "Back to Calls" : "Back")
+            if model.phase == .receipt {
+                Text("Receipt").font(.subheadline.weight(.semibold))
+            } else {
+                sizes(p)
             }
             Spacer(minLength: 4)
             countdown(p)
         }
+        .frame(height: 32)
+    }
+
+    private func sizes(_ p: MoneyPalette) -> some View {
+        let locked = model.phase == .sending || model.confirmed
+        return HStack(spacing: 2) {
+            ForEach(JourneyModel.sizes, id: \.self) { size in
+                let on = size == model.usd
+                Button { model.pick(size) } label: {
+                    Text("$\(size)").font(.footnote.weight(on ? .semibold : .medium).monospacedDigit())
+                        .foregroundStyle(on ? p.text : p.soft)
+                        .frame(width: 44, height: 28)
+                        .background { if on { Capsule().fill(p.thumb).shadow(color: .black.opacity(p.dark ? 0 : 0.1), radius: 2, y: 1) } }
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Trade \(size) dollars")
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+        .padding(2)
+        .background(p.fill, in: Capsule())
+        .disabled(locked)
+        .opacity(locked ? 0.5 : 1)
     }
 
     @ViewBuilder private func countdown(_ p: MoneyPalette) -> some View {
         switch model.phase {
         case .review:
             let s = model.secondsLeft
-            Text("Quote \(s) s")
-                .font(.caption.weight(.semibold).monospacedDigit())
-                .foregroundStyle(s <= 5 ? p.warn : p.soft)
-                .contentTransition(.numericText(countsDown: true))
-                .accessibilityLabel("Quote good for \(s) seconds")
+            HStack(spacing: 5) {
+                ZStack {
+                    Circle().stroke(p.line, lineWidth: 2)
+                    Circle().trim(from: 0, to: CGFloat(s) / 30)
+                        .stroke(s <= 5 ? p.warn : p.soft, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 0.25), value: s)
+                }
+                .frame(width: 14, height: 14)
+                Text("\(s)s")
+                    .font(.footnote.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(s <= 5 ? p.warn : p.soft)
+                    .contentTransition(.numericText(countsDown: true))
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Quote good for \(s) seconds")
         case .expired:
-            Text("Quote expired").font(.caption.weight(.semibold)).foregroundStyle(p.warn)
+            Text("Expired").font(.footnote.weight(.semibold)).foregroundStyle(p.warn)
         case .receipt:
-            Text(model.receipt.flatMap { $0.at }.map(Self.clock) ?? "").font(.caption.monospacedDigit()).foregroundStyle(p.soft)
+            Text(model.receipt.flatMap { $0.at }.map(Self.clock) ?? "").font(.footnote.monospacedDigit()).foregroundStyle(p.soft)
         default:
             EmptyView()
         }
@@ -94,75 +119,83 @@ struct JourneyView: View {
                 .accessibilityLabel("Reviewing the trade")
         case .review, .sending, .expired:
             if let r = model.review {
-                // The numbers first, readable at a glance; the post they came from under them.
                 ReviewCard(review: r, palette: p, dim: model.phase == .expired)
-                postHeader(r, p)
+                source(r, p)
             }
         case .receipt:
             if let r = model.receipt { ReceiptCard(receipt: r, palette: p, actions: actions) }
         case .uncertain(let message):
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Result not known yet", systemImage: "questionmark.circle")
-                    .font(.footnote.weight(.semibold)).foregroundStyle(p.warn)
-                Text(message).font(.footnote).foregroundStyle(p.text)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            StateCard(icon: "questionmark", tint: p.warn, title: "Result not known yet", message: message,
+                      foot: nil, palette: p)
         case .failed(let message):
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Couldn't review this trade", systemImage: "exclamationmark.circle")
-                    .font(.footnote.weight(.semibold)).foregroundStyle(p.warn)
-                Text(message).font(.footnote).foregroundStyle(p.text)
-                    .fixedSize(horizontal: false, vertical: true)
-                if !message.contains("check Wallet") {
-                    Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            StateCard(icon: "exclamationmark", tint: p.warn, title: "Couldn't review this trade", message: message,
+                      foot: message.contains("check Wallet") ? nil : "Nothing was swapped.", palette: p)
         }
     }
 
-    private func postHeader(_ r: TradeReview, _ p: MoneyPalette) -> some View {
+    /// Where the call came from: one line, tap to read the post.
+    @ViewBuilder private func source(_ r: TradeReview, _ p: MoneyPalette) -> some View {
         let post = model.post
-        return KolCardView(handle: post?.handle ?? r.call.handle, name: post?.name ?? r.call.name,
-                           postedAt: post?.postedAt ?? r.call.postedAt, url: post?.url ?? r.call.url,
-                           text: r.call.text.isEmpty ? post?.text : r.call.text,
-                           asset: r.call.asset, direction: r.call.direction,
-                           hits: post?.hits, misses: post?.misses,
-                           reading: r.reading.isEmpty ? nil : r.reading, sample: false,
-                           palette: p, actions: actions, review: nil)
+        let handle = post?.handle ?? r.call.handle
+        if sourceOpen {
+            KolCardView(handle: handle, name: post?.name ?? r.call.name,
+                        postedAt: post?.postedAt ?? r.call.postedAt, url: post?.url ?? r.call.url,
+                        text: r.call.text.isEmpty ? post?.text : r.call.text,
+                        asset: r.call.asset, direction: r.call.direction,
+                        hits: post?.hits, misses: post?.misses,
+                        reading: r.reading.isEmpty ? nil : r.reading, sample: false,
+                        palette: p, actions: actions, review: nil)
+                .onTapGesture { withAnimation(.snappy(duration: 0.22)) { sourceOpen = false } }
+                .transition(.opacity)
+        } else {
+            Button {
+                Haptics.layer()
+                withAnimation(.snappy(duration: 0.22)) { sourceOpen = true }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(String((handle ?? "?").prefix(1)).uppercased())
+                        .font(.caption.weight(.bold))
+                        .frame(width: 22, height: 22)
+                        .background(p.fill, in: Circle())
+                    Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.semibold)).lineLimit(1)
+                    if let ago = J.ago(post?.postedAt ?? r.call.postedAt) {
+                        Text(ago).font(.footnote).foregroundStyle(p.soft).lineLimit(1).fixedSize()
+                    }
+                    Spacer(minLength: 4)
+                    Text("\(r.call.direction == "sell" ? "Sell" : "Buy") \(r.call.asset)")
+                        .font(.footnote.weight(.semibold)).foregroundStyle(p.soft).lineLimit(1).fixedSize()
+                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold)).foregroundStyle(p.faint)
+                }
+                .padding(.horizontal, 10).frame(height: 38)
+                .background(p.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Source: \(handle.map { "@\($0)" } ?? "copied post"), \(r.call.direction) \(r.call.asset)")
+            .accessibilityHint("Shows the post")
+        }
     }
 
-    // MARK: Under the card: the stand-in, then the hold (or what replaced it)
+    // MARK: Under the card: the hold (or what replaced it)
 
     @ViewBuilder private func bottom(_ p: MoneyPalette) -> some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 4) {
             Spacer(minLength: 0)
             switch model.phase {
             case .reviewing:
                 status("Reviewing…", spinning: true, p)
             case .review:
-                if let s = model.review?.standIn {
-                    Text(s).font(.caption).foregroundStyle(p.warn).lineLimit(3).fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
                 if let note = model.note {
                     Text(note).font(.caption).foregroundStyle(p.soft).lineLimit(1)
                 }
                 TradeHold(label: holdLabel, disabled: model.confirmed, palette: p) { model.confirm() }
             case .sending:
-                if let note = model.note {
-                    Text(note).font(.caption).foregroundStyle(p.soft).lineLimit(1)
-                }
                 status("Sending to Spend Limits…", spinning: true, p)
             case .expired:
-                Text("Quotes last 30 seconds so the price you saw is the price you get.")
-                    .font(.caption).foregroundStyle(p.soft).lineLimit(2)
-                wide("Quote expired · Review again", primary: true, p) { model.again() }
+                wide("Review again", primary: true, p) { model.again() }
+                    .accessibilityHint("Quotes last 30 seconds so the price you see is the price you get.")
             case .receipt:
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     wide("Done", primary: false, p) { close() }
                     if let line = model.receiptLine {
                         wide("Insert", primary: true, p) { actions.share(line) }
@@ -173,14 +206,15 @@ struct JourneyView: View {
                 wide("Review again", primary: true, p) { model.again() }
             case .uncertain:
                 if let note = model.note {
-                    Text(note).font(.caption).foregroundStyle(p.soft).lineLimit(2)
+                    Text(note).font(.caption).foregroundStyle(p.soft).lineLimit(1)
                 }
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     wide("Done", primary: false, p) { close() }
                     wide("Check status", primary: true, p) { model.checkStatus() }
                 }
             }
         }
+        .padding(.bottom, 20)
     }
 
     private var holdLabel: String {
@@ -192,29 +226,27 @@ struct JourneyView: View {
 
     private func status(_ text: String, spinning: Bool, _ p: MoneyPalette) -> some View {
         HStack(spacing: 8) {
-            if spinning { ProgressView().controlSize(.small).tint(p.text) }
+            if spinning { ProgressView().controlSize(.small).tint(p.soft) }
             Text(text).font(.subheadline.weight(.semibold)).foregroundStyle(p.soft)
         }
         .frame(maxWidth: .infinity).frame(height: 44)
         .background(p.fill, in: Capsule())
-        .padding(.bottom, 20)
         .accessibilityElement(children: .combine)
     }
 
     private func wide(_ title: String, primary: Bool, _ p: MoneyPalette, action: @escaping () -> Void) -> some View {
         Button { Haptics.letter(); action() } label: {
-            Text(title).font(.subheadline.weight(.bold))
+            Text(title).font(.subheadline.weight(.semibold))
                 .foregroundStyle(primary ? AK.ink : p.text)
                 .frame(maxWidth: .infinity).frame(height: 44)
                 .background(primary ? AK.accent : p.fill, in: Capsule()).contentShape(Capsule())
         }
         .buttonStyle(MoneyPress())
-        .padding(.bottom, 20)
     }
 
     static func clock(_ d: Date) -> String {
         let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
+        f.dateFormat = "HH:mm"
         return f.string(from: d)
     }
 
@@ -224,13 +256,104 @@ struct JourneyView: View {
         call: .init(handle: nil, name: nil, postedAt: nil, url: nil, text: "", asset: "NEAR", direction: "buy"),
         reading: "", network: "NEAR testnet", venue: "Rhea, pool 0000",
         pay: Amount(amount: "0.0000", symbol: "NEAR"), receive: Amount(amount: "0.0000", symbol: "USDC"),
-        receiveMin: "0.0000", slippagePct: "1", fundsSit: "In your leash account until the swap",
-        standIn: nil, mainnet: .init(label: "Mainnet price, dry run", payAmount: "0.0000", receiveAmount: "0.0000", symbol: "USDC"),
+        receiveMin: "0.0000", slippagePct: "1", fundsSit: "In Spend Limits",
+        standIn: nil, mainnet: nil,
         limits: .init(agentName: "Trading Agent", perTrade: "1", daily: "2", spentToday: "0", stopped: false, within: true,
-                      sentence: "The Trading Agent can spend up to 1 NEAR a trade and 2 NEAR a day. You can stop it.", willRefuse: nil, refusedBy: nil))
+                      sentence: "", willRefuse: nil, refusedBy: nil))
 }
 
-/// Everything about the trade, readable at a glance.
+// MARK: - Shared pieces
+
+/// A label on the left, its value on the right, on one baseline.
+struct InfoRow: View {
+    let label: String
+    let value: String
+    let palette: MoneyPalette
+    var tint: Color?
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label).foregroundStyle(palette.soft).lineLimit(1).layoutPriority(1)
+            Spacer(minLength: 8)
+            Text(value).fontWeight(.medium).foregroundStyle(tint ?? palette.text)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .font(.footnote)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// One compact amber line with an icon: a refusal ahead, or the testnet stand-in.
+struct Callout: View {
+    let icon: String
+    let text: String
+    let tint: Color
+    let palette: MoneyPalette
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            Image(systemName: icon).font(.system(size: 11, weight: .semibold))
+            Text(text).font(.caption.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 10).padding(.vertical, 7)
+        .background(tint.opacity(palette.dark ? 0.16 : 0.10), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A thin bar for today's spend against the daily limit.
+struct SpendBar: View {
+    let fraction: Double
+    let tint: Color
+    let palette: MoneyPalette
+
+    var body: some View {
+        GeometryReader { g in
+            ZStack(alignment: .leading) {
+                Capsule().fill(palette.fill)
+                Capsule().fill(tint).frame(width: max(4, g.size.width * min(1, max(0, fraction))))
+            }
+        }
+        .frame(height: 4)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The card for a state with nothing to show but words: lost answer, failed review.
+struct StateCard: View {
+    let icon: String
+    let tint: Color
+    let title: String
+    let message: String
+    let foot: String?
+    let palette: MoneyPalette
+
+    var body: some View {
+        let p = palette
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: icon).font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                    .frame(width: 28, height: 28).background(tint, in: Circle())
+                Text(title).font(.headline)
+            }
+            Text(message).font(.footnote).foregroundStyle(p.soft)
+                .fixedSize(horizontal: false, vertical: true)
+            if let foot { Text(foot).font(.footnote.weight(.medium)) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - The review
+
+/// The trade at a glance: what you pay and get, then the details as rows,
+/// then the limits in one line.
 struct ReviewCard: View {
     let review: TradeReview
     let palette: MoneyPalette
@@ -238,58 +361,86 @@ struct ReviewCard: View {
 
     var body: some View {
         let p = palette, r = review
-        VStack(alignment: .leading, spacing: 4) {
-            (Text("You pay ").foregroundStyle(p.soft) + Text(r.pay.line).bold()
-             + Text(" · You get about ").foregroundStyle(p.soft) + Text(r.receive.line).bold()
-             + Text(" (at least \(r.receiveMin))").foregroundStyle(p.soft))
-                .font(.footnote)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(([r.slippagePct + "% slippage", r.network, r.venue].filter { !$0.isEmpty }).joined(separator: " · "))
-                .font(.caption.weight(.medium)).foregroundStyle(p.text)
-                .fixedSize(horizontal: false, vertical: true)
-            if !r.fundsSit.isEmpty {
-                Text("Funds: \(r.fundsSit)").font(.caption).foregroundStyle(p.soft)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .bottom, spacing: 8) {
+                side("You pay", r.pay.amount, r.pay.symbol, p)
+                Image(systemName: "arrow.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(p.faint)
+                    .padding(.bottom, 5)
+                    .accessibilityHidden(true)
+                side("You get about", r.receive.amount, r.receive.symbol, p)
             }
-            if let m = r.mainnet {
-                Text("\(m.label): \(m.payAmount) \(r.pay.symbol) → \(m.receiveAmount) \(m.symbol)")
-                    .font(.caption).foregroundStyle(p.soft)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            (Text(r.limits.sentence.isEmpty ? "\(r.limits.agentName): \(r.limits.perTrade) NEAR a trade, \(r.limits.daily) NEAR a day." : r.limits.sentence)
-             + Text(r.limits.stopped ? " Stopped." : " Spent today: \(r.limits.spentToday) of \(r.limits.daily) NEAR.")
-                .foregroundStyle(r.limits.stopped ? p.bad : p.soft))
-                .font(.caption).foregroundStyle(p.text)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 2)
-            if let refuse = r.limits.willRefuse {
-                Label {
-                    Text(refuse + (r.limits.refusedBy == "server" ? " Nothing is sent." : " You can still hold, to see the refusal on chain."))
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "exclamationmark.triangle").font(.caption2.weight(.bold))
+            if let callout = callout(r, p) { callout }
+            VStack(spacing: 6) {
+                InfoRow(label: "At least", value: "\(r.receiveMin) \(r.receive.symbol)", palette: p)
+                InfoRow(label: "Slippage", value: "\(r.slippagePct)%", palette: p)
+                InfoRow(label: "Network", value: r.network, palette: p)
+                if !r.venue.isEmpty { InfoRow(label: "Venue", value: r.venue, palette: p) }
+                InfoRow(label: "Funds held in", value: "Spend Limits", palette: p)
+                if let m = r.mainnet {
+                    InfoRow(label: "Mainnet price", value: "\(m.receiveAmount) \(m.symbol) · dry run", palette: p)
                 }
-                .font(.caption).foregroundStyle(p.warn)
+            }
+            limits(r, p)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .opacity(dim ? 0.45 : 1)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func side(_ label: String, _ amount: String, _ symbol: String, _ p: MoneyPalette) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label).font(.caption).foregroundStyle(p.soft)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(amount).font(.title3.weight(.semibold).monospacedDigit())
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Text(symbol).font(.footnote.weight(.semibold)).foregroundStyle(p.soft)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .opacity(dim ? 0.5 : 1)
         .accessibilityElement(children: .combine)
     }
 
-    private func line(_ k: String, _ v: String, _ p: MoneyPalette) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(k).font(.caption).foregroundStyle(p.soft).frame(width: 92, alignment: .leading).lineLimit(2)
-            Text(v).font(.caption.weight(.medium)).foregroundStyle(p.text)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
+    /// One amber line: a refusal ahead wins over the stand-in.
+    private func callout(_ r: TradeReview, _ p: MoneyPalette) -> Callout? {
+        if let refuse = r.limits.willRefuse {
+            let then = r.limits.refusedBy == "server" ? "Nothing will be sent." : "Spend Limits will refuse it on chain."
+            return Callout(icon: "hand.raised.fill", text: "\(Plain.scrub(refuse)) \(then)", tint: p.warn, palette: p)
         }
+        if r.standIn != nil {
+            return Callout(icon: "info.circle.fill",
+                           text: "Testnet has no \(r.call.asset), so this swaps \(r.pay.symbol) to \(r.receive.symbol).",
+                           tint: p.warn, palette: p)
+        }
+        return nil
+    }
+
+    private func limits(_ r: TradeReview, _ p: MoneyPalette) -> some View {
+        let l = r.limits
+        let spent = Double(l.spentToday) ?? 0, daily = Double(l.daily) ?? 0
+        let fraction = daily > 0 ? spent / daily : 0
+        let tint: Color = l.stopped ? p.bad : fraction > 0.8 ? p.warn : p.text.opacity(0.7)
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Spend Limits").font(.footnote.weight(.semibold))
+                Spacer(minLength: 8)
+                Text(l.stopped ? "Stopped" : "\(l.spentToday) of \(l.daily) NEAR today · \(l.perTrade) max a trade")
+                    .font(.caption.monospacedDigit()).foregroundStyle(l.stopped ? p.bad : p.soft)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+            SpendBar(fraction: l.stopped ? 1 : fraction, tint: tint, palette: p)
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(l.stopped ? "Spend Limits: stopped" :
+            "Spend Limits: \(l.spentToday) of \(l.daily) NEAR spent today, up to \(l.perTrade) NEAR a trade. You can stop it.")
     }
 }
 
-/// What happened, who decided, and the proof.
+// MARK: - The receipt
+
+/// The verdict first, then the proof, then the numbers.
 struct ReceiptCard: View {
     let receipt: TradeReceipt
     let palette: MoneyPalette
@@ -297,83 +448,108 @@ struct ReceiptCard: View {
 
     var body: some View {
         let p = palette, r = receipt
-        VStack(alignment: .leading, spacing: 6) {
-            if r.repeated {
-                Text("Already confirmed. This is that trade's receipt; nothing was sent again.")
-                    .font(.caption).foregroundStyle(p.soft)
-            }
-            HStack(spacing: 8) {
-                Image(systemName: r.swapped ? "checkmark" : r.blocked ? "hand.raised.fill" : r.unknown ? "questionmark" : "xmark")
-                    .font(.system(size: 11, weight: .bold))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(r.swapped ? AK.ink : .white)
-                    .frame(width: 22, height: 22)
-                    .background(r.swapped ? AK.accent : r.blocked ? p.bad : p.warn, in: Circle())
-                Text(title).font(.subheadline.weight(.bold))
+                    .frame(width: 36, height: 36)
+                    .background(tint, in: Circle())
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title).font(.title3.weight(.semibold))
+                    Text(decidedBy).font(.footnote).foregroundStyle(p.soft)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
             }
-            if !r.summary.isEmpty {
-                Text(Plain.scrub(r.summary)).font(.footnote).fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .combine)
+            if let tx = r.txURL, let url = URL(string: tx) {
+                link("View transaction", "arrow.up.right", url, p)
+            }
+            if r.repeated {
+                Text("Already confirmed. Nothing was sent again.").font(.caption).foregroundStyle(p.soft)
             }
             if r.blocked || r.status == "failed", let reason = r.reason {
-                Text((r.rule.map { "Rule \($0): " } ?? "") + reason)
-                    .font(.footnote.weight(.medium)).foregroundStyle(r.blocked ? p.bad : p.warn)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(Plain.scrub(reason)).font(.footnote.weight(.medium)).foregroundStyle(r.blocked ? p.bad : p.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    if let rule = r.rule {
+                        Text("Rule \(rule)").font(.caption2.weight(.medium)).foregroundStyle(p.faint)
+                            .accessibilityHidden(true)
+                    }
+                }
+            } else if r.unknown {
+                Text(Plain.scrub(r.summary)).font(.footnote).foregroundStyle(p.soft)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Label(r.unknown ? "Result unknown: check Spend Limits on nearblocks" : r.byContract ? "Decided by the Spend Limits contract on NEAR" : "Stopped by the AIRKEY server",
-                  systemImage: r.unknown ? "questionmark.circle" : r.byContract ? "link" : "server.rack")
-                .font(.caption.weight(.semibold))
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 6) {
-                if let tx = r.txURL, let url = URL(string: tx) {
-                    link("View on nearblocks ↗", url, p)
+            VStack(spacing: 6) {
+                if let pay = r.pay {
+                    InfoRow(label: "Paid", value: r.swapped ? pay.line : r.unknown ? "Unknown" : "Nothing, \(pay.line) stayed", palette: p)
                 }
-                if let post = r.postURL, let url = URL(string: post) {
-                    link(r.postAuthor.map { "@\($0.replacingOccurrences(of: "@", with: ""))'s post ↗" } ?? "The post ↗", url, p)
+                InfoRow(label: "Received", value: r.receive?.line ?? (r.unknown ? "Unknown" : "Nothing"), palette: p,
+                        tint: r.swapped ? p.good : nil)
+                if let venue = r.venue { InfoRow(label: "Venue", value: venue, palette: p) }
+                if let at = r.at { InfoRow(label: "Time", value: at.formatted(date: .abbreviated, time: .shortened), palette: p) }
+            }
+            if let post = r.postURL, let url = URL(string: post) {
+                Button {
+                    Haptics.letter()
+                    actions.open(url) { ok in if !ok { UIPasteboard.general.string = url.absoluteString } }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(r.postAuthor.map { "From @\($0.replacingOccurrences(of: "@", with: ""))'s post" } ?? "From a post")
+                        Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .semibold))
+                    }
+                    .font(.caption.weight(.medium)).foregroundStyle(p.soft)
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.top, 2)
-            if let pay = r.pay { line("Paid", r.swapped ? pay.line : r.unknown ? "Unknown" : "Nothing (\(pay.line) stayed put)", p) }
-            line("Received", r.receive?.line ?? (r.unknown ? "Unknown" : "Nothing received"), p)
-            if r.status == "failed", r.receive == nil {
-                Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
-            }
-            if let venue = r.venue { line("Venue", venue, p) }
-            if let s = r.standIn {
-                Text(s).font(.caption).foregroundStyle(p.warn).fixedSize(horizontal: false, vertical: true)
-            }
-            line("Agent", r.agent, p)
-            if let at = r.at { line("Time", at.formatted(date: .abbreviated, time: .standard), p) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(14)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var icon: String {
+        receipt.swapped ? "checkmark" : receipt.blocked ? "hand.raised.fill" : receipt.unknown ? "questionmark" : "xmark"
+    }
+
+    private var tint: Color {
+        receipt.swapped ? AK.accent : receipt.blocked ? palette.bad : palette.warn
     }
 
     private var title: String {
         switch receipt.status {
         case "swapped": "Swapped"
-        case "blocked": receipt.byContract ? "Refused by the contract" : "Refused by the AIRKEY server"
+        case "blocked": "Refused"
         case "unknown": "Result unknown"
         default: "Failed"
         }
     }
 
-    private func line(_ k: String, _ v: String, _ p: MoneyPalette) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(k).font(.caption).foregroundStyle(p.soft).frame(width: 62, alignment: .leading)
-            Text(v).font(.caption.weight(.medium)).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
+    private var decidedBy: String {
+        if receipt.unknown { return "NEAR didn't answer in time" }
+        return receipt.byContract ? "Decided by Spend Limits on NEAR" : "Stopped by the AIRKEY server"
     }
 
-    private func link(_ title: String, _ url: URL, _ p: MoneyPalette) -> some View {
+    private func link(_ title: String, _ icon: String, _ url: URL, _ p: MoneyPalette) -> some View {
         Button {
             Haptics.letter()
             actions.open(url) { ok in if !ok { UIPasteboard.general.string = url.absoluteString } }
         } label: {
-            Text(title).font(.caption.weight(.semibold)).lineLimit(1)
-                .padding(.horizontal, 10).frame(height: 26)
-                .background(p.fill, in: Capsule()).contentShape(Capsule())
+            HStack(spacing: 6) {
+                Image(systemName: "link").font(.system(size: 12, weight: .semibold))
+                Text(title).font(.subheadline.weight(.semibold))
+                Spacer(minLength: 4)
+                Text("nearblocks").font(.caption).foregroundStyle(p.soft)
+                Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(p.soft)
+            }
+            .padding(.horizontal, 12).frame(height: 40)
+            .background(p.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .contentShape(Rectangle())
         }
         .buttonStyle(MoneyPress())
+        .accessibilityLabel("View transaction on nearblocks")
     }
 }
