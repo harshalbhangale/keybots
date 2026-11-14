@@ -28,7 +28,7 @@ struct RootView: View {
                 NavigationStack { KeyboardTab(openSettings: { showSettings = true }) }
             }
         }
-        .tint(AK.accent)
+        .tint(AK.accentText)
         .tabViewBottomAccessory { CommandBar { showCommand = true } }
         .tabBarMinimizeBehavior(.onScrollDown)
         .task { await model.refresh() }
