@@ -201,6 +201,9 @@ final class KeyboardViewController: UIInputViewController {
         return numberRow ? base + Glass.numberRowExtra(width: w) : base
     }
 
+    /// How much taller than the letters the Calls and Assist panels stand.
+    static let panelExtra: CGFloat = 96
+
     private var totalHeight: CGFloat {
         let base = Glass.toolbarHeight + keysHeight
         switch surface {
@@ -214,12 +217,14 @@ final class KeyboardViewController: UIInputViewController {
         // never move, so muscle memory holds.
         // A call's review stands a little taller, so the numbers, the limits
         // and the hold fit without scrolling; the keys come back unchanged.
-        case .calls where money?.full == true: return base + 72
-        case .none, .shell, .clipboard, .wallet, .calls: return base
+        // Calls (posts, review, receipt) and Assist share one height, the
+        // review's, so the panel's top edge never moves through the flow.
+        case .calls: return base + Self.panelExtra
+        case .none, .shell, .clipboard, .wallet: return base
         // A question typed for Ask or Search: a strip over the keys.
         case .assist:
             if assist?.isStrip == true { return base + AssistPanel.stripHeight - Glass.toolbarHeight }
-            return base
+            return base + Self.panelExtra
         // Trade panel hook: the swap screen is its own height; typing a value
         // folds it to a strip over the keys.
         case .trade:
