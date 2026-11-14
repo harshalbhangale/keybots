@@ -109,7 +109,7 @@ struct LeashView: View {
             VStack(spacing: 0) {
                 ForEach(Array(s.shownAgents.enumerated()), id: \.element.id) { i, a in
                     if i > 0 { Hairline().padding(.leading, 16) }
-                    AgentCard(entry: a, paused: s.paused, explorer: s.explorer)
+                    AgentCard(entry: a, paused: s.paused, explorer: s.explorer, last: model.receipts(for: a.account).first)
                 }
             }
             .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
