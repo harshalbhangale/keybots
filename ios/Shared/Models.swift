@@ -97,7 +97,13 @@ struct Receipt: Decodable, Identifiable {
     let summary: String?
     let tx: Tx?
 
-    struct Input: Decodable { let text: String; let source: String }
+    struct Input: Decodable {
+        let text: String
+        let source: String
+        /// The caller behind a reviewed or followed call, and its post when it has one.
+        var handle: String? = nil
+        var postUrl: String? = nil
+    }
     struct Interpretation: Decodable {
         let action: Action
         let reader: String
