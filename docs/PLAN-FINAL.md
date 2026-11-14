@@ -79,7 +79,7 @@ Status as of 14 Nov, ~12:50 UTC.
 | 3 | **App: Connected page**: Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, X, Telegram, each checked live (`/v1/connected`) | **Done**, deployed, all 6 live |
 | 4 | **NEAR Intents on the review**: "Checked by NEAR Intents" row; server line like "BTC is a listed token at $67,147 · NEAR $3.33, so $1.00 is 0.3003 NEAR" | **Done**, deployed |
 | 4b | **No Kall anywhere people see**: cards, server notes, Connected, README, docs, landing say X / Keybots | To do |
-| 4c | **Mainnet**: Testnet / Mainnet switch in the app (see section 8) | Deciding |
+| 4c | **Mainnet**: Spend Limits Lite deployed (section 8); Testnet / Mainnet switch in the app | Contract **live on mainnet**; server and app switch to do |
 | 5 | **Telegram live check**: add @kbgdbgjd_bot to a group, post "$NEAR buying here", the card appears | Needs you |
 | 6 | **Short clips for the README** (5–10 s each) | To do |
 | 7 | **Screenshots**, app and keyboard, light and dark | To do |
@@ -98,3 +98,16 @@ hellbuddy.near has 0.98 NEAR. NEAR locks about 0.01 NEAR per KB stored; the full
 - **B. Mainnet without a contract**: the switch shows hellbuddy.near's real balance, live mainnet prices, and one real 0.15 NEAR → USDC swap after your yes. Spend Limits stays on testnet.
 
 Commits are real changes only, one per change.
+
+### Mainnet, as deployed (14 Nov, ~13:45 UTC)
+
+Spend Limits Lite (`contracts/limits-lite`, 45 KB, no SDK) is live on NEAR mainnet:
+
+| Account | What | NEAR |
+|---|---|---|
+| `limits.hellbuddy.near` | the contract, owner `hellbuddy.near` | 0.6 (0.453 locked for storage, 0.144 spendable) |
+| `pay.hellbuddy.near` | Pay Agent, trusted, 0.05 a payment / 0.1 a day | 0.03 |
+| `inbox.hellbuddy.near` | Inbox Agent, untrusted (allowed list only), 0.02 / 0.05 | 0.03 |
+| `trader.hellbuddy.near` | Trading Agent, 0.05 / 0.1 (no swaps on Lite) | 0.03 |
+
+Transactions: deploy [8S5iA8F8](https://nearblocks.io/txns/8S5iA8F8QGT8aQ8JyY3aSrkwmXpH5B26JkiYyd5avMLp), agents [Hcfuu3U9](https://nearblocks.io/txns/Hcfuu3U9mW33hmvaauFg8BnvrhTYiHQVAxM4M8u9wtY5), [29wm62tY](https://nearblocks.io/txns/29wm62tYB1xLrfx1GbpGjHYVAzXfRyHBKeXGJp34R8rt), [26k4RY2S](https://nearblocks.io/txns/26k4RY2ScyZqrax1LH6AWQiekoL8j9GMecNPfv6zxPLr), register [7939UjhF](https://nearblocks.io/txns/7939UjhfgkRkb5DD21yQzraq2MRmup9r1oxeMFVbDH1b). Gas used for setup: 0.030 NEAR. Every account also has the owner's key, so it can be deleted and its NEAR returned. The same contract was tried first on testnet (`limits.airkey-harshal.testnet`): paid, R4, R3, R6, R1, and a refund of a failed transfer, all on chain.

@@ -20,8 +20,29 @@ enum Settings {
         store.set(built, forKey: "builtServer")
     }
 
+    /// The testnet server: what you set in Settings, else what the build baked in.
+    static var testnetURL: String {
+        adoptBuild()
+        return store.string(forKey: "serverURL") ?? baked("AirkeyServer") ?? "http://127.0.0.1:8787"
+    }
+
+    /// "testnet" or "mainnet": which Keybots server the app and the keyboard talk to.
+    static var network: String {
+        get { store.string(forKey: "network") == "mainnet" && mainnetURL != nil ? "mainnet" : "testnet" }
+        set { store.set(newValue, forKey: "network") }
+    }
+
+    /// The mainnet server (Spend Limits Lite on limits.hellbuddy.near): baked in by the
+    /// build, else the hosted testnet address with "mainnet-" in front of its host.
+    static var mainnetURL: String? {
+        if let b = baked("AirkeyServerMainnet") { return b }
+        guard var c = URLComponents(string: testnetURL), let host = c.host, host.hasSuffix(".sslip.io") else { return nil }
+        c.host = "mainnet-" + host
+        return c.string
+    }
+
     static var serverURL: String {
-        get { adoptBuild(); return store.string(forKey: "serverURL") ?? baked("AirkeyServer") ?? "http://127.0.0.1:8787" }
+        get { network == "mainnet" ? (mainnetURL ?? testnetURL) : testnetURL }
         set { store.set(newValue, forKey: "serverURL") }
     }
     static var token: String {

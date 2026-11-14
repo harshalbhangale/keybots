@@ -126,6 +126,7 @@
 		9EB29FD3F340E36ED2ED720E /* KeyboardToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DFB34C7C6FBB8745B1F985 /* KeyboardToast.swift */; };
 		9F0824A487DE9A9F409E077C /* IMFeENrm28P.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 96C1B5D0FD6806D2E3F64B7A /* IMFeENrm28P.ttf */; };
 		A0871BD366BBC2C165919F3B /* theme-synth-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 55B7D71F0B4D2AD30AE975A2 /* theme-synth-return.caf */; };
+		A10E875CA40B3CBF83862A03 /* NetworkSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007C977632ED42131FCB3530 /* NetworkSwitch.swift */; };
 		A367AF7F819E87D0315AB2D6 /* FollowingSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87344F12402B9DBD828ABEC0 /* FollowingSurface.swift */; };
 		A4A0B702C7D8673160AE630E /* AccentPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8077B51153AD8CCA02CB55A8 /* AccentPopup.swift */; };
 		A69DA0B4C4CF236761BE369A /* Plain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA2017DC655AFC04315691F /* Plain.swift */; };
@@ -213,6 +214,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		007C977632ED42131FCB3530 /* NetworkSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSwitch.swift; sourceTree = "<group>"; };
 		013677326CEDB2AF96662698 /* WalletSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletSurface.swift; sourceTree = "<group>"; };
 		03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DMSerifDisplay-Regular.ttf"; sourceTree = "<group>"; };
 		09D40447CC983DE204796FE7 /* Jost-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jost-OFL.txt"; sourceTree = "<group>"; };
@@ -421,6 +423,7 @@
 			children = (
 				7B15209E5CFB080BC92DA76D /* Components.swift */,
 				F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */,
+				007C977632ED42131FCB3530 /* NetworkSwitch.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1001,6 +1004,7 @@
 				5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */,
 				DADE104895F822FF5FE891E0 /* Logo.swift in Sources */,
 				86F1F77CD21B8621B052801F /* Models.swift in Sources */,
+				A10E875CA40B3CBF83862A03 /* NetworkSwitch.swift in Sources */,
 				E9FA7A2F6C132B55076DF72E /* Plain.swift in Sources */,
 				DDA74E2BD4FEFDAC97BD1578 /* ReceiptsView.swift in Sources */,
 				298CD3FA72975045D5D78551 /* RootView.swift in Sources */,
