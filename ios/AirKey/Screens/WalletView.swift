@@ -30,6 +30,7 @@ struct WalletView: View {
             NetworkSwitch()
             VStack(alignment: .leading, spacing: 12) {
                 balances
+                MoneyButtons()
                 if model.state?.pending.isEmpty ?? true { status }
                 if let s = model.state {
                     AddressRow(label: "Your Spend Limits account", address: s.leash)
