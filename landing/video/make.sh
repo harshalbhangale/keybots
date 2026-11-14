@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Joins the intro card, Harshal's screen recording with timed captions, and the end card into one 1080p MP4.
-#   ./make.sh recording.mov [airkey-demo.mp4]
+#   ./make.sh recording.mov [keybots-demo.mp4]
 #   PRESET=veryfast ./make.sh recording.mov draft.mp4    # a quick draft
-# A portrait recording (iPhone) sits on the AIRKEY background with captions to its right;
+# A portrait recording (iPhone) sits on the Keybots background with captions to its right;
 # a landscape one fills the frame with lower-third captions. Caption times come from beats.json.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 REC=${1:?usage: ./make.sh recording.mov [out.mp4]}
-OUT=${2:-airkey-demo.mp4}
+OUT=${2:-keybots-demo.mp4}
 command -v ffmpeg >/dev/null || { echo "ffmpeg is needed (brew install ffmpeg)"; exit 1; }
 [ -d node_modules/@resvg ] || npm install --silent
 node render.mjs >/dev/null

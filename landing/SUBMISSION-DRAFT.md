@@ -36,4 +36,4 @@ Links: https://airkey-keyboard.vercel.app · https://github.com/harshalbhangale/
 
 - [ ] The repo is public.
 - [ ] The demo video is uploaded and linked.
-- [ ] The Android button on the site points at an Keybots build (it points at the Kall Markets APK as a placeholder right now).
+- [ ] The Android button on the site points at a Keybots build (it points at the Kall Markets APK as a placeholder right now).
