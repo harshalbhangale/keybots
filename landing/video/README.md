@@ -27,7 +27,7 @@ Open `beats.json` and set `start` / `end` (seconds into **your recording**, not 
 | 3 | The scam is blocked | The AI is fooled. The leash isn't. |
 | 4 | A pasted call becomes a trade | A call becomes a trade |
 | 5 | New receiver, APPROVE?, Face ID | Someone new? Approve. |
-| 6 | Hold space, private AI rewrite | Hold space: private AI |
+| 6 | Hold space, private AI rewrite | Hold space: private AI on NEAR AI Cloud (TEE), signature verified; attestation not verified yet |
 | 7 | Kill switch | One kill switch |
 
 **Check before the final cut:** beats 4 and 6 must match what the app really does on the day. As of 14 Nov a copied call can be checked but only what you type trades, and the AI rewrite answers on NEAR AI Cloud. If either isn't in the recording, delete its entry from `beats.json`.
