@@ -143,7 +143,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
     static let tools: [(id: String, title: String)] = [
         ("wallet", "Wallet"), ("calls", "Calls"), ("swap", "Swap"), // WALLET/CALLS + TRADE HOOKS
         ("check", "Check copied"), ("clipboard", "Clipboard"), ("notes", "Notes"),
-        ("emoji", "Emoji"), ("style", "Style"), ("games", "Games"), ("settings", "Settings"),
+        ("emoji", "Emoji"), ("style", "Style"), ("settings", "Settings"),
     ]
 
     /// What the strip calls the menu itself.

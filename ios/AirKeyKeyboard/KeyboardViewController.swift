@@ -78,8 +78,6 @@ final class KeyboardViewController: UIInputViewController {
     private var emoji: EmojiBoard?
     /// The clipboard: its own header, pinned and recent as card columns.
     private var clipboardPanel: ClipboardPanel?
-    /// Menu → Games: Snake and Chomp over the key area.
-    private var games: GamesSurface?
     /// WALLET/CALLS HOOK: the Wallet or the Calls panel (Surfaces/WalletModel.swift),
     /// built when it opens and let go when it closes.
     private var money: MoneyPanel?
@@ -122,7 +120,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai, wallet, calls, trade }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, ai, wallet, calls, trade }
     private var surface: Surface = .none
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
@@ -212,7 +210,7 @@ final class KeyboardViewController: UIInputViewController {
         case .noteEdit: return base + NoteEditSurface.stripHeight - Glass.toolbarHeight
         // Panels take the key area instead of growing the keyboard: the keys
         // never move, so muscle memory holds.
-        case .none, .shell, .clipboard, .games, .ai, .wallet, .calls: return base
+        case .none, .shell, .clipboard, .ai, .wallet, .calls: return base
         // Trade panel hook: the swap screen is its own height; typing a value
         // folds it to a strip over the keys.
         case .trade:
@@ -662,7 +660,6 @@ final class KeyboardViewController: UIInputViewController {
             let title = shell?.headerTitle ?? MenuShell.rootTitle
             return (title == MenuShell.rootTitle ? "square.grid.2x2" : nil, title)
         case .emoji where emoji?.searchActive != true: return ("face.smiling", "Emoji")
-        case .games: return ("gamecontroller", "Games")
         case .wallet: return (KeyToolbar.icons["wallet"], "Wallet") // WALLET/CALLS HOOK
         case .calls: return (KeyToolbar.icons["calls"], "Calls")
         default: return (nil, nil)
@@ -820,10 +817,6 @@ final class KeyboardViewController: UIInputViewController {
             keyboardView.frame = CGRect(x: 0, y: NoteEditSurface.stripHeight,
                                         width: w,
                                         height: max(0, h - NoteEditSurface.stripHeight))
-        case .games:
-            toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
-            keyboardView.isHidden = true
-            games?.frame = panelRect(w, h)
         case .wallet, .calls: // WALLET/CALLS HOOK: over the keys, under the strip's title.
             toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
             keyboardView.isHidden = true
@@ -877,7 +870,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.games, self.aiBar, self.money, self.trade] as [UIView?] {
+                            self.clipboardPanel, self.aiBar, self.money, self.trade] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
@@ -913,7 +906,6 @@ final class KeyboardViewController: UIInputViewController {
             if noteEdit?.keysContext != nil { keyboardView.context = KeyboardContext(keyboardType: textDocumentProxy.keyboardType) }
             noteEdit?.removeFromSuperview(); noteEdit = nil
         case .clipboard: clipboardPanel?.removeFromSuperview(); clipboardPanel = nil
-        case .games: games?.stop(); games?.removeFromSuperview(); games = nil
         case .wallet, .calls: money?.close(); money = nil // WALLET/CALLS HOOK: timers stop, the panel is let go.
         case .ai: aiBar?.removeFromSuperview(); aiBar = nil
         // Trade panel hook.
@@ -960,12 +952,6 @@ final class KeyboardViewController: UIInputViewController {
             if n.wantsDigits { keyboardView.setMode(.symbols1) }
             if let keys = n.keysContext { keyboardView.context = keys }
             n.activate(n.activeEditor)
-        case .games:
-            let g = GamesSurface()
-            content.addSubview(g)
-            prepareEntrance(g, animated: animated)
-            games = g
-            MemoryLogger.logSurface("games")
         case .wallet, .calls: // WALLET/CALLS HOOK
             let m = MoneyPanel(kind: new == .wallet ? .wallet : .calls, actions: moneyActions, dark: Glass.chromeDark)
             content.addSubview(m)
@@ -2513,7 +2499,6 @@ extension KeyboardViewController: ToolbarDelegate {
         case "swap": openTrade(seed: nil, origin: nil)
         case "clipboard": setSurface(.clipboard)
         case "emoji": setSurface(.emoji)
-        case "games": setSurface(.games)
         case "notes", "settings", "style":
             if id == "style" {
                 let picked = textDocumentProxy.selectedText ?? ""
