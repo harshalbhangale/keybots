@@ -8,8 +8,7 @@ struct AirKeyApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
-                .preferredColorScheme(.dark)
-                .tint(AK.accent)
+                .tint(AK.accentText)
         }
     }
 }
