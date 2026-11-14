@@ -13,7 +13,7 @@ const rhea = {
 const chain = (paused = false) => ({
   state: async () => ({ owner: "x.testnet", leash: "leash.x.testnet", paused, available: "1", agents: [{}, {}, {}], allowlist: [], blocklist: [], pending: [] }),
 });
-const kall = { feed: async () => ({ callers: [{}, {}], calls: [{}] }), caller: async () => [] };
+const xfeed = { feed: async () => ({ callers: [{}, {}], calls: [{}] }), caller: async () => [] };
 const intents = { tokens: async () => [{ symbol: "NEAR" }, { symbol: "USDC" }] };
 
 async function get(deps: Record<string, unknown>) {
@@ -25,18 +25,18 @@ async function get(deps: Record<string, unknown>) {
 
 describe("/v1/connected", () => {
   it("checks each service live and says what it saw", async () => {
-    const { services } = await get({ rhea, kall, intents });
+    const { services } = await get({ rhea, xfeed, intents });
     const by = Object.fromEntries(services.map((s) => [s.id, s]));
     expect(by["spend-limits"]).toMatchObject({ status: "live", detail: `leash.x.testnet: ${Object.keys(cfg.agents).length} agents, running` });
     expect(by.rhea).toMatchObject({ status: "live" });
     expect(by.rhea.detail).toMatch(/^1 NEAR → 2\.50 USDC/);
     expect(by["near-intents"]).toMatchObject({ status: "live", detail: "2 tokens listed" });
-    expect(by.kall).toMatchObject({ status: "live", detail: "2 callers, 1 calls" });
+    expect(by.x).toMatchObject({ status: "live", detail: "2 callers, 1 calls" });
     expect(by.telegram.status).toBe("off");
   });
 
   it("marks a service down when it fails, without failing the page", async () => {
-    const { services } = await get({ chain: chain(true), intents: { tokens: async () => { throw new Error("502 from 1Click"); } }, kall });
+    const { services } = await get({ chain: chain(true), intents: { tokens: async () => { throw new Error("502 from 1Click"); } }, xfeed });
     const by = Object.fromEntries(services.map((s) => [s.id, s]));
     expect(by["spend-limits"].detail).toBe("leash.x.testnet: everything is stopped");
     expect(by["near-intents"]).toMatchObject({ status: "down", detail: "502 from 1Click" });
