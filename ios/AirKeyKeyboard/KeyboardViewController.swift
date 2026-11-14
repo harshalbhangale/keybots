@@ -2304,7 +2304,7 @@ extension KeyboardViewController {
     static let fixLabel = "Fix this"
     static let undoLabel = "Undo"
     /// How much of the draft or the copy goes to the AI.
-    static let assistMaxSource = 4000
+    static let assistMaxSource = 2000
     /// How long Undo stays in the strip after a Replace.
     static let assistUndoSeconds: CFTimeInterval = 5
 
