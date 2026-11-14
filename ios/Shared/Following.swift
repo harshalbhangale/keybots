@@ -117,6 +117,8 @@ final class FollowsModel {
         guard let i = follows?.firstIndex(where: { $0.id == handle.lowercased() }) else { return false }
         let before = follows![i]
         follows![i].apply(rules)
+        // Turning auto back on is what clears a pause on the server.
+        if rules.auto { follows![i].pausedReason = nil }
         saving = handle
         defer { saving = nil }
         do {
