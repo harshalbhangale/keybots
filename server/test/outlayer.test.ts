@@ -110,6 +110,10 @@ const local: Chain = {
   swap: async () => {
     throw new Error("local signer must not be used");
   },
+  swapToken: async () => {
+    throw new Error("local signer must not be used");
+  },
+  tokenCap: async () => null,
   txUrl: (h) => `https://testnet.nearblocks.io/txns/${h}`,
 };
 const chain = () => outlayerChain(cfg, local, { api: base, rpc: `${base}/rpc`, keys: { [PAY]: KEY_PAY, [INBOX]: KEY_INBOX }, pollMs: 5, timeoutMs: 2000 });
@@ -141,6 +145,16 @@ describe("outlayer signer", () => {
   it("uses each agent's own key", async () => {
     await chain().pay(INBOX, { receiver: "friend.testnet", amount: "1" });
     expect(seen.find((s) => s.path === "POST /wallet/v1/call")!.auth).toBe(`Bearer ${KEY_INBOX}`);
+  });
+
+  it("sells a token through the same swap call, with the value in NEAR", async () => {
+    const r = await chain().swapToken(PAY, { venue: "v.testnet", token: "usdc.testnet", amount: "5", valueNear: "1", wrap: "wrap.testnet", msg: "{}", unwrap: true });
+    expect(r.decision.status).toBe("paid");
+    expect(seen.find((s) => s.path === "POST /wallet/v1/call")!.body).toMatchObject({
+      method_name: "swap",
+      gas: "200000000000000",
+      args: { venue: "v.testnet", amount: "1", wrap: "wrap.testnet", sell: { token: "usdc.testnet", amount: "5", unwrap: true } },
+    });
   });
 
   it("sends swap with 200 TGas and returns every log line", async () => {

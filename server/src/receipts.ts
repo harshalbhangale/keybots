@@ -9,10 +9,17 @@ import type { Action } from "./parse.js";
 import type { Decision } from "./near.js";
 import type { SwapQuote, TokenCheck } from "./intents.js";
 
+/** "follow": the server built the command from a followed KOL's call, under the owner's rules for them. */
+export type Source = "typed" | "pasted" | "follow";
+
 export interface Receipt {
   id: string;
   at: string;
-  input: { text: string; source: "typed" | "pasted" };
+  /**
+   * Where the words came from: typed by the owner, pasted from someone else,
+   * or a call from a KOL the owner follows (with who posted it and where).
+   */
+  input: { text: string; source: Source; handle?: string; postUrl?: string };
   interpretation: { action: Action; reader: "rules" | "near-ai-cloud" | "openai"; ai?: AiEvidence };
   agent?: { account: string; tier: "trusted" | "untrusted" };
   receiver?: { asked: string; account: string; via: "contacts" | "account" };
@@ -26,13 +33,15 @@ export interface Receipt {
     quote?: SwapQuote;
     leash?: { agent: string; valueNear: string; perPaymentCap: string; leftToday: string; within: boolean };
     /** A swap that really ran: where, what went in and what came back to the leash. */
-    executed?: { venue: string; exchange: string; amountIn: string; amountOut?: string; symbolOut: string; ok: boolean };
+    executed?: { venue: string; exchange: string; amountIn: string; /** What was sold, when it wasn't NEAR. */ symbolIn?: string; amountOut?: string; symbolOut: string; ok: boolean };
   };
   /** Shown to the person: allow (mint), warn (amber), block (red), quote, or info. */
   outcome: "paid" | "swapped" | "approval" | "blocked" | "quoted" | "watching" | "not-sent";
   /** A price-triggered order this command created. */
   order?: { id: string; symbol: string; direction: "below" | "above"; price: number; priceThen: number; command: string };
   message: string;
+  /** The same thing in plain words, with no rule codes: what the keyboard and the app show first. */
+  summary?: string;
   tx?: { hash: string; url: string };
   events?: unknown[];
 }

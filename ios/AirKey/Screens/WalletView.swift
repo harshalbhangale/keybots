@@ -33,6 +33,7 @@ struct WalletView: View {
             }
             SwapCard()
             if !model.watching.isEmpty { watching }
+            FollowingSection()
             recent
         }
         .toolbarVisibility(.hidden, for: .navigationBar)
@@ -98,7 +99,7 @@ struct WalletView: View {
                 sectionHead("RECENT")
                 Card {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
-                    Text("Use the AIRKEY keyboard in any chat, or tap the bar below and tell an agent what to do.")
+                    Text("Use the AIRKEY keyboard in any chat, or tap the bar below to pay, swap, or check a message.")
                         .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 }
             } else {

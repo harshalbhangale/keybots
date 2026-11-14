@@ -40,6 +40,8 @@ final class AgentModel {
         /// Short lines the strip turns through under the title, one at a
         /// time (a copied call's checks), in place of `detail`.
         var lines: [String] = []
+        /// CALLS HOOK: the copied call's record in the calls book, so its hold is kept with it.
+        var callId: String? = nil
 
         var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
         var holdLabel: String { "Hold to \(verb)" }
@@ -72,6 +74,9 @@ final class AgentModel {
     var vaultItems: [Vault.Item] = []
     /// The trade a copied crypto call could be, ready to hold (POST /v1/call).
     var callIntent: Ready?
+    /// The message text when the call chip came up: typing anything new
+    /// means you moved on, and the chip goes.
+    @ObservationIgnored private var callFor: String?
     /// The paste guard: an address that arrived whole and isn't one you know.
     var pasteWarning: String?
 
@@ -115,6 +120,10 @@ final class AgentModel {
     /// keyboard's own strip already has an answer for it (a sum, a unit).
     func read(_ text: String, answered: Bool) {
         guardPaste(old: lastText, new: text)
+        if callIntent != nil, let callFor, text != callFor {
+            callIntent = nil
+            self.callFor = nil
+        }
         lastText = text
         let next = Intent.read(text)
         if next != intent { intent = next }
@@ -203,6 +212,7 @@ final class AgentModel {
         primed = false
         guard host?.agentHasFullAccess == true else { return }
         if Tokens.stale { Task { if let symbols = try? await API().tokens() { Tokens.save(symbols) } } }
+        Task { await Vault.pull() }
         if Contacts.stale || Contacts.accounts.isEmpty || Vault.owner == nil {
             Task {
                 guard let s = try? await API().state() else { return }
@@ -241,12 +251,39 @@ final class AgentModel {
 
     /// The hold on the strip's button: the command it shows.
     func runReady() {
-        Haptics.hold()
+        // The hold button has already played its rising ticks and its thud (HoldFeel).
+        // Trade panel hook: a swap, a buy or a sell opens the swap screen, filled in; it runs from there.
+        if reviewReady() { return }
         if intent == nil, readIntent == nil, let call = callIntent, let command = call.command {
             // A copied call's trade: the message box keeps whatever is in it.
-            send(command, source: "typed")
+            send(command, source: "typed", callId: call.callId) // CALLS HOOK
             callIntent = nil
         } else if let command = ready?.command { runCommand(command) } else { runTyped() }
+    }
+
+    // MARK: Trade panel (hook)
+
+    /// Opens the keyboard's swap screen on a command; false when it can't read it as a trade.
+    @ObservationIgnored var openTrade: ((_ command: String, _ origin: String?) -> Bool)?
+
+    /// The chip's trade goes to the swap screen instead of running: every
+    /// number is on screen before the hold. False for a payment.
+    @discardableResult
+    func reviewReady() -> Bool {
+        guard let ready, ready.kind == .swap, let openTrade else { return false }
+        let typed = (host?.agentFieldText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let fromCall = intent == nil && readIntent == nil && callIntent != nil
+        let line = typed.split(whereSeparator: \.isNewline).last.map(String.init) ?? typed
+        guard openTrade(ready.command ?? line, fromCall ? nil : typed) else { return false }
+        if fromCall { callIntent = nil }
+        return true
+    }
+
+    /// The swap screen's hold: its quote's own command, sent as typed, so the
+    /// receipt, Share and the haptics are the strip's as ever.
+    func runTrade(_ command: String, clearing: String?) {
+        send(command, source: "typed", clearing: clearing)
+        if running != nil { runningKind = .swap }
     }
 
     /// A command the server read out of what was typed: it runs, and what
@@ -290,29 +327,29 @@ final class AgentModel {
             guard let check, check.call.isCall else { send(text, source: "pasted"); return }
             let r = check.route
             guard r.status == "available", let command = r.command, let title = r.title else {
-                notice = r.reason ?? check.call.summary
+                notice = Plain.scrub(r.reason ?? check.call.summary)
                 Haptics.warning()
                 return
             }
             callIntent = Ready(kind: .swap, title: title, detail: nil, verb: r.side == "sell" ? "sell" : "buy",
-                               command: command, lines: Self.callLines(check))
-            Haptics.letter()
+                               command: command, lines: Self.callLines(check), callId: check.id)
+            callFor = lastText
+            Haptics.chip()
         }
     }
 
     private static func callLines(_ c: CallCheck) -> [String] {
         let r = c.route
-        var caps = "the leash checks the caps"
+        var caps = "your limits apply"
         if let k = r.caps {
-            caps = k.paused ? "the kill switch is on"
-                : (k.within ?? true) ? "within your caps" : "over today's cap (\(k.leftToday) NEAR left)"
+            caps = k.paused ? "Stop everything is on"
+                : (k.within ?? true) ? "within your limits" : "over today's limit (\(k.leftToday) NEAR left)"
         }
-        var lines = ["\(c.call.asset ?? "Token") verified on NEAR Intents · \(caps)"]
+        var lines = ["\(c.call.asset ?? "Token") is a real token · \(caps)"]
         if let q = r.quote {
-            let out = Double(q.amountOut).map { String(format: "%.4g", $0) } ?? q.amountOut
-            lines.append("NEAR Intents quote: \(q.amountIn) NEAR → \(out) \(q.symbolOut)")
+            lines.append("Live price: \(q.amountIn) NEAR gets about \(Plain.tidy(q.amountOut)) \(q.symbolOut)")
         }
-        if let s = r.standIn { lines.append(s) }
+        if let s = r.standIn { lines.append(Plain.scrub(s)) }
         return lines
     }
 
@@ -332,8 +369,8 @@ final class AgentModel {
         Haptics.warning()
     }
 
-    private func send(_ text: String, source: String, clearing: String? = nil) {
-        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so your agents can reach the server."; return }
+    private func send(_ text: String, source: String, clearing: String? = nil, callId: String? = nil) {
+        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so it can pay and swap for you."; return }
         notice = nil
         result = nil
         vaultOpen = false
@@ -341,7 +378,8 @@ final class AgentModel {
         running = source
         Task {
             do {
-                let r = try await API().command(text, source: source)
+                // CALLS HOOK: a copied call's hold carries the call's id.
+                let r = if let callId { try await API().command(text, callId: callId) } else { try await API().command(text, source: source) }
                 result = r
                 feedback(for: r.signal)
                 if source == "typed", r.signal != .block, r.signal != .neutral { host?.agentClear(clearing ?? text) }
@@ -355,15 +393,20 @@ final class AgentModel {
     /// Put the receipt into the chat, so the other person sees it too.
     func insertReceipt() {
         guard let r = result else { return }
-        // Most messages already say what happened ("Paid…", "Swapped…", "Blocked by the leash…");
-        // the outcome word goes first only when the message doesn't start with it.
-        let word = r.signal.word.capitalized
-        let says = r.signal == .allow || r.message.lowercased().hasPrefix(word.lowercased().trimmingCharacters(in: .punctuationCharacters))
-        var line = says ? "AIRKEY · \(r.message)" : "AIRKEY · \(word): \(r.message)"
+        // The plain line says what happened ("Paid 0.2 NEAR to harshal", "Blocked: …").
+        var line = "AIRKEY · \(Plain.line(r))"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         ownInsert = line
         host?.agentInsert(line, spaced: true)
+    }
+
+    /// WALLET/CALLS HOOK: words the Wallet or Calls panel puts in the message
+    /// (a receipt, an address, "pay vendor 0.2"), marked as the keyboard's
+    /// own so the paste guard lets them be.
+    func insertOwn(_ text: String) {
+        ownInsert = text
+        host?.agentInsert(text, spaced: true)
     }
 
     func dismiss() {
@@ -383,6 +426,13 @@ final class AgentModel {
     /// Show your NEAR account and saved addresses in the strip.
     func openVault() {
         vaultItems = Vault.all
+        if host?.agentHasFullAccess == true {
+            Task { @MainActor in
+                await Vault.pull()
+                vaultItems = Vault.all
+                if !vaultItems.isEmpty { notice = nil }
+            }
+        }
         guard !vaultItems.isEmpty else {
             notice = "Add addresses in the AIRKEY app, in Settings › Vault."
             return
@@ -397,7 +447,8 @@ final class AgentModel {
         vaultOpen = false
         ownInsert = item.value
         host?.agentInsert(item.value, spaced: true)
-        UIDevice.current.playInputClick()
+        if SettingsStore.current.keyClicks { UIDevice.current.playInputClick() }
+        Haptics.letter()
     }
 
     private func feedback(for signal: Signal) {
@@ -405,7 +456,7 @@ final class AgentModel {
         case .allow: Haptics.success()
         case .warn: Haptics.warning()
         case .block: Haptics.error()
-        case .quote, .watch: Haptics.letter()
+        case .quote, .watch: Haptics.chip()
         case .neutral: break
         }
     }

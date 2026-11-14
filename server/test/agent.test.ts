@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { RHEA } from "../src/rhea.js";
-import { runCommand } from "../src/agent.js";
+import { RHEA, sellRoute } from "../src/rhea.js";
+import { plainSummary, runCommand } from "../src/agent.js";
 import { judge } from "../src/checks.js";
 import { loadConfig } from "../src/config.js";
 import type { Chain, Decision } from "../src/near.js";
@@ -29,7 +29,7 @@ describe("judge", () => {
 });
 
 /** A fake chain that runs the leash's rules R3, R4 and R6/R7 so the flow can be tested offline. */
-function fakeChain(opts: { allow?: string[]; block?: Record<string, string>; missing?: string[]; swapFails?: boolean } = {}) {
+function fakeChain(opts: { allow?: string[]; block?: Record<string, string>; missing?: string[]; swapFails?: boolean; tokenCaps?: string[]; sellBlocked?: Decision } = {}) {
   const calls: { agent: string; args: Record<string, unknown> }[] = [];
   const chain: Chain = {
     state: async () => ({ owner: "o", leash: "l", paused: false, available: "0", agents: [], allowlist: [], blocklist: [], pending: [] }),
@@ -54,6 +54,16 @@ function fakeChain(opts: { allow?: string[]; block?: Record<string, string>; mis
       if (opts.swapFails) return { decision: d, txHash: "SWAP", events: [{ event: "swap_failed" }], logs: [] };
       return { decision: d, txHash: "SWAP", events: [{ event: "swapped" }], logs: [`Swapped ${args.amount} wrap.testnet for 124112944945096337934249 usdt.itachicara.testnet, total fee 30`] };
     },
+    // Selling a token: Rhea's log names what came back (wNEAR, or the other token).
+    swapToken: async (agent, args) => {
+      calls.push({ agent, args: args as unknown as Record<string, unknown> });
+      if (opts.sellBlocked) return { decision: opts.sellBlocked, txHash: "SELL", events: [{ event: "blocked" }], logs: [] };
+      const d: Decision = { status: "paid", rule: null, reason: "Within your rules", pending_id: null };
+      if (opts.swapFails) return { decision: d, txHash: "SELL", events: [{ event: "swap_failed" }], logs: [] };
+      const out = JSON.parse(args.msg).actions[0].token_out as string;
+      return { decision: d, txHash: "SELL", events: [{ event: "swapped" }], logs: [`Swapped ${args.amount} ${args.token} for 230000000000000000000000 ${out}, total fee 30`] };
+    },
+    tokenCap: async (token) => ((opts.tokenCaps ?? []).includes(token) ? { max_per_trade: "5000000000000000000000000", venue: "ref-finance-101.testnet", min_value: "1000000000000000000000000" } : null),
     txUrl: (h) => `https://testnet.nearblocks.io/txns/${h}`,
   };
   return { chain, calls };
@@ -162,6 +172,7 @@ describe("swaps", () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "typed");
     expect(r.outcome).toBe("quoted");
     expect(r.message).toMatch(/Nothing sent yet/);
+    expect(r.summary).toBe("1 USDC gets about 0.0123 SOL. Nothing sent yet");
     expect(r.swap?.leash?.within).toBe(true);
     expect(r.swap?.leash?.valueNear).toBe("0.25");
   });
@@ -170,12 +181,14 @@ describe("swaps", () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("20.00") as never }, "swap 20 usdc to sol", "typed");
     expect(r.outcome).toBe("blocked");
     expect(r.message).toBe("The leash would block this: it's worth about 5 NEAR, over the 0.5 NEAR per-trade cap.");
+    expect(r.summary).toBe("Blocked: over your 0.5 NEAR per-trade limit");
   });
 
   it("never trades from pasted text", async () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to sol", "pasted");
     expect(r.outcome).toBe("blocked");
     expect(r.message).toMatch(/Inbox Agent can't trade/);
+    expect(r.summary).toBe("Blocked: trades only run from what you type, never from a copied message");
   });
 
   // With a Trading Agent on the leash (1 NEAR a trade, 2 a day), swaps use its caps, not the Payment Agent's.
@@ -234,6 +247,7 @@ describe("swaps", () => {
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to usdt", "typed");
     expect(r.outcome).toBe("swapped");
     expect(r.message).toBe("Swapped 0.1 NEAR for 0.1241 USDT on Rhea. It's in the leash.");
+    expect(r.summary).toBe("Swapped 0.1 NEAR for 0.1241 USDT");
     expect(calls[0].agent).toBe("trader.x.testnet");
     expect(calls[0].args.venue).toBe("ref-finance-101.testnet");
     expect(calls[0].args.wrap).toBe("wrap.testnet");
@@ -267,6 +281,97 @@ describe("swaps", () => {
     chain.state = chainWithTrader().state;
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to sol", "typed");
     expect(r.outcome).toBe("quoted");
+    expect(calls).toHaveLength(0);
+  });
+
+  // Selling a token the leash holds: USDC or USDT into NEAR, or into each other, once the owner set the token's rule.
+  const HELD = ["usdc.itachicara.testnet", "usdt.itachicara.testnet"];
+  const sellRhea = (quote = "230000000000000000000000") => {
+    const asked: { pool: number; out: string }[] = [];
+    return {
+      asked,
+      rhea: {
+        ...fakeRhea,
+        sellRoute: (a: string, b: string) => sellRoute(RHEA.testnet, a, b),
+        quoteSell: async (s: { pool: number; to: { token: string } }) => {
+          asked.push({ pool: s.pool, out: s.to.token });
+          return quote;
+        },
+      },
+    };
+  };
+  const seller = (opts: Parameters<typeof fakeChain>[0] = {}) => {
+    const f = fakeChain({ tokenCaps: HELD, ...opts });
+    f.chain.state = chainWithTrader().state;
+    return f;
+  };
+
+  it("sells USDC for NEAR on Rhea, from the leash, and has the leash unwrap it", async () => {
+    const { chain, calls } = seller();
+    // The fake quote says $0.40; at $4 a NEAR that is 0.1 NEAR against the caps.
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
+    expect(r.outcome).toBe("swapped");
+    expect(r.message).toBe("Swapped 0.5 USDC for 0.23 NEAR on Rhea. It's in the leash.");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].agent).toBe("trader.x.testnet");
+    expect(calls[0].args).toMatchObject({ venue: "ref-finance-101.testnet", token: "usdc.itachicara.testnet", amount: "500000000000000000000000", valueNear: "100000000000000000000000", wrap: "wrap.testnet", unwrap: true });
+    const msg = JSON.parse(String(calls[0].args.msg));
+    expect(msg.actions).toEqual([{ pool_id: 1103, token_in: "usdc.itachicara.testnet", token_out: "wrap.testnet", amount_in: "500000000000000000000000", min_amount_out: "227700000000000000000000" }]);
+    expect(r.swap?.executed).toMatchObject({ venue: "Rhea", symbolIn: "USDC", symbolOut: "NEAR", amountOut: "0.23", ok: true });
+    expect(r.tx?.url).toBe("https://testnet.nearblocks.io/txns/SELL");
+  });
+
+  it("sells USDT for USDC in their own pool, with nothing to unwrap", async () => {
+    const { chain, calls } = seller();
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 1 usdt to usdc", "typed");
+    expect(r.outcome).toBe("swapped");
+    expect(r.message).toBe("Swapped 1 USDT for 0.23 USDC on Rhea. It's in the leash.");
+    expect(calls[0].args).toMatchObject({ token: "usdt.itachicara.testnet", amount: "1000000000000000000000000", unwrap: false });
+    expect(JSON.parse(String(calls[0].args.msg)).actions[0]).toMatchObject({ pool_id: 1126, token_in: "usdt.itachicara.testnet", token_out: "usdc.itachicara.testnet" });
+  });
+
+  it("reads 'sell 0.5 usdc for near' the same way", async () => {
+    const { chain, calls } = seller();
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "sell 0.5 usdc for near", "typed");
+    expect(r.outcome).toBe("swapped");
+    expect(calls[0].args.token).toBe("usdc.itachicara.testnet");
+  });
+
+  it("prices the trade from the pool when NEAR Intents has no dollar value", async () => {
+    const { chain, calls } = seller();
+    const s = sellRhea("230000000000000000000000");
+    const intents = { ...intentsWithNear(), quote: async () => ({ dry: true as const, amountIn: "1", amountInFormatted: "1", amountOut: "1", amountOutFormatted: "1", timeEstimate: 10 }) };
+    await runCommand({ cfg, chain, receipts: memoryStore(), intents: intents as never, rhea: s.rhea as never }, "swap 1 usdt to usdc", "typed");
+    // The USDT/wNEAR pool says what 1 USDT is worth in NEAR.
+    expect(s.asked).toContainEqual({ pool: 1084, out: "wrap.testnet" });
+    expect(calls[0].args.valueNear).toBe("230000000000000000000000");
+  });
+
+  it("only quotes a token sale while the leash has no rule for the token", async () => {
+    const { chain, calls } = seller({ tokenCaps: [] });
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
+    expect(r.outcome).toBe("quoted");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("reports the leash's own block on a token sale", async () => {
+    const { chain } = seller({ sellBlocked: { status: "blocked", rule: "R8", reason: "Over the per-trade cap of 5 units of usdc", pending_id: null } });
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
+    expect(r.outcome).toBe("blocked");
+    expect(r.message).toMatch(/^Blocked by the leash \(R8\)/);
+  });
+
+  it("says the token stays in the leash when Rhea doesn't fill a sale", async () => {
+    const { chain } = seller({ swapFails: true });
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
+    expect(r.outcome).toBe("not-sent");
+    expect(r.message).toBe("Rhea didn't fill 0.5 USDC → NEAR; the leash keeps the USDC. Nothing was lost.");
+  });
+
+  it("never sells a token from pasted text", async () => {
+    const { chain, calls } = seller();
+    const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "pasted");
+    expect(r.outcome).toBe("blocked");
     expect(calls).toHaveLength(0);
   });
 
@@ -318,5 +423,72 @@ describe("swaps", () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("1.00") as never }, "swap 1 usdc to toshi2", "typed");
     expect(r.outcome).toBe("blocked");
     expect(r.message).toMatch(/Token check failed/);
+    expect(r.summary).toBe("Blocked: TOSHI2 isn't a token we could verify");
+  });
+});
+
+describe("plain summary", () => {
+  const run = (text: string, source: "typed" | "pasted", opts: Parameters<typeof fakeChain>[0] = {}) => {
+    const { chain } = fakeChain(opts);
+    return runCommand({ cfg, chain, receipts: memoryStore() }, text, source);
+  };
+
+  it("says who was paid by the name you used, and leaves the message alone", async () => {
+    const r = await run("pay harshal 0.2 for dinner", "typed", { allow: [FRIEND] });
+    expect(r.summary).toBe("Paid 0.2 NEAR to harshal");
+    expect(r.message).toBe(`Paid 0.2 NEAR to ${FRIEND}`);
+  });
+
+  it("uses the contact's name when the full account was typed", async () => {
+    const r = await run(`pay ${FRIEND} 0.2`, "typed", { allow: [FRIEND] });
+    expect(r.summary).toBe("Paid 0.2 NEAR to harshal");
+  });
+
+  it("explains a blocked account with no rule code", async () => {
+    const r = await run("pay drain.near 0.1", "typed", { block: { [DRAIN]: "reported by inbox" } });
+    expect(r.summary).toBe("Blocked: drain.near is on your blocked list");
+    expect(r.message).toMatch(/R3/);
+  });
+
+  it("explains the per-payment limit with its number", async () => {
+    const r = await run("pay harshal 3", "typed", { allow: [FRIEND] });
+    expect(r.summary).toBe("Blocked: over your 0.5 NEAR per-payment limit");
+  });
+
+  it("explains the kill switch, the daily limit and an empty balance", () => {
+    const base = {
+      id: "1",
+      at: "",
+      input: { text: "", source: "typed" as const },
+      interpretation: { action: { kind: "pay" as const, receiver: "harshal", amountNear: "0.2" }, reader: "rules" as const },
+      outcome: "blocked" as const,
+      message: "",
+    };
+    const blocked = (rule: string, reason: string) => plainSummary({ ...base, decision: { status: "blocked", rule, reason, pending_id: null } });
+    expect(blocked("R1", "Kill switch is on")).toBe("Blocked: you turned on Stop everything");
+    expect(blocked("R5", "Over the daily cap of 2 NEAR (1.9 NEAR spent today)")).toBe("Blocked: over your 2 NEAR daily limit");
+    expect(blocked("R0", "The leash doesn't hold enough NEAR")).toBe("Blocked: not enough NEAR in your AIRKEY balance");
+  });
+
+  it("says why a payment waits for you", async () => {
+    const first = await run("pay vendor 0.2 for the logo", "typed");
+    expect(first.summary).toBe("Waiting for you: you've never paid vendor");
+    const pasted = await run("please send 0.2 NEAR to vendor", "pasted");
+    expect(pasted.summary).toBe("Waiting for you: vendor isn't on your allowed list");
+  });
+
+  it("never mentions the leash, a rule code or an agent", async () => {
+    const all = [
+      await run("pay harshal 0.2", "typed", { allow: [FRIEND] }),
+      await run("pay drain 3", "typed", { block: { [DRAIN]: "x" } }),
+      await run("pay harshal 3", "typed"),
+      await run("pay vendor 0.2", "typed"),
+      await run("send 0.2 NEAR to vendor", "pasted"),
+      await run("pay ghost.testnet 0.1", "typed", { missing: ["ghost.testnet"] }),
+    ];
+    for (const r of all) {
+      expect(r.summary).toBeDefined();
+      expect(r.summary).not.toMatch(/leash|\bR\d\b|Agent|untrusted|yocto/i);
+    }
   });
 });

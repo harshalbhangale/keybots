@@ -3,6 +3,9 @@
 // heuristic classifier, ported for NEAR), then turned into one small trade
 // the owner can hold to run: never run by itself, token checked on NEAR
 // Intents, and sized under the Trading Agent's caps as the leash has them.
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
 import type { IntentsClient } from "./intents.js";
 import type { LeashState } from "./near.js";
 
@@ -120,6 +123,8 @@ export async function routeCall(
     network: string;
     /** Tokens Rhea can swap NEAR into here (testnet: USDC, USDT). */
     rhea?: { route(symbol: string): unknown };
+    /** Dollars the trade spends: the copied-call chip's $1 unless a follow's rules say otherwise. */
+    usd?: number;
   },
 ): Promise<CallRoute> {
   if (!call.isCall || !call.asset) return { status: "unavailable", reason: "This isn't a trade call." };
@@ -139,7 +144,8 @@ export async function routeCall(
   if (!check.verified || !check.token) return { status: "unavailable", reason: `Token check failed: ${check.reason}.` };
 
   const asset = call.asset.toLowerCase();
-  const usd = `$${CALL_SIZE_USD}`;
+  const size = deps.usd ?? CALL_SIZE_USD;
+  const usd = `$${size}`;
   const side = call.direction === "bullish" ? "buy" : "sell";
   // Testnet has no SOL (or most tokens): the hold swaps NEAR to USDC on Rhea
   // instead, and the chip says so. The quote shown is NEAR Intents' real one.
@@ -153,7 +159,7 @@ export async function routeCall(
 
   // What it's worth in NEAR, at NEAR Intents' price.
   const nearToken = (await deps.intents.pick("NEAR", "from")).token;
-  const amountNear = nearToken?.price ? Number((CALL_SIZE_USD / nearToken.price).toFixed(4)) : null;
+  const amountNear = nearToken?.price ? Number((size / nearToken.price).toFixed(4)) : null;
 
   // The quote and the leash's caps at the same time: the chip should be up in well under 2 seconds.
   const intents = deps.intents;
@@ -198,3 +204,155 @@ export async function routeCall(
 }
 
 const near = (yocto: bigint) => String(Number(yocto / 10n ** 18n) / 1e6);
+
+// ---------------------------------------------------------------------------
+// The calls book: every copied call that was checked, and the trade it led to.
+// One JSON line per event in <dataDir>/calls.jsonl (a call, a re-check, the
+// trade a hold ran for it, a dismissal), folded into one record per call.
+// ---------------------------------------------------------------------------
+
+/** What the hold for a call came back with (its receipt, in short). */
+export interface CallTrade {
+  at: string;
+  receiptId: string;
+  outcome: string;
+  message: string;
+  tx?: { hash: string; url: string };
+}
+
+type RouteFields = {
+  /** The route as last checked: "available" with the command a hold sends, or "unavailable" with why. */
+  status: "available" | "unavailable";
+  reason: string | null;
+  command: string | null;
+  title: string | null;
+  side: "buy" | "sell" | null;
+  standIn: string | null;
+  /** The token passed NEAR Intents' check. */
+  verified: boolean;
+};
+
+export interface CallRecord extends RouteFields {
+  id: string;
+  /** When it was first checked. */
+  at: string;
+  text: string;
+  asset: string | null;
+  direction: "bullish" | "bearish" | null;
+  confidence: Call["confidence"];
+  instrument: Call["instrument"];
+  summary: string;
+  /** The token's dollar price when the call was first checked. */
+  priceThen: number | null;
+  trade: CallTrade | null;
+  /** Put away by the owner without trading. */
+  dismissed: boolean;
+}
+
+type CallEvent =
+  | ({ t: "call" } & CallRecord)
+  | ({ t: "route"; id: string } & RouteFields)
+  | { t: "trade"; id: string; trade: CallTrade }
+  | { t: "dismiss"; id: string };
+
+export interface CallStore {
+  /** Record a checked call. The same text checked again while still open updates that record's route. */
+  check(text: string, call: Call, route: CallRoute, priceThen: number | null): CallRecord;
+  /** Newest first. */
+  list(limit?: number): CallRecord[];
+  get(id: string): CallRecord | undefined;
+  /** The trade a hold ran for it. */
+  traded(id: string, trade: CallTrade): CallRecord | undefined;
+  dismiss(id: string): CallRecord | undefined;
+}
+
+function routeFields(route: CallRoute): RouteFields {
+  return route.status === "available"
+    ? { status: "available", reason: null, command: route.command, title: route.title, side: route.side, standIn: route.standIn, verified: true }
+    : { status: "unavailable", reason: route.reason, command: null, title: null, side: null, standIn: null, verified: false };
+}
+
+function fold(events: CallEvent[]): CallRecord[] {
+  const byId = new Map<string, CallRecord>();
+  for (const e of events) {
+    if (e.t === "call") {
+      const { t: _t, ...record } = e;
+      byId.set(e.id, { ...record });
+      continue;
+    }
+    const r = byId.get(e.id);
+    if (!r) continue;
+    if (e.t === "route") {
+      const { t: _t, id: _id, ...fields } = e;
+      Object.assign(r, fields);
+    } else if (e.t === "trade") r.trade = e.trade;
+    else r.dismissed = true;
+  }
+  return [...byId.values()];
+}
+
+function callStore(read: () => CallEvent[], append: (e: CallEvent) => void): CallStore {
+  const all = () => fold(read());
+  const get = (id: string) => all().find((r) => r.id === id);
+  return {
+    check(text, call, route, priceThen) {
+      const fields = routeFields(route);
+      const open = all().find((r) => r.text === text && !r.trade && !r.dismissed);
+      if (open) {
+        append({ t: "route", id: open.id, ...fields });
+        return { ...open, ...fields };
+      }
+      const record: CallRecord = {
+        id: randomUUID(),
+        at: new Date().toISOString(),
+        text,
+        asset: call.asset,
+        direction: call.direction,
+        confidence: call.confidence,
+        instrument: call.instrument,
+        summary: call.summary,
+        ...fields,
+        priceThen,
+        trade: null,
+        dismissed: false,
+      };
+      append({ t: "call", ...record });
+      return record;
+    },
+    list: (limit = 50) => all().reverse().slice(0, limit),
+    get,
+    traded(id, trade) {
+      if (!get(id)) return undefined;
+      append({ t: "trade", id, trade });
+      return get(id);
+    },
+    dismiss(id) {
+      if (!get(id)) return undefined;
+      append({ t: "dismiss", id });
+      return get(id);
+    },
+  };
+}
+
+export function fileCalls(dir: string): CallStore {
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, "calls.jsonl");
+  return callStore(
+    () =>
+      existsSync(file)
+        ? readFileSync(file, "utf8")
+            .split("\n")
+            .filter(Boolean)
+            .map((l) => JSON.parse(l) as CallEvent)
+        : [],
+    (e) => appendFileSync(file, JSON.stringify(e) + "\n"),
+  );
+}
+
+export function memoryCalls(): CallStore {
+  const events: CallEvent[] = [];
+  return callStore(
+    () => events,
+    (e) => void events.push(e),
+  );
+}

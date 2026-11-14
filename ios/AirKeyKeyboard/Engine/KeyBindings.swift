@@ -1,6 +1,6 @@
 import Foundation
 
-/// What a held letter runs (Glyf Keys): the app's Keys screen first
+/// What a held letter runs (bound keys): the app's Keys screen first
 /// (BoundKeys, in the App Group), then any menu binding the keyboard's own
 /// settings still carry ("n": "surface:notes"). Read once per showing and
 /// kept, because KeyboardView asks on every letter's touch.

@@ -73,7 +73,7 @@ struct KeyboardSettings: Codable, Equatable {
 
     enum Toolbar {
         /// The strip: three tools at most, AIRKEY's wallet and copied-text
-        /// check first, then the clipboard. Notes, style, games and settings
+        /// check first, then the clipboard. Notes, style and settings
         /// live in the menu; the emoji key is in the bottom row.
         static let defaultOrder = ["wallet", "check", "clipboard"]
 

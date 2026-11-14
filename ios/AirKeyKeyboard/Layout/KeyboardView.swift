@@ -353,12 +353,13 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let st = TouchState(key: kv, start: p, time: touch.timestamp)
             touchStates[ObjectIdentifier(touch)] = st
             kv.setPressed(true)
+            // Delete runs first, so its tick knows whether a whole word went.
+            if case .delete = kv.spec.kind { delegate?.kbDeleteBackward() }
             feedback(impactStyle: .light, key: kv)
 
             switch kv.spec.kind {
             case .delete:
                 st.mode = .deleteRepeat
-                delegate?.kbDeleteBackward()
                 startDeleteRepeat(st)
             case .char(let c):
                 // Bindings rest while the keys type into the keyboard's own fields
@@ -426,7 +427,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let p = touch.location(in: self)
             switch st.mode {
             case .accentPopup:
+                let was = st.popup?.selectedIndex
                 st.popup?.track(pointInSuperview: p)
+                if st.popup?.selectedIndex != was { Haptics.popupMove() }
             case .space:
                 guard var gesture = st.space else { break }
                 // Leaving the bar vertically before any glide or hold is a
@@ -552,7 +555,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let under = key(at: p)
         if under !== st.lit {
             st.lit?.updateFill(pressed: false)
-            if let under, under.spec.isChar { under.updateFill(pressed: true); st.lit = under } else { st.lit = nil }
+            if let under, under.spec.isChar { under.updateFill(pressed: true); st.lit = under; Haptics.glideTick() } else { st.lit = nil }
         }
         // The word so far, worked out a few times a second, not per sample.
         guard let layout = glideLayout, time - st.decodedAt >= 0.09 else { return }
@@ -566,6 +569,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         trail.end()
         guard let layout = glideLayout else { return }
         delegate?.kbGlideEnded(st.path, layout: layout)
+        Haptics.glideLand()
         if shift == .on { setShift(.off, auto: false) } // shift releases after one word
         delegate?.kbTextInteraction()
     }
@@ -585,7 +589,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 Haptics.layer()
                 delegate?.kbCursorGlideBegan()
             case .moveCursor(let graphemes):
-                if st.glides { delegate?.kbMoveCursor(graphemes: graphemes) }
+                if st.glides {
+                    delegate?.kbMoveCursor(graphemes: graphemes)
+                    if graphemes != 0 { Haptics.cursorTick() }
+                }
             case .endGlide:
                 guard st.glides else { break }
                 setTrackpadLook(false)
@@ -613,7 +620,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func tapAction(_ kv: KeyView, event: UIEvent?, at point: CGPoint? = nil) {
         // A theme's sample already sounded on the way down; only the system
         // click is asked for again on the lift.
-        if ThemeSound.shared.sample(for: Self.soundRole(kv)) == nil { UIDevice.current.playInputClick() }
+        if SettingsStore.current.keyClicks, ThemeSound.shared.sample(for: Self.soundRole(kv)) == nil { UIDevice.current.playInputClick() }
         switch kv.spec.kind {
         case .char(let c):
             lastTapOffset = point.map { p in
@@ -680,7 +687,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             addSubview(popup)
             popup.place(over: st.key.frame, in: bounds.insetBy(dx: 0, dy: -Glass.toolbarHeight))
             st.popup = popup
-            Haptics.letter()
+            Haptics.popupOpen()
         }
     }
 
@@ -703,7 +710,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             self.tickDeleteRepeat(st)
         }
         // Every 4th repeat, and only a short key sound, never a long one.
-        if st.repeatCount % 4 == 0, !(SettingsStore.current.keyClicks && ThemeSound.shared.play(.delete)) {
+        if st.repeatCount % 4 == 0, SettingsStore.current.keyClicks, !ThemeSound.shared.play(.delete) {
             UIDevice.current.playInputClick()
         }
     }
@@ -758,7 +765,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         case .char: Haptics.letter()
         case .space: Haptics.space()
         case .delete: Haptics.delete()
-        case .shift, .ret: Haptics.modifier()
+        case .shift: Haptics.shift()
+        case .ret: Haptics.ret()
         case .mode, .globe, .emoji: Haptics.layer()
         }
     }

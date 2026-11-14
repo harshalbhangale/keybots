@@ -35,10 +35,12 @@ const BUY_WORDS = new RegExp(String.raw`\bbuy\s+${AMOUNT}\s*(?:usdc?|dollars?|bu
 const SELL = new RegExp(String.raw`\bsell\s+${AMOUNT}\s*${SYMBOL}(?:\s+(?:for|to|into)\s+${SYMBOL})?\b`, "i");
 /** What a dollar amount is paid in. */
 export const DOLLAR = "USDC";
+/** Tokens that are dollars: an order paying with one watches the token it buys. */
+const DOLLARS_LIKE = new Set(["USDC", "USDT", "DAI"]);
 
 // "<a trade> if it drops below 2", "<a trade> when near goes above $4"
 const WHEN = new RegExp(
-  String.raw`^(.+?)\s+(?:if|when|once|whenever)\s+(?:it|the\s+price|\$?[a-z][a-z0-9]{1,9})?\s*(?:drops?|falls?|dips?|goes|is|gets|rises?|climbs?|hits)?\s*(?:to\s+)?(below|under|above|over|past)\s+\$?${AMOUNT}\s*[.!?]*$`,
+  String.raw`^(.+?)\s+(?:if|when|once|whenever)\s+(?:it|the\s+price|\$?([a-z][a-z0-9]{1,9}))?\s*(?:drops?|falls?|dips?|goes|is|gets|rises?|climbs?|hits)?\s*(?:to\s+)?(below|under|above|over|past)\s+\$?${AMOUNT}\s*[.!?]*$`,
   "i",
 );
 
@@ -58,9 +60,12 @@ export function parse(text: string): Action {
       const trade = parse(w[1]);
       if (trade.kind === "swap") {
         // Watch the token being bought or sold, not the dollars on the other side.
-        const symbol = trade.from === DOLLAR ? trade.to : trade.from;
-        const direction = /below|under/i.test(w[2]) ? "below" : "above";
-        return { kind: "watch", command: w[1].trim(), trade: { amount: trade.amount, from: trade.from, to: trade.to }, symbol, direction, price: normaliseAmount(w[3]) };
+        // A token named in the condition ("swap 5 usdt to near if near drops below 2")
+        // is the one watched, when it is one of the two being traded.
+        const named = w[2]?.toUpperCase();
+        const symbol = named && (named === trade.from || named === trade.to) ? named : DOLLARS_LIKE.has(trade.from) ? trade.to : trade.from;
+        const direction = /below|under/i.test(w[3]) ? "below" : "above";
+        return { kind: "watch", command: w[1].trim(), trade: { amount: trade.amount, from: trade.from, to: trade.to }, symbol, direction, price: normaliseAmount(w[4]) };
       }
     }
     const u = line.match(SWAP_USD);
