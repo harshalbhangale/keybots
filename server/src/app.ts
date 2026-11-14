@@ -69,17 +69,17 @@ export function buildApp(deps: Deps) {
     reply.header("access-control-allow-headers", "authorization, content-type");
     reply.header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
     if (req.method === "OPTIONS") return reply.code(204).send();
-    // Public: /health, and /leash (only public chain data and plain receipt lines).
+    // Public: /health, and the Spend Limits page at /limits and /leash (only public chain data and plain receipt lines).
     const path = req.url.split("?")[0];
-    if (path === "/health" || path === "/leash" || !deps.cfg.apiToken) return;
+    if (path === "/health" || path === "/leash" || path === "/limits" || !deps.cfg.apiToken) return;
     if (req.headers.authorization !== `Bearer ${deps.cfg.apiToken}`) return reply.code(401).send({ error: "Missing or wrong token" });
   });
 
   app.get("/health", async () => ({ ok: true, network: deps.cfg.network, leash: deps.cfg.leash }));
 
-  /** The judge page: the leash live from chain (cached 15 s) and the last decisions, read-only. */
+  /** The judge page: Spend Limits live from chain (cached 15 s) and the last decisions, read-only. /leash is the old address. */
   const leashState = cachedState(deps.chain);
-  app.get("/leash", async (_req, reply) => {
+  const limitsPage = async (_req: unknown, reply: import("fastify").FastifyReply) => {
     let state = null;
     let readAt = Date.now();
     let error: string | undefined;
@@ -90,7 +90,9 @@ export function buildApp(deps: Deps) {
     }
     const html = renderLeash({ cfg: deps.cfg, state, readAt, receipts: deps.receipts.list(15), error });
     return reply.header("content-type", "text/html; charset=utf-8").header("cache-control", "public, max-age=15").send(html);
-  });
+  };
+  app.get("/limits", limitsPage);
+  app.get("/leash", limitsPage);
 
   /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch, and the tokens it holds. */
   app.get("/v1/state", async () => {

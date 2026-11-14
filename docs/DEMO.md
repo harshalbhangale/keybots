@@ -1,6 +1,6 @@
 # AIRKEY demo: the 2-minute script
 
-Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard on screen. Every money moment ends on NEAR testnet. The leash contract is `leash.airkey-harshal.testnet`.
+Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard on screen. Every money moment ends on NEAR testnet. The Spend Limits contract is `leash.airkey-harshal.testnet`.
 
 ## Before each take
 
@@ -11,7 +11,7 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
    - turns the kill switch off and makes sure drain is blocked;
    - clears anything waiting for approval and puts every agent's spend back to 0;
    - makes vendor a brand-new account you've never paid;
-   - sends friend's NEAR back to the owner and tops the leash up to 1.5 NEAR;
+   - sends friend's NEAR back to the owner and tops Spend Limits up to 1.5 NEAR;
    - cancels any price orders.
 3. **Phone, once.**
    - Settings › General › Keyboard › Keyboards: add AIRKEY and turn on Allow Full Access.
@@ -35,7 +35,7 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
 | 1:44 | 5. Private AI | Type a messy draft (`hey so i cant make it tmrw sry, maybe fri??`), hold the space bar, tap **Rewrite**. | Five versions with *NEAR AI ✓* at the top (about 1–2 s); tap **Replace**. |
 | 1:56 | 6. Follow someone | Keyboard › Calls › Following: tap **@AltcoinSherpa** in the suggestions, open him, hold **Trade their latest call now**. | His record (hits, misses, average), then *Bought $1 of … for you (testnet: NEAR → USDC)* in Traded for you, with the post and the transaction. |
 | 2:10 | Close: kill switch | In AIRKEY › Limits, tap **Stop everything**. | Face ID, then *Everything is stopped*. |
-| | | In the chat, `pay harshal 0.2` and hold. | Red **Blocked** over *you turned on Stop everything*. End card: *Your keyboard is the AI. NEAR is the leash.* |
+| | | In the chat, `pay harshal 0.2` and hold. | Red **Blocked** over *you turned on Stop everything*. End card: *Your keyboard is the AI. NEAR holds the limits.* |
 
 After the take, tap the switch again (Face ID) to let the agents work, or just run `demo-reset`.
 

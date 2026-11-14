@@ -15,8 +15,16 @@ use near_sdk::{
 
 const NS_PER_DAY: u64 = 86_400_000_000_000;
 const GAS_FOR_CALLBACK: Gas = Gas::from_tgas(10);
-/// Wrapped-NEAR contracts a swap may use, so an agent can't name a fake one.
-const WRAP: [&str; 2] = ["wrap.near", "wrap.testnet"];
+/// The wrapped-NEAR contract a swap may use, so an agent can't name a fake
+/// one: wrap.near when the leash lives on mainnet, wrap.testnet on testnet.
+/// The same wasm works on both; the leash's own account name decides.
+fn wrap_here() -> &'static str {
+    if env::current_account_id().as_str().ends_with(".testnet") {
+        "wrap.testnet"
+    } else {
+        "wrap.near"
+    }
+}
 // A swap fits in 200 TGas, so an agent's key (0.25 NEAR allowance) can afford
 // the upfront gas reservation: wrap 5, then 170 for the send (140, enough for a
 // one-pool Rhea swap and its payout) and the last callback.
@@ -228,8 +236,8 @@ impl Leash {
 
     /// An agent asks to swap NEAR for a token. The same rules as `pay` decide,
     /// with `venue` as the receiver, except that a swap never waits for the
-    /// owner. The leash wraps exactly `amount` into `wrap` (wrap.near or
-    /// wrap.testnet) and, once that worked, sends the wNEAR to the venue:
+    /// owner. The leash wraps exactly `amount` into `wrap` (wrap.near on
+    /// mainnet, wrap.testnet on testnet) and, once that worked, sends the wNEAR to the venue:
     /// with `msg` by ft_transfer_call (an exchange like Rhea swaps and sends the
     /// token back to the leash), without it by ft_transfer (a NEAR Intents
     /// deposit address, registered on `wrap` first).
@@ -249,7 +257,8 @@ impl Leash {
         sell: Option<Sell>,
     ) -> Decision {
         let agent_id = env::predecessor_account_id();
-        require!(WRAP.contains(&wrap.as_str()), "Swaps go through wrap.near or wrap.testnet only");
+        let expected = wrap_here();
+        require!(wrap.as_str() == expected, format!("Swaps go through {expected} only"));
         let memo = clip(memo, MAX_MEMO);
         if let Some(sell) = sell {
             return self.swap_token(agent_id, venue, sell, amount, wrap, msg, memo);
@@ -971,11 +980,49 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Swaps go through wrap.near or wrap.testnet only")]
+    #[should_panic(expected = "Swaps go through wrap.testnet only")]
     fn swaps_refuse_a_fake_wrap_contract() {
         let mut l = setup();
         as_agent(PAY, 100);
         l.swap(acc(RHEA), milli(200), acc("wrap.evil.testnet"), None, None, None);
+    }
+
+    #[test]
+    #[should_panic(expected = "Swaps go through wrap.testnet only")]
+    fn testnet_leash_refuses_mainnet_wrap() {
+        let mut l = setup();
+        as_agent(PAY, 100);
+        l.swap(acc(RHEA), milli(200), acc("wrap.near"), Some("{}".into()), None, None);
+    }
+
+    /// The same code on mainnet: limits.hellbuddy.near wraps through wrap.near only.
+    fn mainnet_setup(caller: &str) -> Leash {
+        let mut b = ctx("hellbuddy.near", 1, 100);
+        b.current_account_id(acc("limits.hellbuddy.near"));
+        testing_env!(b.build());
+        let mut l = Leash::new(acc("hellbuddy.near"));
+        l.add_agent(acc("trader.hellbuddy.near"), Tier::Trusted, milli(300), milli(600));
+        let mut b = ctx(caller, 0, 100);
+        b.current_account_id(acc("limits.hellbuddy.near"));
+        testing_env!(b.build());
+        l
+    }
+
+    #[test]
+    fn mainnet_leash_swaps_through_wrap_near() {
+        let mut l = mainnet_setup("trader.hellbuddy.near");
+        let swap = |l: &mut Leash, m| l.swap(acc("v2.ref-finance.near"), milli(m), acc("wrap.near"), Some("{}".into()), None, None);
+        assert_eq!(swap(&mut l, 300).status, Status::Paid);
+        assert_eq!(swap(&mut l, 400).rule.as_deref(), Some("R4"));
+        assert_eq!(swap(&mut l, 300).status, Status::Paid);
+        assert_eq!(swap(&mut l, 100).rule.as_deref(), Some("R5"));
+    }
+
+    #[test]
+    #[should_panic(expected = "Swaps go through wrap.near only")]
+    fn mainnet_leash_refuses_testnet_wrap() {
+        let mut l = mainnet_setup("trader.hellbuddy.near");
+        l.swap(acc("v2.ref-finance.near"), milli(200), acc("wrap.testnet"), Some("{}".into()), None, None);
     }
 
     #[test]
