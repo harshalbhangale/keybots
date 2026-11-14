@@ -170,6 +170,8 @@ struct ErrorBanner: View {
 struct ApprovalCard: View {
     @Environment(AppModel.self) private var model
     let pending: LeashState.Pending
+    /// Off under a heading that already says "Waiting for you".
+    var tagged = true
 
     private var working: Bool { model.busy == "approve" || model.busy == "reject" }
 
@@ -179,7 +181,7 @@ struct ApprovalCard: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(Fmt.near(pending.amount)).font(AK.number(30)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.6)
                 Spacer()
-                Pill(text: "Waiting for you", color: AK.amberText)
+                if tagged { Pill(text: "Waiting for you", color: AK.amberText) }
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {

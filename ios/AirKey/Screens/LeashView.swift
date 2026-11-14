@@ -20,7 +20,7 @@ struct LeashView: View {
                 if !state.pending.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         SectionTitle("Waiting for you", trailing: "\(state.pending.count)")
-                        ForEach(state.pending) { ApprovalCard(pending: $0) }
+                        ForEach(state.pending) { ApprovalCard(pending: $0, tagged: false) }
                     }
                 }
                 agents(state)
@@ -75,7 +75,7 @@ struct LeashView: View {
                     Text(on ? "Everything is stopped" : "Stop everything")
                         .font(.headline)
                         .foregroundStyle(AK.redText)
-                    Text(on ? "Tap to let agents spend again" : "No agent can spend until you start again")
+                    Text(on ? "Tap to let agents spend again" : "Pauses every agent at once")
                         .font(.subheadline).foregroundStyle(AK.muted)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
