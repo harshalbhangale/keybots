@@ -5,7 +5,7 @@ setTheme("mono");
 const PERIOD = 2400;
 const svg = (t: number) => `<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">${scene(t)}</svg>`;
 
-/** The AIRKEY mascot, drawn live: it gets excited and clicks itself. Click or tap it to make it click now. */
+/** The Keybots mascot, drawn live: it gets excited and clicks itself. Click or tap it to make it click now. */
 export default function Mascot({ size = 300, label = "The Keybots mascot, a key that clicks itself" }: { size?: number; label?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef(performance.now());

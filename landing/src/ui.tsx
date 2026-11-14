@@ -1,7 +1,7 @@
 export const REPO = "https://github.com/harshalbhangale/near-hack";
 export const LEASH = "https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet";
 export const E2E = `${REPO}/blob/main/docs/evidence/testnet-e2e.md`;
-// Placeholder until the AIRKEY Android build is uploaded: swap this one URL for the AIRKEY APK on S3.
+// Placeholder until the Keybots Android build is uploaded: swap this one URL for the Keybots APK on S3.
 export const APK_URL = "https://kall-markets-downloads-308324916322.s3.ap-south-1.amazonaws.com/apps/kall-keyboard.apk";
 
 export function GitHub({ size = 22 }: { size?: number }) {
@@ -39,7 +39,7 @@ export function Play({ size = 22 }: { size?: number }) {
   );
 }
 
-/** The AIRKEY logo: a lime keycap with the NEAR mark as its legend (public/logo.svg). */
+/** The Keybots logo: a lime keycap with the NEAR mark as its legend (public/logo.svg). */
 export function Mark({ size = 28 }: { size?: number }) {
   return <img src="/logo.svg" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
 }

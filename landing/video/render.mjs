@@ -25,7 +25,7 @@ const wrap = (s, max) =>
   }, []);
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-// The AIRKEY logo (the lime NEAR keycap), from the site's public/logo.svg, so there is one source.
+// The Keybots logo (the lime NEAR keycap), from the site's public/logo.svg, so there is one source.
 const LOGO = readFileSync(join(here, "../public/logo.svg"), "utf8");
 const logoInner = LOGO.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
 const logoBox = LOGO.match(/viewBox="([^"]+)"/)[1];
@@ -130,7 +130,7 @@ cfg.beats.forEach((b, i) => {
     ${mark(80, 90, 150)}
     <text x="80" y="330" font-family="${FONT}" font-weight="700" font-size="76" fill="#F5F5F7">Your keyboard is the AI.</text>
     <text x="80" y="420" font-family="${FONT}" font-weight="700" font-size="76" fill="${LIME}">NEAR is the leash.</text>
-    <text x="80" y="520" font-family="${FONT}" font-size="30" fill="#A1A1A6">AIRKEY · pay, swap and stop scams from any chat · built at NEAR HACKATHON</text>
+    <text x="80" y="520" font-family="${FONT}" font-size="30" fill="#A1A1A6">Keybots · pay, swap and stop scams from any chat · built at NEAR HACKATHON</text>
   </svg>`;
   const r = new Resvg(og, { fitTo: { mode: "width", value: ow }, font: { loadSystemFonts: true, defaultFontFamily: FONT } });
   writeFileSync(join(here, "../public/og.png"), r.render().asPng());
@@ -138,4 +138,4 @@ cfg.beats.forEach((b, i) => {
 }
 
 // A small corner bug with the mark, for the whole recording.
-png("bug.png", svg(`${mark(60, 48, 64)}<text x="140" y="94" font-family="${FONT}" font-weight="700" font-size="30" letter-spacing="5" fill="#F5F5F7">AIRKEY</text>`, false));
+png("bug.png", svg(`${mark(60, 48, 64)}<text x="140" y="94" font-family="${FONT}" font-weight="700" font-size="30" letter-spacing="5" fill="#F5F5F7">KEYBOTS</text>`, false));

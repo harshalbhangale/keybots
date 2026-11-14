@@ -5,7 +5,7 @@ Recording day is just capture. This folder turns one screen recording into the f
 ```bash
 cd landing/video
 npm install                       # once: the SVG renderer for the cards
-./make.sh ~/Desktop/recording.mov # writes airkey-demo.mp4
+./make.sh ~/Desktop/recording.mov # writes keybots-demo.mp4
 ```
 
 ## What it makes
