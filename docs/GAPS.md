@@ -9,7 +9,7 @@ Glyf is compared only from its public README (no code read).
 - The leash contract decides every swap: Stop everything, blocked list, per-trade and daily limits; a refusal is an on-chain `blocked` event (`contracts/leash/src/lib.rs`, `swap`). 38 contract tests.
 - Real testnet swaps on Rhea from the leash, the tokens come back to it (tx 7XUq6MLF…, 5MyPgFPD…).
 - Private AI on NEAR AI Cloud: each answer's signature checked, the signer matched to the attested enclave, and every 10 minutes the TDX quote (Phala) and GPU (NVIDIA NRAS) are checked (`server/src/attest.ts`).
-- Kall's call feed and caller records (`server/src/kall.ts`), a public leash page (`/leash`), a keyless dry run (`npm run try`).
+- The X call feed and caller records (`server/src/xfeed.ts`), a public leash page (`/leash`), a keyless dry run (`npm run try`).
 
 ## What Glyf does better (from its README)
 - A trade panel that shows what you pay, what you get and how long it takes, in one card, before you sign.
