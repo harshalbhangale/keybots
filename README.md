@@ -86,7 +86,7 @@ X posts (through the Keybots feed) and copied text go into the Keybots keyboard,
 
 Money words go through fixed rules, NEAR Intents (token check and quote) and the Spend Limits contract, while wording help goes to Qwen3-VL 30B on NEAR AI Cloud (NEAR's TEE) and comes back as a signed answer with a receipt.
 
-Today this runs on NEAR testnet. Mainnet is next: the code path for live NEAR Intents quotes and deposits exists, but the contract is not deployed on mainnet and no mainnet swap has been enforced yet.
+The full contract runs on NEAR testnet. A smaller version, Spend Limits Lite, is also live on NEAR mainnet at [`limits.hellbuddy.near`](https://nearblocks.io/address/limits.hellbuddy.near) with three agents and tiny caps. On mainnet it has refused one payment ([R7](https://nearblocks.io/txns/FDKxnt6FVY4scNL2e8npUjoDT7E566tyJhaadEBPPPDb)) and paid another, 0.01 NEAR ([payment](https://nearblocks.io/txns/6WgtSxcybESMvn6ouJxCUnmdEPp7QtwCtBBHjFsHM3fm)). Lite has no swaps, and no mainnet swap has been enforced.
 
 ### Why this matters
 
@@ -197,7 +197,7 @@ Boot a matching simulator first, or adjust the destination to an available devic
 
 ## Current scope and limitations
 
-- The leash is on **testnet only**. Mainnet execution is not proven, and this prototype should not be used to safeguard real funds.
+- The full leash runs on **testnet**. Spend Limits Lite is live on mainnet at `limits.hellbuddy.near` with tiny caps and no swaps; it has refused one payment and paid 0.01 NEAR. Mainnet swaps are not proven, and this prototype should not be used to safeguard real funds.
 - The swap flow has a mainnet NEAR Intents path in code, but no leash-enforced mainnet swap. Testnet pools and available tokens are limited; check the actual input and output before confirming.
 - Price-triggered orders use a server watcher and depend on it running. The documentation records a buy quote rather than verified execution for that path; bracket, trailing and TWAP orders are not built.
 - Followed calls come from the X feed's records, not a general X or Telegram scrape. Auto-trading is opt-in; a manually checked copied call and an enabled automated follow are different flows.
