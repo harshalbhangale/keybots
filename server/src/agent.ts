@@ -193,10 +193,12 @@ export function plainSummary(r: Receipt, contacts: Record<string, string> = {}):
   if (r.outcome === "swapped") {
     const x = r.swap?.executed;
     if (!x) return undefined;
-    if (!x.amountOut) return `Swapping ${x.amountIn} NEAR for ${x.symbolOut}`;
+    // A token sold back (USDC → NEAR) names its own symbol; a buy spends NEAR.
+    const inSym = (x as { symbolIn?: string }).symbolIn ?? "NEAR";
+    if (!x.amountOut) return `Swapping ${x.amountIn} ${inSym} for ${x.symbolOut}`;
     return r.message.includes("still running")
-      ? `Swapping ${x.amountIn} NEAR for about ${tidy(x.amountOut)} ${x.symbolOut}. It lands in a minute`
-      : `Swapped ${x.amountIn} NEAR for ${tidy(x.amountOut)} ${x.symbolOut}`;
+      ? `Swapping ${x.amountIn} ${inSym} for about ${tidy(x.amountOut)} ${x.symbolOut}. It lands in a minute`
+      : `Swapped ${x.amountIn} ${inSym} for ${tidy(x.amountOut)} ${x.symbolOut}`;
   }
 
   if (r.outcome === "approval") {
