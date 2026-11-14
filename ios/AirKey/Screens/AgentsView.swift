@@ -1,46 +1,42 @@
 import SwiftUI
 
-/// One agent on the Limits tab: who it is, what it may spend, and what it spent today.
+/// One agent on Spend Limits, as a row: "Trading Agent", "Up to 1 NEAR a
+/// trade, 2 a day", what it spent today, and a small bar.
 struct AgentCard: View {
     let entry: LeashState.AgentEntry
     let paused: Bool
     let explorer: String
 
-    private var trusted: Bool { entry.agent.tier == "trusted" }
-    private var tierColor: Color { trusted ? AK.accent : AK.amber }
+    private var a: LeashState.Agent { entry.agent }
+    private var name: String { Fmt.agentName(account: entry.account) }
+    private var unit: String { name == Plain.trades ? "a trade" : "a payment" }
+    private var limits: String {
+        "Up to \(Fmt.near(a.per_payment_cap)) \(unit), \(Fmt.near(a.daily_cap, unit: false)) a day"
+    }
+    private var trusted: Bool { a.tier == "trusted" }
 
     var body: some View {
-        Panel(spacing: 16) {
-            HStack(spacing: 12) {
-                KeycapMark(size: 34, tab: tierColor)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(Fmt.agentName(account: entry.account)).font(.title3.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.7)
-                    if let url = URL(string: "\(explorer)/address/\(entry.account)") {
-                        Link(destination: url) {
-                            Text(entry.account).font(AK.mono).foregroundStyle(AK.muted).lineLimit(1).truncationMode(.middle)
-                        }
-                    }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(name).font(.body.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1)
+                if paused {
+                    Pill(text: "Stopped", color: AK.redText)
+                } else if !trusted {
+                    Pill(text: "Asks you first", color: AK.amberText)
                 }
-                Spacer(minLength: 8)
-                if paused { Pill(text: "Stopped", color: AK.red) } else { Pill(text: Plain.tier(entry.agent.tier), color: tierColor) }
+                Spacer(minLength: 0)
             }
-
-            Text(Fmt.agentPurpose(account: entry.account, tier: entry.agent.tier))
-                .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(Fmt.near(entry.agent.spent_today, unit: false)).font(AK.number(28)).foregroundStyle(AK.bone)
-                    Text("of \(Fmt.near(entry.agent.daily_cap)) spent today").font(.subheadline).foregroundStyle(AK.muted)
-                }
-                SpendBar(share: Fmt.share(entry.agent.spent_today, of: entry.agent.daily_cap), color: tierColor)
-            }
-
-            Hairline()
-            KeyValue(key: "Most per payment", value: Fmt.near(entry.agent.per_payment_cap))
-            KeyValue(key: "Most per day", value: Fmt.near(entry.agent.daily_cap))
-            Label("Can't move money on its own. Every payment is checked against these limits.", systemImage: "lock.fill")
-                .font(.footnote).foregroundStyle(AK.accent).fixedSize(horizontal: false, vertical: true)
+            Text("\(limits) · \(Fmt.near(a.spent_today, unit: false)) spent today").font(.subheadline.monospacedDigit()).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+            SpendBar(share: Fmt.share(a.spent_today, of: a.daily_cap), color: paused ? AK.faint : AK.accent)
         }
+        .padding(16)
+        .contentShape(Rectangle())
+        .contextMenu {
+            if let url = URL(string: "\(explorer)/address/\(entry.account)") {
+                Link(destination: url) { Label("See \(entry.account) on NEAR", systemImage: "arrow.up.right") }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(name). \(limits). \(Fmt.near(a.spent_today)) spent today.\(paused ? " Stopped." : "")")
     }
 }
