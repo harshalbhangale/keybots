@@ -363,6 +363,11 @@ final class AssistModel {
         "wanna", "dont", "cant", "wont", "im", "ive", "idk", "rn", "msg", "abt", "bc", "cuz", "sry",
     ]
 
+    private static let moneyWords: Set<String> = [
+        "pay", "send", "sent", "give", "tip", "transfer", "swap", "buy", "sell", "convert", "exchange", "trade",
+        "near", "usdc", "usdt", "eth", "btc", "sol", "$", "usd", "inr", "dollars", "bucks",
+    ]
+
     /// Local rules, no network: a draft of three words or more that looks
     /// rough (no capital at the start, shorthand, no end mark, double spaces).
     /// Never for a payment; the caller checks that too.
@@ -372,9 +377,11 @@ final class AssistModel {
         guard words.count >= 3, t.count <= 600, Intent.read(t) == nil else { return false }
         // Links, handles and code are written that way on purpose.
         if t.contains("://") || t.contains("@") || t.contains("`") { return false }
+        // Anything that might be about money stays the agents' ("hey send harshal 0.2").
+        let lower = words.map { $0.lowercased().trimmingCharacters(in: .punctuationCharacters) }
+        if t.contains(where: \.isNumber), lower.contains(where: moneyWords.contains) { return false }
         var signs = 0
         if let first = t.first, first.isLetter, first.isLowercase { signs += 1 }
-        let lower = words.map { $0.lowercased().trimmingCharacters(in: .punctuationCharacters) }
         if lower.contains(where: shorthand.contains) { signs += 2 }
         if lower.contains("i") { signs += 1 }
         if let last = t.last, !".!?…)\"'".contains(last), words.count >= 5 { signs += 1 }
