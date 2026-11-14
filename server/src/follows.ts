@@ -1,5 +1,5 @@
 // Following KOLs: the X handles the owner follows, the rules for each, and
-// the trades their calls led to. Calls come from Kall (kall.ts). A call that
+// the trades their calls led to. Calls come from the X feed (xfeed.ts). A call that
 // passes the owner's rules becomes the same small swap a copied call's chip
 // offers, and runs as a "follow" command: the Trading Agent's caps on chain
 // still apply, and the receipt names the KOL and the post.
@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { FollowSource } from "./agent.js";
 import { readCall, type Call, type CallRoute } from "./calls.js";
-import type { KallCall, KallClient } from "./kall.js";
+import type { XCall, XFeedClient } from "./xfeed.js";
 import type { Receipt } from "./receipts.js";
 
 export interface FollowRules {
@@ -189,8 +189,8 @@ export function memoryFollows(): FollowStore {
   });
 }
 
-/** A caller's record from their calls on Kall: settled hits and misses, open calls, and the average return of the settled ones. */
-export function recordOf(calls: KallCall[]): KolRecord {
+/** A caller's record from their calls on the X feed: settled hits and misses, open calls, and the average return of the settled ones. */
+export function recordOf(calls: XCall[]): KolRecord {
   const settled = calls.filter((c) => c.status === "hit" || c.status === "miss");
   const returns = settled.map((c) => c.returnBps).filter((n): n is number => n !== null);
   return {
@@ -251,13 +251,13 @@ export function parseFollow(body: unknown): { handle: string; rules: Partial<Fol
 }
 
 // ---------------------------------------------------------------------------
-// The poller: read each followed handle's new calls on Kall, apply the rules,
+// The poller: read each followed handle's new calls on the X feed, apply the rules,
 // and run the ones that pass.
 // ---------------------------------------------------------------------------
 
 export interface FollowCtx {
   follows: FollowStore;
-  kall: KallClient;
+  xfeed: XFeedClient;
   /** AIRKEY_AUTO_TRADE=on. Off, calls are only recorded as what would have happened. */
   autoTrade: boolean;
   /** routeCall with the dollars to spend: the token check, the command, the testnet stand-in. */
@@ -275,10 +275,10 @@ export interface FollowPoller {
 }
 
 const money = (n: number) => `$${Number(n.toFixed(2))}`;
-const isSettled = (c: KallCall) => c.status === "hit" || c.status === "miss";
+const isSettled = (c: XCall) => c.status === "hit" || c.status === "miss";
 
 /** Leading misses among settled calls posted since `from`, newest first. */
-export function missesInRow(calls: KallCall[], fromSec: number): number {
+export function missesInRow(calls: XCall[], fromSec: number): number {
   let n = 0;
   for (const c of calls.filter((c) => isSettled(c) && c.postedAt >= fromSec)) {
     if (c.status !== "miss") break;
@@ -302,13 +302,13 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
   async function check(handle: string, latest: boolean): Promise<AutoTrade[]> {
     let f = ctx.follows.get(handle);
     if (!f) return [];
-    const calls = await ctx.kall.caller(f.handle);
-    // The post's words, when Kall's feed has them: only to judge how sure the call is.
+    const calls = await ctx.xfeed.caller(f.handle);
+    // The post's words, when the X feed has them: only to judge how sure the call is.
     const words = new Map<string, string>();
     try {
-      for (const c of (await ctx.kall.feed()).calls) if (c.text && c.caller === key(f.handle)) words.set(c.postId, c.text);
+      for (const c of (await ctx.xfeed.feed()).calls) if (c.text && c.caller === key(f.handle)) words.set(c.postId, c.text);
     } catch {
-      // No words: Kall having recorded the call is enough.
+      // No words: the X feed having recorded the call is enough.
     }
 
     // Misses in a row, counted only from when they were followed (or auto was turned back on).
@@ -320,7 +320,7 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
     f = ctx.follows.update(f.handle, { missesInRow: misses, pausedReason: pause })!;
 
     const done = new Set(ctx.follows.trades(10_000).filter((t) => key(t.handle) === key(f!.handle)).map((t) => t.postId));
-    let todo: KallCall[];
+    let todo: XCall[];
     if (latest) {
       todo = calls.slice(0, 1);
       // Asked again for a call that already traded: the same trade, not a second one.
@@ -347,7 +347,7 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
   }
 
   /** One call, through the owner's rules, then the Trading Agent's path. */
-  async function decide(f: StoredFollow, call: KallCall, text: string | null, onRequest: boolean): Promise<AutoTrade> {
+  async function decide(f: StoredFollow, call: XCall, text: string | null, onRequest: boolean): Promise<AutoTrade> {
     const side = call.direction === "up" ? "buy" : "sell";
     const who = `@${f.handle}`;
     const usd = f.perCallUsd;
@@ -373,7 +373,7 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
       return skip("The call had already ended", `Skipped: ${who}'s ${call.asset} call had already ended`);
     }
     if (side === "sell" && f.sides === "buy") return skip("It's a sell, and you follow buys only", `Skipped: ${call.asset} call from ${who} is a sell, you follow buys only`);
-    // Kall recorded it, so it counts as sure, unless the post's own words read as unsure.
+    // the X feed recorded it, so it counts as sure, unless the post's own words read as unsure.
     if (f.highOnly && text && readCall(text).confidence === "low") {
       return skip("The post reads as unsure", `Skipped: ${who}'s ${call.asset} post reads as unsure, and you follow sure calls only`);
     }
@@ -435,7 +435,7 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
         try {
           out.push(...(await serial(f.handle, () => check(f.handle, false))));
         } catch (e) {
-          // One handle Kall can't answer for doesn't stop the rest.
+          // One handle the X feed can't answer for doesn't stop the rest.
           console.error(`follows: @${f.handle}: ${(e as Error).message}`);
         }
       }
