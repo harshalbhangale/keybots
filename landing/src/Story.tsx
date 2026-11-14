@@ -31,6 +31,8 @@ export default function Story() {
         if (!el) return;
         const r = el.getBoundingClientRect();
         const total = r.height - innerHeight;
+        // Shrink the phone (702 px tall with its frame) to fit short laptop screens.
+        el.style.setProperty("--fit", String(Math.min(1, (innerHeight - 96) / 702)));
         setP(Math.min(1, Math.max(0, -r.top / total)));
       });
     };

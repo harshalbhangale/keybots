@@ -4,7 +4,7 @@ const LIME = { top: "#E4FF8F", front: "#C6F25A", side: "#93BD2E", dish: "#D4FA70
 // Cap colour themes: the lime sticker, and a monochrome white cap with lime only on the stem.
 const THEMES = {
   lime: { cap: LIME, stem: "#FF5C8A", led: "#FF5C8A", cheeks: true },
-  mono: { cap: { top: "#FFFFFF", front: "#EDEDEF", side: "#B9BAC0", dish: "#F6F6F7" }, stem: "#C6F25A", led: "#C6F25A", cheeks: false },
+  mono: { cap: { top: "#FFFFFF", front: "#EDEDEF", side: "#B9BAC0", dish: "#F6F6F7" }, stem: "#00EC97", led: "#00EC97", cheeks: false },
 };
 let TH = THEMES.mono;
 const SW = { top: "#4A4C55", front: "#2B2C32", side: "#1C1D21" }; // switch housing
