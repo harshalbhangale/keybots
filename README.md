@@ -58,24 +58,19 @@ Screens are from the project demo; provider badges and results depend on the con
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    User["User in a chat or app"] --> Keyboard["iOS keyboard extension<br/>typing, action previews, clipboard, Assist"]
-    User --> App["iOS companion app<br/>wallet, limits, approvals, activity"]
-    Keyboard -->|"typed or copied text / explicit action"| Server["TypeScript / Fastify server<br/>parser, receiver checks, quotes, receipts"]
-    App -->|"state and commands"| Server
-    Server -->|"AI requests when configured"| AI["NEAR AI Cloud<br/>signature and attestation checks"]
-    Server -. "optional fallback" .-> OpenAI["OpenAI<br/>not NEAR private inference"]
-    Kall["Kall Markets<br/>followed calls"] -->|"optional feed"| Server
-    Server -->|"restricted function-call keys"| Agents["NEAR agent accounts<br/>Pay · Inbox · Trading"]
-    Agents -->|"permitted method calls"| Leash["NEAR testnet leash contract<br/>funds, caps, lists, approvals, pause"]
-    App -->|"owner-signed approvals and rule changes<br/>server relays"| Leash
-    Leash -->|"testnet swap"| Rhea["Rhea pools"]
-    Rhea -->|"output tokens"| Leash
-    Server -->|"token list, prices and quotes"| Intents["NEAR Intents"]
-    Leash -->|"events and decisions"| Receipts["Activity and transaction receipts"]
-    Receipts --> App
-```
+Two sketches show how it fits together. You can edit them: the Excalidraw files are in [`docs/diagrams`](docs/diagrams).
+
+**How a call becomes a safe trade**
+
+![Calls from X, Telegram and copied text reach the Keybots keyboard. You hold to confirm, an agent asks the Spend Limits contract, and the result is paid or refused.](docs/diagrams/keybots-1-calls-and-limits.png)
+
+A call can come from X (through Kall's feed) or from text you copy. Telegram is drawn dashed: that source is built on a separate branch and is not part of this submission. The keyboard turns a call into one small trade, and nothing runs until you hold to confirm. The agent's key can only ask the Spend Limits contract (called the leash in the code), which pays, swaps or refuses on chain.
+
+**Inside the keyboard**
+
+![Typed money words go through fixed rules, NEAR Intents and Spend Limits. Wording help goes to NEAR AI Cloud and comes back as a signed answer with a receipt.](docs/diagrams/keybots-2-inside-the-keyboard.png)
+
+Money words are read by fixed rules with no AI, and text that reads as money is never sent to the AI. Wording help (fix, rewrite, translate, reply) uses NEAR AI Cloud when it is configured, with a receipt on the keyboard. If NEAR AI does not answer, OpenAI can step in, and the receipt says which one did.
 
 **A payment's path:** the keyboard previews a typed command → the server selects the agent and checks the receiver → the agent's restricted key calls the leash → the contract pays, blocks or records an approval request → Keybots shows the outcome and transaction receipt.
 
