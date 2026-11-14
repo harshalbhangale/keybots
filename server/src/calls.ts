@@ -62,6 +62,8 @@ const perpCue =
 const tradeCue = /\b(trade|trading|entry|target|tp|sl|stop loss)\b/i;
 // A contract address in the post: the ticker can't be trusted to mean that token.
 const contract = /\b0x[a-fA-F0-9]{40}\b|\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/;
+/** The post has a contract address in it: routeCall won't trade a ticker in its place. */
+export const namesContract = (text: string) => contract.test(text);
 
 function findAsset(text: string): string | null {
   for (const m of text.matchAll(/\$([A-Za-z][A-Za-z0-9]{1,9})\b/g)) {
