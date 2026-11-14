@@ -32,7 +32,8 @@ struct KolCardView: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
                 if isSampleAuthor {
-                    Text(name ?? "Sample post").font(.footnote.weight(.bold)).lineLimit(1)
+                    // The tag on the right already says "Sample post".
+                    if !sample { Text(name ?? "Sample post").font(.footnote.weight(.bold)).lineLimit(1) }
                 } else {
                     Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.bold)).lineLimit(1)
                     if let name { Text(name).font(.caption).foregroundStyle(p.soft).lineLimit(1) }
