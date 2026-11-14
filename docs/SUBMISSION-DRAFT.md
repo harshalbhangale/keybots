@@ -90,17 +90,16 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 | Android build | None. The landing page's Android button downloads the Kall Markets APK as a placeholder; remove it before judging |
 | Repo public | Harshal, before 2026-11-14T23:59Z |
 | Demo video and the X post | Harshal records (`docs/DEMO.md`, about 2:28) and posts; the post must say it was built at NEAR HACKATHON and tag @NEARProtocol and #NEARHackathon |
-| Disclosure of Glyf code (section 7) | Harshal confirms the facts before sending; see the note there |
 
 ## 7. Disclosures
 
-- **NOTE FOR HARSHAL, fix before sending:** Glyf is being entered separately in this hackathon (github.com/The-x-35/glyf). This section must say who owns Glyf, that its author agreed to the reuse, and which Glyf code came in during the window (the AI bar, GIFs, letter-hold actions and search were ported in the window, not before it).
-- **Pre-hackathon code (baseline).** Two of Harshal's earlier projects predate this hackathon, and parts of them were adapted into this repo (README › Disclosures):
+- **Glyf:** Glyf is co-owned by Harshal and its co-author, who agreed to this reuse. Glyf is also entered separately in this hackathon by its co-author ([github.com/The-x-35/glyf](https://github.com/The-x-35/glyf)); the two entries are different products. Ported from Glyf's `main` branch during the hackathon, with the same agreement: the hold-space AI bar (rewrite versions, reply, translate, tone, Ask, live translate, search, My glyfs), letter-hold actions, vault shorthand, the smart chips, and the GIF tab (rebuilt so the GIF key stays on AIRKEY's server). None of Glyf's NEAR work (its NEAR Intents client, Guard, pay links, pot or Earn) is in AIRKEY.
+- **Pre-hackathon code (baseline).** Two earlier projects predate this hackathon, and parts of them were adapted into this repo (README › Disclosures):
   - **Glyf** (an AI keyboard): the keyboard core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and dictionary, `Surfaces/`, `Resources/`).
-  - **Kall Markets** (a trading keyboard): keyboard haptics, the hold-to-confirm pattern, and the app's visual design.
+  - **Kall Markets** (a trading keyboard): keyboard haptics, the hold-to-confirm pattern, and the app's visual design; its wallet and calls sections were ported during the hackathon.
 
   Everything NEAR-specific was built in the window: the leash contract, the agents and their keys, the server, Rhea and NEAR Intents swaps, the keyboard's agent strip (`ios/AirKeyKeyboard/Agent/`), the money-safe typing rules, the vault, and the app.
 - No `pre-hackathon` / `hackathon-submission` tags exist: the repo itself started in the window, so all commits are window work, and the baseline above is code that was copied in and named in the README.
 - Built with an AI coding assistant (Claude Code). Harshal chose the product, the rules and every trade-off.
-- Sole author and owner: Harshal Bhangale.
+- AIRKEY's author and owner: Harshal Bhangale (Glyf code reused with its co-author's agreement, above).
 - License: MIT (`LICENSE`).
