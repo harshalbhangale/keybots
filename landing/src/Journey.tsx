@@ -40,7 +40,7 @@ const CHAPTERS: Chapter[] = [
     icon: "shield",
     kicker: "Scams",
     title: ["A scam gets pasted.", "Refused on chain."],
-    body: "Text you copy goes to the Inbox Agent, which is never trusted. Spend Limits refuses the payment on NEAR and the account goes on your blocked list.",
+    body: "Text you copy goes to the “Messages you copy” lane, which can't pay a stranger without you. Spend Limits refuses it on NEAR: over your limit, or the account is on your blocked list.",
     net: "both",
     shots: [
       { src: S("activity"), alt: "Keybots Activity: Blocked 2 NEAR to free-near-drop.testnet", focus: [50, 48, 1.12] },
