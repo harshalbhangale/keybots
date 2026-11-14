@@ -1,4 +1,4 @@
-// A KOL's call, start to finish: the feed (Kall's tracked calls, calls from a
+// A KOL's call, start to finish: the feed (the X feed's tracked calls, calls from a
 // Telegram group the bot is in, or labelled samples) -> a review with the exact numbers (nothing sent) -> a confirm
 // within 30 seconds -> the Trading Agent asks the leash, the contract decides
 // -> a receipt from what the chain said.
@@ -11,7 +11,7 @@ import { randomUUID } from "node:crypto";
 import { runCommand, tidy, type Deps as CommandDeps, type FollowSource } from "./agent.js";
 import { namesContract, readCall, routeCall, type Call } from "./calls.js";
 import { postUrl } from "./follows.js";
-import type { KallClient } from "./kall.js";
+import type { XFeedClient } from "./xfeed.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import type { Receipt } from "./receipts.js";
@@ -21,8 +21,8 @@ export interface FeedCall {
   id: string;
   author: { handle: string; name: string | null };
   postedAt: string;
-  /** Where it was posted: "kall" is X, via Kall; "telegram" is a group the bot is in. */
-  source: "kall" | "telegram" | "sample";
+  /** Where it was posted: "x" is X; "telegram" is a group the bot is in. */
+  source: "x" | "telegram" | "sample";
   /** The post on X or the t.me link; null for a sample or a private Telegram group. */
   url: string | null;
   text: string | null;
@@ -32,8 +32,8 @@ export interface FeedCall {
 }
 
 export interface Feed {
-  /** The feed as a whole: "mixed" when both Kall and Telegram calls are in it. */
-  source: "kall" | "telegram" | "mixed" | "sample";
+  /** The feed as a whole: "mixed" when both the X feed and Telegram calls are in it. */
+  source: "x" | "telegram" | "mixed" | "sample";
   note: string | null;
   calls: FeedCall[];
 }
@@ -89,7 +89,7 @@ export interface ConfirmJson {
     standIn: string | null;
     tx: { hash: string; url: string } | null;
     /** Where the call came from. For Telegram, `author` is the group; `url` is its t.me link or null. */
-    post: { url: string | null; author: string; source: "kall" | "telegram" } | null;
+    post: { url: string | null; author: string; source: "x" | "telegram" } | null;
   };
   repeat?: true;
 }
@@ -119,12 +119,12 @@ const FEED_MAX = 10;
 /** A finished review is kept this long, so a late repeat still gets its receipt. */
 const KEEP_MS = 60 * 60_000;
 const QUOTE_WAIT_MS = 1500;
-export const SAMPLE_NOTE = "Sample posts: Kall's feed didn't answer. Not real calls.";
-const KALL_NOTE = "Calls Kall tracks from the people it follows. Not every post on X.";
+export const SAMPLE_NOTE = "Sample posts: the X feed didn't answer. Not real calls.";
+const X_NOTE = "Calls Keybots tracks from people on X. Not every post on X.";
 const telegramNote = (titles: string[]) =>
   `Messages from the Telegram ${titles.length > 1 ? "groups" : "group"} ${titles.join(", ")} where the Keybots bot is a member.`;
 
-/** Shown when Kall can't be reached, so the flow can still be tried. Labelled as samples everywhere. */
+/** Shown when the X feed can't be reached, so the flow can still be tried. Labelled as samples everywhere. */
 const SAMPLES: { minutesAgo: number; text: string; asset: string; direction: "buy" | "sell" }[] = [
   { minutesAgo: 12, text: "$SOL looks ready to run. Buying a small bag here.", asset: "SOL", direction: "buy" },
   { minutesAgo: 47, text: "Taking profits on $NEAR here, selling into this pump.", asset: "NEAR", direction: "sell" },
@@ -148,7 +148,7 @@ function samples(now: number): FeedCall[] {
 /** "1000000000000000000000000" -> "1" (6 decimals at most). */
 const nearOf = (yocto: bigint) => String(Number((yocto > 0n ? yocto : 0n) / 10n ** 18n) / 1e6);
 
-export type TradeDeps = CommandDeps & { kall: KallClient; telegram?: TelegramSource; now?: () => number };
+export type TradeDeps = CommandDeps & { xfeed: XFeedClient; telegram?: TelegramSource; now?: () => number };
 
 /** A Telegram message that read as a call, as the feed shows it. */
 function telegramCall(t: TgCall): FeedCall {
@@ -174,7 +174,7 @@ interface Review {
   minUnits: string;
   post: FollowSource | undefined;
   /** What the receipt says about where the call came from. */
-  shown: { url: string | null; author: string; source: "kall" | "telegram" } | null;
+  shown: { url: string | null; author: string; source: "x" | "telegram" } | null;
   state: "open" | "sending" | "done";
   result?: ConfirmJson;
 }
@@ -185,10 +185,10 @@ export function tradeFlow(deps: TradeDeps) {
   /** The last feed's calls by id, so a review can name one. */
   let lastFeed = new Map<string, FeedCall>();
 
-  /** Kall's spot calls, newest first (none when Kall doesn't answer). */
-  async function kallCalls(): Promise<FeedCall[]> {
+  /** the X feed's spot calls, newest first (none when the X feed doesn't answer). */
+  async function xCalls(): Promise<FeedCall[]> {
     try {
-      const f = await deps.kall.feed();
+      const f = await deps.xfeed.feed();
       const callers = new Map(f.callers.map((c) => [c.handle.toLowerCase(), c]));
       // Spot buys and sells only: a post that reads as a perp, or names a contract address, is left out.
       const spot = f.calls.filter((c) => !(c.text && (readCall(c.text).instrument === "perp" || namesContract(c.text))));
@@ -197,8 +197,8 @@ export function tradeFlow(deps: TradeDeps) {
       return picked.map((c): FeedCall => {
         const who = callers.get(c.caller);
         return {
-          id: `kall-${c.postId}`,
-          source: "kall",
+          id: `x-${c.postId}`,
+          source: "x",
           author: { handle: c.caller, name: null },
           postedAt: new Date(c.postedAt * 1000).toISOString(),
           url: postUrl(c.caller, c.postId),
@@ -214,17 +214,17 @@ export function tradeFlow(deps: TradeDeps) {
   }
 
   async function feed(): Promise<Feed> {
-    const fromKall = await kallCalls();
+    const fromX = await xCalls();
     const fromTelegram = (deps.telegram?.calls() ?? []).slice(0, FEED_MAX).map(telegramCall);
-    const calls = [...fromKall, ...fromTelegram].sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt)).slice(0, FEED_MAX);
+    const calls = [...fromX, ...fromTelegram].sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt)).slice(0, FEED_MAX);
     let out: Feed;
     if (!calls.length) {
       out = { source: "sample", note: SAMPLE_NOTE, calls: samples(now()) };
     } else {
-      const hasKall = calls.some((c) => c.source === "kall");
+      const hasX = calls.some((c) => c.source === "x");
       const tgTitles = [...new Set(calls.filter((c) => c.source === "telegram").map((c) => c.author.name ?? ""))].filter(Boolean);
-      const notes = [hasKall ? KALL_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null].filter(Boolean);
-      out = { source: hasKall ? (tgTitles.length ? "mixed" : "kall") : "telegram", note: notes.join(" "), calls };
+      const notes = [hasX ? X_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null].filter(Boolean);
+      out = { source: hasX ? (tgTitles.length ? "mixed" : "x") : "telegram", note: notes.join(" "), calls };
     }
     lastFeed = new Map(out.calls.map((c) => [c.id, c]));
     return out;
@@ -262,7 +262,7 @@ export function tradeFlow(deps: TradeDeps) {
       text = fc.text ?? "";
       const read = fc.text ? readCall(fc.text) : null;
       const perp = read?.instrument === "perp";
-      // Kall's asset and direction are what was recorded; the words only decide if it's a perp.
+      // the X feed's asset and direction are what was recorded; the words only decide if it's a perp.
       call = {
         isCall: true,
         confidence: "high",
@@ -349,7 +349,7 @@ export function tradeFlow(deps: TradeDeps) {
         author: fc ? fc.author : null,
         postedAt: fc ? fc.postedAt : null,
         url: fc ? fc.url : null,
-        text: fc ? (fc.text ?? `Kall recorded a ${fc.direction} call on ${fc.asset}. It has no post text.`) : text,
+        text: fc ? (fc.text ?? `Keybots recorded a ${fc.direction} call on ${fc.asset}. It has no post text.`) : text,
         asset,
         direction: route.side,
       },
@@ -395,7 +395,7 @@ export function tradeFlow(deps: TradeDeps) {
         fc?.source === "telegram"
           ? { url: fc.url, author: fc.author.name ?? fc.author.handle, source: "telegram" }
           : fc?.url
-            ? { url: fc.url, author: fc.author.handle, source: "kall" }
+            ? { url: fc.url, author: fc.author.handle, source: "x" }
             : null,
       state: "open",
     });
