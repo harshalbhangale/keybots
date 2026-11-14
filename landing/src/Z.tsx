@@ -125,7 +125,7 @@ export function Follow() {
         <ol>
           <li><b>Connect X.</b> Pick the accounts you follow.</li>
           <li><b>Their calls are read</b> and checked, like a call you copy yourself.</li>
-          <li><b>Trades run on their own,</b> only inside the caps your leash enforces.</li>
+          <li><b>Trades run on their own,</b> only inside the caps Spend Limits enforces.</li>
         </ol>
         <p className="z-note">Today you copy a call yourself and hold to trade. Auto-trading from followed accounts is the next build.</p>
       </div>

@@ -237,7 +237,7 @@ export function Keys({ lit = "" }: { lit?: string }) {
       ))}
       <div className="krow r3">
         <span className="k fn w">123</span>
-        <span className={`k space ${lit === " " ? "lit" : ""}`}>AIRKEY</span>
+        <span className={`k space ${lit === " " ? "lit" : ""}`}>Keybots</span>
         <span className="k fn w"><I n="ret" s={18} /></span>
       </div>
     </div>
