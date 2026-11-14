@@ -108,7 +108,6 @@ final class KeyToolbar: UIView {
         "notes": "person.text.rectangle",
         "emoji": "face.smiling",
         "style": "bold.italic.underline",
-        "games": "gamecontroller",
         "settings": "gearshape",
     ]
 

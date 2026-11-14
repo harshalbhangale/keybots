@@ -78,20 +78,18 @@ final class KeyboardViewController: UIInputViewController {
     private var emoji: EmojiBoard?
     /// The clipboard: its own header, pinned and recent as card columns.
     private var clipboardPanel: ClipboardPanel?
-    /// Menu → Games: Snake and Chomp over the key area.
-    private var games: GamesSurface?
     /// WALLET/CALLS HOOK: the Wallet or the Calls panel (Surfaces/WalletModel.swift),
     /// built when it opens and let go when it closes.
     private var money: MoneyPanel?
-    /// Hold space: AI on what you wrote (rewrite, reply, translate, tone,
-    /// or ask). Built when it opens and let go when it closes.
-    private var aiBar: AIBar?
-    // GLYF AI HOOK: the smart chip's AI suggestion (Surfaces/AISuggest.swift).
-    private lazy var aiSuggest: AISuggest = {
-        let s = AISuggest()
-        s.onReady = { [weak self] in self?.updateCandidates() }
-        return s
-    }()
+    /// Hold space: the Assist panel (Surfaces/Assist), the AI on what you
+    /// wrote or copied. Built when it opens and let go when it closes.
+    private var assist: AssistPanel?
+    /// After Replace: what was there before, what went in, and until when
+    /// the strip offers Undo.
+    private var assistUndo: (original: String, result: String, until: CFTimeInterval)?
+    private var assistUndoTimer: DispatchWorkItem?
+    /// The draft a "Fix this" chip was put away for: it stays away until the field empties.
+    private var fixRestFor: String?
     private var noteEdit: NoteEditSurface?
     /// Trade panel hook: the swap screen, and what it opens on.
     private var trade: TradeSurface?
@@ -122,7 +120,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, games, ai, wallet, calls, trade }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, assist, wallet, calls, trade }
     private var surface: Surface = .none
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
@@ -212,7 +210,11 @@ final class KeyboardViewController: UIInputViewController {
         case .noteEdit: return base + NoteEditSurface.stripHeight - Glass.toolbarHeight
         // Panels take the key area instead of growing the keyboard: the keys
         // never move, so muscle memory holds.
-        case .none, .shell, .clipboard, .games, .ai, .wallet, .calls: return base
+        case .none, .shell, .clipboard, .wallet, .calls: return base
+        // A question typed for Ask or Search: a strip over the keys.
+        case .assist:
+            if assist?.isStrip == true { return base + AssistPanel.stripHeight - Glass.toolbarHeight }
+            return base
         // Trade panel hook: the swap screen is its own height; typing a value
         // folds it to a strip over the keys.
         case .trade:
@@ -490,9 +492,7 @@ final class KeyboardViewController: UIInputViewController {
         // A keyboard coming back for a field starts on the letters: a menu,
         // clipboard or emoji panel left open last time would greet the next
         // field with something it never asked for.
-        // GLYF AI HOOK: live translate stays up (Messages brings the keyboard
-        // back each time its field goes from empty to not, mid-typing).
-        if didBuild, surface != .none, aiBar?.isLive != true { setSurface(.none, animated: false) }
+        if didBuild, surface != .none { setSurface(.none, animated: false) }
         agent.dismiss()
         keyboardView.context = fieldContext
         adoptFieldTraits(fresh: true)
@@ -662,7 +662,6 @@ final class KeyboardViewController: UIInputViewController {
             let title = shell?.headerTitle ?? MenuShell.rootTitle
             return (title == MenuShell.rootTitle ? "square.grid.2x2" : nil, title)
         case .emoji where emoji?.searchActive != true: return ("face.smiling", "Emoji")
-        case .games: return ("gamecontroller", "Games")
         case .wallet: return (KeyToolbar.icons["wallet"], "Wallet") // WALLET/CALLS HOOK
         case .calls: return (KeyToolbar.icons["calls"], "Calls")
         default: return (nil, nil)
@@ -820,10 +819,6 @@ final class KeyboardViewController: UIInputViewController {
             keyboardView.frame = CGRect(x: 0, y: NoteEditSurface.stripHeight,
                                         width: w,
                                         height: max(0, h - NoteEditSurface.stripHeight))
-        case .games:
-            toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
-            keyboardView.isHidden = true
-            games?.frame = panelRect(w, h)
         case .wallet, .calls: // WALLET/CALLS HOOK: over the keys, under the strip's title.
             toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
             keyboardView.isHidden = true
@@ -833,18 +828,18 @@ final class KeyboardViewController: UIInputViewController {
             toolbarHiddenBySurface = true
             keyboardView.isHidden = true
             clipboardPanel?.frame = CGRect(x: 0, y: 0, width: w, height: h)
-        case .ai:
-            // Asking takes the strip and types with the keys under it; the
-            // rest of the AI bar owns the whole keyboard, as the clipboard does.
+        case .assist:
+            // A question is typed on the keys under a strip; an answer owns
+            // the whole keyboard, as the clipboard does.
             toolbarHiddenBySurface = true
-            if aiBar?.isStrip == true {
+            if assist?.isStrip == true {
+                let strip = AssistPanel.stripHeight
                 keyboardView.isHidden = false
-                aiBar?.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
-                keyboardView.frame = CGRect(x: 0, y: Glass.toolbarHeight, width: w,
-                                            height: max(0, h - Glass.toolbarHeight))
+                assist?.frame = CGRect(x: 0, y: 0, width: w, height: strip)
+                keyboardView.frame = CGRect(x: 0, y: strip, width: w, height: max(0, h - strip))
             } else {
                 keyboardView.isHidden = true
-                aiBar?.frame = CGRect(x: 0, y: 0, width: w, height: h)
+                assist?.frame = CGRect(x: 0, y: 0, width: w, height: h)
             }
         // Trade panel hook: the swap screen owns the whole keyboard, or a
         // strip over the keys while a value is typed on them.
@@ -877,7 +872,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.games, self.aiBar, self.money, self.trade] as [UIView?] {
+                            self.clipboardPanel, self.assist, self.money, self.trade] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
@@ -913,9 +908,10 @@ final class KeyboardViewController: UIInputViewController {
             if noteEdit?.keysContext != nil { keyboardView.context = KeyboardContext(keyboardType: textDocumentProxy.keyboardType) }
             noteEdit?.removeFromSuperview(); noteEdit = nil
         case .clipboard: clipboardPanel?.removeFromSuperview(); clipboardPanel = nil
-        case .games: games?.stop(); games?.removeFromSuperview(); games = nil
         case .wallet, .calls: money?.close(); money = nil // WALLET/CALLS HOOK: timers stop, the panel is let go.
-        case .ai: aiBar?.removeFromSuperview(); aiBar = nil
+        case .assist:
+            if assist?.isStrip == true { keyboardView.syncAutoShift(wantsCapital: false) }
+            assist?.detach(); assist = nil
         // Trade panel hook.
         case .trade:
             if trade?.wantsDigits == true { keyboardView.setMode(.letters) }
@@ -960,12 +956,6 @@ final class KeyboardViewController: UIInputViewController {
             if n.wantsDigits { keyboardView.setMode(.symbols1) }
             if let keys = n.keysContext { keyboardView.context = keys }
             n.activate(n.activeEditor)
-        case .games:
-            let g = GamesSurface()
-            content.addSubview(g)
-            prepareEntrance(g, animated: animated)
-            games = g
-            MemoryLogger.logSurface("games")
         case .wallet, .calls: // WALLET/CALLS HOOK
             let m = MoneyPanel(kind: new == .wallet ? .wallet : .calls, actions: moneyActions, dark: Glass.chromeDark)
             content.addSubview(m)
@@ -973,13 +963,8 @@ final class KeyboardViewController: UIInputViewController {
             prepareEntrance(m, animated: animated)
             money = m
             MemoryLogger.logSurface(new == .wallet ? "wallet" : "calls")
-        case .ai:
-            let b = AIBar()
-            b.delegate = self
-            content.addSubview(b)
-            prepareEntrance(b, animated: animated)
-            aiBar = b
-            MemoryLogger.logSurface("ai")
+        case .assist:
+            break // openAssist builds it: it needs the draft and the copy.
         // Trade panel hook.
         case .trade:
             let t = TradeSurface(seed: pendingTrade?.seed, origin: pendingTrade?.origin, hasFullAccess: hasFullAccess)
@@ -1465,8 +1450,6 @@ final class KeyboardViewController: UIInputViewController {
             Perf.reportHostReads() // end of the cycle: the whole keystroke's crossings
         }
         lastSeenField = fieldSignature
-        // GLYF AI HOOK: live translate follows what is typed.
-        if surface == .ai { aiBar?.draftChanged(beforeContext ?? "") }
         noteEmojiRuns(beforeContext ?? "")
         let tCh = Perf.mark()
         let chipOwns = updateSmartChip()
@@ -1474,16 +1457,13 @@ final class KeyboardViewController: UIInputViewController {
         // AIRKEY's agents read the whole field: a command, a price, a sum.
         refreshAgent()
         if chipOwns { return }            // one chip owns the strip
-        // GLYF AI HOOK: one AI action for what's typed, only when no chip and
-        // no money strip has anything (money always wins).
-        if let tip = aiSuggest.chip(for: agentFieldText, allowed: surface == .none && hasFullAccess
-                                    && !isSecureField && !agent.isShowing && !smartFound) {
+        // Assist: Undo after a Replace, or a quiet "Fix this" on a rough
+        // draft. Only when no chip and no money strip has anything.
+        if let label = assistChip() {
             // On the next turn of the loop: the strip was just cleared in
             // this one, and tools hidden twice in one turn stay drawn.
-            let label = tip.label
             DispatchQueue.main.async { [weak self] in
-                guard let self, self.surface == .none, self.toolbar.smartChip == nil,
-                      !self.agent.isShowing else { return }
+                guard let self, self.surface == .none, !self.agent.isShowing else { return }
                 self.toolbar.showSmart(.action(label: label))
             }
             return
@@ -1937,9 +1917,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
             trade?.returnPressed()
             return
         }
-        if inlineTarget != nil, surface == .ai {
+        if inlineTarget != nil, surface == .assist {
             // Return asks, as the arrow does.
-            aiBar?.submitAsk()
+            assist?.model.submit()
             return
         }
         if let editor = inlineTarget {
@@ -2139,20 +2119,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
         let delay = Glass.reduceMotion ? Glass.Ripple.reducedMotionFlash
                                        : Glass.Ripple.surfaceRiseDelay
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            self?.openAI()
+            self?.openAssist()
         }
-    }
-
-    /// The AI bar on the text before the cursor: our own copy, which reaches
-    /// past the sentence iOS shows a keyboard. Never in a password field.
-    private func openAI(run action: String? = nil) {
-        guard !isSecureField, surface == .none else { return }
-        let before = String((beforeContext ?? "").suffix(AIBar.maxSource))
-        setSurface(.ai)
-        // GLYF AI HOOK: a fresh copy gets its own actions; a tapped suggestion runs at once.
-        aiBar?.present(before: before, hasCopy: hasFullAccess && ClipContext.isFresh(),
-                       hasFullAccess: hasFullAccess, run: action)
-        applySurfaceLayout(animated: true)
     }
 
     func kbBoundKeyIgnited(keyId: String, target: String, origin: KeyView) {
@@ -2165,7 +2133,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     /// What a held key opens: a menu screen ("surface:notes").
     private func runBinding(_ target: String) {
-        // Glyf Keys (Engine/KeyBindings): a strip tool, or words typed ("pay ").
+        // Bound keys (Engine/KeyBindings): a strip tool, or words typed ("pay ").
         if let tool = KeyBindings.tool(in: target) { return openTool(tool) }
         if let words = KeyBindings.words(in: target) { return agentInsert(words, spaced: true) }
         guard target.hasPrefix("surface:") else { return }
@@ -2329,80 +2297,162 @@ extension KeyboardViewController: TradeSurfaceDelegate {
     }
 }
 
-// MARK: - AIBarDelegate (hold space)
+// MARK: - Assist (hold space)
 
-extension KeyboardViewController: AIBarDelegate {
+extension KeyboardViewController {
 
-    func aiBarClosed() {
+    static let fixLabel = "Fix this"
+    static let undoLabel = "Undo"
+    /// How much of the draft or the copy goes to the AI.
+    static let assistMaxSource = 2000
+    /// How long Undo stays in the strip after a Replace.
+    static let assistUndoSeconds: CFTimeInterval = 5
+
+    /// The Assist panel on the text before the cursor (our own copy, which
+    /// reaches past the sentence iOS shows a keyboard), or on the clipboard
+    /// when the field is empty. Never in a password field.
+    fileprivate func openAssist(on first: AssistTask = .fix) {
+        guard !isSecureField, surface == .none else { return }
+        let draft = String((beforeContext ?? "").suffix(Self.assistMaxSource))
+        let empty = draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let canCopy = hasFullAccess && UIPasteboard.general.hasStrings
+        let copied = empty && canCopy ? UIPasteboard.general.string.map { String($0.prefix(Self.assistMaxSource)) } : nil
+        endAssistUndo(refresh: false)
+        toolbar.showSmart(nil)
+
+        let model = AssistModel(draft: draft, copied: copied?.isEmpty == true ? nil : copied, canCopy: canCopy)
+        model.isMoney = { [weak self] text in
+            guard let self, !text.isEmpty else { return false }
+            if Intent.read(text) != nil { return true }
+            // The agent strip already reads the draft as a payment or a trade.
+            return text == draft && self.agent.ready != nil
+        }
+        model.readCopied = { [weak self] in
+            guard self?.hasFullAccess == true else { return nil }
+            return UIPasteboard.general.string.map { String($0.prefix(Self.assistMaxSource)) }
+        }
+        model.onClose = { [weak self] in self?.closeAssist() }
+        model.onReplace = { [weak self] source, text in self?.assistReplace(source, with: text) }
+        model.onInsert = { [weak self] text in
+            guard let self else { return }
+            self.closeAssist()
+            self.hostInsert(Self.spaced(text, after: self.beforeContext))
+            self.assistWrote()
+        }
+        model.onCopy = { [weak self] text in
+            guard let self, self.hasFullAccess else { return }
+            UIPasteboard.general.string = text
+            self.remember(copied: text)
+            Haptics.chip()
+        }
+        // Money goes to AIRKEY's agents: a draft is read by the strip as the
+        // panel closes; a copy goes to the check for copied text.
+        model.onAgent = { [weak self] _, copied in
+            guard let self else { return }
+            self.closeAssist()
+            if copied { self.agent.runPasted() }
+        }
+
+        let panel = AssistPanel(model: model, dark: Glass.chromeDark)
+        panel.onShape = { [weak self] editor in
+            guard let self, self.surface == .assist else { return }
+            self.inlineTarget = editor
+            if editor != nil {
+                self.keyboardView.setMode(.letters)
+                self.keyboardView.syncAutoShift(wantsCapital: true)
+            }
+            self.applySurfaceLayout(animated: true)
+        }
+        content.addSubview(panel)
+        panel.attach(to: self)
+        assist = panel
+        MemoryLogger.logSurface("assist")
+        setSurface(.assist)
+        model.open(on: first)
+        panel.rise()
+    }
+
+    private func closeAssist() {
         setSurface(.none)
         syncAutoShift()
     }
 
-    func aiBarAskActivated(_ editor: InlineEditor?) {
-        inlineTarget = editor
-        // A question starts with a capital.
-        if editor != nil { keyboardView.syncAutoShift(wantsCapital: true) }
-    }
-
-    func aiBarLayoutChanged() {
-        applySurfaceLayout(animated: true)
-    }
-
-    /// Swaps exactly the text the answer was made from. If the field moved
-    /// on since (it no longer ends with it), nothing is deleted: the answer
-    /// goes in at the cursor instead.
-    func aiBarReplace(source: String, with text: String) {
+    /// Swaps exactly the draft the answer was made from, and offers Undo.
+    /// If the field moved on since (it no longer ends with it), nothing is
+    /// deleted: the answer goes in at the cursor instead.
+    private func assistReplace(_ source: String, with text: String) {
         let before = beforeContext ?? ""
-        setSurface(.none)
+        closeAssist()
         if !source.isEmpty, before.hasSuffix(source) {
             hostDelete(source.count)
             hostInsert(text)
+            assistUndo = (source, text, CACurrentMediaTime() + Self.assistUndoSeconds)
+            let end = DispatchWorkItem { [weak self] in self?.endAssistUndo() }
+            assistUndoTimer?.cancel()
+            assistUndoTimer = end
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.assistUndoSeconds, execute: end)
         } else {
             hostInsert(Self.spaced(text, after: before))
         }
-        aiWrote()
+        assistWrote()
     }
 
-    func aiBarInsert(_ text: String) {
-        setSurface(.none)
-        hostInsert(Self.spaced(text, after: beforeContext))
-        aiWrote()
-    }
-
-    func aiBarCopy(_ text: String) {
-        guard hasFullAccess else { return }
-        UIPasteboard.general.string = text
-        remember(copied: text)
-        if let aiBar { KeyboardToast.show(in: aiBar, text: "Copied") }
-    }
-
-    // GLYF AI HOOK: live translate swaps the draft and stays open.
-    func aiBarSwap(source: String, with text: String) {
+    /// Undo: the draft comes back exactly as it was.
+    fileprivate func undoAssist() {
+        guard let u = assistUndo else { return }
         let before = beforeContext ?? ""
-        if !source.isEmpty, before.hasSuffix(source) { hostDelete(source.count) }
-        hostInsert(text)
+        endAssistUndo(refresh: false)
+        if before.hasSuffix(u.result) {
+            hostDelete(u.result.count)
+            hostInsert(u.original)
+            Haptics.layer()
+        }
+        toolbar.showSmart(nil)
         lastCorrection = nil
-        scheduleCandidates()
+        syncAutoShift()
+        updateCandidates()
     }
 
-    // GLYF AI HOOK: the copy, read when a Copied tile is tapped.
-    func aiBarReadCopied() -> String? {
-        guard hasFullAccess else { return nil }
-        return UIPasteboard.general.string
+    fileprivate func endAssistUndo(refresh: Bool = true) {
+        assistUndoTimer?.cancel()
+        assistUndoTimer = nil
+        guard assistUndo != nil else { return }
+        assistUndo = nil
+        guard refresh else { return }
+        if case .action(let label)? = toolbar.smartChip, label == Self.undoLabel { toolbar.showSmart(nil) }
+        updateCandidates()
     }
 
-    // GLYF AI HOOK: copied money text goes to AIRKEY's own check, never to an AI action.
-    func aiBarCheckCopied() {
-        setSurface(.none)
-        agent.runPasted()
-    }
-
-    private func aiWrote() {
+    private func assistWrote() {
         Haptics.success()
         lastCorrection = nil
         glide = nil
         syncAutoShift()
         updateCandidates()
+    }
+
+    /// The strip's Assist chip, if any: Undo for five seconds after a
+    /// Replace, or "Fix this" once a rough draft has sat still for a moment.
+    /// Local rules only, never for money, never while the agents speak.
+    fileprivate func assistChip() -> String? {
+        guard surface == .none, !isSecureField, !agent.isShowing, !smartFound else { return nil }
+        let before = beforeContext ?? ""
+        if let u = assistUndo {
+            if CACurrentMediaTime() < u.until, before.hasSuffix(u.result) { return Self.undoLabel }
+            assistUndo = nil
+            assistUndoTimer?.cancel()
+        }
+        let field = agentFieldText
+        if field.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { fixRestFor = nil; return nil }
+        guard fixRestFor == nil, hasFullAccess, typingPolicy.contains(.suggestions), policyField == .normal,
+              agent.ready == nil, AssistModel.looksRough(field) else { return nil }
+        // Quiet: only once the fingers stop, never mid-burst.
+        let idle = CACurrentMediaTime() - lastEditAt
+        if idle < 1.2 {
+            recheckChip(after: 1.2 - idle)
+            return nil
+        }
+        return Self.fixLabel
     }
 }
 
@@ -2513,7 +2563,6 @@ extension KeyboardViewController: ToolbarDelegate {
         case "swap": openTrade(seed: nil, origin: nil)
         case "clipboard": setSurface(.clipboard)
         case "emoji": setSurface(.emoji)
-        case "games": setSurface(.games)
         case "notes", "settings", "style":
             if id == "style" {
                 let picked = textDocumentProxy.selectedText ?? ""
@@ -2671,8 +2720,10 @@ extension KeyboardViewController: ToolbarDelegate {
     /// The ✕ on a chip. A copy is marked done and never offered again (it is
     /// still in the clipboard panel); anything else rests for a while.
     func toolbarSmartDismissed() {
-        // GLYF AI HOOK
-        if case .action(let label)? = toolbar.smartChip { aiSuggest.dismissed(label) }
+        if case .action(let label)? = toolbar.smartChip {
+            if label == Self.fixLabel { fixRestFor = beforeContext ?? "" }
+            if label == Self.undoLabel { endAssistUndo() }
+        }
         if let chip = toolbar.smartChip {
             stripPolicy.dismissed(Self.policyKind(chip), id: Self.policyID(chip),
                                   now: Date().timeIntervalSince1970)
@@ -2696,8 +2747,8 @@ extension KeyboardViewController: ToolbarDelegate {
             return
         case .action(let label):
             toolbar.showSmart(nil)
-            // GLYF AI HOOK: the AI suggestion runs in the AI bar.
-            if let tip = aiSuggest.take(label) { openAI(run: tip.action) }
+            if label == Self.fixLabel { Haptics.chip(); openAssist(on: .fix) }
+            if label == Self.undoLabel { undoAssist() }
             return
         case .paste(let text):
             // History's copy types straight out; the placeholder means we do
