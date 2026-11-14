@@ -105,3 +105,21 @@ then delete `keys/hellbuddy.near.json`. Approving payments from the phone uses t
 - **Locking the code.** Step 1 gives `limits.hellbuddy.near` a full-access key so the code can be fixed later. Delete that key to make the code unchangeable.
 - **Funding.** 0.5 NEAR by default (`--fund`). The agents can never spend more than their daily limits, whatever is in it.
 - **Step 10.** Only needed if the Trading Agent should sell USDC or USDT back for NEAR. Each full trade (1 token) counts for at least 0.25 NEAR against its limits.
+
+## What's live: Spend Limits Lite (14 Nov 2026)
+
+The full contract (215 KB, about 2.15 NEAR of storage) didn't fit the budget, so mainnet runs
+Spend Limits Lite (`contracts/limits-lite`, 45 KB) at `limits.hellbuddy.near`, with agents
+`pay.`, `inbox.` and `trader.hellbuddy.near`. Set up with `scripts/lite.mjs --net mainnet`,
+one step at a time; the accounts and transactions are in `docs/PLAN-FINAL.md`.
+
+Running the server against it:
+
+- `NEAR_NETWORK=mainnet` (the owner and contract names then default to hellbuddy.near and limits.hellbuddy.near).
+- `AIRKEY_PAY_TGAS=20`: it's the default on mainnet now. NEAR wants an agent's balance and key
+  allowance to cover about 10x the gas it attaches, up front; at 50 TGas a Lite agent with 0.03 NEAR
+  is refused before anything reaches the chain ("Not enough balance for pay.hellbuddy.near").
+  A Lite payment really uses about 4.4 TGas.
+- Lite has no swaps and no approvals: don't offer trades there, and a payment that would wait for
+  the owner is stopped instead (R6, R7). Put a receiver on the allowed list to pay them.
+- Telegram stays off on the mainnet copy (`TELEGRAM_BOT_TOKEN=`): two servers can't read one bot.
