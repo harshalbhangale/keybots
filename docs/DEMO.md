@@ -28,17 +28,17 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
 | 0:00 | Hook | Show the "Support" message. | Voice: *AI agents are getting wallets. One message like this can empty them.* |
 | 0:08 | 1. Pay by typing | Hold **P** (it types "pay "), tap **harshal**, type `0.2 for dinner`, then hold **Hold to pay**. | Chip *Pay 0.2 NEAR to harshal*, five ticks, lime *Paid 0.2 NEAR to harshal*. Tap **Share**: the receipt and its nearblocks link go into the chat. |
 | 0:32 | 2. A pasted scam | Long-press the scam, **Copy**, then tap the shield in the keyboard's top strip. | *Checking this message…*, then red **Blocked** over *drain.near is on your blocked list*. The rejected call is on chain. |
-| 0:54 | 3. A call becomes a trade | Copy the friend's call, then tap the shield. | Chip *Buy $1 of SOL*. Under it, these lines take turns: *SOL verified on NEAR Intents · within your caps*, *NEAR Intents quote: 0.28 NEAR → 0.0124 SOL*, and *Testnet has no SOL, so the hold swaps NEAR to USDC on Rhea instead*. |
+| 0:54 | 3. A call becomes a trade | Copy the friend's call, then tap the shield. | Chip *Buy $1 of SOL*. Under it, these lines take turns: *SOL is a real token · within your limits*, *Live price: 0.2994 NEAR gets about 0.01321 SOL*, and *Testnet has no SOL, so the hold swaps NEAR to USDC on Rhea instead*. |
 | | | Hold **Hold to buy**. | *Swapping…*, then lime *Swapped 0.28 NEAR for 0.60 USDC*. |
 | 1:20 | 4. Someone new | Type `pay vendor 0.4 for the logo` and hold. | Amber **Waiting for you** over *a new account you've never paid*. |
 | | | Open AIRKEY, go to Wallet › the approval, and hold **Hold to approve**. | Face ID, then paid. Back in the chat. |
-| 1:44 | 5. Private AI | Type a messy draft (`hey so i cant make it tmrw sry, maybe fri??`), hold the space bar, tap **Rewrite**. | The cleaned-up line with *NEAR AI* under it (about 2–4 s); tap **Replace**. |
+| 1:44 | 5. Private AI | Type a messy draft (`hey so i cant make it tmrw sry, maybe fri??`), hold the space bar, tap **Rewrite**. | Five versions with *NEAR AI ✓* at the top (about 1–2 s); tap **Replace**. |
 | 1:56 | Close: kill switch | In AIRKEY › Limits, tap **Stop everything**. | Face ID, then *Everything is stopped*. |
 | | | In the chat, `pay harshal 0.2` and hold. | Red **Blocked** over *you turned on Stop everything*. End card: *Your keyboard is the AI. NEAR is the leash.* |
 
 After the take, tap the switch again (Face ID) to let the agents work, or just run `demo-reset`.
 
-**Beat 5 runs on NEAR AI Cloud** (DeepSeek V4.1 Flash, `deepseek/deepseek-v4.1-flash`). Each answer's signature is checked against the exact request and response; the attestation behind the signing key is not checked. If NEAR AI doesn't answer during the take, cut the beat rather than turn the fallback back on.
+**Beat 5 runs on NEAR AI Cloud** (Qwen3-VL 30B Instruct, `Qwen/Qwen3-VL-30B-A3B-Instruct`, run and signed inside NEAR AI's TEE; five versions in about 1–2 s). Each answer's signature is checked against the exact request and response; the attestation behind the signing key is not checked. If NEAR AI doesn't answer during the take, cut the beat rather than turn the fallback back on.
 
 ## Proof on testnet
 

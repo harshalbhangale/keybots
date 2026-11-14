@@ -8,7 +8,7 @@ One line each. Updated 14 Nov 2026, 05:15 UTC.
 - [x] A pasted scam is blocked on chain; a new person waits for your Face ID; the kill switch stops every agent
 - [x] Swap NEAR → USDC/USDT on Rhea (testnet), from the keyboard and the app
 - [x] Copied crypto call → a trade chip with token check and limits
-- [x] Hold space for AI: rewrite, reply, translate, tone, on NEAR AI Cloud (DeepSeek V4.1 Flash, ~3 s, signature verified); OpenAI only as fallback
+- [x] Hold space for AI: rewrite, reply, translate, tone, on NEAR AI Cloud (Qwen3-VL 30B Instruct in NEAR's TEE, rewrite's five versions in ~1–2 s, signature verified); OpenAI only as fallback
 - [x] Contract can sell tokens it holds (USDC/USDT → NEAR, USDC ↔ USDT): proven on a test copy, 38 contract tests
 - [x] 196 server tests; demo script, reset command and evidence docs
 - [x] Server hosted on Lightsail with HTTPS and a token (docs/HOSTING.md); the phone build talks to it, so no same-Wi-Fi or tunnel needed
@@ -23,7 +23,7 @@ One line each. Updated 14 Nov 2026, 05:15 UTC.
 - [x] Haptic scheme in the keyboard (needs a feel-check on the phone)
 - [x] Phone can't reach the Mac: fixed by the hosted server
 - [ ] Free Apple signing: the install expires in 7 days (vault now goes through the server; contacts added in the app still don't reach the keyboard)
-- [x] NEAR AI answers (rewrite, reply) with the signature verified, 2–4 s warm. The old default name (GLM-5.1) is now an alias that NEAR AI refuses with no-aliasing, which made answers fall back to OpenAI; default is now deepseek/deepseek-v4.1-flash
+- [x] NEAR AI answers (rewrite, reply) with the signature verified, 2–4 s warm. The old default name (GLM-5.1) is now an alias that NEAR AI refuses with no-aliasing, which made answers fall back to OpenAI; DeepSeek V4.1 then took 13–22 s for five versions because it thinks first; default is now Qwen/Qwen3-VL-30B-A3B-Instruct (no thinking, 1–2 s, still private and signed)
 - [x] Live leash upgraded with token selling; sold 0.5 USDC for NEAR from the swap screen (docs/evidence/token-swaps.md)
 - [x] The dev server stops whenever the session restarts: the hosted one runs under systemd
 - [ ] Three of ten test runs failed on the network ("fetch failed"); the call chip was over 2 s twice
