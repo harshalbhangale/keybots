@@ -1,5 +1,5 @@
-// A KOL's call, start to finish: the feed (Kall's tracked calls, or labelled
-// samples) -> a review with the exact numbers (nothing sent) -> a confirm
+// A KOL's call, start to finish: the feed (Kall's tracked calls, calls from a
+// Telegram group the bot is in, or labelled samples) -> a review with the exact numbers (nothing sent) -> a confirm
 // within 30 seconds -> the Trading Agent asks the leash, the contract decides
 // -> a receipt from what the chain said.
 //
@@ -15,12 +15,15 @@ import type { KallClient } from "./kall.js";
 import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import type { Receipt } from "./receipts.js";
+import type { TelegramSource, TgCall } from "./telegram.js";
 
 export interface FeedCall {
   id: string;
   author: { handle: string; name: string | null };
   postedAt: string;
-  /** The post on X; null for a sample. */
+  /** Where it was posted: "kall" is X, via Kall; "telegram" is a group the bot is in. */
+  source: "kall" | "telegram" | "sample";
+  /** The post on X or the t.me link; null for a sample or a private Telegram group. */
   url: string | null;
   text: string | null;
   asset: string;
@@ -29,7 +32,8 @@ export interface FeedCall {
 }
 
 export interface Feed {
-  source: "kall" | "sample";
+  /** The feed as a whole: "mixed" when both Kall and Telegram calls are in it. */
+  source: "kall" | "telegram" | "mixed" | "sample";
   note: string | null;
   calls: FeedCall[];
 }
@@ -82,7 +86,8 @@ export interface ConfirmJson {
     venue: string;
     standIn: string | null;
     tx: { hash: string; url: string } | null;
-    post: { url: string; author: string } | null;
+    /** Where the call came from. For Telegram, `author` is the group; `url` is its t.me link or null. */
+    post: { url: string | null; author: string; source: "kall" | "telegram" } | null;
   };
   repeat?: true;
 }
@@ -106,6 +111,8 @@ const KEEP_MS = 60 * 60_000;
 const QUOTE_WAIT_MS = 1500;
 export const SAMPLE_NOTE = "Sample posts: Kall's feed didn't answer. Not real calls.";
 const KALL_NOTE = "Calls Kall tracks from the people it follows. Not every post on X.";
+const telegramNote = (titles: string[]) =>
+  `Messages from the Telegram ${titles.length > 1 ? "groups" : "group"} ${titles.join(", ")} where the Keybots bot is a member.`;
 
 /** Shown when Kall can't be reached, so the flow can still be tried. Labelled as samples everywhere. */
 const SAMPLES: { minutesAgo: number; text: string; asset: string; direction: "buy" | "sell" }[] = [
@@ -117,6 +124,7 @@ const SAMPLES: { minutesAgo: number; text: string; asset: string; direction: "bu
 function samples(now: number): FeedCall[] {
   return SAMPLES.map((s, i) => ({
     id: `sample-${i + 1}`,
+    source: "sample",
     author: { handle: "sample", name: "Sample post" },
     postedAt: new Date(now - s.minutesAgo * 60_000).toISOString(),
     url: null,
@@ -130,7 +138,22 @@ function samples(now: number): FeedCall[] {
 /** "1000000000000000000000000" -> "1" (6 decimals at most). */
 const nearOf = (yocto: bigint) => String(Number((yocto > 0n ? yocto : 0n) / 10n ** 18n) / 1e6);
 
-export type TradeDeps = CommandDeps & { kall: KallClient; now?: () => number };
+export type TradeDeps = CommandDeps & { kall: KallClient; telegram?: TelegramSource; now?: () => number };
+
+/** A Telegram message that read as a call, as the feed shows it. */
+function telegramCall(t: TgCall): FeedCall {
+  return {
+    id: t.id,
+    source: "telegram",
+    author: { handle: t.from.username ?? t.from.first_name ?? t.chatTitle, name: t.chatTitle },
+    postedAt: new Date(t.date * 1000).toISOString(),
+    url: t.url,
+    text: t.text,
+    asset: t.asset,
+    direction: t.direction,
+    record: null,
+  };
+}
 
 interface Review {
   id: string;
@@ -140,6 +163,8 @@ interface Review {
   command: string;
   minUnits: string;
   post: FollowSource | undefined;
+  /** What the receipt says about where the call came from. */
+  shown: { url: string | null; author: string; source: "kall" | "telegram" } | null;
   state: "open" | "sending" | "done";
   result?: ConfirmJson;
 }
@@ -150,8 +175,8 @@ export function tradeFlow(deps: TradeDeps) {
   /** The last feed's calls by id, so a review can name one. */
   let lastFeed = new Map<string, FeedCall>();
 
-  async function feed(): Promise<Feed> {
-    let out: Feed;
+  /** Kall's spot calls, newest first (none when Kall doesn't answer). */
+  async function kallCalls(): Promise<FeedCall[]> {
     try {
       const f = await deps.kall.feed();
       const callers = new Map(f.callers.map((c) => [c.handle.toLowerCase(), c]));
@@ -159,10 +184,11 @@ export function tradeFlow(deps: TradeDeps) {
       const spot = f.calls.filter((c) => !(c.text && (readCall(c.text).instrument === "perp" || namesContract(c.text))));
       const withText = spot.filter((c) => c.text);
       const picked = (withText.length ? withText : spot).slice(0, FEED_MAX);
-      const calls = picked.map((c): FeedCall => {
+      return picked.map((c): FeedCall => {
         const who = callers.get(c.caller);
         return {
           id: `kall-${c.postId}`,
+          source: "kall",
           author: { handle: c.caller, name: null },
           postedAt: new Date(c.postedAt * 1000).toISOString(),
           url: postUrl(c.caller, c.postId),
@@ -172,9 +198,23 @@ export function tradeFlow(deps: TradeDeps) {
           record: who ? { hits: who.hits, misses: Math.max(0, who.settled - who.hits) } : null,
         };
       });
-      out = calls.length ? { source: "kall", note: KALL_NOTE, calls } : { source: "sample", note: SAMPLE_NOTE, calls: samples(now()) };
     } catch {
+      return [];
+    }
+  }
+
+  async function feed(): Promise<Feed> {
+    const fromKall = await kallCalls();
+    const fromTelegram = (deps.telegram?.calls() ?? []).slice(0, FEED_MAX).map(telegramCall);
+    const calls = [...fromKall, ...fromTelegram].sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt)).slice(0, FEED_MAX);
+    let out: Feed;
+    if (!calls.length) {
       out = { source: "sample", note: SAMPLE_NOTE, calls: samples(now()) };
+    } else {
+      const hasKall = calls.some((c) => c.source === "kall");
+      const tgTitles = [...new Set(calls.filter((c) => c.source === "telegram").map((c) => c.author.name ?? ""))].filter(Boolean);
+      const notes = [hasKall ? KALL_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null].filter(Boolean);
+      out = { source: hasKall ? (tgTitles.length ? "mixed" : "kall") : "telegram", note: notes.join(" "), calls };
     }
     lastFeed = new Map(out.calls.map((c) => [c.id, c]));
     return out;
@@ -183,6 +223,9 @@ export function tradeFlow(deps: TradeDeps) {
   async function findCall(id: string): Promise<FeedCall | undefined> {
     const sample = samples(now()).find((c) => c.id === id);
     if (sample) return sample;
+    // A Telegram call is looked up in the store itself, so it can't have scrolled out of the last feed.
+    const tg = id.startsWith("tg-") ? deps.telegram?.find(id) : undefined;
+    if (tg) return telegramCall(tg);
     if (!lastFeed.has(id)) await feed();
     return lastFeed.get(id);
   }
@@ -324,7 +367,18 @@ export function tradeFlow(deps: TradeDeps) {
       json,
       command: `swap ${amountNear} near to ${to.toLowerCase()}`,
       minUnits,
-      post: fc?.url ? { handle: fc.author.handle, postUrl: fc.url } : undefined,
+      post:
+        fc?.source === "telegram"
+          ? { handle: fc.author.name ?? fc.author.handle, ...(fc.url ? { postUrl: fc.url } : {}) }
+          : fc?.url
+            ? { handle: fc.author.handle, postUrl: fc.url }
+            : undefined,
+      shown:
+        fc?.source === "telegram"
+          ? { url: fc.url, author: fc.author.name ?? fc.author.handle, source: "telegram" }
+          : fc?.url
+            ? { url: fc.url, author: fc.author.handle, source: "kall" }
+            : null,
       state: "open",
     });
     return json;
@@ -355,7 +409,7 @@ export function tradeFlow(deps: TradeDeps) {
         venue: rv.json.trade.venue,
         standIn: rv.json.trade.standIn,
         tx: r.tx ?? null,
-        post: rv.post ? { url: rv.post.postUrl, author: rv.post.handle } : null,
+        post: rv.shown,
       },
     };
   }
@@ -391,7 +445,7 @@ export function tradeFlow(deps: TradeDeps) {
           venue: rv.json.trade.venue,
           standIn: rv.json.trade.standIn,
           tx: null,
-          post: rv.post ? { url: rv.post.postUrl, author: rv.post.handle } : null,
+          post: rv.shown,
         },
       };
     } finally {
