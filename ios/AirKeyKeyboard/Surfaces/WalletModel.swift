@@ -125,24 +125,24 @@ final class WalletModel {
 
 /// Words the money panels share.
 enum MoneyText {
-    /// The server's words, in plain ones: no "leash", no rule codes.
+    /// The server's words, in plain ones: the contract is "Spend Limits", no rule codes.
     /// "Blocked by the leash (R3): drain.near is blocked: reported by …" reads
     /// "Blocked: drain.near is on your blocked list."
     static func plain(_ message: String) -> String {
         var s = message
         let swaps: [(String, String)] = [
             (#"Blocked by the leash \([^)]*\): (\S+) is blocked\b.*"#, "Blocked: $1 is on your blocked list."),
-            (#"Blocked by the leash \([^)]*\): "#, "Blocked: "),
-            (#"Blocked by the leash: "#, "Blocked: "),
-            (#"The leash would block this: "#, "Over your limits: "),
+            (#"Blocked by the leash \([^)]*\): "#, "Blocked by Spend Limits: "),
+            (#"Blocked by the leash: "#, "Blocked by Spend Limits: "),
+            (#"The leash would block this: "#, "Over your Spend Limits: "),
             (#" ?\(R\d+\)"#, ""),
-            (#"It's in the leash\."#, "It's in your wallet."),
-            (#"the leash keeps the NEAR"#, "the NEAR stays in your wallet"),
-            (#"through the leash"#, "from your wallet"),
-            (#"by the leash"#, "by your limits"),
-            (#"refunds the leash"#, "refunds your wallet"),
-            (#"The leash"#, "Your wallet"),
-            (#"the leash"#, "your wallet"),
+            (#"It's in the leash\."#, "It's in Spend Limits."),
+            (#"the leash keeps the NEAR"#, "Spend Limits keeps the NEAR"),
+            (#"through the leash"#, "through Spend Limits"),
+            (#"by the leash"#, "by Spend Limits"),
+            (#"refunds the leash"#, "refunds Spend Limits"),
+            (#"(The|the) leash contract"#, "Spend Limits"),
+            (#"(The|the) leash"#, "Spend Limits"),
         ]
         for (pattern, with) in swaps {
             s = s.replacingOccurrences(of: pattern, with: with, options: .regularExpression)
@@ -170,6 +170,9 @@ struct MoneyPalette {
     var faint: Color { text.opacity(0.32) }
     var fill: Color { dark ? .white.opacity(0.10) : .black.opacity(0.06) }
     var line: Color { text.opacity(0.08) }
+    /// The raised piece of a segmented control, and a card on the keyboard's backdrop.
+    var thumb: Color { dark ? .white.opacity(0.20) : .white }
+    var card: Color { dark ? .white.opacity(0.08) : .white.opacity(0.75) }
     var good: Color { dark ? AK.accent : Color(hex: 0x3F7A0A) }
     var bad: Color { dark ? AK.red : Color(hex: 0xD92D2F) }
     var warn: Color { dark ? AK.amber : Color(hex: 0xB86E00) }
@@ -194,34 +197,49 @@ struct MoneyPress: ButtonStyle {
     }
 }
 
-/// The row of sections at the top of a panel. The one that's open is lime.
+/// The row of sections at the top of a panel: a segmented control, the open
+/// section raised on a quiet track. Lime is kept for the one action that matters.
 struct MoneyTabs<Tab: Hashable>: View {
     let tabs: [(tab: Tab, label: String)]
     @Binding var selection: Tab
     let palette: MoneyPalette
+    /// true: the segments share the row's width; false: each hugs its label.
+    var fill = false
+
+    @Namespace private var thumb
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 2) {
             ForEach(tabs, id: \.tab) { item in
                 let on = item.tab == selection
                 Button {
                     guard !on else { return }
                     Haptics.layer()
-                    withAnimation(.snappy(duration: 0.2)) { selection = item.tab }
+                    withAnimation(.snappy(duration: 0.22)) { selection = item.tab }
                 } label: {
                     Text(item.label)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(on ? AK.ink : palette.text)
+                        .font(.footnote.weight(on ? .semibold : .medium).monospacedDigit())
+                        .foregroundStyle(on ? palette.text : palette.soft)
                         .lineLimit(1)
-                        .padding(.horizontal, 11)
+                        .minimumScaleFactor(0.8)
+                        .padding(.horizontal, fill ? 4 : 12)
+                        .frame(maxWidth: fill ? .infinity : nil)
                         .frame(height: 28)
-                        .background(on ? AK.accent : palette.fill, in: Capsule())
+                        .background {
+                            if on {
+                                Capsule().fill(palette.thumb)
+                                    .shadow(color: .black.opacity(palette.dark ? 0 : 0.10), radius: 2, y: 1)
+                                    .matchedGeometryEffect(id: "thumb", in: thumb)
+                            }
+                        }
                         .contentShape(Capsule())
                 }
-                .buttonStyle(MoneyPress())
+                .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
+        .padding(2)
+        .background(palette.fill, in: Capsule())
     }
 }
 

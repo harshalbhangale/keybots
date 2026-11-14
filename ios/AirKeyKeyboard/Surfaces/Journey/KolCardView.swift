@@ -71,7 +71,7 @@ struct KolCardView: View {
                     .accessibilityHint(expanded ? "Tap to shorten" : "Tap to read it all")
             }
             HStack(spacing: 6) {
-                Text("$\(asset)").font(.caption.weight(.heavy))
+                Text("$\(asset)").font(.caption.weight(.semibold))
                 Text(direction == "sell" ? "Sell" : "Buy").font(.caption.weight(.bold))
                     .foregroundStyle(direction == "sell" ? p.bad : p.good)
                 if let hits, let misses {
@@ -96,8 +96,8 @@ struct KolCardView: View {
                 .accessibilityHint("Shows the trade first. Nothing trades yet.")
             }
         }
-        .padding(.horizontal, 12).padding(.vertical, 9)
-        .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
