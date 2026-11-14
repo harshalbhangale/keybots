@@ -173,8 +173,29 @@ const SAMPLES: { minutesAgo: number; text: string; asset: string; direction: "bu
   { minutesAgo: 300, text: "$XRP reclaiming support. Small long, spot only.", asset: "XRP", direction: "buy" },
 ];
 
-/** AIRKEY_DEMO_CALLS=on: the labelled samples sit beside the real calls, so a demo always has fresh ones. */
+/** AIRKEY_DEMO_CALLS=on: a friend's calls in a trading group, fresh on every fetch, for the demo. Made up: no real person or post. */
 const demoCalls = () => (process.env.AIRKEY_DEMO_CALLS ?? "").toLowerCase() === "on";
+const DEMO: { minutesAgo: number; text: string; asset: string; direction: "buy" | "sell" }[] = [
+  { minutesAgo: 2, text: "$SOL breaking out, I'm buying here 🚀", asset: "SOL", direction: "buy" },
+  { minutesAgo: 6, text: "Took profit on $NEAR, selling a chunk into this pump", asset: "NEAR", direction: "sell" },
+  { minutesAgo: 11, text: "$ETH looks ready. Adding a bit of spot", asset: "ETH", direction: "buy" },
+  { minutesAgo: 19, text: "$BTC bounced right off support, buying the dip", asset: "BTC", direction: "buy" },
+  { minutesAgo: 27, text: "Out of $DOGE, the volume is gone", asset: "DOGE", direction: "sell" },
+  { minutesAgo: 40, text: "$XRP reclaimed the level, small buy here", asset: "XRP", direction: "buy" },
+];
+function demo(now: number): FeedCall[] {
+  return DEMO.map((s, i) => ({
+    id: `demo-${i + 1}`,
+    source: "telegram",
+    author: { handle: "Arjun", name: "Trading group" },
+    postedAt: new Date(now - s.minutesAgo * 60_000).toISOString(),
+    url: null,
+    text: s.text,
+    asset: s.asset,
+    direction: s.direction,
+    record: null,
+  }));
+}
 
 function samples(now: number): FeedCall[] {
   return SAMPLES.map((s, i) => ({
@@ -262,15 +283,15 @@ export function tradeFlow(deps: TradeDeps) {
   async function feed(): Promise<Feed> {
     const fromX = await xCalls();
     const fromTelegram = (deps.telegram?.calls() ?? []).slice(0, FEED_MAX).map(telegramCall);
-    const extra = demoCalls() ? samples(now()) : [];
+    const extra = demoCalls() ? demo(now()) : [];
     const calls = [...fromX, ...fromTelegram, ...extra].sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt)).slice(0, FEED_MAX);
     let out: Feed;
     if (!calls.length) {
       out = { source: "sample", note: SAMPLE_NOTE, calls: samples(now()).slice(0, 3) };
     } else {
       const hasX = calls.some((c) => c.source === "x");
-      const tgTitles = [...new Set(calls.filter((c) => c.source === "telegram").map((c) => c.author.name ?? ""))].filter(Boolean);
-      const notes = [hasX ? X_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null, extra.length ? "Calls marked Sample are examples, not real posts." : null].filter(Boolean);
+      const tgTitles = [...new Set(calls.filter((c) => c.source === "telegram" && !c.id.startsWith("demo-")).map((c) => c.author.name ?? ""))].filter(Boolean);
+      const notes = [hasX ? X_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null].filter(Boolean);
       out = { source: hasX ? (tgTitles.length ? "mixed" : "x") : "telegram", note: notes.join(" "), calls };
     }
     lastFeed = new Map(out.calls.map((c) => [c.id, c]));
@@ -278,7 +299,7 @@ export function tradeFlow(deps: TradeDeps) {
   }
 
   async function findCall(id: string): Promise<FeedCall | undefined> {
-    const sample = samples(now()).find((c) => c.id === id);
+    const sample = samples(now()).find((c) => c.id === id) ?? (demoCalls() ? demo(now()).find((c) => c.id === id) : undefined);
     if (sample) return sample;
     // A Telegram call is looked up in the store itself, so it can't have scrolled out of the last feed.
     const tg = id.startsWith("tg-") ? deps.telegram?.find(id) : undefined;
