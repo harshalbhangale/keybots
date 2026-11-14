@@ -63,6 +63,7 @@
 		5597B89D3880E309D9E14D9D /* SwapCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C789ADED35D8C14B662DF37 /* SwapCard.swift */; };
 		588FB4BBB4F7A9DE6C95874D /* SecretScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9BA37E9ACEFC91213BB0684 /* SecretScanner.swift */; };
 		59CE8A1AA420257D49C6E1F8 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E174E7250C5963B6505C36 /* Intent.swift */; };
+		59D7995A1C69FE953C6096C7 /* JourneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAC4026218CEA1A8E1168AB /* JourneyView.swift */; };
 		5B02E8FD028F385E8C565C8F /* LeashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC5173F4853BB06FDF38E4C /* LeashView.swift */; };
 		5C4B89AF5CFD197AC5094682 /* JetBrainsMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = EE45E828CAF886E1E5F12D73 /* JetBrainsMono-OFL.txt */; };
 		5C680180512AE94056641E93 /* Exo2-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 117DA09A8A6231297DBA15AB /* Exo2-OFL.txt */; };
@@ -137,7 +138,9 @@
 		B578EB8217E1CB2CFBF710E7 /* MenuShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */; };
 		B6CF68EA11DCFF319FAC4B30 /* FollowingSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8570CD3FAA32EA8F37A0A539 /* FollowingSection.swift */; };
 		B9C7BFE0BFC77E8B7B9E290B /* marble.png in Resources */ = {isa = PBXBuildFile; fileRef = 6F050F6DDBA07718B7DC1920 /* marble.png */; };
+		BA35510AC82A75D8937F20C4 /* KolCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF2A3866B5F85CFD63FAA04 /* KolCardView.swift */; };
 		BB50E01BA953AFF7EB3BE5D2 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B266FD6C151D3FF2DC9AEBF /* Haptics.swift */; };
+		BC030B3C18A89F285B7430D6 /* JourneyAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A717C160AAF5491983329521 /* JourneyAPI.swift */; };
 		BCE809DD730ABB417CEC4394 /* knurl.png in Resources */ = {isa = PBXBuildFile; fileRef = 14D78E32782508FD6396E683 /* knurl.png */; };
 		BD5A2B50C89EE2F5132777D5 /* theme-sonar-return.caf in Resources */ = {isa = PBXBuildFile; fileRef = 4230BFEBE70BF167FF7FE637 /* theme-sonar-return.caf */; };
 		BD60A00EB851372B06F1E92C /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9851A9A472BEEA624723FBC /* Format.swift */; };
@@ -146,10 +149,12 @@
 		C432680CE757B1F296C7A8AC /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85E248A9A14144C071BC8E /* Theme.swift */; };
 		C65503F552904E7CCC1B3D2F /* patina.png in Resources */ = {isa = PBXBuildFile; fileRef = 492181DA8C6DEF4030CADCC1 /* patina.png */; };
 		C6779732FBDF9F307B06425F /* Mascot.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D82843735C6F9608FC144101 /* Mascot.xcassets */; };
+		C9AD7F2B6E37F42B76D2380E /* JourneyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3A7DE97943637705F26DA8 /* JourneyModel.swift */; };
 		CA2130F8E526E86FD50A564D /* DMSerifDisplay-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */; };
 		CB271A99966259ACD5D6A3A0 /* AssistModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D46C95CC72FAF7DF48EC67 /* AssistModel.swift */; };
 		CF12F7BC9D2F918CC62FB1DD /* Kit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */; };
 		CF383AE8E9C2FBFCC86CBEE6 /* Vault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372D9B19A11E10D4CD1002D /* Vault.swift */; };
+		D027EFF18D066406BEDD9BBB /* TradeHold.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F29F6778D5BEF050F44D8F2 /* TradeHold.swift */; };
 		D04A48C8781BFF0C5A67966E /* IMFellEnglish-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8703A48BC2C8CEDF93C4FD99 /* IMFellEnglish-OFL.txt */; };
 		D231D09F0C0C907D349CFEE5 /* TypingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86406CA2934A2DBE3D63F196 /* TypingEngine.swift */; };
 		D332AB293B043691B2D36E44 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8E73A3766E52604B95CAA05 /* KeyboardView.swift */; };
@@ -272,6 +277,8 @@
 		6EC0285346B389EDAC16484E /* WalletModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletModel.swift; sourceTree = "<group>"; };
 		6F050F6DDBA07718B7DC1920 /* marble.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = marble.png; sourceTree = "<group>"; };
 		6F130E28E3271A378D3BDA02 /* theme-typewriter-space.caf */ = {isa = PBXFileReference; path = "theme-typewriter-space.caf"; sourceTree = "<group>"; };
+		6F29F6778D5BEF050F44D8F2 /* TradeHold.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradeHold.swift; sourceTree = "<group>"; };
+		6FF2A3866B5F85CFD63FAA04 /* KolCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KolCardView.swift; sourceTree = "<group>"; };
 		74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		75E0846BE869104E6DBEA22D /* Decoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decoder.swift; sourceTree = "<group>"; };
 		7659CDD3E5392E90C422CD77 /* TypingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingStore.swift; sourceTree = "<group>"; };
@@ -307,6 +314,7 @@
 		A3DEF79ED1A588D9458E1D32 /* theme-typewriter-return.caf */ = {isa = PBXFileReference; path = "theme-typewriter-return.caf"; sourceTree = "<group>"; };
 		A447C1955BB9322363EA17CC /* KeyboardLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayout.swift; sourceTree = "<group>"; };
 		A5B2568003C3CB91D9A04FB0 /* Ask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ask.swift; sourceTree = "<group>"; };
+		A717C160AAF5491983329521 /* JourneyAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyAPI.swift; sourceTree = "<group>"; };
 		A791BF76C4E67F6F86C158DF /* KeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyView.swift; sourceTree = "<group>"; };
 		A9BA37E9ACEFC91213BB0684 /* SecretScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretScanner.swift; sourceTree = "<group>"; };
 		AD85AFCDE8A01928A51D00C9 /* bricks.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bricks.png; sourceTree = "<group>"; };
@@ -323,6 +331,7 @@
 		B8B9D10578985615A1494259 /* Smart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Smart.swift; sourceTree = "<group>"; };
 		B8E73A3766E52604B95CAA05 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
 		BABADD43F1722C35D07BC63C /* TradeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradeModel.swift; sourceTree = "<group>"; };
+		BB3A7DE97943637705F26DA8 /* JourneyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyModel.swift; sourceTree = "<group>"; };
 		BBF1D08237153F6932EEB86C /* Prata-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Prata-Regular.ttf"; sourceTree = "<group>"; };
 		BDC44251A61716A4EF88E949 /* crosshatch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = crosshatch.png; sourceTree = "<group>"; };
 		BE82DAB9B756AF51443152AD /* Instant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Instant.swift; sourceTree = "<group>"; };
@@ -370,6 +379,7 @@
 		F55EA3185F3C9A7AB599371C /* GlideTrail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlideTrail.swift; sourceTree = "<group>"; };
 		F55F915837EB735292FB7E43 /* Marcellus-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Marcellus-Regular.ttf"; sourceTree = "<group>"; };
 		F76815909587B9263F41E788 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		FCAC4026218CEA1A8E1168AB /* JourneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyView.swift; sourceTree = "<group>"; };
 		FCC5173F4853BB06FDF38E4C /* LeashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -380,7 +390,6 @@
 				1C27100FB234C7ABEC38EB7B /* AgentModel.swift */,
 				B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */,
 				2A7505EE4ED5DF1E83292523 /* Protections.swift */,
-				91C217EA25E892B407ABFDEB /* .claude */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -414,13 +423,6 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-		0D67CEC6ECCD3EB698F5599E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		189699E195BCCCA4A9E0B0FB /* AirKey */ = {
 			isa = PBXGroup;
 			children = (
@@ -431,18 +433,10 @@
 				AE30351773DFCF5713DBF24A /* DeviceKey.swift */,
 				38827B21096CE8DA8AB2FE61 /* Info.plist */,
 				AF41A04D107BDF975DB721DC /* RootView.swift */,
-				0D67CEC6ECCD3EB698F5599E /* .claude */,
 				09770E26BBCCB4EA757F7D26 /* Components */,
 				22AAAB9198B7E413FE4CC2D8 /* Screens */,
 			);
 			path = AirKey;
-			sourceTree = "<group>";
-		};
-		1955E37AC411BC4F0D5B799E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		19CB54A95BEED60371AE5C68 /* Assist */ = {
@@ -495,13 +489,6 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		5D25F608B8B8E403D70BBD2E /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		800B64210BA145E55B616DD0 /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
@@ -541,13 +528,6 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
-		91C217EA25E892B407ABFDEB /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
-			sourceTree = "<group>";
-		};
 		98A81E83354111FC345F7EBB /* Surfaces */ = {
 			isa = PBXGroup;
 			children = (
@@ -569,6 +549,7 @@
 				6EC0285346B389EDAC16484E /* WalletModel.swift */,
 				013677326CEDB2AF96662698 /* WalletSurface.swift */,
 				19CB54A95BEED60371AE5C68 /* Assist */,
+				E7831947EBE4273AD128EB1D /* Journey */,
 			);
 			path = Surfaces;
 			sourceTree = "<group>";
@@ -591,7 +572,6 @@
 				3AF49B41A807E6455291CD22 /* AirKeyKeyboard.entitlements */,
 				E1F81127BD0FC8E23110F7C6 /* Info.plist */,
 				41A268554547ABD1D29F4116 /* KeyboardViewController.swift */,
-				1955E37AC411BC4F0D5B799E /* .claude */,
 				07888C8DFF812A19F0FE10F3 /* Agent */,
 				C1E384945909F6681F522065 /* Design */,
 				B50FB382AF12A7C5EF088C9F /* Engine */,
@@ -623,7 +603,6 @@
 				5D3CFBB86938CDC8F30275EB /* StripPolicy.swift */,
 				DABA0E548446A1B47682D911 /* TextPDF.swift */,
 				994FF05E6C99D2F1D75113ED /* VaultStore.swift */,
-				5D25F608B8B8E403D70BBD2E /* .claude */,
 				BF754FBE26852779E64F5B3A /* Typing */,
 			);
 			path = Engine;
@@ -685,16 +664,8 @@
 				DAA2017DC655AFC04315691F /* Plain.swift */,
 				DF85E248A9A14144C071BC8E /* Theme.swift */,
 				B372D9B19A11E10D4CD1002D /* Vault.swift */,
-				C52C527F2FD4B6B2BDE238D0 /* .claude */,
 			);
 			path = Shared;
-			sourceTree = "<group>";
-		};
-		C52C527F2FD4B6B2BDE238D0 /* .claude */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = .claude;
 			sourceTree = "<group>";
 		};
 		C70C41E6B9B22A5F3AD0E222 /* Textures */ = {
@@ -718,6 +689,18 @@
 				13B2ADBA4BC711D6FD639FCF /* wood.png */,
 			);
 			path = Textures;
+			sourceTree = "<group>";
+		};
+		E7831947EBE4273AD128EB1D /* Journey */ = {
+			isa = PBXGroup;
+			children = (
+				A717C160AAF5491983329521 /* JourneyAPI.swift */,
+				BB3A7DE97943637705F26DA8 /* JourneyModel.swift */,
+				FCAC4026218CEA1A8E1168AB /* JourneyView.swift */,
+				6FF2A3866B5F85CFD63FAA04 /* KolCardView.swift */,
+				6F29F6778D5BEF050F44D8F2 /* TradeHold.swift */,
+			);
+			path = Journey;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -926,6 +909,9 @@
 				F85FAD38A4101292DFE21288 /* InlineEditor.swift in Sources */,
 				EBFAFE843BCA6DDC94262A0D /* Instant.swift in Sources */,
 				555D203B491B6C0ADA1C1F89 /* Intent.swift in Sources */,
+				BC030B3C18A89F285B7430D6 /* JourneyAPI.swift in Sources */,
+				C9AD7F2B6E37F42B76D2380E /* JourneyModel.swift in Sources */,
+				59D7995A1C69FE953C6096C7 /* JourneyView.swift in Sources */,
 				E19153652060A42E1ABE6170 /* KeyBindings.swift in Sources */,
 				1D496D29A259E1FD6EFC3FBE /* KeyFaces.swift in Sources */,
 				6A9C5A38A5383F57DA7BC3A5 /* KeyView.swift in Sources */,
@@ -936,6 +922,7 @@
 				D332AB293B043691B2D36E44 /* KeyboardView.swift in Sources */,
 				5FF82EC3BADB8EDE32DB0AA5 /* KeyboardViewController.swift in Sources */,
 				E53D37BBDD2190D76D28FD4C /* KeycapMarkView.swift in Sources */,
+				BA35510AC82A75D8937F20C4 /* KolCardView.swift in Sources */,
 				BFDF1177B79E8A06313E81B7 /* Logo.swift in Sources */,
 				F605AA4DFF62ED359BEC7CB8 /* MemoryLogger.swift in Sources */,
 				B578EB8217E1CB2CFBF710E7 /* MenuShell.swift in Sources */,
@@ -955,6 +942,7 @@
 				F0B6532078ABE9F154F07A2C /* TextPDF.swift in Sources */,
 				C432680CE757B1F296C7A8AC /* Theme.swift in Sources */,
 				7608CAA377D4DAA2BB136395 /* Toolbar.swift in Sources */,
+				D027EFF18D066406BEDD9BBB /* TradeHold.swift in Sources */,
 				1DB5131D097B70F473069C55 /* TradeModel.swift in Sources */,
 				44361B22675E42C1030E7A33 /* TradePanel.swift in Sources */,
 				35F84B06F86CDEA9FCE87903 /* TradeSurface.swift in Sources */,

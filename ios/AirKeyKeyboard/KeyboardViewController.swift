@@ -122,6 +122,8 @@ final class KeyboardViewController: UIInputViewController {
 
     private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, assist, wallet, calls, trade }
     private var surface: Surface = .none
+    /// A copied call's text for the Calls panel to open on its review.
+    private var pendingCallReview: String?
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
     private weak var inlineTarget: InlineEditor?
@@ -246,6 +248,14 @@ final class KeyboardViewController: UIInputViewController {
         paste.addTypeIdentifiers(forAccepting: UIImage.self)
         pasteConfiguration = paste
         agent.host = self
+        // A copied call's chip opens its review in Calls: one path to a trade.
+        agent.openCallReview = { [weak self] text in
+            guard let self else { return }
+            if self.surface == .calls { self.setSurface(.none, animated: false) }
+            self.pendingCallReview = text
+            self.agent.dismiss()
+            self.setSurface(.calls)
+        }
         // Trade panel hook: a trade's chip opens the swap screen.
         agent.openTrade = { [weak self] command, origin in
             guard let self, let seed = TradeModel.seed(from: command) else { return false }
@@ -820,9 +830,15 @@ final class KeyboardViewController: UIInputViewController {
                                         width: w,
                                         height: max(0, h - NoteEditSurface.stripHeight))
         case .wallet, .calls: // WALLET/CALLS HOOK: over the keys, under the strip's title.
-            toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
             keyboardView.isHidden = true
-            money?.frame = panelRect(w, h)
+            if money?.full == true {
+                // A call's review takes the whole keyboard, strip included.
+                toolbarHiddenBySurface = true
+                money?.frame = CGRect(x: 0, y: 0, width: w, height: h)
+            } else {
+                toolbar.frame = CGRect(x: 0, y: 0, width: w, height: Glass.toolbarHeight)
+                money?.frame = panelRect(w, h)
+            }
         case .clipboard:
             // The clipboard owns the whole keyboard, strip included.
             toolbarHiddenBySurface = true
@@ -957,7 +973,10 @@ final class KeyboardViewController: UIInputViewController {
             if let keys = n.keysContext { keyboardView.context = keys }
             n.activate(n.activeEditor)
         case .wallet, .calls: // WALLET/CALLS HOOK
-            let m = MoneyPanel(kind: new == .wallet ? .wallet : .calls, actions: moneyActions, dark: Glass.chromeDark)
+            let m = MoneyPanel(kind: new == .wallet ? .wallet : .calls, actions: moneyActions, dark: Glass.chromeDark,
+                               review: new == .calls ? pendingCallReview : nil)
+            pendingCallReview = nil
+            m.onFull = { [weak self] _ in self?.applySurfaceLayout(animated: true) }
             content.addSubview(m)
             m.attach(to: self)
             prepareEntrance(m, animated: animated)
