@@ -80,6 +80,9 @@ struct TradeReview: Equatable {
     let fundsSit: String
     let standIn: String?
     let mainnet: Mainnet?
+    /// What NEAR Intents checked: the full line, and NEAR's dollar price.
+    var intentsLine: String? = nil
+    var nearPrice: Double? = nil
     let limits: Limits
 }
 
@@ -225,6 +228,8 @@ struct JourneyAPI {
             fundsSit: J.str(t["fundsSit"]) ?? "",
             standIn: J.str(t["standIn"]),
             mainnet: mainnet,
+            intentsLine: J.str(J.dict(j["intents"])["line"]),
+            nearPrice: (J.dict(j["intents"])["nearPrice"] as? NSNumber)?.doubleValue,
             limits: .init(agentName: J.str(l["agentName"]) ?? "Trading Agent", perTrade: J.str(l["perTrade"]) ?? "?",
                           daily: J.str(l["daily"]) ?? "?", spentToday: J.str(l["spentToday"]) ?? "0",
                           stopped: J.bool(l["stopped"]) ?? false, within: J.bool(l["within"]) ?? true,
