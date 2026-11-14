@@ -47,7 +47,7 @@ struct AssistReceiptCard: View {
     let close: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack {
                 Text(receipt.isNear ? "Answered on NEAR AI" : "Answered by OpenAI")
                     .font(.subheadline.weight(.semibold))
@@ -74,6 +74,7 @@ struct AssistReceiptCard: View {
             }
         }
         .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(p.line, lineWidth: 0.5))
         .accessibilityElement(children: .combine)

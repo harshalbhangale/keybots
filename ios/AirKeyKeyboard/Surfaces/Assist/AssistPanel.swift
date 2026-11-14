@@ -114,18 +114,21 @@ struct AssistView: View {
     private func panel(_ p: AssistPalette) -> some View {
         VStack(spacing: 8) {
             header(p)
-            tasks(p)
-            if model.task == .translate { languageRow(p) }
+            // The receipt lies over the tasks and the answer, never pushing them.
             ZStack(alignment: .top) {
-                content(p)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                VStack(spacing: 8) {
+                    tasks(p)
+                    if model.task == .translate { languageRow(p) }
+                    content(p)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    actions(p)
+                }
                 if model.receiptOpen, let r = model.receipt {
                     AssistReceiptCard(receipt: r, note: model.note, p: p) { model.toggleReceipt() }
                         .transition(.opacity.combined(with: .offset(y: 10)))
                 }
             }
             .animation(Glass.reduceMotion ? nil : .snappy(duration: 0.22), value: model.receiptOpen)
-            actions(p)
         }
         .padding(.horizontal, 10)
         .padding(.top, 8)
@@ -201,6 +204,7 @@ struct AssistView: View {
                 }
             }
             .scrollEdgeEffectHidden(true)
+            .onAppear { proxy.scrollTo(model.task, anchor: .center) }
             .onChange(of: model.task) { _, t in
                 withAnimation(Glass.reduceMotion ? nil : .snappy(duration: 0.2)) { proxy.scrollTo(t, anchor: .center) }
             }
