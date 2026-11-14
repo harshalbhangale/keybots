@@ -6,7 +6,8 @@
 // `min_amount_out` (1% under the pool's own quote).
 //
 // Testnet has deep pools for test stablecoins, so a swap there is real and
-// on chain but costs nothing. On mainnet, AIRKEY swaps through NEAR Intents.
+// on chain but costs nothing. Mainnet uses Rhea's deepest pools for NEAR/USDC
+// and NEAR/USDT; anything else NEAR Intents lists goes through NEAR Intents.
 
 export interface RheaRoute {
   /** What people type: "USDT". */
@@ -47,7 +48,46 @@ export const RHEA: Record<string, RheaNetwork | undefined> = {
     // The deepest USDC/USDT pool there (thousands of each).
     pairs: { "USDC/USDT": 1126 },
   },
+  // Read on 14 Nov 2026 with view calls on v2.ref-finance.near (get_pools over
+  // all 9019 pools, then get_return for 1 NEAR in each candidate):
+  //   4512  NEAR/USDC  simple pool, 0.3% fee, ~278,000 wNEAR / ~919,000 USDC   1 NEAR -> 3.299 USDC
+  //   6063  NEAR/USDT  degen pool,  0.3% fee, ~49,000 wNEAR / ~163,000 USDT    1 NEAR -> 3.312 USDT
+  //   6416  USDC/USDT  degen pool,  0.01% fee, ~282,000 USDC / ~318,000 USDT
+  // The next NEAR/USDT pool (3879, a simple pool) holds only ~550 wNEAR. See pickPool below.
+  mainnet: {
+    exchange: "v2.ref-finance.near",
+    wrap: "wrap.near",
+    routes: {
+      USDC: { symbol: "USDC", token: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1", pool: 4512, decimals: 6 },
+      USDT: { symbol: "USDT", token: "usdt.tether-token.near", pool: 6063, decimals: 6 },
+    },
+    pairs: { "USDC/USDT": 6416 },
+  },
 };
+
+/** One pool as Rhea's get_pools lists it. */
+export interface RheaPoolInfo {
+  token_account_ids: string[];
+  amounts: string[];
+  pool_kind?: string;
+  total_fee?: number;
+}
+
+/**
+ * The deepest two-token pool for `a`/`b` in a page of get_pools (ids start at
+ * `fromIndex`): the one holding the most of `a`. This is how the mainnet pool
+ * ids above were chosen; it is kept so they can be checked again.
+ */
+export function pickPool(pools: RheaPoolInfo[], a: string, b: string, fromIndex = 0): { id: number; depth: bigint } | undefined {
+  let best: { id: number; depth: bigint } | undefined;
+  pools.forEach((p, i) => {
+    const ts = p.token_account_ids;
+    if (ts.length !== 2 || !ts.includes(a) || !ts.includes(b)) return;
+    const depth = BigInt(p.amounts[ts.indexOf(a)] ?? "0");
+    if (!best || depth > best.depth) best = { id: fromIndex + i, depth };
+  });
+  return best;
+}
 
 /** 1% under the quote, in basis points. */
 const SLIPPAGE_BPS = 100n;
