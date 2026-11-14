@@ -19,6 +19,10 @@ struct KolCall: Identifiable, Equatable {
     let misses: Int?
     /// "x" (an X post), "telegram" (a group the bot is in) or "sample". A server that doesn't say is X.
     var source: String = "x"
+    /// A leveraged signal read as spot: "Leveraged call (10x): Keybots buys spot, no leverage."
+    var signalNote: String? = nil
+    /// The signal's targets and stop, as it gave them.
+    var signalLine: String? = nil
 
     var sell: Bool { direction == "sell" }
     var telegram: Bool { source == "telegram" }
@@ -199,7 +203,18 @@ struct JourneyAPI {
                        name: J.str(author["name"]), postedAt: J.date(d["postedAt"]), url: J.str(d["url"]),
                        text: J.str(d["text"]), asset: asset, direction: J.str(d["direction"]) ?? "buy",
                        hits: J.int(record["hits"]), misses: J.int(record["misses"]),
-                       source: ["x", "telegram", "sample"].contains(J.str(d["source"]) ?? "") ? J.str(d["source"])! : "x")
+                       source: ["x", "telegram", "sample"].contains(J.str(d["source"]) ?? "") ? J.str(d["source"])! : "x",
+                       signalNote: J.str(J.dict(d["signal"])["note"]),
+                       signalLine: signalLine(J.dict(d["signal"])))
+    }
+
+    /// "Targets 215.45 · 219.49 · 223.98 · Stop 202.53", or nil.
+    static func signalLine(_ s: [String: Any]) -> String? {
+        let targets = (s["targets"] as? [String]) ?? []
+        var parts: [String] = []
+        if !targets.isEmpty { parts.append("Targets " + targets.prefix(4).joined(separator: " · ")) }
+        if let stop = J.str(s["stop"]) { parts.append("Stop \(stop)") }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     static func review(_ j: [String: Any]) -> TradeReview? {
