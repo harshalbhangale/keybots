@@ -50,7 +50,7 @@ struct KolCardView: View {
                 }
                 if !sample, !isSampleAuthor, handle != nil {
                     // Where it was posted, quietly.
-                    Text(isTelegram ? "Telegram" : "X · via Kall").font(.caption2.weight(.medium)).foregroundStyle(p.faint)
+                    Text(isTelegram ? "Telegram" : "X · via Kall").font(.caption2.weight(.medium)).foregroundStyle(p.soft)
                         .padding(.horizontal, 6).frame(height: 18)
                         .background(p.fill.opacity(0.6), in: Capsule())
                         .lineLimit(1).fixedSize()
