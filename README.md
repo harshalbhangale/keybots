@@ -1,5 +1,7 @@
 # Keybots
 
+<p align="center"><img src="docs/keybots-banner.gif" alt="Keybots: typing &quot;swap 0.1 near to usdc&quot; in the keyboard opens a swap sheet; hold, and it swaps 0.1 NEAR for 0.21 USDC on Rhea (NEAR testnet). Real screen recording." width="100%"></p>
+
 ### Your keyboard is the AI. NEAR sets the limits.
 
 Keybots is an iPhone keyboard with three AI agents inside it. Type `pay harshal 0.2` and it pays. Paste a trading call from X or Telegram and it turns into a trade you can review. Hold space and a private AI fixes your message. You never leave the chat.
