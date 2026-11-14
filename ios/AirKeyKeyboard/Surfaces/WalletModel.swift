@@ -16,7 +16,7 @@ struct MoneyActions {
 }
 
 /// The leash as the Wallet panel shows it: read from the AIRKEY server, and
-/// only read. Like Kall's wallet it retries every 4 seconds until the first
+/// only read. It retries every 4 seconds until the first
 /// read lands, then refreshes every 20 while the panel is open.
 @Observable
 @MainActor
