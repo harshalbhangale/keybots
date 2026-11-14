@@ -73,6 +73,10 @@ struct LeashState: Decodable {
         let memo: String?
         let rule: String
         let reason: String
+        /// When the agent asked, in nanoseconds (the contract's block time). Older servers leave it out.
+        let created_at_ns: Double?
+
+        var createdAt: Date? { created_at_ns.map { Date(timeIntervalSince1970: $0 / 1e9) } }
     }
 }
 
