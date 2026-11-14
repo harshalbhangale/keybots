@@ -226,12 +226,4 @@ Testnet setup, hosting and the demo: [scripts/](scripts), [docs/HOSTING.md](docs
 - The app, code and some screenshots still say AIRKEY, the project's earlier name.
 
 ## Credits
-
-- The keyboard's typing core in `ios/AirKeyKeyboard/` (layout, design, typing engine and dictionary, and some panels) is adapted from [Glyf](https://github.com/The-x-35/glyf), which is not covered by this repository's MIT license.
 - Built with Claude Code. Product and design decisions by Harshal Bhangale.
-
-## License
-
-[MIT](LICENSE), except the third-party code noted under Credits.
-
-> Not financial advice and not production wallet software.
