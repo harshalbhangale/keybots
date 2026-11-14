@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Ico } from "./Icons";
+import { Ico, NearTile } from "./Icons";
 
 /**
  * The hero: the Keybots phone keyboard, floating in 3D. A message comes in from
@@ -182,7 +182,7 @@ export default function Keyboard3D() {
         setRes(null);
         setChip(/^(pay|send|swap|buy|sell|kill|follow|\$)/i.test(textRef.current + k) ? "Press return to run it" : null);
         set((textRef.current + k).slice(0, 40));
-      }
+      } else flash(k);
     },
     [flash],
   );
@@ -305,7 +305,7 @@ export default function Keyboard3D() {
               </div>
             ))}
             <div className="mk-row r3">
-              {key("123", "123", "fn w")}
+              {key("near", <NearTile size={20} label={false} />, "fn w nk")}
               {key("sp", "keybots", "space")}
               {key("go", "hold ↵", "go")}
             </div>
@@ -319,6 +319,9 @@ export default function Keyboard3D() {
               <span>
                 <b>{res.title}</b>
                 <small>{res.meta}</small>
+              </span>
+              <span className="mk-on">
+                <NearTile size={16} label={false} /> on NEAR
               </span>
             </div>
           )}
