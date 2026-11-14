@@ -154,7 +154,7 @@ enum Plain {
         switch role {
         case "pay": "Pays when you type a payment, up to these limits."
         case "inbox": "Reads messages you copy. It can pay people on your allowed list; anyone else waits for you."
-        case "trade", "trader": "Swaps tokens when you ask, up to these limits."
+        case "trade", "trader": "Trades the calls you review from X and Telegram, on Rhea. Only after you hold to confirm."
         default: tier == "trusted" ? "Acts on what you type, up to these limits." : "Acts on other people's words. Anyone off your allowed list waits for you."
         }
     }
