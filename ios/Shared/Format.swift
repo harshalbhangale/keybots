@@ -73,6 +73,19 @@ enum Fmt {
         v.formatted(.currency(code: code).precision(.fractionLength(0...2)))
     }
 
+    /// "0.25" NEAR as yoctoNEAR digits, exactly (no floating point), or nil if it isn't a plain amount.
+    static func yocto(near text: String) -> String? {
+        let t = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
+        let parts = t.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        guard (1...2).contains(parts.count), !t.isEmpty,
+              parts.allSatisfy({ $0.allSatisfy(\.isNumber) }), parts[0].count <= 12,
+              (parts.count == 1 || parts[1].count <= 24) else { return nil }
+        let whole = parts[0].isEmpty ? "0" : parts[0]
+        let frac = (parts.count == 2 ? parts[1] : "").padding(toLength: 24, withPad: "0", startingAt: 0)
+        let digits = (whole + frac).drop(while: { $0 == "0" })
+        return digits.isEmpty ? "0" : String(digits)
+    }
+
     /// "14 Nov, 09:42" in the phone's time zone.
     static func stamp(_ date: Date?) -> String {
         guard let date else { return "" }
