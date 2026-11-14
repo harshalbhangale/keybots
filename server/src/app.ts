@@ -13,7 +13,7 @@ import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
-import { TradeError, tradeFlow } from "./trade.js";
+import { TradeError, readPosted, tradeFlow } from "./trade.js";
 import { connected } from "./connected.js";
 import type { TelegramSource } from "./telegram.js";
 import { cachedState, renderLeash } from "./leash-page.js";
@@ -321,14 +321,15 @@ export function buildApp(deps: Deps) {
   app.post<{ Body: { text?: unknown } }>("/v1/call", async (req, reply) => {
     const text = typeof req.body?.text === "string" ? req.body.text.trim().slice(0, 2000) : "";
     if (!text) return reply.code(400).send({ error: 'Send {"text": "..."}' });
-    const call = readCall(text);
+    // A leveraged signal ("TAO LONG 10x") comes back read as spot, with `signal` saying so.
+    const { call, signal } = readPosted(text);
     const route = await routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea });
     if (!call.isCall) return { call, route };
     // Every call that was checked goes in the calls book, with the token's price at that moment.
     let priceThen = route.status === "available" ? (route.token.price ?? null) : null;
     if (priceThen === null && call.asset) priceThen = await priceOf(call.asset);
     const record = calls.check(text, call, route, priceThen);
-    return { call, route, id: record.id };
+    return { call, route, id: record.id, ...(signal ? { signal } : {}) };
   });
 
   /**
