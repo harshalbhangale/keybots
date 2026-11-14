@@ -117,7 +117,7 @@ group("POST /v1/assist: fix", () => {
     const [chat] = net.chats();
     expect(chat!.body.stream).toBe(true);
     expect(chat!.headers["x-no-aliasing"]).toBe("true");
-    expect(chat!.body.messages[1].content).toBe("can u send the file tmrw at 5pm");
+    expect(chat!.body.messages[1].content).toBe("<message>\ncan u send the file tmrw at 5pm\n</message>");
     expect(net.calls.some((c) => c.url.includes("/signature/near-"))).toBe(true);
   });
 
