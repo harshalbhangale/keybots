@@ -475,6 +475,10 @@ struct ReviewCard: View {
                 InfoRow(label: "Price can move", value: "\(r.slippagePct)%", palette: p)
                 InfoRow(label: "Swap on", value: venueName(r.venue), palette: p,
                         note: venueNote(r))
+                if let line = r.intentsLine {
+                    InfoRow(label: "Checked by", value: "NEAR Intents", palette: p, note: intentsNote(r))
+                        .accessibilityLabel(line)
+                }
             }
             Spacer(minLength: 0)
             limits(r, p)
@@ -517,6 +521,13 @@ struct ReviewCard: View {
     private func venueName(_ venue: String) -> String {
         guard !venue.isEmpty else { return "—" }
         return venue.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespaces) ?? venue
+    }
+
+    /// "ETH listed · NEAR $2.10": the short form of the server's Intents line.
+    private func intentsNote(_ r: TradeReview) -> String {
+        let listed = r.standIn == nil ? "\(r.call.asset) listed" : "\(r.call.asset) listed on mainnet"
+        guard let price = r.nearPrice else { return listed }
+        return "\(listed) · NEAR $\(String(format: "%.2f", price))"
     }
 
     private func venueNote(_ r: TradeReview) -> String? {
