@@ -98,7 +98,7 @@ struct ReceiptDetail: View {
             if let ai = r.interpretation.ai {
                 KeyValue(key: "Model", value: ai.model, mono: true)
                 KeyValue(key: "Reply signature", value: r.interpretation.reader == "openai" ? "Not signed" : ai.signature.status, color: ai.signature.status == "verified" ? AK.accent : AK.amber)
-                KeyValue(key: "Attestation", value: ai.attestation, color: AK.amber)
+                KeyValue(key: "Attestation", value: ai.attestation, color: ai.attestation == "verified" ? AK.accent : AK.amber)
             }
         }
     }
