@@ -29,8 +29,8 @@ struct RootView: View {
             }
         }
         .tint(AK.accentText)
-        .tabViewBottomAccessory { CommandBar { showCommand = true } }
-        .tabBarMinimizeBehavior(.onScrollDown)
+        // The command bar lives on Wallet only; the other tabs stay quiet.
+        .commandBar(on: tab == .wallet) { showCommand = true }
         .task { await model.refresh() }
         .onChange(of: scenePhase) { _, phase in
             // Coming back from a chat where the keyboard ran something.
@@ -54,7 +54,7 @@ struct RootView: View {
     }
 }
 
-/// The bar above the tabs, on every screen: the one place you tell an agent what to do.
+/// The bar above the tabs on Wallet: the one place you tell an agent what to do.
 struct CommandBar: View {
     let action: () -> Void
 
@@ -64,7 +64,6 @@ struct CommandBar: View {
                 KeycapMark(size: 18)
                 Text("Pay, swap, or check a message").font(.subheadline).foregroundStyle(AK.muted).lineLimit(1).minimumScaleFactor(0.85)
                 Spacer(minLength: 0)
-                Image(systemName: "arrow.up.circle.fill").font(.title3).foregroundStyle(AK.accentText)
             }
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -72,5 +71,17 @@ struct CommandBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Pay, swap, or check a message")
+    }
+}
+
+extension View {
+    /// The command bar under Wallet only. Before iOS 26.1 it can't be hidden
+    /// per tab, so it stays on every tab there.
+    @ViewBuilder func commandBar(on: Bool, action: @escaping () -> Void) -> some View {
+        if #available(iOS 26.1, *) {
+            tabViewBottomAccessory(isEnabled: on) { CommandBar(action: action) }
+        } else {
+            tabViewBottomAccessory { CommandBar(action: action) }
+        }
     }
 }

@@ -6,35 +6,42 @@ import SwiftUI
 extension AK {
     static let graphite = AK.surface
     static let hairline = AK.line
+    /// The fill behind a secondary button on a card: readable in dark mode.
+    static let fill = Color(light: 0xE9E9EE, dark: 0x3A3A3C)
 }
 
-/// A screen header like a first-party app: a large bold title, a quiet line
-/// under it, and an optional control on the right.
+/// A screen header like a first-party app: a real navigation large title
+/// that collapses to an inline title with a bar as you scroll, an optional
+/// quiet line under it (only where it says something about state), and an
+/// optional control in the toolbar.
 struct Masthead<Trailing: View>: View {
     let eyebrow: String
     let title: String
     @ViewBuilder var trailing: Trailing
 
+    private var hasTrailing: Bool { Trailing.self != EmptyView.self }
+
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(AK.bone)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .accessibilityAddTraits(.isHeader)
-                if !eyebrow.isEmpty {
-                    Text(eyebrow)
-                        .font(.subheadline)
-                        .foregroundStyle(AK.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        Group {
+            if eyebrow.isEmpty {
+                Color.clear.frame(height: 0).accessibilityHidden(true)
+            } else {
+                Text(eyebrow)
+                    .font(.subheadline)
+                    .foregroundStyle(AK.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, -4)
+                    .padding(.top, -14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Spacer(minLength: 8)
-            trailing
         }
-        .padding(.top, 4)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            if hasTrailing {
+                ToolbarItem(placement: .topBarTrailing) { trailing }
+            }
+        }
     }
 }
 
@@ -114,7 +121,7 @@ struct BigButtonStyle: ButtonStyle {
             .foregroundStyle(primary ? AK.ink : (enabled ? AK.bone : AK.muted))
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: height)
-            .background(primary ? AK.accent : AK.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(primary ? AK.accent : AK.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .opacity(configuration.isPressed ? 0.7 : 1)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.snappy(duration: 0.15), value: configuration.isPressed)
@@ -172,36 +179,44 @@ struct NumberedStep: View {
     }
 }
 
-/// A mono address with Copy and a link to the explorer.
+/// An account under a plain label, the full ID on its own line (wrapping,
+/// never cut), and one copy button.
 struct AddressRow: View {
+    let label: String
     let address: String
-    var url: URL?
     @State private var copied = false
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
-        HStack(spacing: 10) {
-            Text(address).font(.footnote.monospaced()).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(label).font(.subheadline).foregroundStyle(AK.muted)
+                Text(address)
+                    .font(.footnote.monospaced())
+                    .foregroundStyle(AK.bone)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
+            .accessibilityElement(children: .combine)
             Spacer(minLength: 4)
             Button {
                 UIPasteboard.general.string = address
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                copied = true
+                withAnimation(.snappy) { copied = true }
+                Task { try? await Task.sleep(for: .seconds(1.6)); withAnimation(.snappy) { copied = false } }
             } label: {
-                Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc")
-                    .font(.subheadline.weight(.medium)).foregroundStyle(AK.accentText)
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(AK.accentText)
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            if let url {
-                Button { openURL(url) } label: {
-                    Image(systemName: "arrow.up.right.square").font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.muted)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("See it on NEAR")
-            }
+            .accessibilityLabel(copied ? "Copied" : "Copy account ID")
         }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 48)
+        .padding(.leading, 16)
+        .padding(.trailing, 6)
+        .padding(.vertical, 10)
         .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
