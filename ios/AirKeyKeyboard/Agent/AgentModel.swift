@@ -121,7 +121,10 @@ final class AgentModel {
     /// Called whenever the text settles. `answered` is true when the
     /// keyboard's own strip already has an answer for it (a sum, a unit).
     func read(_ text: String, answered: Bool) {
+        let before = lastText
+        let wasPrimed = primed
         guardPaste(old: lastText, new: text)
+        checkPastedCall(old: before, new: text, primed: wasPrimed)
         if callIntent != nil, let callFor, text != callFor {
             callIntent = nil
             self.callFor = nil
@@ -345,10 +348,25 @@ final class AgentModel {
         checkCall(text)
     }
 
+    /// The call text checked last, so the same paste isn't checked twice.
+    @ObservationIgnored private var checkedPaste: String?
+
+    /// A trading call pasted into the message box ("$SOL breaking out, buying"):
+    /// checked right away, as Check copied would. Only a call shows anything;
+    /// other pasted text is left alone (nothing goes to an agent unasked).
+    private func checkPastedCall(old: String, new: String, primed: Bool) {
+        guard primed, host?.agentHasFullAccess == true, running == nil, callIntent == nil else { return }
+        guard new.count - old.count >= 20, new.hasPrefix(old) || old.isEmpty else { return }
+        let chunk = String(new.dropFirst(old.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard chunk != checkedPaste, chunk.range(of: #"\$[A-Za-z][A-Za-z0-9]{1,9}\b"#, options: .regularExpression) != nil else { return }
+        checkedPaste = chunk
+        checkCall(chunk, auto: true)
+    }
+
     /// A copied message. A crypto call becomes a trade chip to hold, its
     /// token checked on NEAR Intents and its size under the leash's caps (or
     /// one line saying why not); anything else goes to the untrusted Inbox Agent.
-    private func checkCall(_ text: String) {
+    private func checkCall(_ text: String, auto: Bool = false) {
         notice = nil
         result = nil
         callIntent = nil
@@ -356,7 +374,11 @@ final class AgentModel {
         Task {
             let check = try? await API().call(text)
             running = nil
-            guard let check, check.call.isCall else { send(text, source: "pasted"); return }
+            guard let check, check.call.isCall else {
+                // A paste that isn't a call: say nothing. Check copied still sends it to the Inbox Agent.
+                if !auto { send(text, source: "pasted") }
+                return
+            }
             let r = check.route
             guard r.status == "available", let command = r.command, let title = r.title else {
                 notice = Plain.scrub(r.reason ?? check.call.summary)
