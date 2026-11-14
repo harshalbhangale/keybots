@@ -33,7 +33,7 @@ struct JourneyView: View {
         .onDisappear { model.stop() }
     }
 
-    static let bottomHeight: CGFloat = 88
+    static let bottomHeight: CGFloat = 76
 
     // MARK: Header: back, size, countdown
 
@@ -119,8 +119,8 @@ struct JourneyView: View {
                 .accessibilityLabel("Reviewing the trade")
         case .review, .sending, .expired:
             if let r = model.review {
-                ReviewCard(review: r, palette: p, dim: model.phase == .expired)
-                source(r, p)
+                if sourceOpen { post(r, p) }
+                ReviewCard(review: r, palette: p, dim: model.phase == .expired, source: AnyView(source(r, p)))
             }
         case .receipt:
             if let r = model.receipt { ReceiptCard(receipt: r, palette: p, actions: actions) }
@@ -133,47 +133,43 @@ struct JourneyView: View {
         }
     }
 
-    /// Where the call came from: one line, tap to read the post.
-    @ViewBuilder private func source(_ r: TradeReview, _ p: MoneyPalette) -> some View {
+    /// The post itself, opened from the source line.
+    private func post(_ r: TradeReview, _ p: MoneyPalette) -> some View {
+        let post = model.post
+        return KolCardView(handle: post?.handle ?? r.call.handle, name: post?.name ?? r.call.name,
+                           postedAt: post?.postedAt ?? r.call.postedAt, url: post?.url ?? r.call.url,
+                           text: r.call.text.isEmpty ? post?.text : r.call.text,
+                           asset: r.call.asset, direction: r.call.direction,
+                           hits: post?.hits, misses: post?.misses,
+                           reading: r.reading.isEmpty ? nil : r.reading, sample: false,
+                           palette: p, actions: actions, review: nil)
+            .transition(.opacity)
+    }
+
+    /// Where the call came from: one quiet line at the top of the card; tap to read the post.
+    private func source(_ r: TradeReview, _ p: MoneyPalette) -> some View {
         let post = model.post
         let handle = post?.handle ?? r.call.handle
-        if sourceOpen {
-            KolCardView(handle: handle, name: post?.name ?? r.call.name,
-                        postedAt: post?.postedAt ?? r.call.postedAt, url: post?.url ?? r.call.url,
-                        text: r.call.text.isEmpty ? post?.text : r.call.text,
-                        asset: r.call.asset, direction: r.call.direction,
-                        hits: post?.hits, misses: post?.misses,
-                        reading: r.reading.isEmpty ? nil : r.reading, sample: false,
-                        palette: p, actions: actions, review: nil)
-                .onTapGesture { withAnimation(.snappy(duration: 0.22)) { sourceOpen = false } }
-                .transition(.opacity)
-        } else {
-            Button {
-                Haptics.layer()
-                withAnimation(.snappy(duration: 0.22)) { sourceOpen = true }
-            } label: {
-                HStack(spacing: 8) {
-                    Text(String((handle ?? "?").prefix(1)).uppercased())
-                        .font(.caption.weight(.bold))
-                        .frame(width: 22, height: 22)
-                        .background(p.fill, in: Circle())
-                    Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.semibold)).lineLimit(1)
-                    if let ago = J.ago(post?.postedAt ?? r.call.postedAt) {
-                        Text(ago).font(.footnote).foregroundStyle(p.soft).lineLimit(1).fixedSize()
-                    }
-                    Spacer(minLength: 4)
-                    Text("\(r.call.direction == "sell" ? "Sell" : "Buy") \(r.call.asset)")
-                        .font(.footnote.weight(.semibold)).foregroundStyle(p.soft).lineLimit(1).fixedSize()
-                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold)).foregroundStyle(p.faint)
+        return Button {
+            Haptics.layer()
+            withAnimation(.snappy(duration: 0.22)) { sourceOpen.toggle() }
+        } label: {
+            HStack(spacing: 5) {
+                Text(handle.map { "@\($0)" } ?? "Copied post").fontWeight(.semibold).foregroundStyle(p.text).lineLimit(1)
+                if let ago = J.ago(post?.postedAt ?? r.call.postedAt) {
+                    Text("· \(ago)").lineLimit(1).fixedSize()
                 }
-                .padding(.horizontal, 10).frame(height: 38)
-                .background(p.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .contentShape(Rectangle())
+                Spacer(minLength: 4)
+                Text("\(r.call.direction == "sell" ? "Sell" : "Buy") \(r.call.asset)").lineLimit(1).fixedSize()
+                Image(systemName: sourceOpen ? "chevron.up" : "chevron.down").font(.system(size: 10, weight: .semibold))
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Source: \(handle.map { "@\($0)" } ?? "copied post"), \(r.call.direction) \(r.call.asset)")
-            .accessibilityHint("Shows the post")
+            .font(.caption)
+            .foregroundStyle(p.soft)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("From \(handle.map { "@\($0)" } ?? "a copied post"), \(r.call.direction) \(r.call.asset)")
+        .accessibilityHint(sourceOpen ? "Hides the post" : "Shows the post")
     }
 
     // MARK: Under the card: the hold (or what replaced it)
@@ -214,7 +210,7 @@ struct JourneyView: View {
                 }
             }
         }
-        .padding(.bottom, 20)
+        .padding(.bottom, 8)
     }
 
     private var holdLabel: String {
@@ -298,7 +294,7 @@ struct Callout: View {
             Spacer(minLength: 0)
         }
         .foregroundStyle(tint)
-        .padding(.horizontal, 10).padding(.vertical, 7)
+        .padding(.horizontal, 10).padding(.vertical, 6)
         .background(tint.opacity(palette.dark ? 0.16 : 0.10), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .accessibilityElement(children: .combine)
     }
@@ -358,10 +354,12 @@ struct ReviewCard: View {
     let review: TradeReview
     let palette: MoneyPalette
     let dim: Bool
+    var source: AnyView?
 
     var body: some View {
         let p = palette, r = review
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
+            if let source { source }
             HStack(alignment: .bottom, spacing: 8) {
                 side("You pay", r.pay.amount, r.pay.symbol, p)
                 Image(systemName: "arrow.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(p.faint)
@@ -370,27 +368,27 @@ struct ReviewCard: View {
                 side("You get about", r.receive.amount, r.receive.symbol, p)
             }
             if let callout = callout(r, p) { callout }
-            VStack(spacing: 6) {
-                InfoRow(label: "At least", value: "\(r.receiveMin) \(r.receive.symbol)", palette: p)
-                InfoRow(label: "Slippage", value: "\(r.slippagePct)%", palette: p)
-                InfoRow(label: "Network", value: r.network, palette: p)
-                if !r.venue.isEmpty { InfoRow(label: "Venue", value: r.venue, palette: p) }
-                InfoRow(label: "Funds held in", value: "Spend Limits", palette: p)
-                if let m = r.mainnet {
-                    InfoRow(label: "Mainnet price", value: "\(m.receiveAmount) \(m.symbol) · dry run", palette: p)
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 4) {
+                GridRow {
+                    cell("At least", "\(r.receiveMin) \(r.receive.symbol)", p)
+                    cell("Slippage", "\(r.slippagePct)%", p)
+                }
+                GridRow {
+                    cell("Network", r.network, p)
+                    cell("Venue", r.venue.isEmpty ? "—" : r.venue, p)
                 }
             }
             limits(r, p)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .padding(12)
         .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .opacity(dim ? 0.45 : 1)
         .accessibilityElement(children: .contain)
     }
 
     private func side(_ label: String, _ amount: String, _ symbol: String, _ p: MoneyPalette) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(label).font(.caption).foregroundStyle(p.soft)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(amount).font(.title3.weight(.semibold).monospacedDigit())
@@ -399,6 +397,20 @@ struct ReviewCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// A label and its value on one line, half the card wide.
+    private func cell(_ label: String, _ value: String, _ p: MoneyPalette) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(label).foregroundStyle(p.soft)
+            Spacer(minLength: 4)
+            Text(value).fontWeight(.medium).foregroundStyle(p.text)
+        }
+        .font(.caption)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
     }
 
@@ -421,17 +433,18 @@ struct ReviewCard: View {
         let spent = Double(l.spentToday) ?? 0, daily = Double(l.daily) ?? 0
         let fraction = daily > 0 ? spent / daily : 0
         let tint: Color = l.stopped ? p.bad : fraction > 0.8 ? p.warn : p.text.opacity(0.7)
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Spend Limits").font(.footnote.weight(.semibold))
-                Spacer(minLength: 8)
-                Text(l.stopped ? "Stopped" : "\(l.spentToday) of \(l.daily) NEAR today · \(l.perTrade) max a trade")
-                    .font(.caption.monospacedDigit()).foregroundStyle(l.stopped ? p.bad : p.soft)
-                    .lineLimit(1).minimumScaleFactor(0.8)
-            }
+        return HStack(spacing: 8) {
+            (Text("Funds in ").foregroundStyle(p.soft) + Text("Spend Limits").fontWeight(.semibold))
+                .font(.caption).fixedSize()
             SpendBar(fraction: l.stopped ? 1 : fraction, tint: tint, palette: p)
+                .frame(minWidth: 32, maxWidth: 64)
+            Spacer(minLength: 4)
+            Text(l.stopped ? "Stopped" : "\(l.spentToday) of \(l.daily) NEAR today")
+                .font(.caption.monospacedDigit()).foregroundStyle(l.stopped ? p.bad : p.soft)
+                .lineLimit(1).minimumScaleFactor(0.75)
         }
-        .padding(.top, 2)
+        .padding(.top, 8)
+        .overlay(alignment: .top) { Rectangle().fill(p.line).frame(height: 0.5) }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(l.stopped ? "Spend Limits: stopped" :
             "Spend Limits: \(l.spentToday) of \(l.daily) NEAR spent today, up to \(l.perTrade) NEAR a trade. You can stop it.")
