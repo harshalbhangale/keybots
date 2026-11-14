@@ -211,24 +211,23 @@ struct CallsView: View {
                 MoneyTabs(tabs: [(.posts, "Posts"), (.open, count("Open", model.open.count)), (.done, count("Done", model.done.count)),
                                  (.following, "Following")],
                           selection: $model.tab, palette: p, fill: true)
-                // Always takes its place, so the tabs never shift between sections.
-                let canPaste = model.tab == .open || model.tab == .done
+                // Always in its place, so the tabs never shift between sections.
+                let canPaste = model.tab != .following
                 Button { model.paste() } label: {
                     Group {
                         if model.checking {
-                            ProgressView().controlSize(.mini).tint(AK.ink)
+                            ProgressView().controlSize(.mini).tint(p.text)
                         } else {
                             Image(systemName: "doc.on.clipboard").font(.system(size: 13, weight: .semibold))
                         }
                     }
-                    .foregroundStyle(AK.ink)
+                    .foregroundStyle(p.text)
                     .frame(width: 32, height: 32)
-                    .background(AK.accent, in: Circle()).contentShape(Circle())
+                    .background(p.fill, in: Circle()).contentShape(Circle())
                 }
                 .buttonStyle(MoneyPress())
                 .disabled(!canPaste || model.checking || !actions.fullAccess())
-                .opacity(canPaste ? 1 : 0)
-                .accessibilityHidden(!canPaste)
+                .opacity(canPaste ? 1 : 0.3)
                 .accessibilityLabel("Paste a call")
                 .accessibilityHint("Checks the post you copied. Nothing runs.")
             }
