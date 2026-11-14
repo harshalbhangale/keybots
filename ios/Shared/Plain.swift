@@ -175,6 +175,40 @@ enum Plain {
         }
     }
 
+    /// Why a payment waits, split into the reason and where it came from:
+    /// ("Not on your allowed list", "From a message you copied").
+    static func pendingParts(_ p: LeashState.Pending) -> (reason: String, from: String?) {
+        let copied = "From a message you copied"
+        let fromInbox = p.agent.hasPrefix("inbox.")
+        switch p.rule {
+        case "R6": return ("Not on your allowed list", copied)
+        case "R7": return ("A new account, so AIRKEY asks you first", fromInbox ? copied : nil)
+        default:
+            var s = scrub(p.reason)
+            var from: String? = fromInbox ? copied : nil
+            for tail in [", from a message you copied", ". It came from a message you copied"] where s.lowercased().hasSuffix(tail.lowercased()) {
+                s = String(s.dropLast(tail.count))
+                from = copied
+            }
+            return (s.prefix(1).uppercased() + s.dropFirst(), from)
+        }
+    }
+
+    /// A receipt for a list row: a short title, the account on its own line
+    /// (so it never breaks mid-name), and the memo.
+    static func row(_ r: Receipt) -> (title: String, account: String?, memo: String?) {
+        var title = line(r)
+        let memo = r.interpretation.action.memo.flatMap { $0.isEmpty ? nil : $0 }
+        if let memo, title.hasSuffix(" for \(memo)") { title = String(title.dropLast(memo.count + 5)) }
+        var account: String?
+        if let m = title.range(of: #" (to|from) [a-z0-9_-]+(\.[a-z0-9_-]+)+$"#, options: .regularExpression) {
+            account = String(title[m]).trimmingCharacters(in: .whitespaces)
+            title = String(title[..<m.lowerBound])
+        }
+        if title.hasPrefix("Waiting: ") { title = "Waiting for you: " + title.dropFirst(9) }
+        return (title, account, memo)
+    }
+
     /// Why an account is on your blocked list.
     static func blockedReason(_ reason: String) -> String {
         var s = reason
@@ -183,7 +217,27 @@ enum Plain {
             s = "Reported as a scam: " + why
         }
         if s == "Blocked by the owner" { return "You blocked it" }
-        return scrub(s)
+        // The section is already called Blocked, so say only why.
+        if let r = s.range(of: #"^Blocked by (the leash|Spend Limits)(\s*\(R\d+\))?:\s*"#, options: [.regularExpression, .caseInsensitive]) {
+            s = String(s[r.upperBound...])
+        }
+        s = scrub(s)
+        return s.prefix(1).uppercased() + s.dropFirst()
+    }
+
+    /// What a rule on Spend Limits means, from its id, so no rule id or
+    /// contract word reaches a person. Nil for an id this app doesn't know.
+    static func rule(_ id: String?) -> String? {
+        switch id {
+        case "R0": "Not enough NEAR in your AIRKEY balance"
+        case "R1": "Stop everything was on"
+        case "R3": "The receiver is on your blocked list"
+        case "R4": "Over the limit for one payment"
+        case "R5": "Over today's limit"
+        case "R6": "Not on your allowed list"
+        case "R7": "A new account, so you were asked first"
+        default: nil
+        }
     }
 
     /// A check on the receiver, reworded where it used a word from the contract.

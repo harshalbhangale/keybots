@@ -472,9 +472,9 @@ struct CallerRecord: Decodable, Equatable, Sendable {
         avgReturnBps = c.loose(.avgReturnBps, nil as Double?)
     }
 
-    /// "7 hits · 3 misses · avg +1.2%" (no average when Kall has none)
+    /// "7 of 10 calls up · avg +1.2%" (no average when Kall has none)
     var line: String {
-        var parts = ["\(hits) hit\(hits == 1 ? "" : "s")", "\(misses) miss\(misses == 1 ? "" : "es")"]
+        var parts = ["\(hits) of \(hits + misses) calls up"]
         if let bps = avgReturnBps {
             let avg = bps / 100
             parts.append("avg " + (abs(avg) < 0.05 ? "0%" : String(format: "%+.1f%%", avg)))
