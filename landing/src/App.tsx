@@ -142,7 +142,7 @@ export default function App() {
         <section className="z-final" id="get">
           <div className="y-wrap z-final-in">
             <h2 className="z-h2" data-reveal>
-              Your keys. <span className="grad">Your rules.</span>
+              AI suggests. Agents act. <span className="grad">NEAR decides.</span>
             </h2>
             <div data-reveal>
               <Downloads />
