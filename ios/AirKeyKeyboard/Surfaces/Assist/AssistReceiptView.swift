@@ -40,7 +40,8 @@ struct AssistBadge: View {
 }
 
 /// The receipt: who answered, each check as passed, failed or unavailable,
-/// what is still taken on trust, and how to check it yourself.
+/// what is still taken on trust, and how to check it yourself. A checklist,
+/// one line per item.
 struct AssistReceiptCard: View {
     let receipt: AssistReceipt
     let note: String?
@@ -48,62 +49,80 @@ struct AssistReceiptCard: View {
     let close: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
                 Image(systemName: headerIcon)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(receipt.isPrivate ? p.mark : p.amber)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(header).font(.subheadline.weight(.semibold)).foregroundStyle(p.text)
+                    Text(header).font(.headline).foregroundStyle(p.text)
                     Text(receipt.isNear ? "NEAR AI · \(Self.shortModel(receipt.model))\(receipt.ms.map { " · \(Self.duration($0))" } ?? "")"
                          : "OpenAI · \(Self.shortModel(receipt.model))")
                         .font(.caption).foregroundStyle(p.soft).lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 Button(action: close) {
-                    Text("Done").font(.footnote.weight(.semibold)).foregroundStyle(p.soft)
-                        .padding(.horizontal, 10).frame(height: 26)
+                    Text("Done").font(.footnote.weight(.semibold)).foregroundStyle(p.text)
+                        .padding(.horizontal, 12).frame(height: 28)
                         .background(p.function, in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
+            .accessibilityElement(children: .combine)
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 12) {
                     if receipt.isNear {
-                        ForEach(checkRows, id: \.name) { row in check(row) }
+                        group {
+                            ForEach(Array(checkRows.enumerated()), id: \.element.name) { i, row in
+                                if i > 0 { divider }
+                                check(row)
+                            }
+                        }
                     } else {
-                        bullet("This text was answered by OpenAI. It left NEAR AI's sealed hardware, so it is not private.", tone: .bad)
+                        group {
+                            item("Answered by OpenAI. It left NEAR AI's sealed hardware, so it is not private.", icon: "exclamationmark.triangle.fill", tint: p.amber)
+                        }
                     }
-                    Text("Only the text you choose is sent.")
-                        .font(.footnote).foregroundStyle(p.text).padding(.top, 2)
+                    group {
+                        item("Only the text you chose was sent.", icon: "text.cursor", tint: p.soft)
+                        if let note, !note.isEmpty {
+                            divider
+                            item(note, icon: "info.circle", tint: p.soft)
+                        }
+                    }
                     if receipt.isNear {
-                        Text("What you still trust").font(.footnote.weight(.semibold)).foregroundStyle(p.text).padding(.top, 4)
-                        bullet("The Intel TDX and GPU verdicts come from Phala and NVIDIA; this phone doesn't check them itself.")
-                        bullet("NEAR's instances of a model share one signing key.")
-                        bullet("The connection isn't bound to the attested machine yet.")
-                        bullet("NEAR AI's data retention isn't verified by AIRKEY.")
-                        Text("How to check it yourself").font(.footnote.weight(.semibold)).foregroundStyle(p.text).padding(.top, 4)
-                        Text("GET /v1/ai/attestation on the AIRKEY server, and NEAR's own verifier at https://cloud.near.ai/verify")
+                        section("What you still trust")
+                        group {
+                            item("Phala and NVIDIA give the hardware verdicts; this phone doesn't check them itself.", icon: "building.2", tint: p.soft)
+                            divider
+                            item("NEAR's copies of a model share one signing key.", icon: "key", tint: p.soft)
+                            divider
+                            item("The connection isn't tied to the checked machine yet.", icon: "link", tint: p.soft)
+                            divider
+                            item("NEAR AI's data retention isn't verified by AIRKEY.", icon: "tray", tint: p.soft)
+                        }
+                        section("Check it yourself")
+                        Text("cloud.near.ai/verify, or /v1/ai/attestation on your AIRKEY server")
                             .font(.caption).foregroundStyle(p.soft)
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if let note, !note.isEmpty {
-                        bullet(note).padding(.top, 2)
+                            .padding(.horizontal, 4)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 4)
             }
+            .scrollEdgeEffectHidden(true, for: .all)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(p.line, lineWidth: 0.5))
+        .background(p.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(p.line, lineWidth: 0.5))
     }
 
     private var header: String {
         guard receipt.isNear else { return "OpenAI, not private" }
-        return receipt.isPrivate ? "Verified" : "Partly verified"
+        return receipt.isPrivate ? "Private and verified" : "Partly verified"
     }
 
     private var headerIcon: String {
@@ -119,38 +138,54 @@ struct AssistReceiptCard: View {
         default: .unavailable
         }
         return [
-            CheckRow(name: "Signature on this answer", state: sig),
-            CheckRow(name: "Signer matches the attested enclave", state: receipt.state("signerMatch")),
-            CheckRow(name: "Intel TDX quote (verdict from Phala's verifier)", state: receipt.state("tdxQuote")),
-            CheckRow(name: "NVIDIA GPU (verdict from NVIDIA NRAS)", state: receipt.state("nvidia")),
-            CheckRow(name: "Fresh nonce", state: receipt.state("nonce")),
-            CheckRow(name: "Compose hash", state: receipt.state("composeHash")),
+            CheckRow(name: "Answer signed", state: sig),
+            CheckRow(name: "Signer is the checked machine", state: receipt.state("signerMatch")),
+            CheckRow(name: "Intel TDX chip", state: receipt.state("tdxQuote")),
+            CheckRow(name: "NVIDIA GPU", state: receipt.state("nvidia")),
+            CheckRow(name: "Fresh check, not a replay", state: receipt.state("nonce")),
+            CheckRow(name: "Software matches", state: receipt.state("composeHash")),
         ]
+    }
+
+    private var divider: some View {
+        Rectangle().fill(p.line).frame(height: 0.5).padding(.leading, 30)
+    }
+
+    private func group<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 0) { content() }
+            .background(p.function.opacity(0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func section(_ title: String) -> some View {
+        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(p.soft)
+            .padding(.horizontal, 4).padding(.bottom, -6)
     }
 
     private func check(_ row: CheckRow) -> some View {
         let (icon, word, color): (String, String, Color) = switch row.state {
-        case .passed: ("checkmark", "passed", p.mark)
-        case .failed: ("xmark", "failed", p.amber)
-        case .unavailable: ("minus", "unavailable", p.soft)
+        case .passed: ("checkmark.circle.fill", "Passed", p.mark)
+        case .failed: ("xmark.circle.fill", "Failed", p.amber)
+        case .unavailable: ("minus.circle", "Not available", p.soft)
         }
-        return HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: icon).font(.system(size: 11, weight: .bold)).foregroundStyle(color).frame(width: 14)
-            Text(row.name).font(.footnote).foregroundStyle(p.text).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 4)
-            Text(word).font(.caption.weight(.semibold)).foregroundStyle(row.state == .failed ? p.amber : p.soft)
+        return HStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 15)).foregroundStyle(color).frame(width: 20)
+            Text(row.name).font(.footnote).foregroundStyle(p.text).lineLimit(2)
+            Spacer(minLength: 6)
+            Text(word).font(.caption.weight(.medium)).foregroundStyle(row.state == .failed ? p.amber : p.soft)
         }
+        .padding(.horizontal, 10).padding(.vertical, 8)
         .accessibilityElement(children: .combine)
     }
 
-    private enum Tone { case plain, bad }
-
-    private func bullet(_ text: String, tone: Tone = .plain) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("·").font(.footnote.weight(.bold)).foregroundStyle(p.soft).frame(width: 14)
-            Text(text).font(.caption).foregroundStyle(tone == .bad ? p.amber : p.soft)
+    private func item(_ text: String, icon: String, tint: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: icon).font(.system(size: 13)).foregroundStyle(tint).frame(width: 20)
+            Text(text).font(.footnote).foregroundStyle(p.text)
                 .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
     }
 
     /// "deepseek-ai/DeepSeek-V3.1" → "DeepSeek-V3.1".
