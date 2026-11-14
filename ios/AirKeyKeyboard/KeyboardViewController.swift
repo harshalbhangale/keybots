@@ -355,6 +355,11 @@ final class KeyboardViewController: UIInputViewController {
         } else if overrideUserInterfaceStyle == .unspecified {
             hostTraitDark = traitCollection.userInterfaceStyle == .dark
         }
+        // Dark unless the phone says light: a host that hasn't told us its
+        // appearance yet gets the dark keyboard.
+        if view.superview?.traitCollection.userInterfaceStyle ?? traitCollection.userInterfaceStyle == .unspecified {
+            hostTraitDark = true
+        }
         let traitDark = hostTraitDark
         // The sheet iOS draws behind the keys follows the host's trait. The
         // field's keyboardAppearance can be stale: Messages focused in dark
@@ -424,6 +429,7 @@ final class KeyboardViewController: UIInputViewController {
         keyboardView.rebuild()
         applyBoardPaint()
         emoji?.applyPalette()
+        money?.setDark(Glass.chromeDark)
     }
 
     /// The painted board of a colour or gradient theme.
