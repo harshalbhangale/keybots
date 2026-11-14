@@ -60,7 +60,7 @@ struct WalletView: View {
 
     private var balances: some View {
         HStack(spacing: 10) {
-            Stat(label: "NEAR", value: model.state.map { Fmt.near($0.available, unit: false) }, sub: "Available to spend")
+            BalanceCard(value: model.state.map { Fmt.near($0.available, unit: false) })
             ForEach(model.state?.holdings ?? []) { h in
                 Stat(label: h.symbol, value: Self.dollars(h), sub: "From your swaps")
             }
@@ -134,5 +134,33 @@ struct WalletView: View {
                 ReceiptGroup(receipts: Array(model.receipts.prefix(4)), open: open)
             }
         }
+    }
+}
+
+/// What Spend Limits holds, on the app icon's blue to teal: the one card that is money.
+struct BalanceCard: View {
+    let value: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Text("NEAR").font(.footnote.weight(.semibold))
+                Spacer(minLength: 0)
+                Image(systemName: "shield.lefthalf.filled").font(.footnote)
+            }
+            .foregroundStyle(.white.opacity(0.8))
+            Text(value ?? "–")
+                .font(.system(.title, design: .rounded, weight: .bold).monospacedDigit())
+                .foregroundStyle(.white)
+                .minimumScaleFactor(0.5).lineLimit(1)
+                .contentTransition(.numericText())
+            Text("Spend Limits").font(.footnote).foregroundStyle(.white.opacity(0.75)).lineLimit(1)
+        }
+        .frame(maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(AK.brand, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(value ?? "No") NEAR in Spend Limits")
     }
 }

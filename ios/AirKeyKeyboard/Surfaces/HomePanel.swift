@@ -17,6 +17,15 @@ final class HomeModel {
 
     var bots: [Bot] = []
     var recent: [Receipt] = []
+    /// Calls read today, by where they were posted.
+    var xToday = 0
+    var telegramToday = 0
+    /// The newest call in the feed, when nothing was traded today.
+    var latestCall: KolCall?
+    /// Trades that came from a call you reviewed or a trader you follow, today.
+    var tradedToday: [Receipt] = []
+    /// Everything the bots did today that moved money or was stopped.
+    var doneToday: [Receipt] = []
     var stopped = false
     var network = ""
     var available: String?
@@ -51,9 +60,10 @@ final class HomeModel {
 
     private func load() async {
         async let s = try? API().state()
-        async let r = try? API().receipts(limit: 25)
+        async let r = try? API().receipts(limit: 60)
+        async let f = try? JourneyAPI().feed()
         let asked = choice
-        let (state, receipts) = await (s, r)
+        let (state, receipts, feed) = await (s, r, f)
         // Switched network while this was on its way: it belongs to the other one.
         guard asked == choice else { return }
         if let state {
@@ -69,7 +79,19 @@ final class HomeModel {
             }
         }
         // Only what moved money or was stopped: no readings that found nothing to do.
-        if let receipts { recent = Array(receipts.filter { ["paid", "swapped", "blocked", "approval"].contains($0.outcome) }.prefix(4)) }
+        if let receipts {
+            let money = receipts.filter { ["paid", "swapped", "blocked", "approval"].contains($0.outcome) }
+            recent = Array(money.prefix(4))
+            let today = money.filter { r in r.date.map { Calendar.current.isDateInToday($0) } ?? false }
+            doneToday = today
+            tradedToday = Array(today.filter { ["reviewed-call", "follow"].contains($0.input.source) }.prefix(3))
+        }
+        if let feed, !feed.sample {
+            let fresh = feed.calls.filter { c in c.postedAt.map { Calendar.current.isDateInToday($0) } ?? false }
+            xToday = fresh.filter { !$0.telegram }.count
+            telegramToday = fresh.filter(\.telegram).count
+            latestCall = feed.calls.first
+        }
         failed = state == nil
         loaded = true
     }
@@ -90,6 +112,8 @@ struct HomeView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 14) {
                     bots(p)
+                    today(p)
+                    signals(p)
                     recent(p)
                 }
             }
@@ -177,6 +201,80 @@ struct HomeView: View {
             }
         }
         .background(p.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    /// What the bots did today, in numbers: paid, swapped, refused, waiting.
+    @ViewBuilder private func today(_ p: MoneyPalette) -> some View {
+        if !model.bots.isEmpty {
+            let count = { (o: String) in model.doneToday.filter { $0.outcome == o }.count }
+            HStack(spacing: 8) {
+                stat("\(count("paid"))", "paid", p.good, p)
+                stat("\(count("swapped"))", "swapped", p.good, p)
+                stat("\(count("blocked"))", "refused", p.bad, p)
+                stat("\(count("approval"))", "waiting", p.warn, p)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Today: \(count("paid")) paid, \(count("swapped")) swapped, \(count("blocked")) refused, \(count("approval")) waiting for you")
+        }
+    }
+
+    private func stat(_ n: String, _ label: String, _ color: Color, _ p: MoneyPalette) -> some View {
+        VStack(spacing: 1) {
+            Text(n).font(.headline.monospacedDigit()).foregroundStyle(n == "0" ? p.soft : color)
+            Text(label).font(.caption2).foregroundStyle(p.soft)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 7)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    /// Calls from X and Telegram: what came in today, what was traded, and a way to follow someone.
+    private func signals(_ p: MoneyPalette) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text("Signals").font(.caption.weight(.semibold)).foregroundStyle(p.soft)
+                Spacer(minLength: 4)
+                Text("Today: \(model.xToday) from X · \(model.telegramToday) from Telegram")
+                    .font(.caption.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
+            }
+            if model.tradedToday.isEmpty {
+                if let c = model.latestCall {
+                    HStack(spacing: 8) {
+                        Text(c.telegram ? "TG" : "X").font(.caption2.weight(.bold)).foregroundStyle(p.text)
+                            .frame(width: 22, height: 18).background(p.fill, in: Capsule())
+                        Text("\(c.telegram ? (c.name ?? c.handle) : "@" + c.handle) · \(c.sell ? "Sell" : "Buy") \(c.asset)")
+                            .font(.footnote).foregroundStyle(p.text).lineLimit(1)
+                        Spacer(minLength: 4)
+                        Text(J.ago(c.postedAt) ?? "").font(.caption).foregroundStyle(p.faint).fixedSize()
+                    }
+                }
+                Text("No call traded today. Every trade waits for your review and hold.")
+                    .font(.caption).foregroundStyle(p.soft)
+            } else {
+                ForEach(model.tradedToday) { r in
+                    HStack(spacing: 8) {
+                        Image(systemName: Self.icon(r)).font(.caption.weight(.bold)).foregroundStyle(Self.tint(r, p)).frame(width: 20)
+                        Text(Plain.line(r)).font(.footnote).foregroundStyle(p.text).lineLimit(1)
+                        Spacer(minLength: 4)
+                        Text(r.input.handle.map { "@" + $0 } ?? "").font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                    }
+                }
+            }
+            HStack(spacing: 8) {
+                pill("See calls", "chart.line.uptrend.xyaxis", p) { open("calls") }
+                pill("Follow someone", "person.badge.plus", p) { open("calls-following") }
+            }
+        }
+        .padding(12)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func pill(_ title: String, _ icon: String, _ p: MoneyPalette, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon).font(.caption.weight(.semibold)).foregroundStyle(p.text)
+                .padding(.horizontal, 10).frame(height: 28)
+                .background(p.fill, in: Capsule())
+        }
+        .buttonStyle(MoneyPress())
     }
 
     @ViewBuilder private func recent(_ p: MoneyPalette) -> some View {
