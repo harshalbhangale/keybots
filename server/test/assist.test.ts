@@ -382,3 +382,12 @@ group("POST /v1/act", () => {
     expect(paid.json().money).toBe(true);
   });
 });
+
+group("GET /v1/ai/attestation", () => {
+  it("says it hasn't been checked yet before the first check", async () => {
+    const app = appWith(fakeNet({}));
+    const r = await app.inject({ method: "GET", url: "/v1/ai/attestation" });
+    expect([200, 503]).toContain(r.statusCode);
+    if (r.statusCode === 503) expect(r.json().status).toBe("not checked");
+  });
+});
