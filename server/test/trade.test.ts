@@ -128,6 +128,21 @@ describe("GET /v1/kol/feed", () => {
     expect(r.calls[1].direction).toBe("sell");
   });
 
+  it("mixes labelled samples in beside real calls when AIRKEY_DEMO_CALLS is on", async () => {
+    process.env.AIRKEY_DEMO_CALLS = "on";
+    try {
+      const { app } = setup();
+      const r = (await app.inject("/v1/kol/feed")).json();
+      expect(r.source).toBe("x");
+      expect(r.note).toMatch(/marked Sample are examples/);
+      const ids = r.calls.map((c: { id: string }) => c.id);
+      expect(ids).toContain("x-111");
+      expect(r.calls.filter((c: { source: string }) => c.source === "sample").length).toBe(6);
+    } finally {
+      delete process.env.AIRKEY_DEMO_CALLS;
+    }
+  });
+
   it("falls back to three labelled samples when the X feed doesn't answer or has nothing", async () => {
     for (const k of [downX, fakeXFeed({})]) {
       const r = (await setup({ xfeed: k }).app.inject("/v1/kol/feed")).json();

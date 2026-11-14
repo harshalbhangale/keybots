@@ -168,7 +168,13 @@ const SAMPLES: { minutesAgo: number; text: string; asset: string; direction: "bu
   { minutesAgo: 12, text: "$SOL looks ready to run. Buying a small bag here.", asset: "SOL", direction: "buy" },
   { minutesAgo: 47, text: "Taking profits on $NEAR here, selling into this pump.", asset: "NEAR", direction: "sell" },
   { minutesAgo: 95, text: "$ETH breakout confirmed. Buying spot.", asset: "ETH", direction: "buy" },
+  { minutesAgo: 140, text: "$BTC holding the range low. Adding here, stop under the wick.", asset: "BTC", direction: "buy" },
+  { minutesAgo: 210, text: "$DOGE volume dying. Out of my position.", asset: "DOGE", direction: "sell" },
+  { minutesAgo: 300, text: "$XRP reclaiming support. Small long, spot only.", asset: "XRP", direction: "buy" },
 ];
+
+/** AIRKEY_DEMO_CALLS=on: the labelled samples sit beside the real calls, so a demo always has fresh ones. */
+const demoCalls = () => (process.env.AIRKEY_DEMO_CALLS ?? "").toLowerCase() === "on";
 
 function samples(now: number): FeedCall[] {
   return SAMPLES.map((s, i) => ({
@@ -256,14 +262,15 @@ export function tradeFlow(deps: TradeDeps) {
   async function feed(): Promise<Feed> {
     const fromX = await xCalls();
     const fromTelegram = (deps.telegram?.calls() ?? []).slice(0, FEED_MAX).map(telegramCall);
-    const calls = [...fromX, ...fromTelegram].sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt)).slice(0, FEED_MAX);
+    const extra = demoCalls() ? samples(now()) : [];
+    const calls = [...fromX, ...fromTelegram, ...extra].sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt)).slice(0, FEED_MAX);
     let out: Feed;
     if (!calls.length) {
-      out = { source: "sample", note: SAMPLE_NOTE, calls: samples(now()) };
+      out = { source: "sample", note: SAMPLE_NOTE, calls: samples(now()).slice(0, 3) };
     } else {
       const hasX = calls.some((c) => c.source === "x");
       const tgTitles = [...new Set(calls.filter((c) => c.source === "telegram").map((c) => c.author.name ?? ""))].filter(Boolean);
-      const notes = [hasX ? X_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null].filter(Boolean);
+      const notes = [hasX ? X_NOTE : null, tgTitles.length ? telegramNote(tgTitles) : null, extra.length ? "Calls marked Sample are examples, not real posts." : null].filter(Boolean);
       out = { source: hasX ? (tgTitles.length ? "mixed" : "x") : "telegram", note: notes.join(" "), calls };
     }
     lastFeed = new Map(out.calls.map((c) => [c.id, c]));
