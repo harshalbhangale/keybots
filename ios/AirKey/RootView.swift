@@ -20,7 +20,7 @@ struct RootView: View {
             Tab("Activity", systemImage: "clock.arrow.circlepath", value: AppTab.activity) {
                 NavigationStack { ActivityView(open: { receipt = $0 }) }
             }
-            Tab("Limits", systemImage: "lock.shield.fill", value: AppTab.leash) {
+            Tab("Spend Limits", systemImage: "gauge.with.dots.needle.33percent", value: AppTab.leash) {
                 NavigationStack { LeashView() }
             }
             .badge(model.state?.pending.count ?? 0)
@@ -62,9 +62,9 @@ struct CommandBar: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 KeycapMark(size: 18)
-                Text("Pay, swap, or check a message").font(.subheadline).foregroundStyle(AK.muted).lineLimit(1)
+                Text("Pay, swap, or check a message").font(.subheadline).foregroundStyle(AK.muted).lineLimit(1).minimumScaleFactor(0.85)
                 Spacer(minLength: 0)
-                Image(systemName: "arrow.up.circle.fill").font(.title3).foregroundStyle(AK.accent)
+                Image(systemName: "arrow.up.circle.fill").font(.title3).foregroundStyle(AK.accentText)
             }
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
