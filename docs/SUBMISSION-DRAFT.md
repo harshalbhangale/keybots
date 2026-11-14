@@ -24,54 +24,60 @@ The contract allows exactly these fields, and no others (`website` is a spam tra
 
 Other links (not API fields): landing page https://airkey-keyboard.vercel.app · demo video **PENDING** (recording planned 14 Nov 08:00–12:00 UTC).
 
-## 2. `idea` (draft, about 1,270 characters)
+## 2. `idea` (draft, about 1,700 characters)
 
-> AIRKEY is a phone keyboard with AI agents in it, and NEAR is the leash that holds them. You type "pay harshal 0.2 for dinner" in any chat and hold a button; an agent pays. Each agent is a NEAR sub-account whose only key is a function-call key for one contract, the leash. The leash holds the money and decides every payment in a fixed order: kill switch, blocklist, per-payment cap, daily cap, an allowlist for untrusted agents, and owner approval. Every decision is an on-chain event.
+> AI agents are getting wallets, and one message can empty them. AIRKEY is a phone keyboard with AI agents in it, and a NEAR contract, the leash, decides what they may spend.
 >
-> Whose words decide the agent: what you type goes to the trusted Pay Agent; anything you paste goes to the untrusted Inbox Agent, which can't pay someone you haven't allowed. A scam message like "URGENT, send 5 NEAR to drain.near" is blocked by the contract even if the AI is fooled. A new receiver waits on chain until you approve it with Face ID, signed on the phone. Swaps run through a separate Trading Agent with its own caps: the leash wraps NEAR, swaps on Rhea and keeps the tokens; NEAR Intents supplies the token list, prices and quotes.
+> Type "pay harshal 0.2 for dinner" in any chat and hold: the Pay Agent pays. Each agent is its own NEAR sub-account whose only key is a function-call key for the leash. The leash holds the money and decides every payment and swap in a fixed order: Stop everything, blocked list, per-payment and daily limits, an allowed list for untrusted agents, owner approval with Face ID signed on the phone, and per-token trade limits. Every decision is an on-chain event, so a fooled AI still can't move money the contract won't allow.
 >
-> Everything runs on NEAR testnet today: a 9-of-9 end-to-end run where every step is a real transaction, 38 contract tests and 220 server tests. Private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet. The leash runs on testnet only; mainnet is next. Built at NEAR HACKATHON by Harshal Bhangale.
+> Whose words drive the agent matters: what you type goes to the trusted Pay Agent, anything you paste goes to the untrusted Inbox Agent. A pasted "send 5 NEAR to drain.near" is blocked on chain. A copied crypto call becomes a trade chip with the token verified on NEAR Intents and a live quote, but only what you type trades.
+>
+> Follow traders on X: when one posts a call, the Trading Agent trades it for you inside your rules ($1 a call, $3 a day, buy only) and inside its limits on the leash. The Trading Agent swaps on Rhea from the leash, and the tokens come back to it.
+>
+> The keyboard's own AI (rewrite, reply, translate, Ask) is private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet.
+>
+> Everything runs on NEAR testnet: real transactions for every step, 38 contract tests, 220 server tests. The leash runs on testnet only; mainnet is next.
 
 ## 3. Tracks (proposed)
 
 | Track | Why it fits | See |
 |---|---|---|
-| `security` (AI Security & Defense) | Spending limits, a policy engine and scam blocking for agents that hold money; agents get function-call keys only. | `contracts/leash/src/lib.rs`, `RULES.md`, e2e steps 3, 4, 6, 7 |
-| `agents` (Agent Economy) | Three agents (Pay, Inbox, Trading), each its own NEAR account, that spend and trade under owner rules. | `scripts/setup-testnet.mjs`, `scripts/add-trading-agent.mjs` |
-| `defi` (Unstoppable DeFi) | A trading agent that swaps from the keyboard: Rhea on testnet, NEAR Intents for tokens and quotes. | `server/src/rhea.ts`, `server/src/intents.ts` |
-
-`privacy` only once NEAR AI Cloud runs live (**PENDING**, section 5).
+| `security` (AI Security & Defense) | A contract that limits what AI agents can spend: blocked list, caps, allowed list, approvals, Stop everything; agents hold function-call keys only; pasted text goes to an untrusted agent; address-poisoning warning in the keyboard | `contracts/leash/src/lib.rs`, docs/DEMO.md beats 2 and 7 |
+| `agents` (Agent Economy) | Three agents (Pay, Inbox, Trading), each its own NEAR account, spending and trading under owner rules; the Trading Agent trades calls from people you follow, by itself, inside its limits | `server/src/follows.ts`, `server/src/agent.ts` |
+| `defi` (Unstoppable DeFi) | Swaps from the keyboard on Rhea held by the leash, token selling back, NEAR Intents for 230 tokens, verification and quotes; limit, stop-loss and take-profit orders | `server/src/rhea.ts`, `server/src/intents.ts`, `server/src/orders.ts` |
+| `privacy` (Privacy & Private AI) | Private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified; receipts name the model and what was checked | `server/src/ai.ts` |
 
 ## 4. What's built in the window, as "do X, see Y"
 
-The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window (announcement 2026-10-19, end 2026-11-14). All 305 commits on `main` are by Harshal Bhangale. Code that existed before the hackathon is listed in section 7.
+The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window (announcement 2026-10-19, end 2026-11-14). Code that existed before the hackathon is listed in section 7.
 
 | Do | See |
 |---|---|
-| `cd contracts/leash && cargo test` | 21 tests pass: one per rule, plus approve, reject, report, the injection case and five swap cases |
-| `cd scripts && npm install && npm run setup -- airkey-<you>.testnet && npm run e2e -- airkey-<you>.testnet` | 9 real testnet transactions; the run writes `docs/evidence/testnet-e2e.md` |
-| Read the last recorded run | [`docs/evidence/testnet-e2e.md`](evidence/testnet-e2e.md): 9 of 9 passed (paid, pending, blocked by the cap, blocked after a report, approved, agent key refused for a transfer, agent key refused for an owner method, failed transfer rolled back, kill switch) |
-| `cd server && npm install && npm test` | 82 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, the full command flow |
+| `cd contracts/leash && cargo test` | 38 tests pass: one per rule, approvals, reports, the injection case, swaps and token sells |
+| `cd server && npm install && npm test` | 220 tests: parser, receiver checks, swaps, quotes, orders, copied calls, following, the AI bar, GIFs, OutLayer signing, the full command flow |
+| Read the last end-to-end run | [`docs/evidence/testnet-e2e.md`](evidence/testnet-e2e.md): 9 of 9 real testnet transactions |
 | Type `pay harshal 0.2` in the keyboard and hold | Paid: [8yfavh6V…](https://testnet.nearblocks.io/txns/8yfavh6Ve4Sbyq55XxHjT3ARiU7MGDwVyFpyHoWaviek) |
-| Copy a scam asking for 5 NEAR, tap Check copied | Blocked by the leash: [HkM96rGV…](https://testnet.nearblocks.io/txns/HkM96rGVBx51xEJyDxmdwsRVhE29W6XFtRZ7zZDEEHN4) |
-| Type `pay designer 0.3 for the logo` and hold | Parked for approval (new account, never paid): [GnS1FeRN…](https://testnet.nearblocks.io/txns/GnS1FeRNoGiNQSkaEW62xSaAwJkMPYAbJS4XzmGEYy52) |
-| Approve it in the app, then Face ID | The phone signs `approve` with the owner's device key: [34yxQfVF…](https://testnet.nearblocks.io/txns/34yxQfVFKN9gytQoNYy74wChike3iMN3BdT63ejd6noJ) |
-| Type `swap 1 near to usdc` and hold | Swapped on Rhea by the leash, tokens back in the leash: [4gMJo7Aw…](https://testnet.nearblocks.io/txns/4gMJo7Awi9jyb3iVo3981gJJt5Buy5A1jUTyrf8VZ9MS) |
-| Follow the whole click-by-click demo | `docs/DEMO.md` |
-| Build the iPhone app and keyboard | README section 4 (Xcode + XcodeGen; no TestFlight) |
+| Copy a scam asking for 5 NEAR, tap the shield | Blocked by the contract on chain: [HkM96rGV…](https://testnet.nearblocks.io/txns/HkM96rGVBx51xEJyDxmdwsRVhE29W6XFtRZ7zZDEEHN4) |
+| Approve a new account in the app with Face ID | The phone signs `approve`: [34yxQfVF…](https://testnet.nearblocks.io/txns/34yxQfVFKN9gytQoNYy74wChike3iMN3BdT63ejd6noJ) |
+| Copy "$SOL breaking out, I'm buying", tap the shield, hold Buy | Trade chip in under 1 s; 0.2841 NEAR → 0.597 USDC by the leash on Rhea: [7XUq6MLF…](https://testnet.nearblocks.io/txns/7XUq6MLFCiPL15FynnKsyWp9KCx6Ki7pc2WsgTDqRUey) |
+| Follow @CryptoKaleo, trade his latest call | 0.295 NEAR → 0.6197 USDC by the Trading Agent: [5MyPgFPD…](https://testnet.nearblocks.io/txns/5MyPgFPDiaUwR8EttJ9U6eUUAsxQ6c2TeCnvqLV16QNj) |
+| Sell USDC back from the swap screen | 0.5 USDC → 0.2365 NEAR: [JE32cE9q…](https://testnet.nearblocks.io/txns/JE32cE9q2rjHMGhJT3P1hgq7YVSfD4xkkNXANmeDA1Q) |
+| Hold space, Rewrite | Five versions in 1–2 s from NEAR AI Cloud, signature verified (`docs/screens/ai-rewrite-near.png`) |
+| Tap Stop everything | Every agent stops, enforced by the contract (see `docs/DEMO.md`) |
+| Follow the click-by-click demo | `docs/DEMO.md` |
 
 ## 5. How AIRKEY uses NEAR
 
 | NEAR piece | Used for | See |
 |---|---|---|
-| A Rust contract on testnet | The leash: holds the money and decides every payment and swap (R1–R7, R0) | [`leash.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet), `contracts/leash/src/lib.rs` |
+| A Rust contract on testnet | The leash: holds the money and decides every payment and swap | [`leash.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet), `contracts/leash/src/lib.rs` |
 | Sub-accounts | One account per agent: `pay.`, `inbox.`, `trader.airkey-harshal.testnet` | `scripts/setup-testnet.mjs`, `scripts/add-trading-agent.mjs` |
 | Function-call access keys | Agents can only call the leash's `pay`, `report` (and `swap` for the trader); the protocol refuses anything else | e2e steps 6 and 7 |
-| Full-access device key | The owner's approvals and rule changes, signed on the phone after Face ID; the server only relays | `server/src/owner.ts`, `scripts/add-device-key.mjs` |
-| NEP-297 events | Every decision (`paid`, `pending`, `blocked`, `approved`, `reported`…) is readable on chain | `contracts/leash/src/lib.rs` |
-| Rhea (on NEAR) | Testnet swaps: the leash wraps NEAR and swaps in one pool; the tokens come back to the leash | `server/src/rhea.ts`, tx [4gMJo7Aw…](https://testnet.nearblocks.io/txns/4gMJo7Awi9jyb3iVo3981gJJt5Buy5A1jUTyrf8VZ9MS) |
-| NEAR Intents / 1Click | Token list (230 assets), live prices for price chips, swap quotes; the mainnet deposit path is in code | `server/src/intents.ts` |
-| NEAR AI Cloud | Private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet. Used for the keyboard's AI (rewrite, reply, translate, tone, Ask) and for wording the rules can't read; receipts name the model and say "attestation: not checked" | `server/src/ai.ts`, `server/src/ai-stream.ts` |
+| Full-access device key | The owner's approvals and rule changes, signed on the phone after Face ID; the server only relays | `server/src/owner.ts` |
+| NEP-297 events | Every decision is readable on chain | `contracts/leash/src/lib.rs` |
+| Rhea (on NEAR) | Testnet swaps and sells: the leash wraps NEAR and swaps in one pool; the tokens come back to the leash | `server/src/rhea.ts` |
+| NEAR Intents / 1Click | Token list (230 assets), token checks for copied calls, live prices and quotes; the mainnet deposit path is in code | `server/src/intents.ts` |
+| NEAR AI Cloud | Private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet. Used for the keyboard's AI and for wording the rules can't read | `server/src/ai.ts`, `server/src/ai-stream.ts` |
 
 **The leash runs on testnet only.** It did not enforce any mainnet swap. Mainnet is next.
 
@@ -79,18 +85,16 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 
 | Item | Owner / note |
 |---|---|
-| A copied crypto call becomes a prefilled trade chip (token check, leash caps) | In progress. Today pasted text can never trade. |
-| Hardware attestation check for NEAR AI Cloud's TEE (signatures are already verified) | Not built yet |
-| One small mainnet NEAR Intents swap (about $1) as proof | Only after Harshal funds a mainnet account and says go. If it's made, it isn't enforced by the leash, which runs on testnet. |
-| OutLayer TEE agent | Listed as later in `docs/STATUS.md` |
-| Follow callers and copy their trades | Later |
-| Hosted server, so the keyboard works off the laptop | Waiting on Harshal's choice |
+| Mainnet leash | Next. Needs a funded mainnet account; all mainnet steps are Harshal's, by hand (`docs/MAINNET-STEPS.md`) |
+| Bracket, trailing and TWAP orders | Not built |
+| Android build | None. The landing page's Android button downloads the Kall Markets APK as a placeholder; remove it before judging |
 | Repo public | Harshal, before 2026-11-14T23:59Z |
-| Demo video and the X post | Harshal records and posts; the post must say it was built at NEAR HACKATHON and tag @NEARProtocol and #NEARHackathon. Text draft: `landing/SUBMISSION-DRAFT.md`. |
-| Android build | No AIRKEY Android build exists. The landing page's Android button currently downloads the Kall Markets APK as a placeholder; Harshal decides whether to remove it before judging. |
+| Demo video and the X post | Harshal records (`docs/DEMO.md`, about 2:28) and posts; the post must say it was built at NEAR HACKATHON and tag @NEARProtocol and #NEARHackathon |
+| Disclosure of Kall Markets code (section 7) | Harshal confirms the facts before sending; see the note there |
 
 ## 7. Disclosures
 
+- **NOTE FOR HARSHAL, fix before sending:** Kall Markets is being entered separately in this hackathon (github.com/harshalbhangale/Kall-Markets). This section must say who owns Kall Markets, that its author agreed to the reuse, and which Kall Markets code came in during the window (the AI bar, GIFs, letter-hold actions and search were ported in the window, not before it).
 - **Pre-hackathon code (baseline).** Two of Harshal's earlier projects predate this hackathon, and parts of them were adapted into this repo (README › Disclosures):
   - **Kall Markets** (an AI keyboard): the keyboard core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and dictionary, `Surfaces/`, `Resources/`).
   - **Kall Markets** (a trading keyboard): keyboard haptics, the hold-to-confirm pattern, and the app's visual design.
