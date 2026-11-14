@@ -137,6 +137,7 @@
 		B3CF34DD5591AFC0E98EBC18 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602E65F915BF5CB7CA8F9B37 /* Models.swift */; };
 		B499AACC5C567A4A70C7EB8C /* SpaceGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECD5E091EE2449E9439D0CB4 /* SpaceGesture.swift */; };
 		B578EB8217E1CB2CFBF710E7 /* MenuShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6BDF9779DA64B9A1109AF6 /* MenuShell.swift */; };
+		B6CF68EA11DCFF319FAC4B30 /* FollowingSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8570CD3FAA32EA8F37A0A539 /* FollowingSection.swift */; };
 		B9C7BFE0BFC77E8B7B9E290B /* marble.png in Resources */ = {isa = PBXBuildFile; fileRef = 6F050F6DDBA07718B7DC1920 /* marble.png */; };
 		BB50E01BA953AFF7EB3BE5D2 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B266FD6C151D3FF2DC9AEBF /* Haptics.swift */; };
 		BCE809DD730ABB417CEC4394 /* knurl.png in Resources */ = {isa = PBXBuildFile; fileRef = 14D78E32782508FD6396E683 /* knurl.png */; };
@@ -281,6 +282,7 @@
 		7FED51547364C203C31456EA /* ShipporiMincho-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ShipporiMincho-OFL.txt"; sourceTree = "<group>"; };
 		8077B51153AD8CCA02CB55A8 /* AccentPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccentPopup.swift; sourceTree = "<group>"; };
 		82D7D2857EFF168C3DFB8350 /* JetBrainsMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Regular.ttf"; sourceTree = "<group>"; };
+		8570CD3FAA32EA8F37A0A539 /* FollowingSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowingSection.swift; sourceTree = "<group>"; };
 		86406CA2934A2DBE3D63F196 /* TypingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingEngine.swift; sourceTree = "<group>"; };
 		8703A48BC2C8CEDF93C4FD99 /* IMFellEnglish-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IMFellEnglish-OFL.txt"; sourceTree = "<group>"; };
 		87344F12402B9DBD828ABEC0 /* FollowingSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowingSurface.swift; sourceTree = "<group>"; };
@@ -434,6 +436,7 @@
 			children = (
 				235D82802F01F7286217056B /* AgentsView.swift */,
 				E1ED72AD170088D3999341D5 /* CommandSheet.swift */,
+				8570CD3FAA32EA8F37A0A539 /* FollowingSection.swift */,
 				1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */,
 				0C83B914356CC09E45DEEDA8 /* KeysView.swift */,
 				FCC5173F4853BB06FDF38E4C /* LeashView.swift */,
@@ -935,6 +938,7 @@
 				86522BDC05010DA5622CD4D3 /* Components.swift in Sources */,
 				D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */,
 				E7997DF2D9ADC66F8C076403 /* Following.swift in Sources */,
+				B6CF68EA11DCFF319FAC4B30 /* FollowingSection.swift in Sources */,
 				BD60A00EB851372B06F1E92C /* Format.swift in Sources */,
 				B306D3258734682B66A65CE5 /* HoldToConfirm.swift in Sources */,
 				AE7E16FEA2916C23B528B377 /* Instant.swift in Sources */,

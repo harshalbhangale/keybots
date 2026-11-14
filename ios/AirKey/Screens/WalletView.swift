@@ -33,6 +33,7 @@ struct WalletView: View {
             }
             SwapCard()
             if !model.watching.isEmpty { watching }
+            FollowingSection()
             recent
         }
         .toolbarVisibility(.hidden, for: .navigationBar)
