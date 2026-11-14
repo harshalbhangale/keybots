@@ -227,3 +227,15 @@ function pickQuote(q: Omit<SwapQuote, "dry">) {
     timeEstimate: q.timeEstimate,
   };
 }
+
+/**
+ * Where a NEAR Intents buy lands. The 1Click quote names the owner as the
+ * recipient: a NEAR token goes straight to the owner's NEAR account; a token
+ * from another chain (SOL, BTC) stays in the owner's NEAR Intents balance,
+ * which the owner sees and withdraws at app.near-intents.org.
+ */
+export function intentsLanding(owner: string, blockchain: string | undefined): string {
+  return blockchain === "near"
+    ? `It lands in ${owner}, your NEAR account.`
+    : `It lands in ${owner}'s NEAR Intents balance${blockchain ? ` (${blockchain} tokens stay there until you withdraw them at app.near-intents.org)` : ""}.`;
+}

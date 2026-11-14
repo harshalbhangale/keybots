@@ -44,6 +44,10 @@ describe("GET /leash", () => {
     const { app } = setup();
     const page = await app.inject({ method: "GET", url: "/leash" });
     expect(page.statusCode).toBe(200);
+    // /limits is the new address for the same page.
+    const limits = await app.inject({ method: "GET", url: "/limits" });
+    expect(limits.statusCode).toBe(200);
+    expect(limits.body).toContain("<title>AIRKEY Spend Limits</title>");
     expect(page.headers["content-type"]).toMatch(/text\/html/);
     expect((await app.inject({ method: "GET", url: "/leash?x=1" })).statusCode).toBe(200);
     expect((await app.inject({ method: "GET", url: "/v1/state" })).statusCode).toBe(401);
