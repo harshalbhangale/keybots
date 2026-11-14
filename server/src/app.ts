@@ -6,7 +6,7 @@ import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps 
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
 import { GifsUnavailable, gifClient, type GifClient } from "./gifs.js";
 import { followJson, followPoller, memoryFollows, parseFollow, recordOf, type FollowPoller, type FollowStore, type KolRecord } from "./follows.js";
-import { kallClient, type KallClient } from "./kall.js";
+import { xFeedClient, type XFeedClient } from "./xfeed.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
@@ -28,9 +28,9 @@ export type Deps = CommandDeps & {
   vault?: VaultStore;
   /** The KOLs the owner follows, and what their calls led to. */
   follows?: FollowStore;
-  /** Kall Markets' API, where their calls come from. */
-  kall?: KallClient;
-  /** Telegram calls (telegram.ts): a bot in a group, read-only. Absent or without a token, the feed is Kall's alone. */
+  /** Keybots' API, where their calls come from. */
+  xfeed?: XFeedClient;
+  /** Telegram calls (telegram.ts): a bot in a group, read-only. Absent or without a token, the feed is the X feed's alone. */
   telegram?: TelegramSource;
   /** The same poller index.ts runs every minute, so "check now" and the timer never trade one call twice. */
   followPoller?: FollowPoller;
@@ -49,7 +49,7 @@ export type Deps = CommandDeps & {
 export function followsFor(deps: Deps): FollowPoller {
   return followPoller({
     follows: deps.follows ?? memoryFollows(),
-    kall: deps.kall ?? kallClient(deps.cfg.kallApi),
+    xfeed: deps.xfeed ?? xFeedClient(deps.cfg.xFeedApi),
     autoTrade: deps.cfg.autoTrade,
     route: (text, call, usd) => routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea, usd }),
     run: (command, from) => runCommand(deps, command, "follow", from),
@@ -396,17 +396,17 @@ export function buildApp(deps: Deps) {
     }
   });
 
-  // --- Following KOLs (follows.ts, kall.ts) ---
+  // --- Following KOLs (follows.ts, xfeed.ts) ---
   const follows = deps.follows ?? memoryFollows();
-  const kall = deps.kall ?? kallClient(deps.cfg.kallApi);
-  const poller = deps.followPoller ?? followsFor({ ...deps, follows, kall });
-  /** A caller's record from Kall, or null when Kall can't say right now (a slow answer doesn't hold the list up). */
+  const xfeed = deps.xfeed ?? xFeedClient(deps.cfg.xFeedApi);
+  const poller = deps.followPoller ?? followsFor({ ...deps, follows, xfeed });
+  /** A caller's record from the X feed, or null when the X feed can't say right now (a slow answer doesn't hold the list up). */
   const recordFor = (handle: string): Promise<KolRecord | null> =>
     Promise.race([
-      kall.caller(handle).then(recordOf).catch(() => null),
+      xfeed.caller(handle).then(recordOf).catch(() => null),
       new Promise<null>((r) => setTimeout(() => r(null), 1500)),
     ]);
-  const kallDown = (e: unknown) => `Kall didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}`;
+  const xDown = (e: unknown) => `The X feed didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}`;
 
   /** Who the owner follows, with their rules and record, and the newest 50 trades their calls led to. */
   app.get("/v1/follows", async () => {
@@ -428,10 +428,10 @@ export function buildApp(deps: Deps) {
     return { ok: true };
   });
 
-  /** Kall's tracked callers and their records, to suggest who to follow. */
+  /** the X feed's tracked callers and their records, to suggest who to follow. */
   app.get("/v1/kols", async (_req, reply) => {
     try {
-      const feed = await kall.feed();
+      const feed = await xfeed.feed();
       return {
         callers: feed.callers.map((c) => ({
           handle: c.handle,
@@ -439,12 +439,12 @@ export function buildApp(deps: Deps) {
           hits: c.hits,
           misses: Math.max(0, c.settled - c.hits),
           open: c.open,
-          // Kall gives the median return; it stands in for the average here.
+          // the X feed gives the median return; it stands in for the average here.
           avgReturnBps: c.medianBps,
         })),
       };
     } catch (e) {
-      return reply.code(502).send({ error: kallDown(e) });
+      return reply.code(502).send({ error: xDown(e) });
     }
   });
 
@@ -458,18 +458,18 @@ export function buildApp(deps: Deps) {
     try {
       return { trades: await poller.poll(req.params.handle, { latest: req.body?.latest === true }) };
     } catch (e) {
-      return reply.code(502).send({ error: kallDown(e) });
+      return reply.code(502).send({ error: xDown(e) });
     }
   });
 
   // --- A KOL's call: feed -> review -> confirm -> the leash decides -> receipt (trade.ts) ---
-  const trade = tradeFlow({ ...deps, kall, telegram: deps.telegram, now: deps.now });
+  const trade = tradeFlow({ ...deps, xfeed, telegram: deps.telegram, now: deps.now });
 
-  /** Kall's and Telegram's newest spot calls together (up to 10), or three labelled samples when there are none. */
+  /** the X feed's and Telegram's newest spot calls together (up to 10), or three labelled samples when there are none. */
   app.get("/v1/kol/feed", async () => trade.feed());
 
-  /** What Keybots is connected to (Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, Kall, Telegram), each checked live. */
-  app.get("/v1/connected", async () => connected(deps, kall));
+  /** What Keybots is connected to (Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, the X feed, Telegram), each checked live. */
+  app.get("/v1/connected", async () => connected(deps, xfeed));
 
   /** Is the Telegram bot set up and seeing messages? The bot's name and which groups it has read; never the token or message text. */
   app.get("/v1/telegram/status", async () =>
