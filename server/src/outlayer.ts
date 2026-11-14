@@ -130,7 +130,7 @@ export function outlayerChain(cfg: Config, base: Chain, opts: Partial<OutLayerOp
     if (!key) throw new Error(`No OutLayer key for ${agent}`);
     const txHash = await send(key, methodName, args, gas);
     const res = await outcome(txHash, agent);
-    if (res.status.Failure) throw new Error(`Leash call failed: ${JSON.stringify(res.status.Failure)}`);
+    if (res.status.Failure) throw new Error(`Spend Limits call failed: ${JSON.stringify(res.status.Failure)}`);
     const v = res.status.SuccessValue;
     const decision = JSON.parse(Buffer.from(v ?? "", "base64").toString() || "null") as Decision;
     const logs = [res.transaction_outcome, ...res.receipts_outcome].flatMap((x) => x.outcome.logs);

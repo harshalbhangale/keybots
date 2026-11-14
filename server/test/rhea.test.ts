@@ -1,14 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { RHEA, amountOut, fromUnits, minOut, rheaClient, sellMsg, sellRoute, swapMsg, toUnits } from "../src/rhea.js";
+import { RHEA, amountOut, fromUnits, minOut, pickPool, rheaClient, sellMsg, sellRoute, swapMsg, toUnits } from "../src/rhea.js";
 
 const net = RHEA.testnet!;
 
 describe("rhea", () => {
-  it("knows the testnet pools and nothing on mainnet", () => {
+  it("knows the testnet pools and the deepest mainnet ones", () => {
     const c = rheaClient({ network: "testnet", rpc: "x" });
     expect(c.route("usdt")?.pool).toBe(1084);
     expect(c.route("sol")).toBeUndefined();
-    expect(rheaClient({ network: "mainnet", rpc: "x" }).route("usdt")).toBeUndefined();
+    const m = rheaClient({ network: "mainnet", rpc: "x" });
+    expect(m.network).toMatchObject({ exchange: "v2.ref-finance.near", wrap: "wrap.near" });
+    expect(m.route("usdc")).toEqual({ symbol: "USDC", token: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1", pool: 4512, decimals: 6 });
+    expect(m.route("usdt")).toEqual({ symbol: "USDT", token: "usdt.tether-token.near", pool: 6063, decimals: 6 });
+    expect(m.route("sol")).toBeUndefined();
+  });
+
+  it("builds the mainnet swap through wrap.near, with 6-decimal stablecoins", () => {
+    const m = RHEA.mainnet!;
+    const msg = JSON.parse(swapMsg(m, m.routes.USDC, "100000000000000000000000", minOut("330000")));
+    expect(msg.actions[0]).toEqual({ pool_id: 4512, token_in: "wrap.near", token_out: m.routes.USDC.token, amount_in: "100000000000000000000000", min_amount_out: "326700" });
+    expect(fromUnits("329921", 6)).toBe("0.3299");
+    expect(sellRoute(m, "usdt", "usdc")).toMatchObject({ pool: 6416, unwrap: false });
+    expect(sellRoute(m, "usdc", "near")).toMatchObject({ pool: 4512, unwrap: true, to: { token: "wrap.near" } });
+  });
+
+  it("picks the deepest pool for a pair from a get_pools page", () => {
+    const W = "wrap.near", U = "usdt.tether-token.near";
+    const pools = [
+      { token_account_ids: [W, U], amounts: ["548000000000000000000000000", "1820000000"] },
+      { token_account_ids: [U, "x.near"], amounts: ["999999999999", "1"] },
+      { token_account_ids: [U, W, "dai.near"], amounts: ["1", "999999000000000000000000000000", "1"] },
+      { token_account_ids: [U, W], amounts: ["162895000000", "48988000000000000000000000000"] },
+    ];
+    expect(pickPool(pools, W, U, 6060)).toEqual({ id: 6063, depth: 48988000000000000000000000000n });
+    expect(pickPool(pools, W, "nope.near")).toBeUndefined();
   });
 
   it("builds a one-pool swap with a floor", () => {
@@ -33,7 +58,7 @@ describe("rhea", () => {
     expect(sellRoute(net, "near", "usdc")).toBeUndefined();
     expect(sellRoute(net, "usdc", "sol")).toBeUndefined();
     expect(sellRoute(net, "usdc", "usdc")).toBeUndefined();
-    expect(rheaClient({ network: "mainnet", rpc: "x" }).sellRoute("usdc", "near")).toBeUndefined();
+    expect(rheaClient({ network: "localnet", rpc: "x" }).sellRoute("usdc", "near")).toBeUndefined();
     // The routes Builder 1 reads keep their shape.
     expect(net.routes.USDC).toEqual({ symbol: "USDC", token: "usdc.itachicara.testnet", pool: 1103, decimals: 24 });
   });

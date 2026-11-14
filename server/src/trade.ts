@@ -231,7 +231,7 @@ export function tradeFlow(deps: TradeDeps) {
     if (route.status === "unavailable") throw new TradeError(422, route.reason);
     const asset = call.asset!;
     const to = route.side === "sell" || route.standIn ? "USDC" : asset;
-    if (to === "NEAR") throw new TradeError(422, "The post says buy NEAR. A reviewed trade spends NEAR from the leash, so there's nothing to buy NEAR with here.");
+    if (to === "NEAR") throw new TradeError(422, "The post says buy NEAR. A reviewed trade spends NEAR from Spend Limits, so there's nothing to buy NEAR with here.");
     const pool = rhea.route(to);
     if (!pool) throw new TradeError(422, `AIRKEY can't swap NEAR into ${to} here.`);
 
@@ -263,7 +263,7 @@ export function tradeFlow(deps: TradeDeps) {
 
     const agentAccount = cfg.agents.trade;
     const a = state.agents.find((x) => x.account === agentAccount)?.agent;
-    if (!a) throw new TradeError(503, "The leash has no Trading Agent yet, so there's nothing to trade with.");
+    if (!a) throw new TradeError(503, "Spend Limits has no Trading Agent yet, so there's nothing to trade with.");
     const perTrade = BigInt(a.per_payment_cap);
     const daily = BigInt(a.daily_cap);
     // The contract starts each UTC day at zero.
@@ -300,7 +300,7 @@ export function tradeFlow(deps: TradeDeps) {
         pay: { amount: amountNear, symbol: "NEAR" },
         receive: { amount: fromUnits(expected, pool.decimals), symbol: pool.symbol, min: fromUnits(minUnits, pool.decimals) },
         slippagePct: 1,
-        fundsSit: `In the leash, ${cfg.leash}. The tokens come back to it.`,
+        fundsSit: `In Spend Limits, ${cfg.leash}. The tokens come back to it.`,
         standIn,
       },
       mainnetQuote,

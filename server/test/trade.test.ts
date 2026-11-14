@@ -152,7 +152,7 @@ describe("POST /v1/trade/review", () => {
       // 0.5 NEAR at 2 USDC a NEAR; the leash takes no less than 1% under it.
       receive: { amount: "1", symbol: "USDC", min: "0.99" },
       slippagePct: 1,
-      fundsSit: "In the leash, leash.x.testnet. The tokens come back to it.",
+      fundsSit: "In Spend Limits, leash.x.testnet. The tokens come back to it.",
       standIn: "The post is about SOL. Testnet has no SOL, so this swaps NEAR to USDC instead.",
     });
     expect(r.mainnetQuote).toEqual({ label: "NEAR Intents quote (mainnet, dry: no funds move)", payAmount: "0.5", receiveAmount: "0.0125", symbol: "SOL" });

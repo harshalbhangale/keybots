@@ -76,8 +76,8 @@ const RULES: [string, string][] = [
   ["R5", "A daily limit for each agent."],
   ["R6", "An agent reading someone else's message can only pay allowed accounts; anything else waits for the owner."],
   ["R7", "Anything new or odd waits for the owner's Face ID."],
-  ["R0", "Nothing leaves that the leash doesn't hold."],
-  ["R8", "Tokens the leash holds can only be sold within the owner's per-token rule."],
+  ["R0", "Nothing leaves that Spend Limits doesn't hold."],
+  ["R8", "Tokens Spend Limits holds can only be sold within the owner's per-token rule."],
 ];
 
 export function renderLeash(opts: {
@@ -124,7 +124,7 @@ export function renderLeash(opts: {
       .join("");
     chain = `
 <section class="status">
-  <div><div class="k">Leash</div><div class="v">${acct(state.leash)}</div></div>
+  <div><div class="k">Spend Limits</div><div class="v">${acct(state.leash)}</div></div>
   <div><div class="k">NEAR held</div><div class="v big num">${near(state.available, 2, 2)}</div></div>
   <div><div class="k">Stop everything</div><div class="v big ${state.paused ? "on" : "off"}">${state.paused ? "On: every agent is stopped" : "Off"}</div></div>
   <div><div class="k">Owner</div><div class="v">${acct(state.owner)}</div></div>
@@ -135,7 +135,7 @@ export function renderLeash(opts: {
   <thead><tr><th>Agent</th><th>Role</th><th class="num">Per payment</th><th class="num">Spent today</th></tr></thead>
   <tbody>${agents}</tbody>
 </table>
-<p class="muted small">In NEAR. Each agent holds only a key that can call the leash; the owner's key never leaves the phone.</p>
+<p class="muted small">In NEAR. Each agent holds only a key that can call Spend Limits; the owner's key never leaves the phone.</p>
 
 <div class="cols">
   <section><h2>Blocked</h2><ul>${blocked}</ul></section>
@@ -165,8 +165,8 @@ export function renderLeash(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AIRKEY leash</title>
-<meta name="description" content="The AIRKEY leash on NEAR ${esc(cfg.network)}, live from chain.">
+<title>AIRKEY Spend Limits</title>
+<meta name="description" content="AIRKEY Spend Limits on NEAR ${esc(cfg.network)}, live from chain.">
 <style>
   :root { --bg:#0B0B0C; --fg:#EDEDE8; --muted:#8A8A85; --line:#1F1F21; --card:#121214; --lime:#C6F45B; --red:#FF6B5E; --amber:#F2C14E; }
   * { box-sizing: border-box; }
@@ -217,15 +217,15 @@ export function renderLeash(opts: {
 </head>
 <body>
 <main>
-<h1>AIRKEY: AI agents in your keyboard. <em>NEAR is the leash.</em></h1>
+<h1>AIRKEY: AI agents in your keyboard. <em>NEAR holds the limits.</em></h1>
 <p class="lede">Agents that move money from your keyboard can only do it through a NEAR contract that holds the money and checks every payment against the owner's rules: limits, a blocked list, an allowed list, and the owner's approval for anything new.</p>
-<p class="small muted">Live from NEAR ${esc(cfg.network)} · <a href="${REPO}">Code on GitHub</a></p>
+<p class="small muted">Live from NEAR ${esc(cfg.network)} · <a href="${esc(cfg.explorer)}/address/${esc(cfg.leash)}">${esc(cfg.leash)} on nearblocks</a> · <a href="${REPO}">Code on GitHub</a></p>
 ${chain}
 
 <h2>Recent decisions</h2>
 <ul>${rows}</ul>
 
-<h2>How the leash decides</h2>
+<h2>How Spend Limits decides</h2>
 <ul class="rules">${rules}</ul>
 
 <footer>Read from chain at ${esc(time(opts.readAt))}, at most every 15 seconds. This page only reads; it can't move anything.</footer>

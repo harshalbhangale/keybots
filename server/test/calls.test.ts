@@ -163,7 +163,7 @@ describe("the calls book", () => {
 describe("GET /v1/calls", () => {
   const cfg = loadConfig({ AIRKEY_OWNER: "x.testnet" });
   const priced = { ...intents, price: async (s: string) => (s === "NEAR" ? 3.85 : undefined) };
-  const receipt = { id: "r1", at: "2026-11-13T00:00:00.000Z", outcome: "blocked", message: "Blocked by the leash.", input: {}, interpretation: {} };
+  const receipt = { id: "r1", at: "2026-11-13T00:00:00.000Z", outcome: "blocked", message: "Blocked by Spend Limits.", input: {}, interpretation: {} };
 
   it("lists every checked call with the price then and now, and skips what isn't a call", async () => {
     const app = buildApp({ cfg, chain: chain as never, receipts: {} as never, intents: priced as never });
@@ -185,7 +185,7 @@ describe("GET /v1/calls", () => {
     // What POST /v1/command does once the command has run (running one needs the chain).
     calls.traded(id, { at: receipt.at, receiptId: receipt.id, outcome: receipt.outcome, message: receipt.message });
     const list = (await app.inject({ method: "GET", url: "/v1/calls" })).json().calls;
-    expect(list[0].trade).toMatchObject({ outcome: "blocked", message: "Blocked by the leash.", receiptId: "r1" });
+    expect(list[0].trade).toMatchObject({ outcome: "blocked", message: "Blocked by Spend Limits.", receiptId: "r1" });
   });
 
   it("puts a call away", async () => {
