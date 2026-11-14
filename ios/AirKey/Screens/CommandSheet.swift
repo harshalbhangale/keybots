@@ -87,7 +87,7 @@ struct CommandSheet: View {
                     Label("Paste what you copied", systemImage: "doc.on.clipboard")
                 }
                 .buttonStyle(.glass)
-                Text("AIRKEY reads it for you. It can only pay people on your allowed list; anyone else waits for you.")
+                Text("Keybots reads it for you. It can only pay people on your allowed list; anyone else waits for you.")
                     .font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 4)
             } else {
                 Text("Try").font(.footnote.weight(.semibold)).foregroundStyle(AK.muted).padding(.horizontal, 4)
@@ -129,7 +129,7 @@ struct CommandSheet: View {
     }
 
     private var note: String {
-        if pasted { return "AIRKEY reads it for you. It can only pay people on your allowed list." }
+        if pasted { return "Keybots reads it for you. It can only pay people on your allowed list." }
         if let intent { return intent.detail ?? "Checked against your limits before anything moves." }
         return "Try “pay harshal 0.2 for dinner” or “buy $5 of near”."
     }

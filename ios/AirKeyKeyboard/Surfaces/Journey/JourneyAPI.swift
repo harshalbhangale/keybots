@@ -242,7 +242,7 @@ struct JourneyAPI {
         do {
             (data, response) = try await URLSession.shared.data(for: r)
         } catch {
-            throw APIError(message: "Can't reach the AIRKEY server.")
+            throw APIError(message: "Can't reach the Keybots server.")
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]

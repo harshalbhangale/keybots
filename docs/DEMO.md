@@ -1,6 +1,6 @@
-# AIRKEY demo: the 2-minute script
+# Keybots demo: the 2-minute script
 
-Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard on screen. Every money moment ends on NEAR testnet. The Spend Limits contract is `leash.airkey-harshal.testnet`.
+Everything happens inside a chat (WhatsApp or Messages) with the Keybots keyboard on screen. Every money moment ends on NEAR testnet. The Spend Limits contract is `leash.airkey-harshal.testnet`.
 
 ## Before each take
 
@@ -14,8 +14,8 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
    - sends friend's NEAR back to the owner and tops Spend Limits up to 1.5 NEAR;
    - cancels any price orders.
 3. **Phone, once.**
-   - Settings › General › Keyboard › Keyboards: add AIRKEY and turn on Allow Full Access.
-   - Settings › Apps › AIRKEY › Paste from Other Apps › Allow. A keyboard can't show iOS's paste prompt, so Check copied needs this.
+   - Settings › General › Keyboard › Keyboards: add Keybots and turn on Allow Full Access.
+   - Settings › Apps › Keybots › Paste from Other Apps › Allow. A keyboard can't show iOS's paste prompt, so Check copied needs this.
    - Face ID enrolled.
 4. **The chat.**
    - Clear the message box; the reset can't reach the chat app.
@@ -31,10 +31,10 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
 | 0:54 | 3. A call becomes a trade | Copy the friend's call, then tap the shield. | Chip *Buy $1 of SOL*. Under it, these lines take turns: *SOL is a real token · within your limits*, *Live price: 0.2994 NEAR gets about 0.01321 SOL*, and *Testnet has no SOL, so the hold swaps NEAR to USDC on Rhea instead*. |
 | | | Hold **Hold to buy**. | *Swapping…*, then lime *Swapped 0.28 NEAR for 0.60 USDC*. |
 | 1:20 | 4. Someone new | Type `pay vendor 0.4 for the logo` and hold. | Amber **Waiting for you** over *a new account you've never paid*. |
-| | | Open AIRKEY, go to Wallet › the approval, and hold **Hold to approve**. | Face ID, then paid. Back in the chat. |
+| | | Open Keybots, go to Wallet › the approval, and hold **Hold to approve**. | Face ID, then paid. Back in the chat. |
 | 1:44 | 5. Private AI | Type a messy draft (`hey so i cant make it tmrw sry, maybe fri??`), hold the space bar, tap **Rewrite**. | Five versions with *NEAR AI ✓* at the top (about 1–2 s); tap **Replace**. |
 | 1:56 | 6. Follow someone | Keyboard › Calls › Following: tap **@AltcoinSherpa** in the suggestions, open him, hold **Trade their latest call now**. | His record (hits, misses, average), then *Bought $1 of … for you (testnet: NEAR → USDC)* in Traded for you, with the post and the transaction. |
-| 2:10 | Close: kill switch | In AIRKEY › Limits, tap **Stop everything**. | Face ID, then *Everything is stopped*. |
+| 2:10 | Close: kill switch | In Keybots › Limits, tap **Stop everything**. | Face ID, then *Everything is stopped*. |
 | | | In the chat, `pay harshal 0.2` and hold. | Red **Blocked** over *you turned on Stop everything*. End card: *Your keyboard is the AI. NEAR holds the limits.* |
 
 After the take, tap the switch again (Face ID) to let the agents work, or just run `demo-reset`.

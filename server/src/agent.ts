@@ -240,7 +240,7 @@ export function plainSummary(r: Receipt, contacts: Record<string, string> = {}):
       return cap ? `Blocked: over your ${cap} NEAR daily limit` : "Blocked: over your daily limit";
     }
     if (rule === "R6") return `Blocked: ${name} isn't on your allowed list`;
-    if (rule === "R0") return "Blocked: not enough NEAR in your AIRKEY balance";
+    if (rule === "R0") return "Blocked: not enough NEAR in your Keybots balance";
     if (rule) return undefined;
     // Stopped by the server before the chain was asked.
     if (r.input.source === "pasted" && (a.kind === "swap" || a.kind === "watch")) {
@@ -327,7 +327,7 @@ async function swap(
   if (deps.cfg.network === "mainnet" && !(usd > 0 && usd <= deps.cfg.mainnetUsdCap)) {
     return done({
       outcome: "blocked",
-      message: `On mainnet AIRKEY swaps at most $${deps.cfg.mainnetUsdCap}${usd > 0 ? `; this is about $${usd.toFixed(2)}` : ", and NEAR Intents gave no dollar value"}.`,
+      message: `On mainnet Keybots swaps at most $${deps.cfg.mainnetUsdCap}${usd > 0 ? `; this is about $${usd.toFixed(2)}` : ", and NEAR Intents gave no dollar value"}.`,
       swap: { from, to, quote },
     });
   }

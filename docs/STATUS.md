@@ -1,4 +1,4 @@
-# AIRKEY: done and to do
+# Keybots: done and to do
 
 One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026, 23:59 UTC.
 
@@ -12,7 +12,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] docs/DEMO.md: the click-by-click script with tx links
 
 ## Keyboard: typing and feel
-- [x] Kall Markets' keyboard core moved into AIRKEY: keys, layouts, accent popups, delete repeat
+- [x] Kall Markets' keyboard core moved into Keybots: keys, layouts, accent popups, delete repeat
 - [x] Kall Markets' typing engine: autocorrect, 3 suggestions, next-word prediction, learning
 - [x] Glide (swipe) typing with a trail, checked in Messages; token tickers (usdc, usdt…) glide too
 - [x] Space-bar cursor: slide on space moves the cursor (checked in Messages)
@@ -35,7 +35,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 - [x] Price chips: `$near` shows the live price, with Buy
 - [x] Currency conversion, sums and bill splits on the phone
 - [x] Vault: your NEAR account and saved addresses in one tap; keys and phrases refused
-- [x] Check copied needs Settings › Apps › AIRKEY › Paste from Other Apps › Allow (a keyboard can't show the paste prompt); the keyboard says so
+- [x] Check copied needs Settings › Apps › Keybots › Paste from Other Apps › Allow (a keyboard can't show the paste prompt); the keyboard says so
 - [x] Swaps in dollars, in the keyboard and on the server ("swap $5 of near to usdc", "5$")
 - [x] Any wording works: an AI reads what the rules miss; the hold sends its exact command
 - [x] A copied crypto call becomes a hold chip: token checked on NEAR Intents, Intents quote, inside the Trading Agent's caps; testnet runs NEAR → USDC on Rhea and says so ([7XUq6MLF…](https://testnet.nearblocks.io/txns/7XUq6MLFCiPL15FynnKsyWp9KCx6Ki7pc2WsgTDqRUey))

@@ -168,7 +168,7 @@ final class JourneyModel {
                     note = "The server no longer has this trade. Check Wallet or the NEAR explorer before trading again."
                 }
             } catch {
-                note = "Still can't reach the AIRKEY server."
+                note = "Still can't reach the Keybots server."
             }
         }
     }
@@ -176,7 +176,7 @@ final class JourneyModel {
     /// The receipt as one plain line for the chat, with its transaction.
     var receiptLine: String? {
         guard let r = receipt else { return nil }
-        var line = "AIRKEY · \(Plain.scrub(r.summary))"
+        var line = "Keybots · \(Plain.scrub(r.summary))"
         if let tx = r.txURL { line += " \(tx)" }
         return line
     }

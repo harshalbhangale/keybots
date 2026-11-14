@@ -1,10 +1,10 @@
-# Gap list: AIRKEY's core journey (14 Nov 2026, 08:15 UTC)
+# Gap list: Keybots's core journey (14 Nov 2026, 08:15 UTC)
 
 The journey: **see a KOL call → review the trade → hold to confirm → NEAR enforces the agent's limits → see a verifiable receipt.**
 
 Kall Markets is compared only from its public README (no code read).
 
-## What already works in AIRKEY
+## What already works in Keybots
 - Copied crypto call → a trade chip in under 1 s: token checked on NEAR Intents, a live quote, and the Trading Agent's limits read from chain (`server/src/calls.ts`).
 - The leash contract decides every swap: Stop everything, blocked list, per-trade and daily limits; a refusal is an on-chain `blocked` event (`contracts/leash/src/lib.rs`, `swap`). 38 contract tests.
 - Real testnet swaps on Rhea from the leash, the tokens come back to it (tx 7XUq6MLF…, 5MyPgFPD…).
@@ -17,7 +17,7 @@ Kall Markets is compared only from its public README (no code read).
 - Mainnet swaps across many chains from the person's own wallet.
 - A privacy receipt the person can open per answer.
 
-## The gaps in AIRKEY's journey, and the smallest fixes
+## The gaps in Keybots's journey, and the smallest fixes
 1. **No source on the call.** The chip says "Buy $1 of SOL" but not who posted it, when, or a link to the post. → One compact KOL card: author, time, link, the original text, the caller's record; "Review trade" (no trade on sight).
 2. **The quote isn't a full review.** No minimum received, slippage, venue/pool or where the funds sit; the testnet stand-in is a rotating line. → One review card: pay, receive, minimum, slippage, network, venue, where funds sit, the stand-in stated before the hold.
 3. **Quotes don't expire and a confirm can run twice.** → A review id that expires after 30 s; confirm is idempotent per review (a second confirm returns the first receipt, never a second trade).

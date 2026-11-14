@@ -88,7 +88,7 @@ final class CallsModel {
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             // A keyboard can't show iOS's "Allow Paste" prompt, so a refused read looks like an empty clipboard.
             notice = UIPasteboard.general.hasStrings
-                ? "To check copied text: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                ? "To check copied text: Settings › Apps › Keybots › Paste from Other Apps › Allow."
                 : "Copy a post first, then tap Paste a call."
             Haptics.warning()
             return
@@ -304,7 +304,7 @@ struct CallsView: View {
         } else if model.tab == .following, actions.fullAccess() {
             FollowingView(model: model.following, actions: actions, palette: p)
         } else if !actions.fullAccess() {
-            MoneyEmpty(text: "Turn on Allow Full Access for AIRKEY so Calls can reach your server.", palette: p)
+            MoneyEmpty(text: "Turn on Allow Full Access for Keybots so Calls can reach your server.", palette: p)
         } else if model.calls == nil {
             if let problem = model.problem {
                 VStack(spacing: 10) {

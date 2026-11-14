@@ -112,10 +112,10 @@ struct AssistReceiptCard: View {
                             divider
                             item("The connection isn't tied to the checked machine yet.", icon: "link", tint: p.soft)
                             divider
-                            item("NEAR AI's data retention isn't verified by AIRKEY.", icon: "tray", tint: p.soft)
+                            item("NEAR AI's data retention isn't verified by Keybots.", icon: "tray", tint: p.soft)
                         }
                         section("Check it yourself")
-                        Text("cloud.near.ai/verify, or /v1/ai/attestation on your AIRKEY server")
+                        Text("cloud.near.ai/verify, or /v1/ai/attestation on your Keybots server")
                             .font(.caption).foregroundStyle(p.soft)
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)

@@ -545,7 +545,7 @@ enum Glass {
     /// The one thing that stays constant either way: the brand keycap.
     static let brandInk = UIColor(white: 0.07, alpha: 1)
 
-    /// Space-bar "AIRKEY" watermark — tuned to read on EVERY theme (the old
+    /// Space-bar "KEYBOTS" watermark — tuned to read on EVERY theme (the old
     /// textSecondary×0.45 vanished on light glass).
     static var watermark: UIColor { keyInk.withAlphaComponent(0.40) }
 

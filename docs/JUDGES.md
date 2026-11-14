@@ -1,4 +1,4 @@
-# AIRKEY for judges
+# Keybots for judges
 
 **One journey:** see a KOL call → review the trade → hold to confirm → the NEAR contract (the leash) enforces the agent's limits → a receipt you can check on chain.
 
@@ -31,7 +31,7 @@ git clone https://github.com/harshalbhangale/near-hack && cd near-hack/server &&
 | The trade | A real Rhea swap on NEAR testnet, from the leash, through the Trading Agent | Testnet has no SOL/BTC/ETH: the trade swaps NEAR to USDC, and the review and receipt say so before and after. |
 | NEAR Intents | Token checks and prices | No testnet. Any Intents quote is labelled a dry mainnet quote: no funds move. |
 | Limits | Enforced by the leash contract on chain (per trade, per day, Stop everything) | Typed-vs-pasted (which agent acts) is decided by the keyboard and server, the trusted client/server boundary, not by the contract. |
-| Private AI | NEAR AI Cloud (Qwen3-VL 30B, in NEAR's TEE): signature verified, signer matched to the attested enclave, TDX quote and GPU attestation checked every 10 minutes | The TDX and GPU verdicts come from Phala's and NVIDIA's verifiers, not checked on the phone; a model's instances share one signing key; the connection isn't bound to the attested machine; NEAR AI's data retention isn't verified by AIRKEY. |
+| Private AI | NEAR AI Cloud (Qwen3-VL 30B, in NEAR's TEE): signature verified, signer matched to the attested enclave, TDX quote and GPU attestation checked every 10 minutes | The TDX and GPU verdicts come from Phala's and NVIDIA's verifiers, not checked on the phone; a model's instances share one signing key; the connection isn't bound to the attested machine; NEAR AI's data retention isn't verified by Keybots. |
 | Auto-trading | Built (`server/src/follows.ts`) | **Off** in the demo and on the hosted server: every trade is confirmed by hand. |
 
 ## Evidence on testnet

@@ -104,7 +104,7 @@ export function buildApp(deps: Deps) {
   /** What swapping `amount` NEAR into a token gets on Rhea right now, before you hold to swap. */
   app.get<{ Querystring: { amount?: string; to?: string } }>("/v1/swap/quote", async (req, reply) => {
     const route = deps.rhea?.route(String(req.query.to ?? ""));
-    if (!deps.rhea?.network || !route) return reply.code(404).send({ error: `AIRKEY can't swap NEAR into ${req.query.to ?? "that"} here` });
+    if (!deps.rhea?.network || !route) return reply.code(404).send({ error: `Keybots can't swap NEAR into ${req.query.to ?? "that"} here` });
     let amountIn: string;
     try {
       amountIn = toYocto(String(req.query.amount ?? ""));

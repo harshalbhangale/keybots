@@ -397,7 +397,7 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
         : /short/.test(route.reason)
           ? `you hold no ${call.asset} to sell`
           : /contract address/.test(route.reason)
-            ? "the post names a contract address, so AIRKEY won't guess the token"
+            ? "the post names a contract address, so Keybots won't guess the token"
             : `${call.asset} can't be traded here`;
       return skip(why.charAt(0).toUpperCase() + why.slice(1), `Skipped: ${call.asset} call from ${who}, ${why}`);
     }

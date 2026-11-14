@@ -1,6 +1,6 @@
 # Follow KOLs and trade their calls automatically
 
-You follow people on X. When one of them posts a trade call, AIRKEY's Trading Agent buys or sells for you, within rules you set, and the contract still caps every trade.
+You follow people on X. When one of them posts a trade call, Keybots's Trading Agent buys or sells for you, within rules you set, and the contract still caps every trade.
 
 ## Where the calls come from
 - **Kall's API** (kallmarkets.vercel.app, our own): `GET /api/keyboard/feed` lists 25 tracked callers and their open calls and results. `GET /api/callers/{handle}` returns one caller's calls and record (hit or miss, return), stored on Arkiv. No X API key needed.

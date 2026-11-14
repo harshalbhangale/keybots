@@ -8,7 +8,7 @@ merged yet.
 
 ## Why
 
-Today the AIRKEY server signs `leash.pay` and `leash.swap` with function-call
+Today the Keybots server signs `leash.pay` and `leash.swap` with function-call
 keys it keeps in `keys/` (gitignored). Whoever reads that folder can act as an
 agent, within the leash's rules.
 
@@ -49,7 +49,7 @@ OUTLAYER_KEY_TRADE=wk_...
 
 ## What OutLayer does and does not give us
 
-- The agent key is not on the AIRKEY server. Someone who steals `server/.env`
+- The agent key is not on the Keybots server. Someone who steals `server/.env`
   gets the `wk_` keys, which can ask OutLayer to sign for that agent, so they
   can still do what the agent can do, within the leash's rules and any
   OutLayer policy. OutLayer documents revoking a `wk_` key

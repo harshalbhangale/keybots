@@ -233,7 +233,7 @@ export function tradeFlow(deps: TradeDeps) {
     const to = route.side === "sell" || route.standIn ? "USDC" : asset;
     if (to === "NEAR") throw new TradeError(422, "The post says buy NEAR. A reviewed trade spends NEAR from Spend Limits, so there's nothing to buy NEAR with here.");
     const pool = rhea.route(to);
-    if (!pool) throw new TradeError(422, `AIRKEY can't swap NEAR into ${to} here.`);
+    if (!pool) throw new TradeError(422, `Keybots can't swap NEAR into ${to} here.`);
 
     const nearToken = (await intents!.pick("NEAR", "from")).token;
     if (!nearToken?.price) throw new TradeError(503, "NEAR Intents has no NEAR price right now, so the trade can't be sized. Try again in a moment.");
@@ -270,7 +270,7 @@ export function tradeFlow(deps: TradeDeps) {
     const spent = a.day === Math.floor(now() / 86_400_000) ? BigInt(a.spent_today) : 0n;
     const value = BigInt(amountIn);
     const willRefuse = state.paused
-      ? "Stop everything is on: AIRKEY won't send it."
+      ? "Stop everything is on: Keybots won't send it."
       : value > perTrade
         ? `Over the ${nearOf(perTrade)} NEAR per-trade limit: the contract will refuse it.`
         : spent + value > daily
@@ -293,7 +293,7 @@ export function tradeFlow(deps: TradeDeps) {
         asset,
         direction: route.side,
       },
-      reading: { by: "rules", detail: "Read on the AIRKEY server by fixed rules, not by AI" },
+      reading: { by: "rules", detail: "Read on the Keybots server by fixed rules, not by AI" },
       trade: {
         network: cfg.network === "mainnet" ? "NEAR mainnet" : "NEAR testnet",
         venue: `Rhea, pool ${pool.pool}`,
@@ -380,7 +380,7 @@ export function tradeFlow(deps: TradeDeps) {
         status: "unknown",
         receipt: {
           id: randomUUID(),
-          summary: "NEAR didn't answer, so AIRKEY can't say if it went through. Check Spend Limits on nearblocks before trying again.",
+          summary: "NEAR didn't answer, so Keybots can't say if it went through. Check Spend Limits on nearblocks before trying again.",
           at: new Date(now()).toISOString(),
           by: "server",
           rule: null,

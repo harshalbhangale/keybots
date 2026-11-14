@@ -147,7 +147,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
     ]
 
     /// What the strip calls the menu itself.
-    static let rootTitle = "AIRKEY"
+    static let rootTitle = "KEYBOTS"
 
     /// The saved order, with tools added since it was saved at the end. An
     /// order saved with Emoji, Keys or Shorthand in it places the tools that
@@ -962,7 +962,7 @@ final class MenuShell: UIView, UITableViewDataSource, UITableViewDelegate {
             // A theme colours the keys, their glyphs, the press popup and
             // the sound; it never paints a board and never changes a size.
             let current = SettingsStore.current.skin ?? ""
-            var rows: [Row] = [.nav(icon: current.isEmpty ? "checkmark" : "circle", title: "None", detail: "AIRKEY's own look",
+            var rows: [Row] = [.nav(icon: current.isEmpty ? "checkmark" : "circle", title: "None", detail: "Keybots's own look",
                                     target: "!theme:")]
             for theme in KeyboardTheme.all {
                 rows.append(.nav(icon: theme.id == current ? "checkmark" : "circle", title: theme.name,

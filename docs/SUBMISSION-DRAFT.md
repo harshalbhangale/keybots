@@ -1,4 +1,4 @@
-# AIRKEY: submission draft
+# Keybots: submission draft
 
 **Draft only. Nothing has been submitted.** Harshal reads this, fills in the fields marked *Harshal decides*, confirms the final JSON, and sends it himself. The payload goes to `POST https://nearhackathon.com/api/applications` once, and mistakes after that go through https://nearhackathon.com/request-changes. Don't commit the final payload: it contains personal data.
 
@@ -11,7 +11,7 @@ The contract allows exactly these fields, and no others (`website` is a spam tra
 | Field | Rule | Draft value |
 |---|---|---|
 | `requestId` | UUID, generated once, reused on retries | Generate when sending: `uuidgen \| tr A-Z a-z` |
-| `projectName` | 2–80 chars | `AIRKEY` |
+| `projectName` | 2–80 chars | `Keybots` |
 | `leadName` | 2–80 chars | `Harshal Bhangale` |
 | `email` | valid, max 160 chars | *Harshal decides* (not written here) |
 | `size` | `1`, `2 - 4`, `4 - 6`, `6 - 8` or `8+` | `1` (sole author; Harshal confirms) |
@@ -26,7 +26,7 @@ Other links (not API fields): landing page https://airkey-keyboard.vercel.app ·
 
 ## 2. `idea` (draft, about 1,700 characters)
 
-> AI agents are getting wallets, and one message can empty them. AIRKEY is a phone keyboard with AI agents in it, and a NEAR contract, Spend Limits, decides what they may spend.
+> AI agents are getting wallets, and one message can empty them. Keybots is a phone keyboard with AI agents in it, and a NEAR contract, Spend Limits, decides what they may spend.
 >
 > Type "pay harshal 0.2 for dinner" in any chat and hold: the Pay Agent pays. Each agent is its own NEAR sub-account whose only key is a function-call key for Spend Limits. Spend Limits holds the money and decides every payment and swap in a fixed order: Stop everything, blocked list, per-payment and daily limits, an allowed list for untrusted agents, owner approval with Face ID signed on the phone, and per-token trade limits. Every decision is an on-chain event, so a fooled AI still can't move money the contract won't allow.
 >
@@ -66,7 +66,7 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 | Tap Stop everything | Every agent stops, enforced by the contract (see `docs/DEMO.md`) |
 | Follow the click-by-click demo | `docs/DEMO.md` |
 
-## 5. How AIRKEY uses NEAR
+## 5. How Keybots uses NEAR
 
 | NEAR piece | Used for | See |
 |---|---|---|
