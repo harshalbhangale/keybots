@@ -256,6 +256,7 @@ final class AgentModel {
         // The hold button has already played its rising ticks and its thud (HoldFeel).
         // Trade panel hook: a swap, a buy or a sell opens the swap screen, filled in; it runs from there.
         if reviewCall() { return }
+        if reviewPay() { return }
         if reviewReady() { return }
         if intent == nil, readIntent == nil, callIntent != nil {
             // A copied call only ever trades from its review card.
@@ -274,6 +275,21 @@ final class AgentModel {
         guard intent == nil, readIntent == nil, let call = callIntent, let text = call.callText, let openCallReview else { return false }
         callIntent = nil
         openCallReview(text)
+        return true
+    }
+
+    // MARK: Pay screen
+
+    /// Opens the keyboard's pay screen for a typed payment (keyboard's hook).
+    @ObservationIgnored var openPay: ((PayRequest) -> Void)?
+
+    /// A typed payment goes to the pay screen instead of running: who, how
+    /// much, the fee and the limits are on screen before the hold.
+    @discardableResult
+    func reviewPay() -> Bool {
+        guard let intent, intent.kind == .pay, let to = intent.payTo, let amount = intent.payAmount, let openPay else { return false }
+        let typed = (host?.agentFieldText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        openPay(PayRequest(name: to, amount: amount, memo: intent.payMemo, typed: typed))
         return true
     }
 

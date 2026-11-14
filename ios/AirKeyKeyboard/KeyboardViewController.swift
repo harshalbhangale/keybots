@@ -93,6 +93,9 @@ final class KeyboardViewController: UIInputViewController {
     private var noteEdit: NoteEditSurface?
     /// Trade panel hook: the swap screen, and what it opens on.
     private var trade: TradeSurface?
+    /// A typed payment's own screen, and the payment it opens on.
+    private var pay: PaySurface?
+    private var pendingPay: PayRequest?
     private var pendingTrade: (seed: TradeModel.Seed?, origin: String?)?
     /// What the editor strip opens on (set right before setSurface(.noteEdit)).
     private var pendingEdit: NoteEditSurface.Edit?
@@ -120,7 +123,7 @@ final class KeyboardViewController: UIInputViewController {
     }()
     private var agentHost: UIHostingController<AgentStrip>?
 
-    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, assist, wallet, calls, trade }
+    private enum Surface: Equatable { case none, shell, emoji, noteEdit, clipboard, assist, wallet, calls, trade, pay }
     private var surface: Surface = .none
     /// A copied call's text for the Calls panel to open on its review.
     private var pendingCallReview: String?
@@ -230,6 +233,8 @@ final class KeyboardViewController: UIInputViewController {
         case .trade:
             if let strip = trade?.stripHeight { return base + strip - Glass.toolbarHeight }
             return max(base, TradeSurface.panelHeight)
+        case .pay:
+            return max(base, TradeSurface.panelHeight)
         }
     }
 
@@ -265,6 +270,14 @@ final class KeyboardViewController: UIInputViewController {
             self.setSurface(.calls)
         }
         // Trade panel hook: a trade's chip opens the swap screen.
+        // A typed payment's chip opens its own screen: who, how much, fee, limits, then the hold.
+        agent.openPay = { [weak self] request in
+            guard let self else { return }
+            if self.surface == .pay { self.setSurface(.none, animated: false) }
+            self.pendingPay = request
+            self.agent.dismiss()
+            self.setSurface(.pay)
+        }
         agent.openTrade = { [weak self] command, origin in
             guard let self, let seed = TradeModel.seed(from: command) else { return false }
             self.openTrade(seed: seed, origin: origin)
@@ -883,6 +896,10 @@ final class KeyboardViewController: UIInputViewController {
                 keyboardView.isHidden = true
                 trade?.frame = CGRect(x: 0, y: 0, width: w, height: h)
             }
+        case .pay:
+            toolbarHiddenBySurface = true
+            keyboardView.isHidden = true
+            pay?.frame = CGRect(x: 0, y: 0, width: w, height: h)
         }
         let agentUp = surface == .none && agent.isShowing && !isSecureField
         toolbar.isHidden = toolbarHiddenBySurface || agentUp
@@ -946,6 +963,7 @@ final class KeyboardViewController: UIInputViewController {
         case .trade:
             if trade?.wantsDigits == true { keyboardView.setMode(.letters) }
             trade?.detach(); trade = nil
+        case .pay: pay?.close(); pay = nil
         case .none: break
         }
         inlineTarget = nil
@@ -1008,6 +1026,21 @@ final class KeyboardViewController: UIInputViewController {
             prepareEntrance(t, animated: animated)
             trade = t
             MemoryLogger.logSurface("trade")
+        case .pay:
+            guard let request = pendingPay else { break }
+            pendingPay = nil
+            let typed = request.typed
+            let s = PaySurface(request: request, dark: Glass.chromeDark, actions: moneyActions,
+                               close: { [weak self] in self?.setSurface(.none); self?.syncAutoShift() },
+                               paid: { [weak self] r in
+                                   // Paid or waiting: what was typed leaves the message box, as from the strip.
+                                   if r.signal != .block, r.signal != .neutral { self?.agentClear(typed) }
+                               })
+            s.attach(to: self)
+            content.addSubview(s)
+            prepareEntrance(s, animated: animated)
+            pay = s
+            MemoryLogger.logSurface("pay")
         case .none:
             break
         }
