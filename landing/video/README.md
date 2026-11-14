@@ -30,7 +30,7 @@ Open `beats.json` and set `start` / `end` (seconds into **your recording**, not 
 | 6 | Hold space, private AI rewrite | Hold space: private AI |
 | 7 | Kill switch | One kill switch |
 
-**Check before the final cut:** beats 4 and 6 must match what the app really does on the day. As of 13 Nov the README says pasted text can never trade, and the AI rewrite isn't listed. If either isn't in the recording, delete its entry from `beats.json`.
+**Check before the final cut:** beats 4 and 6 must match what the app really does on the day. As of 14 Nov a copied call can be checked but only what you type trades, and the AI rewrite answers on NEAR AI Cloud. If either isn't in the recording, delete its entry from `beats.json`.
 
 ## Recording tips
 
