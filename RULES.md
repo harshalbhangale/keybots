@@ -1,11 +1,11 @@
-# The leash: rules
+# Spend Limits: rules
 
-AirKey gives each AI agent its own NEAR account. The agent can move money only by calling the leash contract, and the leash decides. These are the rules it enforces. The code is `contracts/leash/src/lib.rs`; every rule below has a test there.
+AirKey is one assistant with three lanes: what you type, messages you copy, and trades. Each lane is its own NEAR account (an "agent" in the code). An agent can move money only by calling Spend Limits, a NEAR contract, and Spend Limits decides. These are the rules it enforces. The code is `contracts/leash/src/lib.rs` (the contract is called the leash in the code and in its testnet account name); every rule below has a test there.
 
 ## Who is who
 
-- **Owner:** the person. Owns the leash, holds a full-access key in the AirKey app, and is the only one who can change rules, approve, or withdraw.
-- **Agent:** a NEAR sub-account such as `pay.harshal.airkey.testnet`. It signs with a **function-call access key that can only call this leash**, so it cannot send NEAR or add keys on its own. The owner registers each agent with a trust tier and limits.
+- **Owner:** the person. Owns Spend Limits, holds a full-access key in the AirKey app, and is the only one who can change rules, approve, or withdraw.
+- **Agent:** a NEAR sub-account for one lane: `pay.<you>` (your words), `inbox.<you>` (messages you copy), `trader.<you>` (trades). It signs with a **function-call access key that can only call Spend Limits**, so it cannot send NEAR or add keys on its own. The owner registers each agent with a trust tier and limits.
 - **Trust tier**, fixed per agent by the owner, never chosen per request:
   - `trusted`: acts on what the owner typed in the AirKey keyboard.
   - `untrusted`: acts on text that came from someone else (a pasted message, a copied post, later an email).
@@ -23,8 +23,8 @@ AirKey gives each AI agent its own NEAR account. The agent can move money only b
 | R5 | The amount would take the agent past its daily cap | **blocked** |
 | R6 | The agent is `untrusted` and the receiver is not on the owner's allowlist | **pending**: waits for the owner |
 | R7 | The agent asked for approval (`ask_owner: true`), for example because the off-chain check warned | **pending** |
-| R0 | The leash doesn't hold enough NEAR (balance minus what its storage needs) | **blocked** |
-| - | Otherwise | **paid**: the leash sends the NEAR |
+| R0 | Spend Limits doesn't hold enough NEAR (balance minus what its storage needs) | **blocked** |
+| - | Otherwise | **paid**: Spend Limits sends the NEAR |
 
 - A day is a UTC day by block time. Spending resets at 00:00 UTC.
 - If a transfer fails (for example the receiver doesn't exist), the spend is rolled back and a `transfer_failed` event is logged.
@@ -41,19 +41,20 @@ Agents can also report an account with evidence (`report(account, evidence)`). A
 
 ## Receipts
 
-Every decision is logged as a NEP-297 event (`standard: "airkey"`): `paid`, `pending`, `blocked`, `approved`, `rejected`, `transfer_failed`, `reported`, plus the owner's rule changes. Anyone can read them from the chain.
+Every decision is logged as a NEP-297 event (`standard: "airkey"`): `paid`, `pending`, `blocked`, `approved`, `rejected`, `transfer_failed`, `reported`, `swap`, plus the owner's rule changes. Anyone can read them from the chain.
 
-## Swaps (checked by the server today)
+## Swaps
 
-Swaps go through NEAR Intents, which has no testnet, so they are quoted as dry runs for now and these rules run on the server, using the caps the leash holds on chain:
+`swap(venue, amount, wrap, msg, memo, sell)` runs on testnet today, on Rhea:
 
-- Only the Trading Agent can swap (`trade.<you>`, trusted, with its own caps). Anything pasted or forwarded can never trade.
-- Both tokens must be on NEAR Intents' own token list.
-- The swap's value in NEAR must fit the Trading Agent's per-trade cap and what's left of its daily cap, and the kill switch must be off. Trading never uses up what the Payment Agent may spend.
+- Only the Trading Agent (`trader.<you>`) can swap: its key may call `pay`, `report` and `swap`; the other agents' keys may call only `pay` and `report`. The server also refuses any trade from pasted text.
+- A swap is checked like a payment: kill switch, blocklist, the agent's per-payment and daily caps, and what Spend Limits holds. A swap never waits for approval; it is either within the caps or blocked. Trading never uses up what the payment lanes may spend.
+- Spend Limits wraps exactly the amount into wNEAR (only through `wrap.near` or `wrap.testnet`) and hands it to the venue. The token comes back to Spend Limits, so value never leaves it. If anything fails, the spend is rolled back.
+- Off chain, the server first checks both tokens against NEAR Intents' own token list, so a look-alike symbol is refused.
 
-When swaps execute on mainnet, the leash will hold these rules itself.
+On mainnet the same method funds a NEAR Intents deposit address instead; Spend Limits has enforced no mainnet swap yet.
 
-## What the leash does not do
+## What Spend Limits does not do
 
 - It does not judge who a new receiver is. Account age, contract code changes and past payments are checked off-chain by the AirKey server before it calls `pay`, and it passes `ask_owner: true` when the check warns.
-- It does not keep the agents' keys. The server does (see README). The leash is what limits a stolen key to the caps above.
+- It does not keep the agents' keys. The server does (see README). Spend Limits is what limits a stolen key to the caps above.

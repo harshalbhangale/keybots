@@ -38,7 +38,7 @@ export function Play({ size = 22 }: { size?: number }) {
   );
 }
 
-/** The Keybots logo: a lime keycap with the NEAR mark as its legend (public/logo.svg). */
+/** The Keybots logo: a lime keycap with the NEAR mark as its legend (public/logo.png). */
 /** The Keybots lockup: the mono key on a dark tile, then the wordmark with a lime LED. */
 export function Lockup({ small = false }: { small?: boolean }) {
   return (
@@ -54,7 +54,7 @@ export function Lockup({ small = false }: { small?: boolean }) {
 }
 
 export function Mark({ size = 28 }: { size?: number }) {
-  return <img src="/logo.svg" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
+  return <img src="/logo.png" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
 }
 
 /** GitHub, App Store and Google Play (soon). */
