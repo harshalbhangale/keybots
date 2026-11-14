@@ -39,7 +39,7 @@ Everything happens inside a chat (WhatsApp or Messages) with the AIRKEY keyboard
 
 After the take, tap the switch again (Face ID) to let the agents work, or just run `demo-reset`.
 
-**Beat 5 runs on NEAR AI Cloud** (Qwen3-VL 30B Instruct, `Qwen/Qwen3-VL-30B-A3B-Instruct`, run and signed inside NEAR AI's TEE; five versions in about 1–2 s). Each answer's signature is checked against the exact request and response; the attestation behind the signing key is not checked. If NEAR AI doesn't answer during the take, cut the beat rather than turn the fallback back on.
+**Beat 5 runs on NEAR AI Cloud** (Qwen3-VL 30B Instruct, `Qwen/Qwen3-VL-30B-A3B-Instruct`; five versions in about 1–2 s). Private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet. Say it that way in the voice-over: private AI in NEAR's TEE, signature verified, attestation next. If NEAR AI doesn't answer during the take, cut the beat rather than turn the fallback back on.
 
 **Beat 6 needs auto-trading on** for the take, and a person whose latest call hasn't been traded yet (a post trades once; @CryptoKaleo's already has). Turn it on before, and off after:
 `ssh -i ~/.ssh/airkey-server.pem ubuntu@13.126.207.245 'sudo sed -i "s/^AIRKEY_AUTO_TRADE=.*/AIRKEY_AUTO_TRADE=on/" /opt/airkey/app/.env && sudo systemctl restart airkey'` (and `=off` after). While it's on, the people you follow trade by themselves inside their rules ($3 a day each by default).
