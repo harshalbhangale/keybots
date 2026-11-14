@@ -27,7 +27,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const WASM = join(ROOT, "contracts/limits-lite/target/wasm32-unknown-unknown/release/spend_limits_lite.wasm");
 const OWNER = arg("--owner") ?? (NET === "mainnet" ? "hellbuddy.near" : "airkey-harshal.testnet");
 // Testnet already has pay./inbox./trader. for the full contract, so Lite's agents get their own names there.
-const P = NET === "mainnet" ? "" : "lite-";
+const P = arg("--prefix") ?? (NET === "mainnet" ? "" : "lt-");
 const N = {
   limits: `limits.${OWNER}`,
   pay: `${P}pay.${OWNER}`,
@@ -35,11 +35,16 @@ const N = {
   trader: `${P}trader.${OWNER}`,
 };
 const GAS = 30_000_000_000_000n;
+/** What the server attaches to pay with Lite (AIRKEY_PAY_TGAS in server/src/near.ts). */
+const PAY_GAS = 20_000_000_000_000n; // the server sets AIRKEY_PAY_TGAS=20 for Lite; a pay uses ~4.4 TGas
 const ONE_YOCTO = 1n;
 // Small on purpose: the whole budget is under 1 NEAR.
 const CONTRACT_FUND = "0.6"; // ~0.46 is locked for code and state; the rest is what agents can spend
-const AGENT_FUND = "0.02"; // gas for the agent's own calls
-const KEY_ALLOWANCE = near("0.015");
+// NEAR wants a call's balance and key allowance to cover a pessimistic gas bound (~10x the
+// real cost): a 20 TGas pay needs ~0.021 NEAR there, though it costs ~0.00044. The owner's
+// key goes on every account too, so all of it can be taken back by deleting the account.
+const AGENT_FUND = "0.03";
+const KEY_ALLOWANCE = near("0.25");
 const AGENTS = [
   { id: N.pay, tier: "trusted", per: "0.05", daily: "0.1", what: "Pay Agent: what you type" },
   { id: N.inbox, tier: "untrusted", per: "0.02", daily: "0.05", what: "Inbox Agent: what you paste; allowed list only" },
@@ -76,8 +81,13 @@ const steps = [
   ...AGENTS.map((a, i) => ({
     n: i + 2,
     to: a.id,
-    say: `Create ${a.id} (${a.what}) with ${AGENT_FUND} NEAR for gas, and a key that may only call pay on ${N.limits}`,
-    build: () => [actions.createAccount(), actions.transfer(near(AGENT_FUND)), actions.addFunctionCallAccessKey(agentKey(a.id).getPublicKey(), N.limits, ["pay"], KEY_ALLOWANCE)],
+    say: `Create ${a.id} (${a.what}) with ${AGENT_FUND} NEAR for gas, a key that may only call pay on ${N.limits}, and ${OWNER}'s key so it can be deleted and its NEAR returned`,
+    build: () => [
+      actions.createAccount(),
+      actions.transfer(near(AGENT_FUND)),
+      actions.addFunctionCallAccessKey(agentKey(a.id).getPublicKey(), N.limits, ["pay"], KEY_ALLOWANCE),
+      actions.addFullAccessKey(KeyPair.fromString(ownerKey().secretKey).getPublicKey()),
+    ],
   })),
   {
     n: 5,
@@ -120,7 +130,7 @@ if (process.argv.includes("--check")) {
   const o = owner();
   const pay = new Account(N.pay, provider, JSON.parse(readFileSync(keyFile(N.pay), "utf8")).secretKey);
   const inbox = new Account(N.inbox, provider, JSON.parse(readFileSync(keyFile(N.inbox), "utf8")).secretKey);
-  const fc = (m, a, d = 0n) => [actions.functionCall(m, a, GAS, d)];
+  const fc = (m, a, d = 0n) => [actions.functionCall(m, a, m === "pay" ? PAY_GAS : GAS, d)];
   const friend = `friend.${OWNER}`;
   await send(o, N.limits, fc("block", { account: `drain.${OWNER}`, reason: "Scam in the trial" }, ONE_YOCTO), "owner blocks drain");
   const t = [

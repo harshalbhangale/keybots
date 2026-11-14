@@ -91,6 +91,14 @@ export function sellArgs(a: SellArgs) {
 
 const EMPTY_CODE = "11111111111111111111111111111111";
 
+/**
+ * Gas attached to `pay`. NEAR wants the agent's balance and key allowance to
+ * cover a pessimistic bound of about 10x it up front, so a small budget (Spend
+ * Limits Lite on mainnet: 0.06 NEAR an agent) sets AIRKEY_PAY_TGAS=20. A Lite
+ * payment really uses about 4.4 TGas.
+ */
+const PAY_GAS = BigInt(Number(process.env.AIRKEY_PAY_TGAS ?? 50) || 50) * 1_000_000_000_000n;
+
 function readKey(cfg: Config, accountId: string): string {
   const envName = `AIRKEY_KEY_${accountId.split(".")[0].toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
   if (process.env[envName]) return process.env[envName]!;
@@ -171,7 +179,7 @@ export function nearChain(cfg: Config): Chain {
       return { exists, isContract, createdAtNs };
     },
     async pay(agent, args) {
-      const { decision, txHash, events } = await callLeash(agent, "pay", args, 50_000_000_000_000n);
+      const { decision, txHash, events } = await callLeash(agent, "pay", args, PAY_GAS);
       return { decision, txHash, events };
     },
     // A swap wraps NEAR, sends it on and waits for the venue. 200 TGas keeps the
