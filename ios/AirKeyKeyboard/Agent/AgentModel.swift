@@ -74,6 +74,9 @@ final class AgentModel {
     var vaultItems: [Vault.Item] = []
     /// The trade a copied crypto call could be, ready to hold (POST /v1/call).
     var callIntent: Ready?
+    /// The message text when the call chip came up: typing anything new
+    /// means you moved on, and the chip goes.
+    @ObservationIgnored private var callFor: String?
     /// The paste guard: an address that arrived whole and isn't one you know.
     var pasteWarning: String?
 
@@ -117,6 +120,10 @@ final class AgentModel {
     /// keyboard's own strip already has an answer for it (a sum, a unit).
     func read(_ text: String, answered: Bool) {
         guardPaste(old: lastText, new: text)
+        if callIntent != nil, let callFor, text != callFor {
+            callIntent = nil
+            self.callFor = nil
+        }
         lastText = text
         let next = Intent.read(text)
         if next != intent { intent = next }
@@ -326,6 +333,7 @@ final class AgentModel {
             }
             callIntent = Ready(kind: .swap, title: title, detail: nil, verb: r.side == "sell" ? "sell" : "buy",
                                command: command, lines: Self.callLines(check), callId: check.id)
+            callFor = lastText
             Haptics.chip()
         }
     }
