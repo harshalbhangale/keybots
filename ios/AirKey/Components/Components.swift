@@ -98,22 +98,32 @@ struct OutcomeCard: View {
     }
 }
 
+/// A label and its value on one row; a long value moves under its label
+/// instead of being cut.
 struct KeyValue: View {
     let key: String
     let value: String
     var mono = false
     var color: Color = AK.bone
 
+    private var valueText: some View {
+        Text(value)
+            .font(mono ? .footnote.monospaced() : .subheadline.weight(.medium))
+            .foregroundStyle(color)
+    }
+
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(key).font(.subheadline).foregroundStyle(AK.muted).layoutPriority(1)
-            Spacer(minLength: 16)
-            Text(value)
-                .font(mono ? AK.mono : .subheadline.weight(.medium))
-                .foregroundStyle(color)
-                .multilineTextAlignment(.trailing)
-                .lineLimit(2)
-                .truncationMode(.middle)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 16) {
+                Text(key).font(.subheadline).foregroundStyle(AK.muted).fixedSize()
+                Spacer(minLength: 0)
+                valueText.lineLimit(1).fixedSize()
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(key).font(.subheadline).foregroundStyle(AK.muted)
+                valueText.fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
     }
@@ -132,11 +142,11 @@ struct SpendBar: View {
     var body: some View {
         GeometryReader { g in
             ZStack(alignment: .leading) {
-                Capsule().fill(AK.raised)
+                Capsule().fill(AK.line)
                 Capsule().fill(share > 0.85 ? AK.amber : color).frame(width: share > 0 ? max(4, g.size.width * share) : 0)
             }
         }
-        .frame(height: 4)
+        .frame(height: 5)
         .accessibilityLabel("\(Int(share * 100)) percent of today's limit used")
     }
 }
@@ -164,6 +174,7 @@ struct ApprovalCard: View {
     private var working: Bool { model.busy == "approve" || model.busy == "reject" }
 
     var body: some View {
+        let why = Plain.pendingParts(pending)
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
                 Text(Fmt.near(pending.amount)).font(AK.number(30)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.6)
@@ -171,60 +182,78 @@ struct ApprovalCard: View {
                 Pill(text: "Waiting for you", color: AK.amberText)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("to \(Plain.name(pending.receiver))").font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("To").font(.subheadline).foregroundStyle(AK.muted)
+                    Text(Plain.name(pending.receiver)).font(.subheadline.monospaced()).foregroundStyle(AK.bone)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
                 if let memo = pending.memo, !memo.isEmpty {
-                    Text("for \(memo)").font(.subheadline).foregroundStyle(AK.muted)
+                    Text("For \(memo)").font(.subheadline).foregroundStyle(AK.muted)
                 }
             }
-            Text(Plain.pending(pending))
-                .font(.footnote)
-                .foregroundStyle(AK.muted)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                Button(role: .destructive) {
-                    Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
-                } label: {
-                    Text(model.busy == "reject" ? "…" : "Reject")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(why.reason).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
+                if let from = why.from {
+                    Text(from).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(BigButtonStyle(primary: false, height: 50))
-                .frame(width: 96)
-                .disabled(working)
+            }
+            // Reject takes a third, approve two thirds, so neither label is cut.
+            GeometryReader { g in
+                let reject = (g.size.width - 10) / 3
+                HStack(spacing: 10) {
+                    Button(role: .destructive) {
+                        Task { await model.owner("reject", ["id": pending.id], reason: "Reject \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
+                    } label: {
+                        Text(model.busy == "reject" ? "…" : "Reject")
+                    }
+                    .buttonStyle(BigButtonStyle(primary: false, height: 50))
+                    .frame(width: reject)
+                    .disabled(working)
 
-                // Approving pays someone, so it takes a hold, then Face ID.
-                HoldToConfirm(
-                    label: model.busy == "approve" ? "Signing…" : "Hold to approve",
-                    icon: "faceid",
-                    height: 50,
-                    font: .body.weight(.semibold),
-                    disabled: working
-                ) {
-                    Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
+                    // Approving pays someone, so it takes a hold, then Face ID.
+                    HoldToConfirm(
+                        label: model.busy == "approve" ? "Signing…" : "Hold to approve",
+                        icon: "faceid",
+                        height: 50,
+                        font: .body.weight(.semibold),
+                        disabled: working
+                    ) {
+                        Task { await model.owner("approve", ["id": pending.id], reason: "Pay \(Fmt.near(pending.amount)) to \(Plain.name(pending.receiver))") }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
+            .frame(height: 50)
         }
         .padding(16)
         .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: AK.radius, style: .continuous).stroke(AK.amber.opacity(0.55), lineWidth: 1))
     }
 }
 
-/// One line of activity: what happened, what was said and when, and a badge.
+/// One line of activity: the icon gives the verdict, a short title says what
+/// happened, the account sits whole on its own line, then what it was for,
+/// where it came from and when.
 struct ReceiptRow: View {
     let r: Receipt
 
     var body: some View {
-        let b = r.badge
-        HStack(alignment: .center, spacing: 12) {
+        let p = Plain.row(r)
+        let meta = [p.memo.map { "For \($0)" }, r.input.source == "typed" ? "Typed" : "Copied", Fmt.time(r.date)]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+        HStack(alignment: .top, spacing: 12) {
             SignalBadge(signal: r.signal, size: 32)
             VStack(alignment: .leading, spacing: 2) {
-                Text(Plain.line(r)).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
-                Text([r.input.source == "typed" ? "Typed" : "Copied", Fmt.time(r.date)].filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(.footnote)
-                    .foregroundStyle(AK.muted)
-                    .lineLimit(1)
+                Text(p.title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let account = p.account {
+                    Text(account).font(.footnote.monospaced()).foregroundStyle(AK.bone.opacity(0.85))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                Text(meta).font(.footnote).foregroundStyle(AK.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 8)
-            Badge(text: b.text, color: b.color, filled: b.filled)
+            .padding(.top, 1)
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -263,10 +292,11 @@ struct Screen<Content: View>: View {
                 content
             }
             .padding(.horizontal, AK.gutter)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
+            .padding(.top, 4)
+            .padding(.bottom, 32)
         }
         .scrollIndicators(.hidden)
+        .scrollEdgeEffectStyle(.hard, for: .bottom)
         .background { Ambient(tint: tint) }
         .refreshable { await model.refresh() }
     }
