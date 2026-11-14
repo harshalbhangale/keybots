@@ -44,7 +44,7 @@ const makeRhea = () => ({
 });
 
 /** The leash: the Trading Agent may spend 1 NEAR a trade, 2 a day. Refusals come back as a successful tx with a `blocked` event. */
-function fakeLeash(opts: { paused?: boolean; spent?: bigint; slow?: boolean; fills?: boolean } = {}) {
+function fakeLeash(opts: { paused?: boolean; spent?: bigint; slow?: boolean; fills?: boolean; throws?: boolean } = {}) {
   const sent: Record<string, unknown>[] = [];
   const agent = { tier: "trusted" as const, per_payment_cap: String(NEAR), daily_cap: String(2n * NEAR), spent_today: String(opts.spent ?? 0n), day: DAY };
   const chain: Chain = {
@@ -57,6 +57,7 @@ function fakeLeash(opts: { paused?: boolean; spent?: bigint; slow?: boolean; fil
     },
     swap: async (_agent, args) => {
       sent.push(args);
+      if (opts.throws) throw new Error("RPC timed out");
       if (opts.slow) await new Promise((r) => setTimeout(r, 50));
       const amount = BigInt(args.amount);
       const no = (rule: string, reason: string) => {
@@ -165,7 +166,9 @@ describe("POST /v1/trade/review", () => {
       within: true,
       sentence: "The Trading Agent can spend up to 1 NEAR a trade and 2 NEAR a day. You can stop it.",
       willRefuse: null,
+      refusedBy: null,
     });
+    expect(r.ttlSeconds).toBe(30);
     expect(sent).toHaveLength(0);
   });
 
@@ -178,7 +181,29 @@ describe("POST /v1/trade/review", () => {
   it("says when the contract will refuse it", async () => {
     expect((await setup().review({ callId: "kall-111", usd: 3 })).json().limits).toMatchObject({ within: false, willRefuse: "Over the 1 NEAR per-trade limit: the contract will refuse it." });
     expect((await setup({ spent: 1800n * 10n ** 21n }).review({ callId: "kall-111" })).json().limits.willRefuse).toBe("Over the 2 NEAR daily limit (1.8 NEAR spent today): the contract will refuse it.");
-    expect((await setup({ paused: true }).review({ callId: "kall-111" })).json().limits).toMatchObject({ stopped: true, willRefuse: "Stop everything is on: AIRKEY won't send it." });
+    expect((await setup({ paused: true }).review({ callId: "kall-111" })).json().limits).toMatchObject({ stopped: true, willRefuse: "Stop everything is on: AIRKEY won't send it.", refusedBy: "server" });
+    expect((await setup().review({ callId: "kall-111", usd: 3 })).json().limits.refusedBy).toBe("contract");
+  });
+
+  it("while one reviewed trade is sending, a second review can't be confirmed", async () => {
+    const { review, confirm, sent } = setup({ slow: true });
+    const first = (await review({ callId: "kall-111" })).json().reviewId;
+    const second = (await review({ callId: "kall-111" })).json().reviewId;
+    const [a, b] = await Promise.all([confirm(first), confirm(second)]);
+    expect(a.statusCode).toBe(200);
+    expect(b.statusCode).toBe(409);
+    expect(b.json()).toEqual({ error: "Another trade is still being sent. Wait for its result." });
+    expect(sent).toHaveLength(1);
+  });
+
+  it("when NEAR doesn't answer, the result is unknown, never 'failed', and it isn't retried", async () => {
+    const { review, confirm, sent } = setup({ throws: true });
+    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const r = (await confirm(reviewId)).json();
+    expect(r).toMatchObject({ status: "unknown", receipt: { receive: null, tx: null } });
+    expect(r.receipt.summary).toContain("can't say if it went through");
+    expect((await confirm(reviewId)).json()).toMatchObject({ status: "unknown", repeat: true });
+    expect(sent).toHaveLength(1);
   });
 
   it("refuses in plain words what it can't trade", async () => {
