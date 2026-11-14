@@ -24,6 +24,8 @@ export interface Config {
   openAi: { apiKey: string; model: string; base: string };
   /** "openai" (default): OpenAI answers when NEAR AI Cloud can't. "off": NEAR AI Cloud or nothing (the demo recording). */
   aiFallback: "openai" | "off";
+  /** Serper's web search, for the keyboard's search. SERPER_API_KEY or keys/serper.key; empty means search is off. */
+  serperKey: string;
   /** Mainnet spends real money: no swap above this many dollars, whatever the command says. */
   mainnetUsdCap: number;
   /** Kall Markets' API, where the calls of the KOLs you follow come from. */
@@ -78,6 +80,7 @@ export function loadConfig(env = process.env): Config {
       base: env.OPENAI_BASE ?? "https://api.openai.com/v1",
     },
     aiFallback: env.AIRKEY_AI_FALLBACK === "off" ? "off" : "openai",
+    serperKey: env.SERPER_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "serper.key")),
     mainnetUsdCap: Number(env.AIRKEY_MAINNET_USD_CAP ?? 0.15),
     kallApi: env.KALL_API ?? "https://kallmarkets.vercel.app",
     autoTrade: env.AIRKEY_AUTO_TRADE === "on",
