@@ -35,6 +35,30 @@ The last end-to-end run passed 9 of 9, every step a real transaction: **[docs/ev
 
 ## Try it
 
+### 0. Without a phone or keys
+
+**A dry run against the live leash.** It reads the words with the server's own rules, reads the leash's state on testnet with public view calls, and applies the contract's rules in the contract's order for the agent that would act (what you type: the trusted Pay Agent; `--pasted`: the untrusted Inbox Agent; swaps: the Trading Agent). No keys, nothing sent.
+
+```bash
+cd server && npm install
+npm run try -- "pay harshal 0.2 for dinner"
+npm run try -- "pay drain 5" --pasted
+npm run try -- "pay vendor 0.4 for the logo" --pasted
+npm run try -- "swap 0.3 near to usdc"
+```
+
+```
+You pasted    pay vendor 0.4 for the logo
+Agent         Inbox Agent (inbox.airkey-harshal.testnet), untrusted
+Leash         leash.airkey-harshal.testnet: 1.20 NEAR, Stop everything off
+Verdict       Would wait for the owner's Face ID: vendor.airkey-harshal.testnet is new and the Inbox Agent can only pay allowed accounts
+Why           within 0.5 NEAR per payment and 1.0 NEAR today (0.0 spent); the contract holds it until the owner approves
+
+Dry run: nothing was sent. The contract makes this decision on chain when the agent sends it; see the transactions in docs/DEMO.md.
+```
+
+**The leash, live, in a browser.** The AIRKEY server serves a public read-only page at `GET /leash` (no token): the leash's NEAR, Stop everything, each agent's limits and today's spend, the blocked and allowed lists, anything waiting for the owner, and the last decisions as plain lines with their transactions. Run it locally with `cd server && npm run dev`, then open `http://localhost:8787/leash`. Screenshot: [docs/screens/leash-page.png](docs/screens/leash-page.png).
+
 ### 1. The leash's rules (no chain needed)
 
 ```bash
