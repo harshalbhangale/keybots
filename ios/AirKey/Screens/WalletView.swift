@@ -9,8 +9,10 @@ struct WalletView: View {
     let open: (Receipt) -> Void
 
     private var network: String {
-        (model.state?.explorer.contains("testnet") ?? true) ? "On NEAR testnet" : "On NEAR"
+        (model.state?.explorer.contains("testnet") ?? true) ? "On NEAR testnet" : "On NEAR mainnet"
     }
+
+    private var onMainnet: Bool { !(model.state?.explorer.contains("testnet") ?? true) }
 
     var body: some View {
         Screen(tint: model.mood) {
@@ -25,6 +27,7 @@ struct WalletView: View {
                 }
                 .accessibilityLabel("Settings")
             }
+            NetworkSwitch()
             VStack(alignment: .leading, spacing: 12) {
                 balances
                 if model.state?.pending.isEmpty ?? true { status }
@@ -47,7 +50,7 @@ struct WalletView: View {
             if let pending = model.state?.pending {
                 ForEach(pending) { ApprovalCard(pending: $0) }
             }
-            SwapCard()
+            if !onMainnet { SwapCard() }
             if !model.watching.isEmpty { watching }
             FollowingSection()
             recent
