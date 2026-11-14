@@ -54,6 +54,10 @@ Every decision is logged as a NEP-297 event (`standard: "airkey"`): `paid`, `pen
 
 On mainnet the same method funds a NEAR Intents deposit address instead; Spend Limits has enforced no mainnet swap yet.
 
+## Spend Limits Lite (mainnet)
+
+On mainnet, Spend Limits Lite runs at `limits.hellbuddy.near` (code in `contracts/limits-lite/`). It checks payments with the same rules in the same order (R1–R7, then R0), with two differences: R6 and R7 stop the payment instead of leaving it waiting for the owner, and it has no swaps.
+
 ## What Spend Limits does not do
 
 - It does not judge who a new receiver is. Account age, contract code changes and past payments are checked off-chain by the AirKey server before it calls `pay`, and it passes `ask_owner: true` when the check warns.
