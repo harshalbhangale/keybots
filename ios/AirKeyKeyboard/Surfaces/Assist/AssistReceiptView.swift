@@ -54,11 +54,15 @@ struct AssistReceiptCard: View {
                 Image(systemName: headerIcon)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(receipt.isPrivate ? p.mark : p.amber)
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text(header).font(.headline).foregroundStyle(p.text)
-                    Text(receipt.isNear ? "NEAR AI · \(Self.shortModel(receipt.model))\(receipt.ms.map { " · \(Self.duration($0))" } ?? "")"
-                         : "OpenAI · \(Self.shortModel(receipt.model))")
-                        .font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                    HStack(spacing: 5) {
+                        Text(receipt.isNear ? "NEAR AI\(receipt.ms.map { " · \(Self.duration($0))" } ?? "")" : "OpenAI")
+                            .font(.caption).foregroundStyle(p.soft)
+                        // The model's name is for the curious: a small grey label.
+                        Text(Self.shortModel(receipt.model)).font(.caption2).foregroundStyle(p.soft.opacity(0.7))
+                    }
+                    .lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 Button(action: close) {
@@ -69,11 +73,20 @@ struct AssistReceiptCard: View {
                 .buttonStyle(.plain)
             }
             .accessibilityElement(children: .combine)
+            // The four checks that matter, whole, with their own corners.
+            if receipt.isNear {
+                group {
+                    ForEach(Array(checkRows.prefix(4).enumerated()), id: \.element.name) { i, row in
+                        if i > 0 { divider }
+                        check(row)
+                    }
+                }
+            }
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 12) {
                     if receipt.isNear {
                         group {
-                            ForEach(Array(checkRows.enumerated()), id: \.element.name) { i, row in
+                            ForEach(Array(checkRows.dropFirst(4).enumerated()), id: \.element.name) { i, row in
                                 if i > 0 { divider }
                                 check(row)
                             }
@@ -113,11 +126,11 @@ struct AssistReceiptCard: View {
                 .padding(.bottom, 4)
             }
             .scrollEdgeEffectHidden(true, for: .all)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(p.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(p.line, lineWidth: 0.5))
     }
 
     private var header: String {
@@ -138,10 +151,10 @@ struct AssistReceiptCard: View {
         default: .unavailable
         }
         return [
-            CheckRow(name: "Answer signed", state: sig),
-            CheckRow(name: "Signer is the checked machine", state: receipt.state("signerMatch")),
-            CheckRow(name: "Intel TDX chip", state: receipt.state("tdxQuote")),
-            CheckRow(name: "NVIDIA GPU", state: receipt.state("nvidia")),
+            CheckRow(name: "Reply signed", state: sig),
+            CheckRow(name: "Signed inside a sealed machine", state: receipt.state("signerMatch")),
+            CheckRow(name: "Processor checked", state: receipt.state("tdxQuote")),
+            CheckRow(name: "Graphics chip checked", state: receipt.state("nvidia")),
             CheckRow(name: "Fresh check, not a replay", state: receipt.state("nonce")),
             CheckRow(name: "Software matches", state: receipt.state("composeHash")),
         ]
@@ -167,14 +180,19 @@ struct AssistReceiptCard: View {
         case .failed: ("xmark.circle.fill", "Failed", p.amber)
         case .unavailable: ("minus.circle", "Not available", p.soft)
         }
+        // The icon says passed; only a failure or a gap gets a word.
         return HStack(spacing: 10) {
             Image(systemName: icon).font(.system(size: 15)).foregroundStyle(color).frame(width: 20)
-            Text(row.name).font(.footnote).foregroundStyle(p.text).lineLimit(2)
+            Text(row.name).font(.footnote).foregroundStyle(p.text)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 6)
-            Text(word).font(.caption.weight(.medium)).foregroundStyle(row.state == .failed ? p.amber : p.soft)
+            if row.state != .passed {
+                Text(word).font(.caption.weight(.medium)).foregroundStyle(row.state == .failed ? p.amber : p.soft)
+            }
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(row.name): \(word)")
     }
 
     private func item(_ text: String, icon: String, tint: Color) -> some View {
