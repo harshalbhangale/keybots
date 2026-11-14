@@ -21,7 +21,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: tech.airkey.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
     entitlements:
       path: AirKey/AirKey.entitlements
       properties:
@@ -32,7 +31,6 @@ targets:
         CFBundleDisplayName: AIRKEY
         UILaunchScreen:
           UIColorName: LaunchInk
-        UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSFaceIDUsageDescription: AIRKEY uses Face ID before you approve a payment or change your limits.
         NSLocalNetworkUsageDescription: AIRKEY talks to your AIRKEY server on this network to run your agents.

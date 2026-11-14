@@ -1,6 +1,16 @@
 import Foundation
 
 enum Fmt {
+    /// A command as a sentence: "sell 1 near" -> "Sell 1 NEAR".
+    static func sentence(_ text: String) -> String {
+        let tokens: Set<String> = ["near", "usdc", "usdt", "eth", "btc", "sol", "wnear"]
+        let words = text.split(separator: " ", omittingEmptySubsequences: false).map { w in
+            tokens.contains(w.lowercased()) ? w.uppercased() : String(w)
+        }
+        let s = words.joined(separator: " ")
+        return s.prefix(1).uppercased() + s.dropFirst()
+    }
+
     /// yoctoNEAR (decimal string) -> "0.5 NEAR", exact, trimmed to 4 decimals.
     static func near(_ yocto: String, unit: Bool = true) -> String {
         let digits = yocto.filter(\.isNumber)

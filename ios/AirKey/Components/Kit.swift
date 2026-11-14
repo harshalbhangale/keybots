@@ -1,36 +1,48 @@
 import SwiftUI
 
-// The app's building blocks, after Kall Markets' look: near-black, graphite
-// cards with hairlines, a mono eyebrow over a heavy uppercase title that ends
-// in a lime full stop, heavy uppercase buttons, big lime numbers.
+// The app's building blocks: system-grouped surfaces, SF Pro, sentence case,
+// one lime accent. Each card leads with one number or verdict.
 
 extension AK {
-    static let graphite = Color(red: 0.102, green: 0.102, blue: 0.102)
-    static let hairline = Color(red: 0.165, green: 0.165, blue: 0.165)
+    static let graphite = AK.surface
+    static let hairline = AK.line
+    /// The fill behind a secondary button on a card: readable in dark mode.
+    static let fill = Color(light: 0xE9E9EE, dark: 0x3A3A3C)
 }
 
-/// The keycap mark, a mono eyebrow, and a heavy title ending in a lime full stop.
+/// A screen header like a first-party app: a real navigation large title
+/// that collapses to an inline title with a bar as you scroll, an optional
+/// quiet line under it (only where it says something about state), and an
+/// optional control in the toolbar.
 struct Masthead<Trailing: View>: View {
     let eyebrow: String
     let title: String
     @ViewBuilder var trailing: Trailing
 
+    private var hasTrailing: Bool { Trailing.self != EmptyView.self }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                KeycapMark(size: 26)
+        Group {
+            if eyebrow.isEmpty {
+                Color.clear.frame(height: 0).accessibilityHidden(true)
+            } else {
                 Text(eyebrow)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.subheadline)
                     .foregroundStyle(AK.muted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Spacer(minLength: 8)
-                trailing
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, -4)
+                    .padding(.top, -14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            (Text(title).foregroundColor(AK.bone) + Text(".").foregroundColor(AK.accent))
-                .font(.system(size: 36, weight: .black))
-                .tracking(-1)
-                .accessibilityAddTraits(.isHeader)
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.large)
+        // Once content scrolls under it, the inline title sits on a solid bar.
+        .toolbarBackground(AK.canvas, for: .navigationBar)
+        .toolbar {
+            if hasTrailing {
+                ToolbarItem(placement: .topBarTrailing) { trailing }
+            }
         }
     }
 }
@@ -41,7 +53,7 @@ extension Masthead where Trailing == EmptyView {
     }
 }
 
-/// A graphite card with a hairline edge.
+/// A grouped card.
 struct Card<Content: View>: View {
     var padding: CGFloat = 16
     var spacing: CGFloat = 12
@@ -51,71 +63,68 @@ struct Card<Content: View>: View {
         VStack(alignment: .leading, spacing: spacing) { content }
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AK.graphite.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(AK.hairline))
+            .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
 
-/// A small heavy lime label at the top of a card: "SWAP NEAR", "SET UP".
+/// A card's heading: "Swap NEAR".
 struct CardTitle: View {
     let text: String
     var icon: String?
-    var color: Color = AK.accent
+    var color: Color = AK.bone
 
     var body: some View {
         Group {
             if let icon { Label(text, systemImage: icon) } else { Text(text) }
         }
-        .font(.system(size: 12, weight: .heavy))
+        .font(.headline)
         .foregroundStyle(color)
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
-/// A balance: mono label, big number, an optional line under it.
+/// A balance: a quiet label, one big number, an optional line under it.
 struct Stat: View {
     let label: String
     let value: String?
     var sub: String?
-    var color: Color = AK.accent
+    var color: Color = AK.bone
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(AK.muted)
-            Text(value ?? "…")
-                .font(.system(size: 28, weight: .black).monospacedDigit())
+            Text(label).font(.footnote.weight(.medium)).foregroundStyle(AK.muted).lineLimit(1)
+            Text(value ?? "–")
+                .font(.system(.title, design: .rounded, weight: .semibold).monospacedDigit())
                 .foregroundStyle(color)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .contentTransition(.numericText())
-            if let sub {
-                Text(sub).font(.system(size: 11, weight: .semibold).monospacedDigit()).foregroundStyle(AK.muted).lineLimit(1).minimumScaleFactor(0.8)
-            }
+            Text(sub ?? " ").font(.footnote).foregroundStyle(AK.muted).lineLimit(1).minimumScaleFactor(0.8)
         }
         .frame(maxHeight: .infinity, alignment: .topLeading)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(AK.graphite, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(AK.hairline))
+        .padding(16)
+        .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
 
-/// Heavy uppercase buttons: lime for the main thing, graphite for the rest.
+/// Buttons: lime for the main thing, a quiet fill for the rest.
 struct BigButtonStyle: ButtonStyle {
     var primary = true
     var height: CGFloat = 50
+    @Environment(\.isEnabled) private var enabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .heavy))
-            .tracking(0.5)
-            .foregroundStyle(primary ? AK.ink : AK.bone)
+            .font(.body.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .foregroundStyle(primary ? AK.ink : (enabled ? AK.bone : AK.muted))
+            .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: height)
-            .background(primary ? AK.accent : AK.graphite, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay {
-                if !primary { RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(AK.hairline) }
-            }
-            .opacity(configuration.isPressed ? 0.75 : 1)
+            .background(primary ? AK.accent : AK.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .opacity(configuration.isPressed ? 0.7 : 1)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.snappy(duration: 0.15), value: configuration.isPressed)
     }
@@ -126,7 +135,7 @@ extension ButtonStyle where Self == BigButtonStyle {
     static var bigSecondary: BigButtonStyle { BigButtonStyle(primary: false) }
 }
 
-/// A short uppercase status: PAID, SWAPPED, BLOCKED, WAITING.
+/// A short status: Paid, Swapped, Blocked, Waiting.
 struct Badge: View {
     let text: String
     let color: Color
@@ -134,11 +143,13 @@ struct Badge: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 10, weight: .heavy))
+            .font(.caption.weight(.semibold))
             .foregroundStyle(filled ? AK.ink : color)
+            .lineLimit(1)
             .padding(.horizontal, 8)
-            .frame(height: 22)
-            .background(filled ? color : AK.graphite, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .padding(.vertical, 3)
+            .background(filled ? AnyShapeStyle(AK.accent) : AnyShapeStyle(color.opacity(0.14)), in: Capsule())
+            .fixedSize()
     }
 }
 
@@ -146,13 +157,13 @@ extension Receipt {
     /// The badge a receipt gets in lists.
     var badge: (text: String, color: Color, filled: Bool) {
         switch outcome {
-        case "paid": ("PAID", AK.accent, true)
-        case "swapped": ("SWAPPED", AK.accent, true)
-        case "approval": ("WAITING", AK.amber, true)
-        case "blocked": ("BLOCKED", AK.red, false)
-        case "quoted": ("QUOTE", AK.bone, false)
-        case "watching": ("WATCHING", AK.bone, false)
-        default: ("NOT SENT", AK.muted, false)
+        case "paid": ("Paid", AK.accent, true)
+        case "swapped": ("Swapped", AK.accent, true)
+        case "approval": ("Waiting", AK.amberText, false)
+        case "blocked": ("Blocked", AK.redText, false)
+        case "quoted": ("Quote", AK.muted, false)
+        case "watching": ("Watching", AK.muted, false)
+        default: ("Not sent", AK.muted, false)
         }
     }
 }
@@ -164,41 +175,50 @@ struct NumberedStep: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Text(String(format: "%02d", n)).font(.system(size: 12, design: .monospaced)).foregroundStyle(AK.accent)
+            Text("\(n)").font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(AK.muted).frame(minWidth: 16, alignment: .leading)
             Text(text).font(.subheadline).foregroundStyle(AK.bone).fixedSize(horizontal: false, vertical: true)
         }
     }
 }
 
-/// A mono address with Copy and a link to the explorer.
+/// An account under a plain label, the full ID on its own line (wrapping,
+/// never cut), and one copy button.
 struct AddressRow: View {
+    let label: String
     let address: String
-    var url: URL?
     @State private var copied = false
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
-        HStack(spacing: 10) {
-            Text(address).font(.system(size: 12, design: .monospaced)).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(label).font(.subheadline).foregroundStyle(AK.muted)
+                Text(address)
+                    .font(.footnote.monospaced())
+                    .foregroundStyle(AK.bone)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
+            .accessibilityElement(children: .combine)
             Spacer(minLength: 4)
             Button {
                 UIPasteboard.general.string = address
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                copied = true
+                withAnimation(.snappy) { copied = true }
+                Task { try? await Task.sleep(for: .seconds(1.6)); withAnimation(.snappy) { copied = false } }
             } label: {
-                Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 12, weight: .bold)).foregroundStyle(AK.bone)
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(AK.accentText)
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            if let url {
-                Button { openURL(url) } label: {
-                    Image(systemName: "arrow.up.right.square").font(.system(size: 15, weight: .semibold)).foregroundStyle(AK.muted)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("See it on NEAR")
-            }
+            .accessibilityLabel(copied ? "Copied" : "Copy account ID")
         }
-        .padding(12)
-        .background(AK.graphite, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.leading, 16)
+        .padding(.trailing, 6)
+        .padding(.vertical, 10)
+        .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
     }
 }
