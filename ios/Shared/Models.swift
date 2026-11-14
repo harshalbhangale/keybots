@@ -140,6 +140,7 @@ struct Receipt: Decodable, Identifiable {
         let venue: String
         let exchange: String
         let amountIn: String
+        let symbolIn: String?
         let amountOut: String?
         let symbolOut: String
         let ok: Bool

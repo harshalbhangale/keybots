@@ -61,8 +61,9 @@ enum Plain {
 
         case "swapped":
             guard let x = r.swap?.executed else { return nil }
-            guard let out = x.amountOut else { return "Swapping \(x.amountIn) NEAR for \(x.symbolOut)" }
-            return "Swapped \(x.amountIn) NEAR for \(tidy(out)) \(x.symbolOut)"
+            let sold = x.symbolIn ?? "NEAR"
+            guard let out = x.amountOut else { return "Swapping \(x.amountIn) \(sold) for \(x.symbolOut)" }
+            return "Swapped \(x.amountIn) \(sold) for \(tidy(out)) \(x.symbolOut)"
 
         case "approval":
             if rule == "R6" { return "Waiting for you: \(name) isn't on your allowed list" }
