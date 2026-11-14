@@ -2,7 +2,7 @@ import { attestations } from "./attest.js";
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActMoney, ActUnavailable, act, type ActAction } from "./act.js";
 import { MONEY_REFUSAL, plainError, readAssistBody, runAssist } from "./assist.js";
-import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
+import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps, cleanClient } from "./agent.js";
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
 import { GifsUnavailable, gifClient, type GifClient } from "./gifs.js";
 import { followJson, followPoller, memoryFollows, parseFollow, recordOf, type FollowPoller, type FollowStore, type KolRecord } from "./follows.js";
@@ -103,7 +103,17 @@ export function buildApp(deps: Deps) {
   app.get("/v1/state", async () => {
     const [state, holdings] = await Promise.all([deps.chain.state(), deps.rhea ? deps.rhea.holdings(deps.cfg.leash).catch(() => []) : []]);
     // `active`: the three agent accounts this server signs for (named, or OutLayer's when that's on).
-    return { ...state, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings, active: deps.cfg.agents };
+    // A pending payment says which app asked for it, from the receipt that made it.
+    const clients = new Map<number, string>();
+    for (const r of deps.receipts.list(200)) {
+      const id = r.decision?.pending_id;
+      if (id != null && r.input.client) clients.set(Number(id), r.input.client);
+    }
+    const pending = ((state.pending ?? []) as Array<Record<string, unknown>>).map((p) => {
+      const c = clients.get(Number(p.id ?? p.pending_id));
+      return c ? { ...p, client: c } : p;
+    });
+    return { ...state, pending, explorer: deps.cfg.explorer, contacts: deps.cfg.contacts, holdings, active: deps.cfg.agents };
   });
 
   /** What swapping `amount` NEAR into a token gets on Rhea right now, before you hold to swap. */
@@ -140,7 +150,7 @@ export function buildApp(deps: Deps) {
   });
 
   /** Run one command. source: "typed" (from the owner) or "pasted" (from someone else). */
-  app.post<{ Body: { text?: unknown; source?: unknown; callId?: unknown } }>("/v1/command", async (req, reply) => {
+  app.post<{ Body: { text?: unknown; source?: unknown; callId?: unknown; client?: unknown } }>("/v1/command", async (req, reply) => {
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
     const source = req.body?.source === "pasted" ? "pasted" : req.body?.source === "typed" ? "typed" : null;
     if (!text || !source) return reply.code(400).send({ error: 'Send {"text": "...", "source": "typed" | "pasted"}' });
@@ -148,7 +158,8 @@ export function buildApp(deps: Deps) {
     const client = String(req.headers["x-airkey-client"] ?? "unknown").slice(0, 20);
     console.log(`${new Date().toISOString()} command from ${client} (${source}): ${JSON.stringify(text.slice(0, 120))}`);
     try {
-      const receipt = await runCommand(deps, text, source);
+      const fromApp = cleanClient(req.body?.client);
+      const receipt = await runCommand(deps, text, source, undefined, fromApp ? { client: fromApp } : {});
       // A hold on a copied call's chip: the calls book keeps what it came back with.
       if (typeof req.body?.callId === "string") {
         calls.traded(req.body.callId, { at: receipt.at, receiptId: receipt.id, outcome: receipt.outcome, message: receipt.message, tx: receipt.tx });

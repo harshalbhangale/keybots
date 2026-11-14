@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RHEA, sellRoute } from "../src/rhea.js";
-import { plainSummary, runCommand } from "../src/agent.js";
+import { cleanClient, plainSummary, runCommand } from "../src/agent.js";
 import { judge } from "../src/checks.js";
 import { loadConfig } from "../src/config.js";
 import type { Chain, Decision } from "../src/near.js";
@@ -491,5 +491,15 @@ describe("plain summary", () => {
       expect(r.summary).toBeDefined();
       expect(r.summary).not.toMatch(/leash|\bR\d\b|Agent|untrusted|yocto/i);
     }
+  });
+
+  it("keeps the app that sent a command on its receipt", async () => {
+    const { chain } = fakeChain();
+    const r = await runCommand({ cfg, chain, receipts: memoryStore() }, "pay vendor 0.2 for the logo", "pasted", undefined, { client: "claude-code" });
+    expect(r.input.client).toBe("claude-code");
+    expect(r.input.source).toBe("pasted");
+    expect(cleanClient("Claude-Code")).toBe("claude-code");
+    expect(cleanClient("<script>")).toBeUndefined();
+    expect(cleanClient(7)).toBeUndefined();
   });
 });

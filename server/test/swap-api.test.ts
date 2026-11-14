@@ -11,7 +11,7 @@ const rhea = {
   holdings: async () => [{ symbol: "USDT", token: "usdt.itachicara.testnet", amount: "0.1241" }],
 };
 const chain = { state: async () => ({ owner: "x.testnet", leash: "leash.x.testnet", paused: false, available: "1", agents: [], allowlist: [], blocklist: [], pending: [] }) };
-const app = () => buildApp({ cfg, chain: chain as never, receipts: {} as never, rhea: rhea as never });
+const app = () => buildApp({ cfg, chain: chain as never, receipts: { list: () => [] } as never, rhea: rhea as never });
 
 describe("swap API", () => {
   it("quotes NEAR into a token Rhea has a pool for, with the floor", async () => {

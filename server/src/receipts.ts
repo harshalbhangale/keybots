@@ -22,7 +22,8 @@ export interface Receipt {
    * Where the words came from: typed by the owner, pasted from someone else,
    * or a call from a KOL the owner follows (with who posted it and where).
    */
-  input: { text: string; source: Source; handle?: string; postUrl?: string };
+  /** `client`: the app that sent it when it isn't Keybots itself (e.g. "claude-code"). */
+  input: { text: string; source: Source; handle?: string; postUrl?: string; client?: string };
   interpretation: { action: Action; reader: "rules" | "near-ai-cloud" | "openai"; ai?: AiEvidence };
   agent?: { account: string; tier: "trusted" | "untrusted" };
   receiver?: { asked: string; account: string; via: "contacts" | "account" };

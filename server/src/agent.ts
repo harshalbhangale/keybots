@@ -96,12 +96,26 @@ export interface SwapOptions {
   leashDecides?: boolean;
   /** The least the owner was shown, in the token's units: the swap never accepts less. */
   minOut?: string;
+  /** Another app that sent the command (e.g. "claude-code"), kept on the receipt. */
+  client?: string;
+}
+
+/** A client name we keep: short, lowercase letters, digits and dashes only. */
+export function cleanClient(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const c = v.trim().toLowerCase().slice(0, 32);
+  return /^[a-z0-9-]+$/.test(c) ? c : undefined;
 }
 
 export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource, opts: SwapOptions = {}): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
   const withPost = (source === "follow" || source === "reviewed-call") && from;
-  const input = { text: text.slice(0, 2000), source, ...(withPost ? { handle: from.handle, ...(from.postUrl ? { postUrl: from.postUrl } : {}) } : {}) };
+  const input = {
+    text: text.slice(0, 2000),
+    source,
+    ...(withPost ? { handle: from.handle, ...(from.postUrl ? { postUrl: from.postUrl } : {}) } : {}),
+    ...(opts.client ? { client: opts.client } : {}),
+  };
   const base = { id: randomUUID(), at: new Date().toISOString(), input };
 
   // 1. Read it: rules first, an AI only for what the rules can't read.
