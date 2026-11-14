@@ -101,12 +101,12 @@ final class TradeModel {
         return "≈ \(Fmt.usd(out * p))"
     }
 
-    /// "Leash: 0.61 NEAR" for a side.
+    /// "Spend Limits: 0.61 NEAR" for a side.
     func held(_ side: Side) -> String? {
         let symbol = side == .pay ? from : to
-        if side == .pay, let b = live?.balance { return "Leash: \(b.amount) \(b.symbol)" }
+        if side == .pay, let b = live?.balance { return "Spend Limits: \(b.amount) \(b.symbol)" }
         guard let t = token(symbol) else { return nil }
-        return "Leash: \(t.balance ?? "0") \(symbol)"
+        return "Spend Limits: \(t.balance ?? "0") \(symbol)"
     }
 
     /// The token an order watches, as the server would pick it.

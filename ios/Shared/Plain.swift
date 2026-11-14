@@ -220,13 +220,14 @@ enum Plain {
     }
 
     private static let rewrites: [(String, String)] = [
-        (#"Blocked by the leash \(R\d\): "#, "Blocked: "),
-        (#"The leash would block this: "#, "Blocked: "),
+        (#"Blocked by the leash \(R\d\): "#, "Blocked by Spend Limits: "),
+        (#"The leash would block this: "#, "Spend Limits would block this: "),
         (#"\s*\(R\d\)"#, ""),
         (#"The Inbox Agent can't (trade|set one)"#, "A copied message can't $1"),
         (#"(?i)the kill switch is on|kill switch is on"#, "Stop everything is on"),
-        (#"The leash"#, "Your AIRKEY balance"),
-        (#"the leash"#, "your AIRKEY balance"),
+        (#"(The|the) leash contract"#, "Spend Limits"),
+        (#"(The|the) leash"#, "Spend Limits"),
+        (#"(your|Your) leash"#, "Spend Limits"),
         (#"(The|the) (Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
         (#"(Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
         (#"The agent asked you to approve this one"#, "AIRKEY asks you first for this one"),
