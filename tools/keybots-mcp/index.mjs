@@ -47,7 +47,7 @@ async function call(name, args = {}) {
     if (!/^\d+(\.\d+)?$/.test(amount) || !to) throw new Error("Give `to` and a plain `amount` like 0.3");
     const text = `pay ${to} ${amount}${args.note ? ` for ${String(args.note).slice(0, 120)}` : ""}`;
     const r = await api("/v1/command", { text, source: "pasted", client: "claude-code" });
-    return `${r.outcome}: ${r.summary ?? r.message ?? ""}${r.tx ? `\n${r.tx}` : ""}`.trim();
+    return `${r.outcome}: ${r.summary ?? r.message ?? ""}${r.tx?.url ? `\n${r.tx.url}` : ""}`.trim();
   }
   if (name === "keybots_status") {
     const [s, rs] = await Promise.all([api("/v1/state"), api("/v1/receipts?limit=5")]);
