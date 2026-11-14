@@ -49,8 +49,13 @@ struct AssistReceipt: Equatable {
     let signature: String
     /// "verified", "partial", "failed" or "not checked".
     let attestation: String
-    /// tdxQuote, nvidia, nonce, signerMatch, composeHash: passed or not.
-    let checks: [String: Bool]
+    /// tdxQuote, nvidia, nonce, signerMatch, composeHash: passed, failed or
+    /// unavailable (a missing key is unavailable too).
+    let checks: [String: CheckState]
+
+    enum CheckState: Equatable { case passed, failed, unavailable }
+
+    func state(_ key: String) -> CheckState { checks[key] ?? .unavailable }
     let ms: Int?
 
     var isNear: Bool { provider == "near-ai-cloud" }
@@ -226,10 +231,15 @@ struct AssistClient {
     }
 
     private static func receipt(_ j: [String: Any]) -> AssistReceipt {
-        var checks: [String: Bool] = [:]
+        var checks: [String: AssistReceipt.CheckState] = [:]
         for (k, v) in j["checks"] as? [String: Any] ?? [:] {
-            if let b = v as? Bool { checks[k] = b } else if let s = string(v) {
-                checks[k] = ["verified", "ok", "pass", "passed", "true", "match"].contains(s.lowercased())
+            if let b = v as? Bool {
+                checks[k] = b ? .passed : .failed
+            } else if let s = (v as? String)?.lowercased() {
+                checks[k] = ["verified", "ok", "pass", "passed", "true", "match"].contains(s) ? .passed
+                    : ["failed", "fail", "false", "mismatch", "invalid"].contains(s) ? .failed : .unavailable
+            } else {
+                checks[k] = .unavailable
             }
         }
         let ms = (j["ms"] as? NSNumber)?.intValue ?? string(j["ms"]).flatMap { Int($0) }

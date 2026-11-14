@@ -246,9 +246,15 @@ final class MoneyPanel: UIView {
 
     private let host: UIHostingController<AnyView>
     private let stop: () -> Void
+    /// Calls is showing a review: it takes the whole keyboard, strip and all.
+    private(set) var full = false
+    /// Called when `full` changes, so the keyboard lays itself out again.
+    var onFull: ((Bool) -> Void)?
 
-    init(kind: Kind, actions: MoneyActions, dark: Bool) {
+    /// `review`: a copied call's text, opened straight on its review.
+    init(kind: Kind, actions: MoneyActions, dark: Bool, review: String? = nil) {
         let scheme: ColorScheme = dark ? .dark : .light
+        var calls: CallsModel?
         switch kind {
         case .wallet:
             let model = WalletModel()
@@ -257,9 +263,18 @@ final class MoneyPanel: UIView {
         case .calls:
             let model = CallsModel()
             host = UIHostingController(rootView: AnyView(CallsView(model: model, actions: actions).environment(\.colorScheme, scheme)))
-            stop = { model.stop() }
+            stop = { model.stop(); model.journey?.stop() }
+            calls = model
         }
         super.init(frame: .zero)
+        if let calls {
+            calls.onFull = { [weak self] on in
+                guard let self, self.full != on else { return }
+                self.full = on
+                self.onFull?(on)
+            }
+            if let review { calls.review(text: review) }
+        }
         host.view.backgroundColor = .clear
         host.sizingOptions = []
         host.safeAreaRegions = []
