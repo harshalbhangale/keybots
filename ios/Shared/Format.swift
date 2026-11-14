@@ -73,6 +73,21 @@ enum Fmt {
         v.formatted(.currency(code: code).precision(.fractionLength(0...2)))
     }
 
+    /// "14 Nov, 09:42" in the phone's time zone.
+    static func stamp(_ date: Date?) -> String {
+        guard let date else { return "" }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_GB")
+        f.setLocalizedDateFormatFromTemplate("d MMM, HH:mm")
+        return f.string(from: date)
+    }
+
+    /// "14 Nov, 09:42 · 5 min ago".
+    static func when(_ date: Date?) -> String {
+        guard let date else { return "" }
+        return "\(stamp(date)) · \(time(date))"
+    }
+
     static func time(_ date: Date?) -> String {
         guard let date else { return "" }
         let f = RelativeDateTimeFormatter()
