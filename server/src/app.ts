@@ -1,6 +1,5 @@
 import Fastify from "fastify";
 import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
-import { aiRoutes, type AiRouteDeps } from "./ai-routes.js"; // GLYF AI HOOK
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
 import { GifsUnavailable, gifClient, type GifClient } from "./gifs.js";
@@ -30,7 +29,7 @@ export type Deps = CommandDeps & {
   followPoller?: FollowPoller;
   /** KLIPY's GIFs, through this server (the key stays here). Tests pass a client with a fake fetch. */
   gifs?: GifClient;
-} & AiRouteDeps;
+};
 
 /**
  * The follow poller for these deps: a followed KOL's call gets the copied
@@ -419,9 +418,6 @@ export function buildApp(deps: Deps) {
       return reply.code(502).send({ error: "KLIPY didn't answer. Try again in a moment." });
     }
   });
-
-  // GLYF AI HOOK: streamed act, ask, translate, suggest, search, glyfs. See ai-routes.ts.
-  aiRoutes(app, deps);
 
   return app;
 }
