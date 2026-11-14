@@ -176,6 +176,12 @@ struct MoneyPalette {
     var good: Color { dark ? AK.accent : Color(hex: 0x3F7A0A) }
     var bad: Color { dark ? AK.red : Color(hex: 0xD92D2F) }
     var warn: Color { dark ? AK.amber : Color(hex: 0xB86E00) }
+    /// Text on a refusal's 10% tint: checked for 4.5:1 in both modes.
+    var refuse: Color { dark ? Color(hex: 0xFF7A70) : Color(hex: 0xB42318) }
+    /// The word "Buy" / a gain as text: a green that reads on light and dark.
+    var gain: Color { dark ? Color(hex: 0x7BD88F) : Color(hex: 0x2E6B0A) }
+    /// One side inset for every panel: Calls, the review and Assist.
+    static let inset: CGFloat = 16
 
     func color(_ signal: Signal) -> Color {
         switch signal {

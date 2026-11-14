@@ -247,7 +247,7 @@ struct CallsView: View {
             }
             content(p)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, MoneyPalette.inset)
         .padding(.top, 4)
         .padding(.bottom, 4)
         .foregroundStyle(p.text)
