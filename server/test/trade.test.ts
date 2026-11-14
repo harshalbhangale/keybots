@@ -1,9 +1,9 @@
-// The KOL call flow, offline: a fake Kall, a fake NEAR Intents, a fake Rhea and
+// The KOL call flow, offline: a fake the X feed, a fake NEAR Intents, a fake Rhea and
 // a fake leash that runs the contract's R1, R4 and R5 the way lib.rs does.
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
-import { fakeKall, type KallClient } from "../src/kall.js";
+import { fakeXFeed, type XFeedClient } from "../src/xfeed.js";
 import type { Chain, Decision } from "../src/near.js";
 import { memoryStore } from "../src/receipts.js";
 import { RHEA } from "../src/rhea.js";
@@ -83,8 +83,8 @@ function fakeLeash(opts: { paused?: boolean; spent?: bigint; slow?: boolean; fil
   return { chain, sent };
 }
 
-const kall = () =>
-  fakeKall({
+const xfeed = () =>
+  fakeXFeed({
     callers: [{ handle: "solcaller", focus: null, tracked: true, open: 1, settled: 5, hits: 3, medianBps: 40 }],
     calls: {
       solcaller: [
@@ -94,29 +94,29 @@ const kall = () =>
       ],
     },
   });
-const downKall: KallClient = { feed: async () => Promise.reject(new Error("down")), caller: async () => [] };
+const downX: XFeedClient = { feed: async () => Promise.reject(new Error("down")), caller: async () => [] };
 
-function setup(opts: Parameters<typeof fakeLeash>[0] & { kall?: KallClient; telegram?: TelegramSource } = {}) {
+function setup(opts: Parameters<typeof fakeLeash>[0] & { xfeed?: XFeedClient; telegram?: TelegramSource } = {}) {
   const { chain, sent } = fakeLeash(opts);
   const clock = { t: NOW };
   const rhea = makeRhea();
   const receipts = memoryStore();
-  const app = buildApp({ cfg, chain, receipts, intents: intents as never, rhea: rhea as never, kall: opts.kall ?? kall(), telegram: opts.telegram, now: () => clock.t });
+  const app = buildApp({ cfg, chain, receipts, intents: intents as never, rhea: rhea as never, xfeed: opts.xfeed ?? xfeed(), telegram: opts.telegram, now: () => clock.t });
   const review = async (body: object) => app.inject({ method: "POST", url: "/v1/trade/review", payload: body });
   const confirm = async (reviewId: string) => app.inject({ method: "POST", url: "/v1/trade/confirm", payload: { reviewId } });
   return { app, sent, clock, rhea, receipts, review, confirm };
 }
 
 describe("GET /v1/kol/feed", () => {
-  it("lists Kall's spot calls newest first, without perps, with the caller's record", async () => {
+  it("lists the X feed's spot calls newest first, without perps, with the caller's record", async () => {
     const { app } = setup();
     const r = (await app.inject("/v1/kol/feed")).json();
-    expect(r.source).toBe("kall");
+    expect(r.source).toBe("x");
     expect(r.note).toMatch(/Not every post on X/);
-    expect(r.calls.map((c: { id: string }) => c.id)).toEqual(["kall-111", "kall-333"]);
+    expect(r.calls.map((c: { id: string }) => c.id)).toEqual(["x-111", "x-333"]);
     expect(r.calls[0]).toEqual({
-      id: "kall-111",
-      source: "kall",
+      id: "x-111",
+      source: "x",
       author: { handle: "solcaller", name: null },
       postedAt: new Date(NOW - 600_000).toISOString(),
       url: "https://x.com/solcaller/status/111",
@@ -128,9 +128,9 @@ describe("GET /v1/kol/feed", () => {
     expect(r.calls[1].direction).toBe("sell");
   });
 
-  it("falls back to three labelled samples when Kall doesn't answer or has nothing", async () => {
-    for (const k of [downKall, fakeKall({})]) {
-      const r = (await setup({ kall: k }).app.inject("/v1/kol/feed")).json();
+  it("falls back to three labelled samples when the X feed doesn't answer or has nothing", async () => {
+    for (const k of [downX, fakeXFeed({})]) {
+      const r = (await setup({ xfeed: k }).app.inject("/v1/kol/feed")).json();
       expect(r.source).toBe("sample");
       expect(r.note).toBe(SAMPLE_NOTE);
       expect(r.calls).toHaveLength(3);
@@ -156,10 +156,10 @@ async function telegramWithCalls() {
 }
 
 describe("GET /v1/kol/feed with Telegram", () => {
-  it("merges Kall and Telegram newest first, each call says where it's from, and the feed is mixed", async () => {
+  it("merges the X feed and Telegram newest first, each call says where it's from, and the feed is mixed", async () => {
     const r = (await setup({ telegram: await telegramWithCalls() }).app.inject("/v1/kol/feed")).json();
     expect(r.source).toBe("mixed");
-    expect(r.calls.map((c: { id: string; source: string }) => `${c.id} ${c.source}`)).toEqual(["tg--100200-5 telegram", "kall-111 kall", "tg--100300-9 telegram", "kall-333 kall"]);
+    expect(r.calls.map((c: { id: string; source: string }) => `${c.id} ${c.source}`)).toEqual(["tg--100200-5 telegram", "x-111 x", "tg--100300-9 telegram", "x-333 x"]);
     expect(r.calls[0]).toEqual({
       id: "tg--100200-5",
       source: "telegram",
@@ -178,23 +178,23 @@ describe("GET /v1/kol/feed with Telegram", () => {
     expect(r.note).not.toMatch(/all of Telegram|every Telegram/i);
   });
 
-  it("is telegram alone when Kall has nothing or is down, and kall alone when Telegram is empty", async () => {
-    for (const k of [downKall, fakeKall({})]) {
-      const r = (await setup({ kall: k, telegram: await telegramWithCalls() }).app.inject("/v1/kol/feed")).json();
+  it("is telegram alone when the X feed has nothing or is down, and xfeed alone when Telegram is empty", async () => {
+    for (const k of [downX, fakeXFeed({})]) {
+      const r = (await setup({ xfeed: k, telegram: await telegramWithCalls() }).app.inject("/v1/kol/feed")).json();
       expect(r.source).toBe("telegram");
       expect(r.calls.every((c: { source: string }) => c.source === "telegram")).toBe(true);
       expect(r.note).toBe("Messages from the Telegram groups Alpha Calls, Friends where the Keybots bot is a member.");
     }
     const empty = telegramSource({ token: TOKEN, fetcher: fakeBotApi().fetcher });
     const r = (await setup({ telegram: empty }).app.inject("/v1/kol/feed")).json();
-    expect(r.source).toBe("kall");
-    expect(r.note).toBe("Calls Kall tracks from the people it follows. Not every post on X.");
-    expect(r.calls.every((c: { source: string }) => c.source === "kall")).toBe(true);
+    expect(r.source).toBe("x");
+    expect(r.note).toBe("Calls Keybots tracks from people on X. Not every post on X.");
+    expect(r.calls.every((c: { source: string }) => c.source === "x")).toBe(true);
   });
 
   it("falls back to labelled samples, each with source sample, when there is nothing at all", async () => {
     const empty = telegramSource({ token: TOKEN, fetcher: fakeBotApi().fetcher });
-    const r = (await setup({ kall: downKall, telegram: empty }).app.inject("/v1/kol/feed")).json();
+    const r = (await setup({ xfeed: downX, telegram: empty }).app.inject("/v1/kol/feed")).json();
     expect(r.source).toBe("sample");
     expect(r.calls.map((c: { source: string }) => c.source)).toEqual(["sample", "sample", "sample"]);
   });
@@ -211,7 +211,7 @@ describe("GET /v1/kol/feed with Telegram", () => {
   });
 });
 
-describe("a Telegram call, reviewed and confirmed like a Kall one", () => {
+describe("a Telegram call, reviewed and confirmed like a the X feed one", () => {
   it("review reads the stored call with the rules and names the group and link", async () => {
     const { review, sent } = setup({ telegram: await telegramWithCalls() });
     const r = (await review({ callId: "tg--100200-5" })).json();
@@ -252,10 +252,10 @@ describe("a Telegram call, reviewed and confirmed like a Kall one", () => {
     expect(r).toMatchObject({ status: "blocked", receipt: { by: "contract", rule: "R4", post: { author: "Alpha Calls" } } });
   });
 
-  it("a Kall receipt says where it came from too", async () => {
+  it("a the X feed receipt says where it came from too", async () => {
     const { review, confirm } = setup();
-    const r = (await confirm((await review({ callId: "kall-111" })).json().reviewId)).json();
-    expect(r.receipt.post).toEqual({ url: "https://x.com/solcaller/status/111", author: "solcaller", source: "kall" });
+    const r = (await confirm((await review({ callId: "x-111" })).json().reviewId)).json();
+    expect(r.receipt.post).toEqual({ url: "https://x.com/solcaller/status/111", author: "solcaller", source: "x" });
   });
 });
 
@@ -268,7 +268,7 @@ describe("GET /v1/telegram/status", () => {
   });
 
   it("needs the same token as the rest of the API", async () => {
-    const app = buildApp({ cfg: { ...cfg, apiToken: "secret" }, chain: fakeLeash().chain, receipts: memoryStore(), kall: kall() });
+    const app = buildApp({ cfg: { ...cfg, apiToken: "secret" }, chain: fakeLeash().chain, receipts: memoryStore(), xfeed: xfeed() });
     expect((await app.inject("/v1/telegram/status")).statusCode).toBe(401);
     expect((await app.inject({ url: "/v1/telegram/status", headers: { authorization: "Bearer secret" } })).statusCode).toBe(200);
   });
@@ -277,7 +277,7 @@ describe("GET /v1/telegram/status", () => {
 describe("POST /v1/trade/review", () => {
   it("shows Rhea's own numbers, the floor, the stand-in and the limits, and sends nothing", async () => {
     const { review, sent } = setup();
-    const res = await review({ callId: "kall-111" });
+    const res = await review({ callId: "x-111" });
     expect(res.statusCode).toBe(200);
     const r = res.json();
     expect(r.expiresAt).toBe(new Date(NOW + 30_000).toISOString());
@@ -320,16 +320,16 @@ describe("POST /v1/trade/review", () => {
   });
 
   it("says when the contract will refuse it", async () => {
-    expect((await setup().review({ callId: "kall-111", usd: 3 })).json().limits).toMatchObject({ within: false, willRefuse: "Over the 1 NEAR per-trade limit: the contract will refuse it." });
-    expect((await setup({ spent: 1800n * 10n ** 21n }).review({ callId: "kall-111" })).json().limits.willRefuse).toBe("Over the 2 NEAR daily limit (1.8 NEAR spent today): the contract will refuse it.");
-    expect((await setup({ paused: true }).review({ callId: "kall-111" })).json().limits).toMatchObject({ stopped: true, willRefuse: "Stop everything is on: Keybots won't send it.", refusedBy: "server" });
-    expect((await setup().review({ callId: "kall-111", usd: 3 })).json().limits.refusedBy).toBe("contract");
+    expect((await setup().review({ callId: "x-111", usd: 3 })).json().limits).toMatchObject({ within: false, willRefuse: "Over the 1 NEAR per-trade limit: the contract will refuse it." });
+    expect((await setup({ spent: 1800n * 10n ** 21n }).review({ callId: "x-111" })).json().limits.willRefuse).toBe("Over the 2 NEAR daily limit (1.8 NEAR spent today): the contract will refuse it.");
+    expect((await setup({ paused: true }).review({ callId: "x-111" })).json().limits).toMatchObject({ stopped: true, willRefuse: "Stop everything is on: Keybots won't send it.", refusedBy: "server" });
+    expect((await setup().review({ callId: "x-111", usd: 3 })).json().limits.refusedBy).toBe("contract");
   });
 
   it("while one reviewed trade is sending, a second review can't be confirmed", async () => {
     const { review, confirm, sent } = setup({ slow: true });
-    const first = (await review({ callId: "kall-111" })).json().reviewId;
-    const second = (await review({ callId: "kall-111" })).json().reviewId;
+    const first = (await review({ callId: "x-111" })).json().reviewId;
+    const second = (await review({ callId: "x-111" })).json().reviewId;
     const [a, b] = await Promise.all([confirm(first), confirm(second)]);
     expect(a.statusCode).toBe(200);
     expect(b.statusCode).toBe(409);
@@ -339,7 +339,7 @@ describe("POST /v1/trade/review", () => {
 
   it("when NEAR doesn't answer, the result is unknown, never 'failed', and it isn't retried", async () => {
     const { review, confirm, sent } = setup({ throws: true });
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     const r = (await confirm(reviewId)).json();
     expect(r).toMatchObject({ status: "unknown", receipt: { receive: null, tx: null } });
     expect(r.receipt.summary).toContain("can't say if it went through");
@@ -355,8 +355,8 @@ describe("POST /v1/trade/review", () => {
       [{ text: "$SOL is weak, selling" }, 422, /doesn't short/],
       [{ text: "$TOSHI2 to the moon, buying" }, 422, /Token check failed/],
       [{ text: "$NEAR breakout, buying" }, 422, /buy NEAR/],
-      [{ callId: "kall-999" }, 404, /isn't in the feed/],
-      [{ callId: "kall-111", usd: 11 }, 400, /up to 10/],
+      [{ callId: "x-999" }, 404, /isn't in the feed/],
+      [{ callId: "x-111", usd: 11 }, 400, /up to 10/],
       [{}, 400, /callId/],
     ];
     for (const [body, code, msg] of cases) {
@@ -371,7 +371,7 @@ describe("POST /v1/trade/review", () => {
 describe("POST /v1/trade/confirm", () => {
   it("swaps once through the Trading Agent and reports what the chain filled", async () => {
     const { review, confirm, sent, receipts } = setup();
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     const res = await confirm(reviewId);
     expect(res.statusCode).toBe(200);
     const r = res.json();
@@ -397,7 +397,7 @@ describe("POST /v1/trade/confirm", () => {
 
   it("a repeat confirm gets the same receipt and the chain sees one call", async () => {
     const { review, confirm, sent } = setup();
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     const first = (await confirm(reviewId)).json();
     const again = await confirm(reviewId);
     expect(again.statusCode).toBe(200);
@@ -407,7 +407,7 @@ describe("POST /v1/trade/confirm", () => {
 
   it("a confirm while the same review is sending gets 409", async () => {
     const { review, confirm, sent } = setup({ slow: true });
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     const [a, b] = await Promise.all([confirm(reviewId), confirm(reviewId)]);
     expect([a.statusCode, b.statusCode].sort()).toEqual([200, 409]);
     expect((a.statusCode === 409 ? a : b).json()).toEqual({ error: "Already sending this trade." });
@@ -416,7 +416,7 @@ describe("POST /v1/trade/confirm", () => {
 
   it("a review more than 30 seconds old is refused and nothing is sent", async () => {
     const { review, confirm, clock, sent } = setup();
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     clock.t += 30_001;
     const r = await confirm(reviewId);
     expect(r.statusCode).toBe(409);
@@ -427,7 +427,7 @@ describe("POST /v1/trade/confirm", () => {
 
   it("over a limit, the contract decides: the leash refuses it on chain and says which rule", async () => {
     const { review, confirm, sent } = setup();
-    const { reviewId } = (await review({ callId: "kall-111", usd: 3 })).json();
+    const { reviewId } = (await review({ callId: "x-111", usd: 3 })).json();
     const r = (await confirm(reviewId)).json();
     expect(sent).toHaveLength(1);
     expect(r.status).toBe("blocked");
@@ -437,7 +437,7 @@ describe("POST /v1/trade/confirm", () => {
 
   it("over today's limit, the same: R5 from the contract", async () => {
     const { review, confirm, sent } = setup({ spent: 1800n * 10n ** 21n });
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     const r = (await confirm(reviewId)).json();
     expect(sent).toHaveLength(1);
     expect(r).toMatchObject({ status: "blocked", receipt: { by: "contract", rule: "R5" } });
@@ -446,7 +446,7 @@ describe("POST /v1/trade/confirm", () => {
 
   it("Stop everything is refused here, and says so", async () => {
     const { review, confirm, sent } = setup({ paused: true });
-    const { reviewId } = (await review({ callId: "kall-111" })).json();
+    const { reviewId } = (await review({ callId: "x-111" })).json();
     const r = (await confirm(reviewId)).json();
     expect(sent).toHaveLength(0);
     expect(r).toMatchObject({ status: "blocked", receipt: { by: "server", rule: null, tx: null, receive: null } });
@@ -456,11 +456,11 @@ describe("POST /v1/trade/confirm", () => {
   it("a quote or an unfilled swap is never shown as swapped", async () => {
     // Rhea didn't fill: the tx went through, nothing came back.
     const unfilled = setup({ fills: false });
-    const a = (await unfilled.confirm((await unfilled.review({ callId: "kall-111" })).json().reviewId)).json();
+    const a = (await unfilled.confirm((await unfilled.review({ callId: "x-111" })).json().reviewId)).json();
     expect(a).toMatchObject({ status: "failed", receipt: { receive: null } });
     // No venue by the time it runs: the agent only quotes it.
     const quoted = setup();
-    const { reviewId } = (await quoted.review({ callId: "kall-111" })).json();
+    const { reviewId } = (await quoted.review({ callId: "x-111" })).json();
     quoted.rhea.network = undefined;
     const b = (await quoted.confirm(reviewId)).json();
     expect(b).toMatchObject({ status: "failed", receipt: { receive: null, tx: null } });
