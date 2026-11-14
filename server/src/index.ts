@@ -1,4 +1,6 @@
-import { buildApp } from "./app.js";
+import { buildApp, followsFor } from "./app.js";
+import { fileFollows } from "./follows.js";
+import { kallClient } from "./kall.js";
 import { loadConfig } from "./config.js";
 import { nearChain } from "./near.js";
 import { outlayerChain } from "./outlayer.js";
@@ -30,8 +32,11 @@ const deps = {
   rhea: rheaClient({ network: cfg.network, rpc: cfg.rpc }),
   calls: fileCalls(cfg.dataDir), // the calls book: calls.jsonl
   vault: fileVault(cfg.dataDir), // vault.json: what the app saves for the keyboard
+  follows: fileFollows(cfg.dataDir), // follows.json and follow-trades.jsonl
+  kall: kallClient(cfg.kallApi),
 };
-const app = buildApp(deps);
+const followPoller = followsFor(deps);
+const app = buildApp({ ...deps, followPoller });
 
 // Watch the prices that orders are waiting on. A crossed order runs its command as the owner's own words.
 const WATCH_MS = Number(process.env.AIRKEY_WATCH_MS ?? 15_000);
@@ -52,6 +57,21 @@ setInterval(async () => {
     looking = false;
   }
 }, WATCH_MS).unref();
+// The KOLs the owner follows: their new calls on Kall, every minute. Only
+// trades with AIRKEY_AUTO_TRADE=on; off, it records what it would have done.
+const FOLLOW_MS = Number(process.env.AIRKEY_FOLLOW_MS ?? 60_000);
+let following = false;
+setInterval(async () => {
+  if (following) return;
+  following = true;
+  try {
+    for (const t of await followPoller.pollAll()) console.log(`follow @${t.handle} ${t.postId}: ${t.status} · ${t.message}`);
+  } catch (e) {
+    console.error(`follow poller: ${(e as Error).message}`);
+  } finally {
+    following = false;
+  }
+}, FOLLOW_MS).unref();
 // Keep the slow lookups warm so the keyboard's chips come up fast: NEAR
 // Intents' token list (refetched before it goes stale) and the leash's state.
 const warm = () => {
