@@ -100,6 +100,14 @@ struct JourneyView: View {
             }
         case .receipt:
             if let r = model.receipt { ReceiptCard(receipt: r, palette: p, actions: actions) }
+        case .uncertain(let message):
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Result not known yet", systemImage: "questionmark.circle")
+                    .font(.footnote.weight(.semibold)).foregroundStyle(p.warn)
+                Text(message).font(.footnote).foregroundStyle(p.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         case .failed(let message):
             VStack(alignment: .leading, spacing: 6) {
                 Label("Couldn't review this trade", systemImage: "exclamationmark.circle")
@@ -148,7 +156,7 @@ struct JourneyView: View {
                 if let note = model.note {
                     Text(note).font(.caption).foregroundStyle(p.soft).lineLimit(1)
                 }
-                status("Sending to the leash…", spinning: true, p)
+                status("Sending to Spend Limits…", spinning: true, p)
             case .expired:
                 Text("Quotes last 30 seconds so the price you saw is the price you get.")
                     .font(.caption).foregroundStyle(p.soft).lineLimit(2)
@@ -163,6 +171,14 @@ struct JourneyView: View {
                 }
             case .failed:
                 wide("Review again", primary: true, p) { model.again() }
+            case .uncertain:
+                if let note = model.note {
+                    Text(note).font(.caption).foregroundStyle(p.soft).lineLimit(2)
+                }
+                HStack(spacing: 6) {
+                    wide("Done", primary: false, p) { close() }
+                    wide("Check status", primary: true, p) { model.checkStatus() }
+                }
             }
         }
     }
@@ -211,7 +227,7 @@ struct JourneyView: View {
         receiveMin: "0.0000", slippagePct: "1", fundsSit: "In your leash account until the swap",
         standIn: nil, mainnet: .init(label: "Mainnet price, dry run", payAmount: "0.0000", receiveAmount: "0.0000", symbol: "USDC"),
         limits: .init(agentName: "Trading Agent", perTrade: "1", daily: "2", spentToday: "0", stopped: false, within: true,
-                      sentence: "The Trading Agent can spend up to 1 NEAR a trade and 2 NEAR a day. You can stop it.", willRefuse: nil))
+                      sentence: "The Trading Agent can spend up to 1 NEAR a trade and 2 NEAR a day. You can stop it.", willRefuse: nil, refusedBy: nil))
 }
 
 /// Everything about the trade, readable at a glance.
@@ -248,7 +264,7 @@ struct ReviewCard: View {
                 .padding(.top, 2)
             if let refuse = r.limits.willRefuse {
                 Label {
-                    Text(refuse + " You can still hold, to see the refusal on chain.")
+                    Text(refuse + (r.limits.refusedBy == "server" ? " Nothing is sent." : " You can still hold, to see the refusal on chain."))
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
                     Image(systemName: "exclamationmark.triangle").font(.caption2.weight(.bold))
@@ -287,7 +303,7 @@ struct ReceiptCard: View {
                     .font(.caption).foregroundStyle(p.soft)
             }
             HStack(spacing: 8) {
-                Image(systemName: r.swapped ? "checkmark" : r.blocked ? "hand.raised.fill" : "xmark")
+                Image(systemName: r.swapped ? "checkmark" : r.blocked ? "hand.raised.fill" : r.unknown ? "questionmark" : "xmark")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(r.swapped ? AK.ink : .white)
                     .frame(width: 22, height: 22)
@@ -302,8 +318,8 @@ struct ReceiptCard: View {
                     .font(.footnote.weight(.medium)).foregroundStyle(r.blocked ? p.bad : p.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Label(r.byContract ? "Decided by the leash contract on NEAR testnet" : "Stopped by the AIRKEY server",
-                  systemImage: r.byContract ? "link" : "server.rack")
+            Label(r.unknown ? "Result unknown: check Spend Limits on nearblocks" : r.byContract ? "Decided by the Spend Limits contract on NEAR" : "Stopped by the AIRKEY server",
+                  systemImage: r.unknown ? "questionmark.circle" : r.byContract ? "link" : "server.rack")
                 .font(.caption.weight(.semibold))
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 6) {
@@ -315,8 +331,8 @@ struct ReceiptCard: View {
                 }
             }
             .padding(.top, 2)
-            if let pay = r.pay { line("Paid", r.swapped ? pay.line : "Nothing (\(pay.line) stayed put)", p) }
-            line("Received", r.receive?.line ?? "Nothing received", p)
+            if let pay = r.pay { line("Paid", r.swapped ? pay.line : r.unknown ? "Unknown" : "Nothing (\(pay.line) stayed put)", p) }
+            line("Received", r.receive?.line ?? (r.unknown ? "Unknown" : "Nothing received"), p)
             if r.status == "failed", r.receive == nil {
                 Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
             }
@@ -336,6 +352,7 @@ struct ReceiptCard: View {
         switch receipt.status {
         case "swapped": "Swapped"
         case "blocked": receipt.byContract ? "Refused by the contract" : "Refused by the AIRKEY server"
+        case "unknown": "Result unknown"
         default: "Failed"
         }
     }

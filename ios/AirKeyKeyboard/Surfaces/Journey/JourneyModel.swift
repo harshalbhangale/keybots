@@ -14,6 +14,8 @@ final class JourneyModel {
         case receipt
         case expired
         case failed(String)
+        /// A confirm was sent but its answer was lost: the trade may or may not have gone through.
+        case uncertain(String)
     }
 
     /// What is being reviewed: a feed post (its id) or a copied call (its text).
@@ -36,6 +38,8 @@ final class JourneyModel {
     @ObservationIgnored private var asking: Task<Void, Never>?
     /// The review ids already sent: a second confirm of one never leaves the phone.
     @ObservationIgnored private var sent: Set<String> = []
+    /// The last review sent: "Check status" asks the server about this one, never a new one.
+    @ObservationIgnored private var lastSent: String?
 
     init(callId: String?, text: String?, post: KolCall? = nil) {
         self.callId = callId
@@ -111,6 +115,7 @@ final class JourneyModel {
     func confirm() {
         guard phase == .review, let r = review, !sent.contains(r.reviewId) else { return }
         sent.insert(r.reviewId)
+        lastSent = r.reviewId
         note = nil
         clock?.cancel()
         withAnimation(.snappy(duration: 0.2)) { phase = .sending }
@@ -126,15 +131,44 @@ final class JourneyModel {
                     Haptics.warning()
                 case .busy(let msg):
                     note = msg
-                case .gone(let msg):
-                    withAnimation(.snappy(duration: 0.2)) { phase = .failed(msg) }
+                case .gone:
+                    withAnimation(.snappy(duration: 0.2)) { phase = .uncertain(Self.lost) }
                     Haptics.warning()
                 }
             } catch {
-                withAnimation(.snappy(duration: 0.2)) {
-                    phase = .failed("\(error.localizedDescription) The trade may not have been sent; check Wallet before trying again.")
+                // The answer was lost, not the trade: it may still be running or may have landed.
+                withAnimation(.snappy(duration: 0.2)) { phase = .uncertain(Self.lost) }
+                Haptics.warning()
+            }
+        }
+    }
+
+    static let lost = "The answer didn't come back, so this trade may or may not have gone through. Check its status before trading again."
+
+    /// After a lost answer: ask about the same review. The server answers with
+    /// its receipt, "still sending", or "expired" (never sent), and never sends it twice.
+    func checkStatus() {
+        guard let id = lastSent else { return }
+        Haptics.letter()
+        note = "Checking…"
+        Task {
+            do {
+                switch try await JourneyAPI().confirm(reviewId: id) {
+                case .receipt(let receipt):
+                    note = nil
+                    self.receipt = receipt
+                    withAnimation(.snappy(duration: 0.25)) { phase = .receipt }
+                case .busy:
+                    note = "Still sending. Check again in a moment."
+                case .expired:
+                    // Expired before it was sent: nothing went out.
+                    note = nil
+                    withAnimation(.snappy(duration: 0.2)) { phase = .expired }
+                case .gone:
+                    note = "The server no longer has this trade. Check Wallet or nearblocks before trading again."
                 }
-                Haptics.error()
+            } catch {
+                note = "Still can't reach the AIRKEY server."
             }
         }
     }

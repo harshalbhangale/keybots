@@ -54,6 +54,8 @@ struct TradeReview: Equatable {
         let within: Bool
         let sentence: String
         let willRefuse: String?
+        /// "contract" (a limit, refused on chain) or "server" (Stop everything: nothing is sent).
+        let refusedBy: String?
     }
     struct Mainnet: Equatable {
         let label: String
@@ -101,6 +103,8 @@ struct TradeReceipt: Equatable {
 
     var swapped: Bool { status == "swapped" }
     var blocked: Bool { status == "blocked" }
+    /// NEAR didn't answer: whether it went through isn't known.
+    var unknown: Bool { status == "unknown" }
     var byContract: Bool { by == "contract" }
 }
 
@@ -136,7 +140,8 @@ struct JourneyAPI {
     }
 
     func confirm(reviewId: String) async throws -> ConfirmAnswer {
-        let (status, j) = try await send("POST", "/v1/trade/confirm", ["reviewId": reviewId])
+        // A swap waits on NEAR's receipts: give it longer than a review.
+        let (status, j) = try await send("POST", "/v1/trade/confirm", ["reviewId": reviewId], timeout: 90)
         if status == 409 {
             let msg = Self.said(j, status)
             return J.bool(j["expired"]) == true ? .expired(msg) : .busy(msg)
@@ -199,7 +204,8 @@ struct JourneyAPI {
             receiveAmount: J.str(m["receiveAmount"]) ?? "?", symbol: J.str(m["symbol"]) ?? "")
         return TradeReview(
             reviewId: id,
-            expiresAt: J.date(j["expiresAt"]) ?? Date().addingTimeInterval(30),
+            // Count down from when the quote arrived, not the server's clock: the phone's clock may differ.
+            expiresAt: Date().addingTimeInterval((j["ttlSeconds"] as? NSNumber)?.doubleValue ?? 30),
             call: .init(handle: J.str(author["handle"])?.replacingOccurrences(of: "@", with: ""), name: J.str(author["name"]),
                         postedAt: J.date(c["postedAt"]), url: J.str(c["url"]), text: J.str(c["text"]) ?? "",
                         asset: J.str(c["asset"]) ?? receive.symbol, direction: J.str(c["direction"]) ?? "buy"),
@@ -215,16 +221,16 @@ struct JourneyAPI {
             limits: .init(agentName: J.str(l["agentName"]) ?? "Trading Agent", perTrade: J.str(l["perTrade"]) ?? "?",
                           daily: J.str(l["daily"]) ?? "?", spentToday: J.str(l["spentToday"]) ?? "0",
                           stopped: J.bool(l["stopped"]) ?? false, within: J.bool(l["within"]) ?? true,
-                          sentence: J.str(l["sentence"]) ?? "", willRefuse: J.str(l["willRefuse"])))
+                          sentence: J.str(l["sentence"]) ?? "", willRefuse: J.str(l["willRefuse"]), refusedBy: J.str(l["refusedBy"])))
     }
 
     // MARK: Sending
 
-    private func send(_ method: String, _ path: String, _ body: [String: Any]?) async throws -> (status: Int, json: [String: Any]) {
+    private func send(_ method: String, _ path: String, _ body: [String: Any]?, timeout: TimeInterval = 30) async throws -> (status: Int, json: [String: Any]) {
         guard let url = URL(string: base.trimmingCharacters(in: .whitespaces) + path) else {
             throw APIError(message: "The server address in Settings isn't a URL.")
         }
-        var r = URLRequest(url: url, timeoutInterval: 30)
+        var r = URLRequest(url: url, timeoutInterval: timeout)
         r.httpMethod = method
         if !token.isEmpty { r.setValue("Bearer \(token)", forHTTPHeaderField: "authorization") }
         r.setValue("keyboard", forHTTPHeaderField: "x-airkey-client")

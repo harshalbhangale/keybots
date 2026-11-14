@@ -37,6 +37,8 @@ export interface Feed {
 export interface ReviewJson {
   reviewId: string;
   expiresAt: string;
+  /** Seconds the quote lasts from when the phone gets it: count down from this, not from expiresAt (clocks differ). */
+  ttlSeconds: number;
   call: { author: { handle: string; name: string | null } | null; postedAt: string | null; url: string | null; text: string; asset: string; direction: "buy" | "sell" };
   reading: { by: "rules"; detail: string };
   trade: {
@@ -59,11 +61,14 @@ export interface ReviewJson {
     within: boolean;
     sentence: string;
     willRefuse: string | null;
+    /** Who will refuse it: the contract (a limit, recorded on chain) or the AIRKEY server (Stop everything; nothing is sent). */
+    refusedBy: "contract" | "server" | null;
   };
 }
 
 export interface ConfirmJson {
-  status: "swapped" | "blocked" | "failed";
+  /** "unknown": NEAR didn't answer, so whether it went through isn't known. */
+  status: "swapped" | "blocked" | "failed" | "unknown";
   receipt: {
     id: string;
     summary: string;
@@ -279,6 +284,7 @@ export function tradeFlow(deps: TradeDeps) {
     const json: ReviewJson = {
       reviewId: id,
       expiresAt: new Date(created + REVIEW_TTL_MS).toISOString(),
+      ttlSeconds: Math.round(REVIEW_TTL_MS / 1000),
       call: {
         author: fc ? fc.author : null,
         postedAt: fc ? fc.postedAt : null,
@@ -308,6 +314,7 @@ export function tradeFlow(deps: TradeDeps) {
         within: willRefuse === null,
         sentence: `The Trading Agent can spend up to ${nearOf(perTrade)} NEAR a trade and ${nearOf(daily)} NEAR a day. You can stop it.`,
         willRefuse,
+        refusedBy: state.paused ? "server" : willRefuse ? "contract" : null,
       },
     };
     reviews.set(id, {
@@ -359,6 +366,10 @@ export function tradeFlow(deps: TradeDeps) {
     if (rv.state === "done") return { code: 200, body: { ...rv.result!, repeat: true } };
     if (rv.state === "sending") return { code: 409, body: { error: "Already sending this trade." } };
     if (now() > rv.expiresAt) return { code: 409, body: { error: "This quote is more than 30 seconds old. Review it again.", expired: true } };
+    // One reviewed trade at a time: a phone that lost its answer and reviews again can't send a second while the first is in flight.
+    if ([...reviews.values()].some((x) => x.state === "sending")) {
+      return { code: 409, body: { error: "Another trade is still being sent. Wait for its result." } };
+    }
     rv.state = "sending";
     try {
       const receipt = await runCommand(deps, rv.command, "reviewed-call", rv.post, { leashDecides: true, minOut: rv.minUnits });
@@ -366,10 +377,10 @@ export function tradeFlow(deps: TradeDeps) {
     } catch (e) {
       // The chain may or may not have it: never try again by itself.
       rv.result = {
-        status: "failed",
+        status: "unknown",
         receipt: {
           id: randomUUID(),
-          summary: "NEAR didn't answer, so AIRKEY can't say if it went through. Check the leash before trying again.",
+          summary: "NEAR didn't answer, so AIRKEY can't say if it went through. Check Spend Limits on nearblocks before trying again.",
           at: new Date(now()).toISOString(),
           by: "server",
           rule: null,
