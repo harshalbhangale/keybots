@@ -1,65 +1,181 @@
 # Keybots
 
-### Your keyboard is the AI. NEAR is the limit.
+### Your keyboard is the AI. NEAR sets the limits.
 
-Keybots is an iPhone keyboard that can pay, swap and check messages without leaving the chat. Money only moves through **Spend Limits**, a NEAR contract that holds the funds and enforces your rules, so an AI that gets fooled still can't spend more than you allow.
+Keybots is an iPhone keyboard with three AI agents inside it. Type `pay harshal 0.2` and it pays. Paste a trading call from X or Telegram and it turns into a trade you can review. Hold space and a private AI fixes your message. You never leave the chat.
 
-**NEAR Hackathon · iOS · NEAR testnet, plus Spend Limits Lite on mainnet · Work in progress**
+The agents never hold your money. It sits in **Spend Limits**, a NEAR contract, and every payment and swap has to pass its rules on chain: Stop everything, the blocked list, a per-payment limit, a daily limit, an allowed list for messages you didn't write, and your Face ID for anything else. If an agent is fooled by a scam message, the contract still says no, in public.
 
-[Demo](docs/DEMO.md) · [Testnet evidence](docs/evidence/testnet-e2e.md) · [Rules](RULES.md) · [Try it without a phone](#try-it-without-a-phone)
+**NEAR Hackathon 2026 · iOS keyboard + app · Live on NEAR testnet, and Spend Limits Lite on NEAR mainnet**
 
-> Testnet prototype. Not financial advice and not production wallet software. The app, code and screenshots still say AIRKEY in places.
+[See it work](#see-it-work) · [How it works](#how-it-works) · [What NEAR does](#what-near-does-here) · [Proof on chain](#proof-on-chain) · [Our journey](#our-journey) · [Try it](#try-it-without-a-phone)
 
-## How we got here
+---
 
-1. **Xtrading:** our first product, a browser extension for trading straight from a post on X, built on Monad.
-2. **Kall Markets:** built at ETHGlobal Mumbai. Watching people use Xtrading, the real question was "is this caller ever right?", so Kall Markets keeps a record of every caller's calls and puts trading in a keyboard. ([repo](https://github.com/harshalbhangale/Kall-Markets))
-3. **Keybots:** built at this hackathon. The keyboard now holds AI agents that can pay and trade, and NEAR's Spend Limits contract decides what each one may do.
+## See it work
 
-<p>
-  <img src="docs/screens/swap-screen.png" width="200" alt="Swap preview inside the keyboard" />
-  <img src="docs/screens/demo-scam-blocked.png" width="200" alt="A scam payment request, blocked" />
-  <img src="docs/screens/assist-fix.png" width="200" alt="The keyboard's AI rewriting a draft" />
-  <img src="docs/screens/following.png" width="200" alt="Followed traders and their rules" />
-</p>
+Real screen recordings from the iPhone simulator, against the live server and real NEAR transactions.
 
-## What you can do
+<table>
+  <tr>
+    <td align="center"><img src="docs/clips/pay-by-typing.gif" width="240" alt="Pay by typing" /><br /><b>Pay by typing</b><br />Type it, hold, paid on NEAR.</td>
+    <td align="center"><img src="docs/clips/pay-mainnet.gif" width="240" alt="A payment on NEAR mainnet" /><br /><b>A real payment on mainnet</b><br />Who gets it, the fee, today's limit, then hold.</td>
+    <td align="center"><img src="docs/clips/scam-refused-mainnet.gif" width="240" alt="A scam refused on mainnet" /><br /><b>A scam, refused</b><br />Spend Limits says no, on mainnet.</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/clips/call-to-trade.gif" width="240" alt="A trading call becomes a trade" /><br /><b>A call becomes a trade</b><br />Checked, sized to your limits. You hold.</td>
+    <td align="center"><img src="docs/clips/swap.gif" width="240" alt="Swap NEAR to USDC" /><br /><b>Say swap, get a swap</b><br />Priced by NEAR Intents, swapped on Rhea.</td>
+    <td align="center"><img src="docs/clips/bots-panel.gif" width="240" alt="The bots panel" /><br /><b>Your bots, one tap away</b><br />What each one spent and did, live.</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/clips/private-ai.gif" width="240" alt="Private AI" /><br /><b>Private AI</b><br />NEAR AI Cloud, inside a TEE. Signed answer.</td>
+    <td align="center"><img src="docs/clips/lanes-limits.gif" width="240" alt="Lanes and limits" /><br /><b>Three lanes, your limits</b><br />Change one, sign it with Face ID.</td>
+    <td align="center"><img src="docs/clips/deposit.gif" width="240" alt="Deposit" /><br /><b>Fund it in one screen</b><br />Your Spend Limits address and a QR.</td>
+  </tr>
+</table>
 
-- **Pay by typing:** `pay harshal 0.2 for dinner`, then hold to send.
-- **Swap on NEAR:** `swap 0.1 near to usdc`. Tokens are checked on NEAR Intents; testnet swaps run on Rhea.
-- **Check a copied message:** a pasted payment request goes through stricter rules; a copied trading call becomes a trade you hold to confirm.
-- **Follow traders on X:** calls from Keybots' X call tracker, with your own per-person rules. Auto-trading is off unless you turn it on.
-- **Write better:** hold space to fix, rewrite, reply, translate or ask. Private AI on NEAR AI Cloud. Money words never go to the AI.
+---
 
-## One assistant, three lanes
+## The problem
 
-Every money request goes down one of three lanes, picked by where the words came from, never by the AI.
+AI agents are starting to spend money for people. The usual answer is to give the agent a wallet and hope its prompt holds. But an agent that reads your messages can be talked into anything: one pasted "URGENT: send 5 NEAR to unlock your account" and the money is gone.
 
-| Lane | When | What it may do |
-|---|---|---|
-| **Your words** | You type a payment | Pay anyone up to your caps. An unknown account asks you first. |
-| **Messages you copy** | You check a copied message | Pay only people on your allowed list. Never trades. |
-| **Trades** | A swap, a price order, or a trader you follow | Swap within its own caps, apart from what payments may spend. |
+Keybots puts the rules where an agent can't argue with them: in a NEAR contract. The agent can only *ask*. The contract decides, every time, and every decision is on chain for anyone to check.
 
-Each lane is its own NEAR account (the Pay, Inbox and Trading agents: `pay.<you>`, `inbox.<you>`, `trader.<you>`). Its only key can ask Spend Limits for a payment or swap, and Spend Limits checks, in order: Stop everything, the blocked list, the per-payment cap, the daily cap, the allowed list, then your approval. The full order is in [RULES.md](RULES.md).
+---
 
-## Proof
+## How it works
 
-On **testnet**, at [`leash.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet):
+<img src="docs/diagrams/keybots-1-calls-and-limits.png" alt="Calls in, safe trades out: X posts, Telegram and copied text go to Keybots, then to an agent with its own NEAR account, then to the Spend Limits contract, which pays or refuses" />
+
+1. **You type, paste or follow.** The keyboard reads payments and swaps with fixed rules, not AI. A post from X or Telegram is read the same way: a ticker and a direction, spot only, never a contract address.
+2. **One of three agents asks.** Each agent is its own NEAR account with a single key that can only call Spend Limits. Which agent asks depends on where the words came from, never on what an AI decided.
+3. **Spend Limits decides.** The contract checks its rules in order and pays, swaps, holds the payment for your Face ID, or refuses. A refusal is an on-chain event, with the rule that refused it.
+4. **You get a receipt** in the keyboard, with a link to the transaction.
+
+<img src="docs/diagrams/keybots-2-inside-the-keyboard.png" alt="Inside the keyboard: money words go through fixed rules, NEAR Intents and Spend Limits; while typing, NEAR AI Cloud in a TEE returns a signed answer and a receipt. Money never goes to the AI." />
+
+Money and AI are kept apart. Anything about money is read by fixed rules and checked by NEAR Intents and Spend Limits. The AI only helps you write: fix, rewrite, reply, translate, ask. It never sees a payment.
+
+### The three agents
+
+| Agent | Acts on | It may | Limits on testnet |
+|---|---|---|---|
+| **Pay Agent** `pay.<you>` | What you type | Pay anyone. Someone new waits for your Face ID. | 0.5 NEAR a payment, 1 a day |
+| **Inbox Agent** `inbox.<you>` | Messages you copy | Pay only people on your allowed list. Never trade. | 0.5 NEAR a payment, 1 a day |
+| **Trading Agent** `trader.<you>` | Calls you review, swaps you ask for | Swap on Rhea, only after you hold to confirm | 1 NEAR a trade, 2 a day |
+
+All three spend from the one Spend Limits balance and hold only enough NEAR for gas. Stop everything pauses all three at once. The full rule order is in [RULES.md](RULES.md).
+
+---
+
+## What NEAR does here
+
+| NEAR piece | What it does in Keybots |
+|---|---|
+| **Spend Limits, a NEAR contract** (Rust) | Holds the money and decides every payment and swap. 41 tests. Testnet runs the full contract at [`leash.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet). |
+| **Spend Limits Lite** (Rust, no SDK, 45 KB) | The same core rules for mainnet on a small budget, at [`limits.hellbuddy.near`](https://nearblocks.io/address/limits.hellbuddy.near). Same method names, so the server runs against either. 15 tests, then a full trial on testnet before mainnet. |
+| **NEAR accounts and function-call keys** | Each agent is its own account. Its only key can call `pay` (or `swap`) on Spend Limits, nothing else. It can't move money on its own. |
+| **The owner's key, behind Face ID** | Approvals, limit changes, Stop everything and withdrawals are built by the server, signed on the phone after Face ID, and relayed. The owner key never leaves the phone. |
+| **NEAR Intents (1Click)** | Checks that a coin in a post is a real token, prices it, and sizes the trade: "BTC is a listed token at $67,147 · NEAR $3.33, so $1.00 is 0.3003 NEAR." |
+| **Rhea** | Where the Trading Agent's swaps run (testnet pool 1103, NEAR/USDC), with a minimum you'll accept. |
+| **NEAR AI Cloud, in a TEE** | The private AI behind hold space. The model runs inside a trusted execution environment (TEE): Intel TDX for the CPU and NVIDIA confidential computing for the GPU. Every answer is signed, and the server checks the hardware attestation (the TDX quote and the NVIDIA GPU report, against a fresh nonce) every 10 minutes. The receipt says whether both passed. |
+| **On-chain events** | Every payment, swap and refusal is a NEP-297 event, so the history is public and linkable on nearblocks. |
+
+---
+
+## Features
+
+**In the keyboard**
+- **Pay by typing.** `pay harshal 0.2 for dinner` opens a Pay screen: who gets it (name and NEAR account), the amount in NEAR and dollars, the network fee, what's left of today's limit, then **Hold to pay** or tap twice.
+- **Swap by typing.** `swap 0.1 near to usdc` opens a swap screen with Rhea's real quote, the minimum after 1% slippage, and your limits.
+- **Trading calls from X and Telegram.** The Calls screen lists calls from people on X and from a Telegram group. Copy a signal like "ETH LONG 10x" from any channel and it's read as a spot buy, clearly labelled "no leverage", with its targets and stop. Nothing trades until you review and hold.
+- **Scam checks on copied messages.** A pasted payment request goes through the stricter Inbox Agent. A stranger or a blocked account is refused on chain.
+- **The Keybots panel.** Tap the Keybots key: your three bots, running or stopped, what each spent today and did last, recent activity, a Testnet / Mainnet switch, and every tool.
+- **Private AI.** Hold space to fix, rewrite, reply, translate or ask, on NEAR AI Cloud, with a receipt that shows the answer was signed and the hardware checked.
+- **A full keyboard.** Glide typing, autocorrect, emoji, clipboard, GIFs, and light and dark that follow the phone.
+
+**In the app**
+- **Wallet:** what Spend Limits holds, Deposit (address and QR), Withdraw to you with Face ID, Send through the Pay Agent, and a Testnet / Mainnet switch.
+- **Spend Limits:** Stop everything, each agent's limits and what it did last, Change limits with Face ID, the allowed and blocked lists.
+- **Activity:** "Waiting for you" pinned at the top with Approve and Reject, then every receipt with its time, agent, the rule in plain words, who decided (contract or server), and the full transaction hash.
+- **Connected:** Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, X and Telegram, each checked live.
+
+**Behind it**
+- A Node server (Fastify, TypeScript, 309 tests) that reads posts, gets quotes, and signs as the agents with their narrow keys. It never holds the owner's key.
+- A public page for the contract: anyone can see the agents, limits and recent decisions at `/limits`.
+- Auto-trading is off. Every trade in the demo is confirmed by a person.
+
+---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="docs/screens/keyboard-bots-mainnet-dark.png" width="200" alt="Keybots panel on mainnet" /></td>
+    <td><img src="docs/screens/kb-review-dark.png" width="200" alt="Reviewing a trading call" /></td>
+    <td><img src="docs/screens/keyboard-bots-testnet-dark.png" width="200" alt="Keybots panel on testnet" /></td>
+    <td><img src="docs/screens/kb-assist-receipt-dark.png" width="200" alt="AI receipt with signature and attestation" /></td>
+  </tr>
+  <tr>
+    <td align="center">Bots panel, mainnet</td>
+    <td align="center">Review a call</td>
+    <td align="center">Bots panel, testnet</td>
+    <td align="center">Private AI receipt</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screens/app-wallet-money-dark.png" width="200" alt="Wallet with Deposit, Withdraw and Send" /></td>
+    <td><img src="docs/screens/app-lanes-dark.png" width="200" alt="Spend Limits and the three lanes" /></td>
+    <td><img src="docs/screens/app-change-limits-dark.png" width="200" alt="Change limits with Face ID" /></td>
+    <td><img src="docs/screens/app-activity-times-dark.png" width="200" alt="Activity with exact times" /></td>
+  </tr>
+  <tr>
+    <td align="center">Wallet</td>
+    <td align="center">Spend Limits</td>
+    <td align="center">Change limits</td>
+    <td align="center">Activity</td>
+  </tr>
+</table>
+
+---
+
+## Proof on chain
+
+**Testnet**, the full contract at [`leash.airkey-harshal.testnet`](https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet):
 
 | What happened | Transaction |
 |---|---|
-| A pasted "send 5 NEAR" was blocked by the 0.5 NEAR cap | [HMeo4MYz…](https://testnet.nearblocks.io/txns/HMeo4MYzcLWXSpkt9sn9qbnXBFfax4fC24nf2BHzD2kt) |
+| A pasted "send 5 NEAR" was refused by the 0.5 NEAR limit | [HMeo4MYz…](https://testnet.nearblocks.io/txns/HMeo4MYzcLWXSpkt9sn9qbnXBFfax4fC24nf2BHzD2kt) |
 | A swap from the keyboard: 0.1 NEAR → 0.2101 USDC on Rhea | [89dXiQh4…](https://testnet.nearblocks.io/txns/89dXiQh4SToJM2c3tpFp9F7TgdyDT1b6CTnEPRSj7aaM) |
-| Stop everything on, then a payment was blocked | [Hmk7LcjQ…](https://testnet.nearblocks.io/txns/Hmk7LcjQJsjaqnZL9WAgS4DmVxY6PrxhN121boMY8nuR) |
+| Stop everything on, then a payment refused | [Hmk7LcjQ…](https://testnet.nearblocks.io/txns/Hmk7LcjQJsjaqnZL9WAgS4DmVxY6PrxhN121boMY8nuR) |
 
-On **mainnet**, Spend Limits Lite runs at [`limits.hellbuddy.near`](https://nearblocks.io/address/limits.hellbuddy.near) with tiny caps and no swaps. It refused one payment ([FDKxnt6F…](https://nearblocks.io/txns/FDKxnt6FVY4scNL2e8npUjoDT7E566tyJhaadEBPPPDb)) and paid 0.01 NEAR ([6WgtSxcy…](https://nearblocks.io/txns/6WgtSxcybESMvn6ouJxCUnmdEPp7QtwCtBBHjFsHM3fm)).
+**Mainnet**, Spend Limits Lite at [`limits.hellbuddy.near`](https://nearblocks.io/address/limits.hellbuddy.near), with real NEAR and small limits:
 
-More: the [full testnet run](docs/evidence/testnet-e2e.md) (9 real transactions) and the [demo run log](docs/evidence/demo-runs.md), failures included.
+| What happened | Transaction |
+|---|---|
+| Spend Limits Lite deployed, owner `hellbuddy.near` | [8S5iA8F8…](https://nearblocks.io/txns/8S5iA8F8QGT8aQ8JyY3aSrkwmXpH5B26JkiYyd5avMLp) |
+| A payment to a new account, refused on chain (it needed approval) | [FDKxnt6F…](https://nearblocks.io/txns/FDKxnt6FVY4scNL2e8npUjoDT7E566tyJhaadEBPPPDb) |
+| The owner put it on the allowed list | [Bo67g7Nx…](https://nearblocks.io/txns/Bo67g7NxforWMHod3vWCL9jUoE4v2EzbJaBYd1U8a149) |
+| Paid 0.01 NEAR by typing | [6WgtSxcy…](https://nearblocks.io/txns/6WgtSxcybESMvn6ouJxCUnmdEPp7QtwCtBBHjFsHM3fm) |
+| Paid 0.02 NEAR from the Pay screen | [7hpf2Y28…](https://nearblocks.io/txns/7hpf2Y28NJetvrAPtpP4oRbJjHEyUeboJAa1zk2xtds) |
+
+More: the [full testnet run](docs/evidence/testnet-e2e.md) and the [demo run log](docs/evidence/demo-runs.md), failures included.
+
+---
+
+## Our journey
+
+**Xtrading, on Monad.** It started as a browser extension for trading straight from a post on X: see a call, trade it without leaving the timeline. ([repo](https://github.com/harshalbhangale/xtrading))
+
+**Kall Markets, at ETHGlobal.** People don't trade on a laptop; they trade on their phone, and a phone has no extensions. The one thing every app shares is the keyboard. So we built a keyboard for swapping, with a record of every caller's hits and misses. ([ETHGlobal showcase](https://ethglobal.com/showcase/kall-markets-9m371))
+
+**Keybots, on NEAR.** A keyboard that can swap raised the next question: what happens when an AI in your keyboard can spend? For this hackathon we rebuilt it around NEAR. Every agent gets its own account, every rule lives in a contract, every token is checked on NEAR Intents, swaps run on Rhea, and the AI runs privately on NEAR AI Cloud. It's a keyboard for the whole NEAR ecosystem, where the agents do the work and NEAR keeps them honest.
+
+---
 
 ## Try it without a phone
 
-Node.js 20+. This reads the live testnet contract and applies its rules; it signs and sends nothing.
+Node.js 20+. This reads the live testnet contract and applies its rules. It signs and sends nothing.
 
 ```bash
 git clone https://github.com/harshalbhangale/keybots.git
@@ -72,9 +188,10 @@ npm run try -- "swap 0.3 near to usdc"
 ## Run it
 
 ```bash
-cd contracts/leash && cargo test          # the contract's rules
-cd ../../server && npm install && npm test  # the server
-npm start                                   # http://localhost:8787, needs testnet keys
+cd contracts/leash && cargo test              # Spend Limits (41 tests)
+cd ../limits-lite && cargo test               # Spend Limits Lite (15 tests)
+cd ../../server && npm install && npm test    # the server (309 tests)
+npm start                                     # http://localhost:8787, needs testnet keys
 ```
 
 iOS app and keyboard (Xcode and XcodeGen, iOS 26+):
@@ -85,4 +202,36 @@ xcodebuild -project AirKey.xcodeproj -scheme AirKey -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone Air' -derivedDataPath build CODE_SIGN_IDENTITY=- build
 ```
 
-Testnet setup, hosting and the demo: [scripts/](scripts), [docs/HOSTING.md](docs/HOSTING.md), [docs/DEMO.md](docs/DEMO.md). Never commit keys or `.env` files.
+Testnet setup, hosting and the demo: [scripts/](scripts), [docs/HOSTING.md](docs/HOSTING.md), [docs/MAINNET-STEPS.md](docs/MAINNET-STEPS.md), [docs/DEMO.md](docs/DEMO.md). Never commit keys or `.env` files.
+
+## Repo map
+
+| Folder | What's in it |
+|---|---|
+| `contracts/leash` | Spend Limits, the full contract (testnet) |
+| `contracts/limits-lite` | Spend Limits Lite (mainnet) |
+| `server/` | The Keybots server: commands, calls, reviews, owner actions, NEAR AI attestation |
+| `ios/AirKeyKeyboard/` | The keyboard |
+| `ios/AirKey/` | The app |
+| `scripts/` | Setup, the Lite deploy (`lite.mjs`), phone builds |
+| `landing/` | The website |
+
+## Limits
+
+- The full contract runs on testnet. Mainnet runs only Spend Limits Lite, without swaps or approvals. Don't use this to protect real money yet.
+- The server decides whether text was typed or pasted; the contract can't prove where text came from.
+- NEAR AI Cloud's checks depend on live services. Every receipt names the provider that answered and whether its signature and hardware checked out.
+- Reading a Telegram group through the Keybots bot is built and tested, but hasn't been shown with a live group yet. Copying a signal into the keyboard works with any channel.
+- Tested mostly on the simulator and one iPhone. No Android build.
+- The app, code and some screenshots still say AIRKEY, the project's earlier name.
+
+## Credits
+
+- The keyboard's typing core in `ios/AirKeyKeyboard/` (layout, design, typing engine and dictionary, and some panels) is adapted from [Glyf](https://github.com/The-x-35/glyf), which is not covered by this repository's MIT license.
+- Built with Claude Code. Product and design decisions by Harshal Bhangale.
+
+## License
+
+[MIT](LICENSE), except the third-party code noted under Credits.
+
+> Not financial advice and not production wallet software.
