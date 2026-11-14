@@ -41,8 +41,9 @@ const ONE_YOCTO = 1n;
 // Small on purpose: the whole budget is under 1 NEAR.
 const CONTRACT_FUND = "0.6"; // ~0.46 is locked for code and state; the rest is what agents can spend
 // NEAR wants a call's balance and key allowance to cover a pessimistic gas bound (~10x the
-// real cost): a 20 TGas pay needs ~0.021 NEAR there, though it costs ~0.00044.
-const AGENT_FUND = "0.06";
+// real cost): a 20 TGas pay needs ~0.021 NEAR there, though it costs ~0.00044. The owner's
+// key goes on every account too, so all of it can be taken back by deleting the account.
+const AGENT_FUND = "0.03";
 const KEY_ALLOWANCE = near("0.25");
 const AGENTS = [
   { id: N.pay, tier: "trusted", per: "0.05", daily: "0.1", what: "Pay Agent: what you type" },
@@ -80,8 +81,13 @@ const steps = [
   ...AGENTS.map((a, i) => ({
     n: i + 2,
     to: a.id,
-    say: `Create ${a.id} (${a.what}) with ${AGENT_FUND} NEAR for gas, and a key that may only call pay on ${N.limits}`,
-    build: () => [actions.createAccount(), actions.transfer(near(AGENT_FUND)), actions.addFunctionCallAccessKey(agentKey(a.id).getPublicKey(), N.limits, ["pay"], KEY_ALLOWANCE)],
+    say: `Create ${a.id} (${a.what}) with ${AGENT_FUND} NEAR for gas, a key that may only call pay on ${N.limits}, and ${OWNER}'s key so it can be deleted and its NEAR returned`,
+    build: () => [
+      actions.createAccount(),
+      actions.transfer(near(AGENT_FUND)),
+      actions.addFunctionCallAccessKey(agentKey(a.id).getPublicKey(), N.limits, ["pay"], KEY_ALLOWANCE),
+      actions.addFullAccessKey(KeyPair.fromString(ownerKey().secretKey).getPublicKey()),
+    ],
   })),
   {
     n: 5,
