@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import Mascot from "./Mascot";
 import Keyboard3D from "./Keyboard3D";
 import Story, { Private } from "./Story";
-import { NearMark } from "./Sections";
+import { NearTile } from "./Icons";
 import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
 
@@ -70,10 +70,10 @@ export default function App() {
           <div className="z-grid" aria-hidden />
           <div className="y-wrap z-hero-in">
             <a className="y-badge" href="#proof">
-              <span className="y-live" /> Live on NEAR testnet
+              <NearTile size={20} /> Live on NEAR testnet <span className="y-live" />
             </a>
             <h1 className="y-h1">
-              Type it. <span className="y-nowrap">NEAR</span> does the rest.
+              Type it. <span className="y-nowrap"><NearTile size="0.82em" label={false} />NEAR</span> does the rest.
             </h1>
             <p className="y-sub">Your keyboard is the AI. NEAR sets the limits.</p>
             <Keyboard3D />
@@ -144,7 +144,7 @@ export default function App() {
           <Lockup small /> <span className="foot-note">built at NEAR HACKATHON 2026 by Harshal Bhangale</span>
         </span>
         <a className="built-near" href="https://near.org" target="_blank" rel="noreferrer">
-          <NearMark size={18} /> Built on NEAR
+          <NearTile size={20} /> Built on NEAR
         </a>
       </footer>
     </>
