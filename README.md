@@ -88,7 +88,7 @@ Money words go through fixed rules, NEAR Intents (token check and quote) and the
 | **Swap** | `swap 0.1 near to usdc` makes the Trading Agent ask the contract, which swaps on Rhea on testnet and keeps the result inside the contract. |
 | **Calls** | A call from X (through the Keybots feed) or from copied text becomes one small trade chip that waits for your hold, and auto-trading is off unless you turn it on. |
 | **Receipts** | Every decision, paid or refused, is an on-chain event with a testnet explorer link, and Share puts the receipt in your chat. |
-| **Where it runs** | Everything on NEAR testnet today, and no mainnet swap has been enforced. |
+| **Testnet and mainnet** | It runs on NEAR testnet today, where every payment and swap is enforced by the contract, and mainnet is next: the code path for live NEAR Intents quotes and deposits exists, but the contract is not deployed on mainnet and no mainnet swap has been enforced yet. |
 
 ### Why this matters
 
