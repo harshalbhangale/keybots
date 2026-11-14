@@ -248,8 +248,12 @@ struct ReceiptRow: View {
                 Text(p.title).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
                     .fixedSize(horizontal: false, vertical: true)
                 if let account = p.account {
-                    Text(account).font(.footnote.monospaced()).foregroundStyle(AK.bone.opacity(0.85))
-                        .lineLimit(1).minimumScaleFactor(0.7)
+                    let parts = account.split(separator: " ", maxSplits: 1).map(String.init)
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        if parts.count == 2 { Text(parts[0].prefix(1).uppercased() + parts[0].dropFirst()).font(.footnote).foregroundStyle(AK.muted) }
+                        Text(parts.last ?? account).font(.footnote.monospaced()).foregroundStyle(AK.bone)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                    }
                 }
                 Text(meta).font(.footnote).foregroundStyle(AK.muted)
                     .fixedSize(horizontal: false, vertical: true)

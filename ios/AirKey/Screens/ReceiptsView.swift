@@ -76,11 +76,11 @@ struct ReceiptDetail: View {
 
     /// Who made the call: the contract on chain, or the server before anything was sent.
     private var decider: String? {
-        if r.decision != nil { return "Decided by the Spend Limits contract" }
+        if r.decision != nil { return "Decided by Spend Limits, on NEAR" }
         switch r.outcome {
         case "quoted": return "A price only. Nothing was sent."
         case "watching": return "Waiting for the price. Nothing sent yet."
-        default: return "Stopped by the AIRKEY server. Nothing reached the contract."
+        default: return "Stopped by the AIRKEY server. Nothing reached Spend Limits."
         }
     }
 
