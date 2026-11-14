@@ -12,7 +12,7 @@ struct KeysView: View {
 
     var body: some View {
         Screen {
-            Masthead(eyebrow: "Hold a letter to run what you saved on it", title: "Hold keys")
+            Masthead(eyebrow: "", title: "Hold keys")
             Text("Hold a letter in any chat to run it. A small dot marks each one.")
                 .font(.subheadline)
                 .foregroundStyle(AK.muted)

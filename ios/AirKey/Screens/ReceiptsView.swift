@@ -17,7 +17,7 @@ struct ActivityView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
-            Masthead(eyebrow: "Everything your agents were asked to do", title: "Activity")
+            Masthead(eyebrow: "", title: "Activity")
             if model.receipts.isEmpty {
                 Panel {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.headline).foregroundStyle(AK.bone)
@@ -32,7 +32,6 @@ struct ActivityView: View {
                 }
             }
         }
-        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 }
 
@@ -55,6 +54,9 @@ struct ReceiptDetail: View {
                         if let c = r.checks { checks(c) }
                         details
                     }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(AK.surface, in: RoundedRectangle(cornerRadius: AK.radius, style: .continuous))
                 }
                 .padding(.horizontal, AK.gutter)
                 .padding(.vertical, 12)
@@ -82,20 +84,59 @@ struct ReceiptDetail: View {
         }
     }
 
+    /// The amount at stake, for the big number: "2 NEAR".
+    private var bigAmount: String? {
+        let a = r.interpretation.action
+        if a.kind == "pay", let n = a.amountNear { return "\(n) NEAR" }
+        if a.kind == "swap", let n = a.amount, let from = a.from { return "\(n) \(from.uppercased())" }
+        return nil
+    }
+
+    /// Who it went to, or what a swap became: ("To", "free-near-drop.testnet").
+    private var counterpart: (word: String, name: String)? {
+        let a = r.interpretation.action
+        if a.kind == "swap", let to = a.to { return ("For", to.uppercased()) }
+        if let rc = r.receiver { return ("To", Plain.name(rc.account)) }
+        if let to = a.receiver { return ("To", to) }
+        return nil
+    }
+
     /// The verdict, who decided, and the transaction, before anything else.
     private var verdict: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
-                SignalBadge(signal: r.signal, size: 40)
+            if let amount = bigAmount {
+                // One big number: the status above it, the account under it.
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(Plain.title(r)).font(.title2.weight(.semibold)).foregroundStyle(AK.bone)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(Plain.body(r)).font(.subheadline).foregroundStyle(AK.muted)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Label(Plain.title(r), systemImage: r.signal.icon)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(r.signal.text)
+                    Text(amount)
+                        .font(AK.number(40))
+                        .foregroundStyle(AK.bone)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                    if let to = counterpart {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(to.word).font(.subheadline).foregroundStyle(AK.muted)
+                            Text(to.name).font(.footnote.monospaced()).foregroundStyle(AK.bone)
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                    }
                 }
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+            } else {
+                HStack(alignment: .top, spacing: 14) {
+                    SignalBadge(signal: r.signal, size: 40)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(Plain.title(r)).font(.title2.weight(.semibold)).foregroundStyle(AK.bone)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(Plain.body(r)).font(.subheadline).foregroundStyle(AK.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .accessibilityElement(children: .combine)
             }
-            .accessibilityElement(children: .combine)
             if let decider {
                 Hairline()
                 Label(decider, systemImage: r.decision != nil ? "checkmark.shield" : "server.rack")
@@ -143,9 +184,23 @@ struct ReceiptDetail: View {
                 Text(reason).font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             }
             if let ai = r.interpretation.ai {
-                KeyValue(key: "Model", value: ai.model, mono: true)
-                KeyValue(key: "Reply signature", value: r.interpretation.reader == "openai" ? "Not signed" : ai.signature.status.capitalized, color: ai.signature.status == "verified" ? AK.accentText : AK.amberText)
-                KeyValue(key: "Attestation", value: ai.attestation.capitalized, color: ai.attestation == "verified" ? AK.accentText : AK.amberText)
+                let checked = r.interpretation.reader != "openai" && ai.signature.status == "verified" && ai.attestation == "verified"
+                Label(checked ? "Checked: the reading came from a private, verified model" : "Not checked: this reading isn't from a verified private model",
+                      systemImage: checked ? "checkmark.seal" : "exclamationmark.triangle")
+                    .font(.subheadline)
+                    .foregroundStyle(checked ? AK.bone : AK.amberText)
+                    .fixedSize(horizontal: false, vertical: true)
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 8) {
+                        KeyValue(key: "Model", value: ai.model)
+                        KeyValue(key: "Answer signed", value: r.interpretation.reader == "openai" ? "No" : Self.sentence(ai.signature.status), color: ai.signature.status == "verified" ? AK.accentText : AK.amberText)
+                        KeyValue(key: "Private hardware", value: Self.sentence(ai.attestation), color: ai.attestation == "verified" ? AK.accentText : AK.amberText)
+                    }
+                    .padding(.top, 8)
+                } label: {
+                    Text("How it was checked").font(.subheadline).foregroundStyle(AK.muted)
+                }
+                .tint(AK.muted)
             }
         }
     }
@@ -228,12 +283,15 @@ struct ReceiptDetail: View {
                     Spacer(minLength: 16)
                     Text(d.status.capitalized).font(.subheadline.weight(.medium)).foregroundStyle(r.signal.text)
                 }
-                Text(Plain.scrub(d.reason)).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+                Text(Plain.rule(d.rule) ?? Plain.scrub(d.reason)).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             }
             Text(Plain.scrub(r.message)).font(.footnote).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
         }
     }
+
+    /// "verified" -> "Verified".
+    static func sentence(_ s: String) -> String { s.prefix(1).uppercased() + s.dropFirst() }
 
     /// The reader that actually answered, named plainly.
     static func readerName(_ reader: String) -> String {
