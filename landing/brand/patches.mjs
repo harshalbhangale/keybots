@@ -21,4 +21,9 @@ writeFileSync(
   join(out, "patch-space.png"),
   png(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="66"><rect width="300" height="66" fill="#575758"/><text x="150" y="45" text-anchor="middle" font-family="Helvetica Neue" font-size="31" letter-spacing="9" fill="#c7c7cc">KEYBOTS</text></svg>`, 300),
 );
+// The message field, emptied: the iMessage placeholder on the field colour (for the hero screen).
+writeFileSync(
+  join(out, "patch-input.png"),
+  png(`<svg xmlns="http://www.w3.org/2000/svg" width="420" height="96"><rect width="420" height="96" fill="#3b3b3d"/><text x="14" y="62" font-family="Helvetica Neue" font-size="42" fill="#8e8e93">iMessage</text></svg>`, 420),
+);
 console.log("wrote patches");
