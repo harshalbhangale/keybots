@@ -12,8 +12,8 @@ struct LeashView: View {
 
     var body: some View {
         Screen(tint: model.mood) {
-            Masthead(eyebrow: "AIRKEY · THE LEASH", title: "RULES")
-            Text("Rules your agents can't change. A NEAR contract enforces them, not this app.")
+            Masthead(eyebrow: "AIRKEY · WHAT YOUR AGENTS MAY SPEND", title: "LIMITS")
+            Text("Your agents spend from a NEAR smart contract with these limits. They can't change them; only you can, with Face ID.")
                 .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
             if let state = model.state {
                 killSwitch(state)
@@ -43,7 +43,7 @@ struct LeashView: View {
             Button(adding == .allow ? "Allow" : "Block") { submit() }
         } message: {
             Text(adding == .allow
-                ? "The Inbox Agent can pay this account without asking you, within its caps."
+                ? "A payment to this account from a message you copy goes through without asking you, up to your limits."
                 : "No agent can pay this account.")
         }
     }
@@ -57,7 +57,7 @@ struct LeashView: View {
         Task {
             switch kind {
             case .allow: await model.owner("allow", ["account": name], reason: "Allow \(name)")
-            case .block: await model.owner("block", ["account": name, "reason": why.isEmpty ? "Blocked by the owner" : why], reason: "Block \(name)")
+            case .block: await model.owner("block", ["account": name, "reason": why.isEmpty ? "You blocked it" : why], reason: "Block \(name)")
             }
         }
     }
@@ -94,19 +94,19 @@ struct LeashView: View {
 
     private func limits(_ s: LeashState) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionTitle("Limits")
+            SectionTitle("Balance")
             Panel {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(Fmt.near(s.available, unit: false)).font(AK.number(28)).foregroundStyle(AK.bone)
-                    Text("NEAR in the leash").font(.subheadline).foregroundStyle(AK.muted)
+                    Text("NEAR your agents can spend").font(.subheadline).foregroundStyle(AK.muted)
                 }
-                Text("Agents spend from here, never from your own account.")
+                Text("They spend from this balance, never from your own account.")
                     .font(.footnote).foregroundStyle(AK.muted)
                 Hairline()
                 ForEach(s.shownAgents) { a in
                     KeyValue(
                         key: Fmt.agentName(account: a.account),
-                        value: "\(Fmt.near(a.agent.per_payment_cap, unit: false)) a payment · \(Fmt.near(a.agent.daily_cap, unit: false)) a day"
+                        value: "\(Fmt.near(a.agent.per_payment_cap, unit: false)) at a time · \(Fmt.near(a.agent.daily_cap, unit: false)) a day"
                     )
                 }
             }
@@ -118,14 +118,14 @@ struct LeashView: View {
             SectionTitle("Allowed", trailing: "Add") { adding = .allow }
             Panel {
                 if s.allowlist.isEmpty {
-                    Text("No one yet. Payments from messages will wait for you.").font(.subheadline).foregroundStyle(AK.muted)
+                    Text("No one yet. A payment from a message you copy waits for you.").font(.subheadline).foregroundStyle(AK.muted)
                 }
                 ForEach(Array(s.allowlist.enumerated()), id: \.element) { i, a in
                     if i > 0 { Hairline() }
                     HStack {
                         Text(a).font(AK.mono).foregroundStyle(AK.bone).lineLimit(1).truncationMode(.middle)
                         Spacer(minLength: 12)
-                        Button("Remove") { Task { await model.owner("disallow", ["account": a], reason: "Remove \(a) from your allowlist") } }
+                        Button("Remove") { Task { await model.owner("disallow", ["account": a], reason: "Remove \(a) from your allowed list") } }
                             .font(.subheadline).foregroundStyle(AK.muted)
                     }
                 }
@@ -150,7 +150,7 @@ struct LeashView: View {
                             Button("Unblock") { Task { await model.owner("unblock", ["account": b.account], reason: "Unblock \(b.account)") } }
                                 .font(.subheadline).foregroundStyle(AK.muted)
                         }
-                        Text(b.reason).font(.footnote).foregroundStyle(AK.red.opacity(0.9)).lineLimit(3)
+                        Text(Plain.blockedReason(b.reason)).font(.footnote).foregroundStyle(AK.red.opacity(0.9)).lineLimit(3)
                     }
                 }
             }
@@ -162,12 +162,12 @@ struct LeashView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let tx = model.lastOwnerTx, let url = URL(string: tx.url) {
                 Link(destination: url) {
-                    Label("Last change you signed: \(tx.method)", systemImage: "checkmark.seal.fill").font(.footnote).foregroundStyle(AK.accent)
+                    Label("Last change you signed: \(Plain.change(tx.method))", systemImage: "checkmark.seal.fill").font(.footnote).foregroundStyle(AK.accent)
                 }
             }
             if let url = URL(string: "\(s.explorer)/address/\(s.leash)") {
                 Link(destination: url) {
-                    Label("See the contract on NEAR", systemImage: "arrow.up.right").font(.footnote).foregroundStyle(AK.muted)
+                    Label("See the smart contract on NEAR", systemImage: "arrow.up.right").font(.footnote).foregroundStyle(AK.muted)
                 }
             }
         }

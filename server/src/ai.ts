@@ -8,10 +8,13 @@
 //   recover the ECDSA (EIP-191) signer, and check that the signed text is
 //   "<model>:<sha256(request)>:<sha256(response)>" (provider_tee) or
 //   "<sha256(request)>:<sha256(response)>" (gateway).
-// - We do NOT yet verify the attestation report that ties that signing address
-//   to TEE hardware. Receipts say so ("attestation": "not checked").
+// - The hardware attestation (attest.ts) is checked per enclave every ten
+//   minutes in the background; each answer carries that result and whether
+//   its signer is the attested address. Until a check has run, and for
+//   OpenAI, receipts say "not checked".
 import { createHash } from "node:crypto";
 import { recoverMessageAddress } from "viem";
+import { attestations, type AttestationEvidence } from "./attest.js";
 import type { Action } from "./parse.js";
 
 export interface AiConfig {
@@ -31,7 +34,8 @@ export interface AiEvidence {
     signingAddress?: string;
     algo: "ecdsa";
   };
-  attestation: "not checked";
+  attestation: AttestationEvidence["attestation"];
+  attestationChecks?: AttestationEvidence["attestationChecks"];
 }
 
 const SYSTEM = `You read one message and extract at most one money action from it.
@@ -108,10 +112,11 @@ export async function chatWithEvidence(
   };
   // Only NEAR AI Cloud signs its answers; OpenAI's stay "unavailable".
   if (near && chatId) evidence.signature = await checkSignature(chatId, cfg, sha256(body), sha256(raw), fetchImpl);
+  if (near) Object.assign(evidence, attestations.evidenceFor(cfg.model, evidence.signature));
   return { content, evidence };
 }
 
-async function checkSignature(
+export async function checkSignature(
   chatId: string,
   cfg: { apiKey: string; model: string; base: string },
   requestHash: string,

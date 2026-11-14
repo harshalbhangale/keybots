@@ -7,9 +7,9 @@ import type { Config } from "./config.js";
 import type { Chain } from "./near.js";
 import type { IntentsClient } from "./intents.js";
 import type { OrderStore } from "./orders.js";
-import { amountOut, fromUnits, minOut, swapMsg, type RheaClient } from "./rhea.js";
+import { amountOut, fromUnits, minOut, sellMsg, swapMsg, toUnits, type RheaClient, type RheaSell } from "./rhea.js";
 import { DOLLAR, parse, resolveReceiver, toYocto, type Action } from "./parse.js";
-import type { Receipt, ReceiptStore } from "./receipts.js";
+import type { Receipt, ReceiptStore, Source } from "./receipts.js";
 
 export interface Deps {
   cfg: Config;
@@ -79,9 +79,16 @@ export function describe(action: Action): { kind: "pay" | "swap"; title: string;
   }
 }
 
-export async function runCommand(deps: Deps, text: string, source: "typed" | "pasted"): Promise<Receipt> {
+/** The KOL and post behind a "follow" command, for its receipt. */
+export interface FollowSource {
+  handle: string;
+  postUrl: string;
+}
+
+export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
-  const base = { id: randomUUID(), at: new Date().toISOString(), input: { text: text.slice(0, 2000), source } };
+  const input = { text: text.slice(0, 2000), source, ...(source === "follow" && from ? { handle: from.handle, postUrl: from.postUrl } : {}) };
+  const base = { id: randomUUID(), at: new Date().toISOString(), input };
 
   // 1. Read it: rules first, an AI only for what the rules can't read.
   const interpretation = await readCommand(deps, text);
@@ -89,11 +96,15 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
 
   const done = (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">): Receipt => {
     const receipt = { ...base, interpretation, ...r } as Receipt;
+    const summary = plainSummary(receipt, cfg.contacts);
+    if (summary) receipt.summary = summary;
     receipts.add(receipt);
     return receipt;
   };
 
   if (action.kind === "unknown") return done({ outcome: "not-sent", message: action.reason });
+  // A followed KOL's call only ever becomes one swap: never a payment or a standing order.
+  if (source === "follow" && action.kind !== "swap") return done({ outcome: "blocked", message: "Only a swap runs for a KOL you follow." });
   if (action.kind === "swap") return swap(deps, action, source, done);
   if (action.kind === "watch") return watch(deps, action, text, source, done);
 
@@ -153,6 +164,104 @@ export async function runCommand(deps: Deps, text: string, source: "typed" | "pa
   });
 }
 
+/** The name a person knows a receiver by: the contact's name when there is one, else the account. */
+function who(r: Receipt, contacts: Record<string, string>): string {
+  const rc = r.receiver;
+  if (!rc) return "them";
+  if (rc.via === "contacts") return rc.asked.toLowerCase();
+  return Object.entries(contacts).find(([, account]) => account === rc.account)?.[0] ?? rc.account;
+}
+
+/** "0.5" out of "Over the per-payment cap of 0.5 NEAR". */
+const nearIn = (s: string) => /(\d+(?:\.\d+)?)\s*NEAR/.exec(s)?.[1];
+
+/**
+ * One plain line for a receipt, for someone new to NEAR: what happened and
+ * why, with no rule codes and no contract words. Worked out from the
+ * receipt's own fields (outcome, rule, receiver, checks, swap), not from
+ * `message`, which stays as it was. Undefined when there is nothing plainer
+ * to say than the message.
+ */
+export function plainSummary(r: Receipt, contacts: Record<string, string> = {}): string | undefined {
+  const a = r.interpretation.action;
+  const name = who(r, contacts);
+  const rule = r.decision?.rule;
+  const stopped = "Blocked: you turned on Stop everything";
+
+  if (r.outcome === "paid" && a.kind === "pay") return `Paid ${a.amountNear} NEAR to ${name}`;
+
+  if (r.outcome === "swapped") {
+    const x = r.swap?.executed;
+    if (!x) return undefined;
+    // A token sold back (USDC → NEAR) names its own symbol; a buy spends NEAR.
+    const inSym = (x as { symbolIn?: string }).symbolIn ?? "NEAR";
+    if (!x.amountOut) return `Swapping ${x.amountIn} ${inSym} for ${x.symbolOut}`;
+    return r.message.includes("still running")
+      ? `Swapping ${x.amountIn} ${inSym} for about ${tidy(x.amountOut)} ${x.symbolOut}. It lands in a minute`
+      : `Swapped ${x.amountIn} ${inSym} for ${tidy(x.amountOut)} ${x.symbolOut}`;
+  }
+
+  if (r.outcome === "approval") {
+    if (rule === "R6") return `Waiting for you: ${name} isn't on your allowed list`;
+    const f = r.checks?.facts;
+    if (!f) return "Waiting for you to approve";
+    const fresh = f.ageDays !== null && f.ageDays < 7;
+    if (f.isContract) return "Waiting for you: this account is an app, not a person";
+    if (fresh && !f.paidBefore) return "Waiting for you: a new account you've never paid";
+    if (fresh) return "Waiting for you: this account is only a few days old";
+    if (!f.paidBefore) return `Waiting for you: you've never paid ${name}`;
+    return "Waiting for you to approve";
+  }
+
+  if (r.outcome === "blocked") {
+    if (rule === "R1") return stopped;
+    if (rule === "R3") return `Blocked: ${name} is on your blocked list`;
+    if (rule === "R4") {
+      const cap = nearIn(r.decision!.reason);
+      const kind = a.kind === "swap" ? "per-trade" : "per-payment";
+      return cap ? `Blocked: over your ${cap} NEAR ${kind} limit` : `Blocked: over your ${kind} limit`;
+    }
+    if (rule === "R5") {
+      const cap = nearIn(r.decision!.reason);
+      return cap ? `Blocked: over your ${cap} NEAR daily limit` : "Blocked: over your daily limit";
+    }
+    if (rule === "R6") return `Blocked: ${name} isn't on your allowed list`;
+    if (rule === "R0") return "Blocked: not enough NEAR in your AIRKEY balance";
+    if (rule) return undefined;
+    // Stopped by the server before the chain was asked.
+    if (r.input.source === "pasted" && (a.kind === "swap" || a.kind === "watch")) {
+      return "Blocked: trades only run from what you type, never from a copied message";
+    }
+    if (r.swap && (!r.swap.from.verified || !r.swap.to.verified)) {
+      const bad = !r.swap.from.verified ? r.swap.from : r.swap.to;
+      return `Blocked: ${bad.asked.toUpperCase()} isn't a token we could verify`;
+    }
+    const l = r.swap?.leash;
+    if (l && !l.within) {
+      if (r.message.includes("kill switch")) return stopped;
+      const cap = yoctoToNear(BigInt(l.perPaymentCap));
+      if (nearToYocto(Number(l.valueNear)) > BigInt(l.perPaymentCap)) return `Blocked: over your ${cap} NEAR per-trade limit`;
+      return `Blocked: only ${tidy(yoctoToNear(BigInt(l.leftToday)))} NEAR left of today's limit`;
+    }
+    return undefined;
+  }
+
+  if (r.outcome === "quoted" && r.swap?.quote && a.kind === "swap") {
+    return `${a.amount} ${a.from.toUpperCase()} gets about ${tidy(r.swap.quote.amountOutFormatted)} ${a.to.toUpperCase()}. Nothing sent yet`;
+  }
+
+  if (r.outcome === "watching" && r.order) {
+    const o = r.order;
+    return `Watching ${o.symbol}: will ${o.command} when it's ${o.direction} $${tidy(o.price)}`;
+  }
+
+  if (r.outcome === "not-sent") {
+    if (r.receiver && r.checks && !r.checks.facts.exists) return `Not sent: ${r.receiver.account} doesn't exist on NEAR`;
+    if (r.swap?.executed && !r.swap.executed.ok) return `Not swapped: ${r.swap.executed.venue} couldn't fill it. Your NEAR is safe`;
+  }
+  return undefined;
+}
+
 const nearToYocto = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 18n;
 const yoctoToNear = (y: bigint) => (Number(y / 10n ** 18n) / 1e6).toString();
 /** A number for a sentence: "2.933176326443593989515722" -> "2.933", "0.024441517" -> "0.02444". */
@@ -166,7 +275,7 @@ export const tidy = (n: string | number) => {
 async function swap(
   deps: Deps,
   action: Extract<Action, { kind: "swap" }>,
-  source: "typed" | "pasted",
+  source: Source,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
 ): Promise<Receipt> {
   const label = `${action.amount} ${action.from} → ${action.to}`;
@@ -236,6 +345,12 @@ async function swap(
   const route = from.token!.assetId.endsWith("wrap.near") ? deps.rhea?.route(action.to) : undefined;
   if (route && deps.rhea?.network) {
     return swapOnRhea(deps, action, agent, route, { from, to, quote, leash }, done);
+  }
+  // A token the leash holds (USDC, USDT) into NEAR or the other one: sell it on Rhea, from the leash.
+  // Only when the owner has set the leash's rule for that token; otherwise it stays a quote.
+  const sell = deps.rhea?.network ? deps.rhea.sellRoute?.(action.from, action.to) : undefined;
+  if (sell && (await deps.chain.tokenCap?.(sell.from.token).catch(() => null))) {
+    return sellOnRhea(deps, action, agent, sell, { from, to, quote, leash }, done);
   }
   // On mainnet, NEAR into anything NEAR Intents lists: fund a 1Click deposit address from the leash.
   if (deps.cfg.network === "mainnet" && from.token!.assetId === "nep141:wrap.near") {
@@ -362,12 +477,94 @@ async function swapOnRhea(
   });
 }
 
+/**
+ * The leash sends a token it holds to Rhea, which swaps it in one pool and
+ * sends NEAR (as wNEAR, which the leash unwraps) or the other token back.
+ * The leash's caps are in NEAR, so the trade's value goes with it: NEAR
+ * Intents' price when it has one, else what the pool itself pays in NEAR.
+ */
+async function sellOnRhea(
+  deps: Deps,
+  action: Extract<Action, { kind: "swap" }>,
+  agent: string,
+  sell: RheaSell,
+  swap: NonNullable<Receipt["swap"]>,
+  done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
+): Promise<Receipt> {
+  const rhea = deps.rhea!;
+  const net = rhea.network!;
+  const label = `${action.amount} ${sell.from.symbol} → ${sell.to.symbol}`;
+  const who = { account: agent, tier: "trusted" as const };
+  let amountIn: string;
+  try {
+    amountIn = toUnits(action.amount, sell.from.decimals);
+    if (BigInt(amountIn) <= 0n) throw new Error();
+  } catch {
+    return done({ outcome: "not-sent", message: `${action.amount} isn't an amount I can swap.`, swap });
+  }
+  let expected: string;
+  let valueNear: string;
+  try {
+    expected = await rhea.quoteSell(sell, amountIn);
+    const priced = swap.leash ? toYocto(swap.leash.valueNear) : "0";
+    // No NEAR Intents price: the pool's own answer, in NEAR.
+    valueNear = BigInt(priced) > 0n ? priced : sell.unwrap ? expected : await rhea.quoteSell({ ...sell, to: { symbol: "NEAR", token: net.wrap, decimals: 24 }, pool: sell.from.pool }, amountIn);
+  } catch (e) {
+    return done({ outcome: "not-sent", message: `Rhea couldn't price ${label}: ${(e as Error).message}`, swap });
+  }
+  const { decision, txHash, events, logs } = await deps.chain.swapToken(agent, {
+    venue: net.exchange,
+    token: sell.from.token,
+    amount: amountIn,
+    valueNear,
+    wrap: net.wrap,
+    msg: sellMsg(sell, amountIn, minOut(expected)),
+    unwrap: sell.unwrap,
+    memo: `swap ${label}`,
+  });
+  const tx = { hash: txHash, url: deps.chain.txUrl(txHash) };
+  if (decision.status !== "paid") {
+    return done({ outcome: "blocked", message: `Blocked by the leash (${decision.rule}): ${decision.reason}.`, agent: who, decision, tx, events, swap });
+  }
+  const failed = events.some((e) => (e as { event?: string }).event === "swap_failed");
+  const out = amountOut(logs, sell.to.token);
+  const executed = {
+    venue: "Rhea",
+    exchange: net.exchange,
+    amountIn: action.amount,
+    symbolIn: sell.from.symbol,
+    amountOut: out ? fromUnits(out, sell.to.decimals) : undefined,
+    symbolOut: sell.to.symbol,
+    ok: !failed && !!out,
+  };
+  if (!executed.ok) {
+    return done({
+      outcome: "not-sent",
+      message: `Rhea didn't fill ${label}; the leash keeps the ${sell.from.symbol}. Nothing was lost.`,
+      agent: who,
+      decision,
+      tx,
+      events,
+      swap: { ...swap, executed },
+    });
+  }
+  return done({
+    outcome: "swapped",
+    message: `Swapped ${action.amount} ${sell.from.symbol} for ${executed.amountOut} ${sell.to.symbol} on Rhea. It's in the leash.`,
+    agent: who,
+    decision,
+    tx,
+    events,
+    swap: { ...swap, executed },
+  });
+}
+
 /** A price-triggered order: check the trade and the token now, then leave it with the watcher. */
 async function watch(
   deps: Deps,
   action: Extract<Action, { kind: "watch" }>,
   text: string,
-  source: "typed" | "pasted",
+  source: Source,
   done: (r: Omit<Receipt, "id" | "at" | "input" | "interpretation">) => Receipt,
 ): Promise<Receipt> {
   const what = `${action.command} when ${action.symbol} is ${action.direction} $${action.price}`;

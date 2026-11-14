@@ -20,6 +20,19 @@ export interface RheaNetwork {
   exchange: string;
   wrap: string;
   routes: Record<string, RheaRoute>;
+  /** Pools that trade two of the tokens above directly, by "A/B" in either order: "USDC/USDT". */
+  pairs?: Record<string, number>;
+}
+
+/** Selling a token the leash holds: one pool, the token in, NEAR or another token out. */
+export interface RheaSell {
+  /** The token sold: one of the network's routes. */
+  from: RheaRoute;
+  /** What comes back: "NEAR" (wNEAR from the pool, unwrapped by the leash) or a token. */
+  to: { symbol: string; token: string; decimals: number };
+  pool: number;
+  /** The output is wNEAR, which the leash turns back into NEAR. */
+  unwrap: boolean;
 }
 
 /** The pools AIRKEY trades in, chosen for depth (tens of thousands of wNEAR each). */
@@ -31,6 +44,8 @@ export const RHEA: Record<string, RheaNetwork | undefined> = {
       USDT: { symbol: "USDT", token: "usdt.itachicara.testnet", pool: 1084, decimals: 24 },
       USDC: { symbol: "USDC", token: "usdc.itachicara.testnet", pool: 1103, decimals: 24 },
     },
+    // The deepest USDC/USDT pool there (thousands of each).
+    pairs: { "USDC/USDT": 1126 },
   },
 };
 
@@ -42,6 +57,32 @@ export function swapMsg(net: RheaNetwork, route: RheaRoute, amountIn: string, mi
   return JSON.stringify({
     actions: [{ pool_id: route.pool, token_in: net.wrap, token_out: route.token, amount_in: amountIn, min_amount_out: minOut }],
   });
+}
+
+/** The swap Rhea runs when the leash sells a token: one pool, the token in, wNEAR or the other token out. */
+export function sellMsg(sell: RheaSell, amountIn: string, minOut: string): string {
+  return JSON.stringify({
+    actions: [{ pool_id: sell.pool, token_in: sell.from.token, token_out: sell.to.token, amount_in: amountIn, min_amount_out: minOut }],
+  });
+}
+
+/** How AIRKEY sells `from` for `to` on this network, if it can: "USDC" for "NEAR", "USDT" for "USDC". */
+export function sellRoute(net: RheaNetwork | undefined, from: string, to: string): RheaSell | undefined {
+  const [a, b] = [from.toUpperCase(), to.toUpperCase()];
+  const route = net?.routes[a];
+  if (!net || !route || a === b) return undefined;
+  if (b === "NEAR") return { from: route, to: { symbol: "NEAR", token: net.wrap, decimals: 24 }, pool: route.pool, unwrap: true };
+  const out = net.routes[b];
+  const pool = net.pairs?.[`${a}/${b}`] ?? net.pairs?.[`${b}/${a}`];
+  if (!out || pool === undefined) return undefined;
+  return { from: route, to: { symbol: out.symbol, token: out.token, decimals: out.decimals }, pool, unwrap: false };
+}
+
+/** "0.5" with 24 decimals -> "500000000000000000000000", exact (no floats). */
+export function toUnits(amount: string, decimals: number): string {
+  const [i, f = ""] = amount.split(".");
+  if (!/^\d+$/.test(i) || !/^\d*$/.test(f) || f.length > decimals) throw new Error("Not an amount");
+  return (BigInt(i) * 10n ** BigInt(decimals) + BigInt((f + "0".repeat(decimals)).slice(0, decimals) || "0")).toString();
 }
 
 /** The least the swap may return: the pool's quote less the slippage allowance. */
@@ -92,6 +133,11 @@ export function rheaClient(opts: { network: string; rpc: string; fetchImpl?: typ
     /** What `amountIn` yocto of NEAR gets from the pool right now, in the token's units. */
     quote: (route: RheaRoute, amountIn: string) =>
       view<string>(net!.exchange, "get_return", { pool_id: route.pool, token_in: net!.wrap, amount_in: amountIn, token_out: route.token }),
+    /** How to sell a token the leash holds for NEAR or for another token here, if AIRKEY can. */
+    sellRoute: (from: string, to: string): RheaSell | undefined => sellRoute(net, from, to),
+    /** What selling `amountIn` units of the token gets from the pool right now, in the output's units. */
+    quoteSell: (sell: RheaSell, amountIn: string) =>
+      view<string>(net!.exchange, "get_return", { pool_id: sell.pool, token_in: sell.from.token, amount_in: amountIn, token_out: sell.to.token }),
     /** The tokens `account` holds that AIRKEY trades in (swaps land back in the leash). */
     async holdings(account: string): Promise<{ symbol: string; token: string; amount: string }[]> {
       if (!net) return [];

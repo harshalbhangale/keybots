@@ -30,18 +30,20 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
     weak var delegate: EmojiBoardDelegate?
 
     enum Mode: Int, CaseIterable {
-        case emoji, emoticons
+        case emoji, emoticons, gifs
 
         var placeholder: String {
             switch self {
             case .emoji: return "Search Emoji"
             case .emoticons: return "Search Emoticons"
+            case .gifs: return "GIFs"
             }
         }
         var name: String {
             switch self {
             case .emoji: return "emoji"
             case .emoticons: return "emoticons"
+            case .gifs: return "gifs"
             }
         }
     }
@@ -110,6 +112,21 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
     private var selectedChip: [Mode: String] = [:]
     private var emoticonItems: [String] = []
 
+    // GIFs, from KLIPY through our server. Loading them and handing one over
+    // both need Full Access (network and pasteboard).
+    var hasFullAccess = false
+    private var gifGrid: UICollectionView!
+    private var gifItems: [GifItem] = []
+    private var gifQuery = ""
+    private var gifNext: Int?
+    private var gifLoading = false
+    /// Bumped on every new feed, so a late answer for an old chip is dropped.
+    private var gifGeneration = 0
+    /// The line under the grid: "Copied. Paste it in the chat." for a moment.
+    private let gifNote = UILabel()
+    private let attributionLabel = UILabel()
+    private var noteTimer: Timer?
+
     /// One entry on the bottom bar of a media or emoticon page.
     private struct Chip {
         let id: String
@@ -129,8 +146,21 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
     private static let emoticonChips: [Chip] = [recentsChip] +
         EmoticonData.categories.map { Chip(id: $0.id, title: $0.title, query: $0.id, label: $0.title) }
 
+    /// Searching needs the letter keys, which the board covers, so the GIF
+    /// tab offers the feelings people reach for most, and trending.
+    private static let gifChips: [Chip] =
+        [Chip(id: "trending", title: "Trending", query: "", label: "Trending")] + [
+            ("Haha", "haha"), ("Yes", "yes"), ("Thanks", "thank you"), ("Wow", "wow"),
+            ("Sad", "sad"), ("Love", "love"), ("Party", "party"), ("No", "no"),
+            ("Hi", "hello"), ("Congrats", "congratulations"), ("Good night", "good night"),
+        ].map { Chip(id: $0.1, title: $0.0, query: $0.1, label: $0.0) }
+
     private func chips(for mode: Mode) -> [Chip] {
-        mode == .emoticons ? Self.emoticonChips : []
+        switch mode {
+        case .emoticons: return Self.emoticonChips
+        case .gifs: return Self.gifChips
+        case .emoji: return []
+        }
     }
 
     private var placeholder: String { mode.placeholder }
@@ -213,11 +243,40 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
         emoticonGrid.accessibilityIdentifier = "emoji:emoticons"
         addSubview(emoticonGrid)
 
+        let gifLayout = UICollectionViewFlowLayout()
+        gifLayout.minimumInteritemSpacing = 4
+        gifLayout.minimumLineSpacing = 4
+        gifLayout.sectionInset = UIEdgeInsets(top: 0, left: 8, bottom: 8, right: 8)
+        gifGrid = UICollectionView(frame: .zero, collectionViewLayout: gifLayout)
+        gifGrid.noEdgeEffects()
+        gifGrid.backgroundColor = Glass.touchableGrid
+        gifGrid.dataSource = self
+        gifGrid.delegate = self
+        gifGrid.register(GifCell.self, forCellWithReuseIdentifier: "g")
+        gifGrid.showsVerticalScrollIndicator = false
+        gifGrid.alwaysBounceVertical = true
+        gifGrid.accessibilityIdentifier = "emoji:gifs"
+        addSubview(gifGrid)
+
+        gifNote.font = .systemFont(ofSize: 12, weight: .medium)
+        gifNote.textColor = Glass.textPrimary
+        gifNote.accessibilityIdentifier = "emoji:gif:note"
+        gifNote.alpha = 0
+        addSubview(gifNote)
+        // KLIPY asks for its name beside its results.
+        attributionLabel.font = .systemFont(ofSize: 11, weight: .medium)
+        attributionLabel.textColor = Self.sectionGrey
+        attributionLabel.textAlignment = .right
+        attributionLabel.accessibilityIdentifier = "emoji:attribution"
+        addSubview(attributionLabel)
+
         statusLabel.font = .systemFont(ofSize: 15)
         statusLabel.textColor = Glass.textSecondary
         statusLabel.textAlignment = .center
         statusLabel.numberOfLines = 0
         statusLabel.accessibilityIdentifier = "emoji:status"
+        statusLabel.isUserInteractionEnabled = true
+        statusLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(statusTapped)))
         addSubview(statusLabel)
 
         lettersButton.setTitle("ABC", for: .normal)
@@ -288,10 +347,12 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
         abcButton.setTitleColor(Glass.textPrimary, for: .normal)
         lettersButton.setTitleColor(Glass.textPrimary, for: .normal)
         deleteButton.tintColor = Glass.textPrimary
-        for grid in [collection, emoticonGrid] as [UICollectionView] {
+        for grid in [collection, emoticonGrid, gifGrid] as [UICollectionView] {
             grid.backgroundColor = Glass.touchableGrid
         }
         sectionLabel.textColor = Self.sectionGrey
+        attributionLabel.textColor = Self.sectionGrey
+        gifNote.textColor = Glass.textPrimary
         statusLabel.textColor = Glass.textSecondary
         for thumb in [tabThumb, modeThumb, chipThumb] { thumb.backgroundColor = Self.thumbColor }
         for (i, b) in modeButtons.enumerated() {
@@ -329,6 +390,7 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
         let glyphs: [(Mode, UIImage?, String)] = [
             (.emoji, UIImage(systemName: "face.smiling"), "Emoji"),
             (.emoticons, BoardGlyphs.text(":-)", size: 14, weight: .semibold), "Emoticons"),
+            (.gifs, BoardGlyphs.text("GIF", size: 10.5, weight: .heavy, boxed: true), "GIFs"),
         ]
         for (mode, image, label) in glyphs {
             let b = UIButton(type: .system)
@@ -364,6 +426,13 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
             highlightTab(currentCategory)
         case .emoticons:
             selectChip(selectedChip[new] ?? (EmoticonRecents.load().isEmpty ? "classic" : "recents"))
+        case .gifs:
+            if !hasFullAccess {
+                sectionLabel.text = "GIFS"
+                statusText = "Turn on Allow Full Access to use GIFs\nSettings › Apps › AIRKEY › Keyboards"
+            } else if changed || gifItems.isEmpty {
+                selectChip(selectedChip[new] ?? "trending")
+            }
         }
         if changed { MemoryLogger.logSurface("emoji:\(new.name)") }
         setNeedsLayout()
@@ -491,10 +560,95 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
             statusText = emoticonItems.isEmpty ? "Emoticons you send show up here" : nil
             emoticonGrid.reloadData()
             emoticonGrid.setContentOffset(.zero, animated: false)
+        case .gifs:
+            sectionLabel.text = chip.label.uppercased()
+            loadGifs(query: chip.query ?? "")
         case .emoji:
             break
         }
         setNeedsLayout()
+    }
+
+    // MARK: GIFs
+
+    /// A new feed: trending ("") or a feeling's search, from the first page.
+    private func loadGifs(query: String) {
+        guard hasFullAccess else { return }
+        gifGeneration += 1
+        gifQuery = query
+        gifItems = []
+        gifNext = nil
+        gifLoading = false
+        gifGrid.reloadData()
+        gifGrid.setContentOffset(.zero, animated: false)
+        statusText = nil
+        fetchGifs(page: 1)
+    }
+
+    private func fetchGifs(page: Int) {
+        guard !gifLoading else { return }
+        gifLoading = true
+        let generation = gifGeneration, query = gifQuery
+        Task { [weak self] in
+            let result: Result<GifPage, Error>
+            do { result = .success(try await API().gifs(q: query, page: page)) } catch { result = .failure(error) }
+            guard let self, generation == self.gifGeneration else { return }
+            self.gifLoading = false
+            switch result {
+            case .success(let found):
+                let start = self.gifItems.count
+                self.gifItems += found.items
+                self.gifNext = found.next
+                self.attributionLabel.text = found.attribution
+                if start == 0 {
+                    self.gifGrid.reloadData()
+                } else {
+                    self.gifGrid.insertItems(at: (start..<self.gifItems.count).map { IndexPath(item: $0, section: 0) })
+                }
+                if self.gifItems.isEmpty { self.statusText = "No GIFs for that" }
+            case .failure(let error):
+                // Only the first page says so; a later page just stops.
+                if self.gifItems.isEmpty {
+                    self.statusText = "\(error.localizedDescription)\nTap to try again"
+                }
+            }
+        }
+    }
+
+    @objc private func statusTapped() {
+        guard mode == .gifs, hasFullAccess, gifItems.isEmpty else { return }
+        loadGifs(query: gifQuery)
+    }
+
+    /// A tapped GIF: download the medium one and put it on the pasteboard.
+    private func sendGif(at ip: IndexPath) {
+        guard gifItems.indices.contains(ip.item) else { return }
+        let item = gifItems[ip.item]
+        let cell = gifGrid.cellForItem(at: ip)
+        cell?.contentView.alpha = 0.5
+        GifLoader.shared.full(item.url) { [weak self, weak cell] data in
+            cell?.contentView.alpha = 1
+            guard let self else { return }
+            if let data, GifLoader.copy(data) {
+                Haptics.success()
+                self.showGifNote("Copied. Paste it in the chat.")
+            } else {
+                Haptics.error()
+                self.showGifNote("Couldn't get that GIF. Try again.")
+            }
+        }
+    }
+
+    private func showGifNote(_ text: String) {
+        gifNote.text = text
+        noteTimer?.invalidate()
+        UIView.animate(withDuration: Glass.motion) { self.gifNote.alpha = 1 }
+        noteTimer = Timer.scheduledTimer(withTimeInterval: 2.6, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                UIView.animate(withDuration: 0.4) { self.gifNote.alpha = 0 }
+            }
+        }
     }
 
     // MARK: Search
@@ -516,6 +670,8 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
                 : EmoticonData.categories.filter { $0.title.lowercased().hasPrefix(typed) }
                     .flatMap(\.items)
             showSuggestions(Array(hits.prefix(24)), emoticons: true)
+        case .gifs:
+            break   // no field on the GIF tab: its chips are the search
         }
     }
 
@@ -551,6 +707,7 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
     }
 
     @objc private func searchTapped() {
+        guard mode != .gifs else { return }
         searchEditor.isActive = true
         if !searchActive {
             searchActive = true
@@ -559,7 +716,7 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
                 // Empty query shows recents in the strip right away.
                 if searchResults == nil { searchResults = Self.loadRecents() }
                 reload()
-            case .emoticons:
+            case .emoticons, .gifs:
                 queryChanged(searchEditor.text)
             }
             abcButton.isHidden = false
@@ -652,12 +809,13 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
     // MARK: Collections
 
     func numberOfSections(in cv: UICollectionView) -> Int {
-        if cv === emoticonGrid { return 1 }
+        if cv === emoticonGrid || cv === gifGrid { return 1 }
         return searchResults != nil ? 1 : sections.count
     }
 
     func collectionView(_ cv: UICollectionView, numberOfItemsInSection s: Int) -> Int {
         if cv === emoticonGrid { return emoticonItems.count }
+        if cv === gifGrid { return gifItems.count }
         if let results = searchResults { return results.count }
         return sections.indices.contains(s) ? sections[s].emoji.count : 0
     }
@@ -669,6 +827,19 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
 
     func collectionView(_ cv: UICollectionView,
                         cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        if cv === gifGrid {
+            let cell = cv.dequeueReusableCell(withReuseIdentifier: "g", for: indexPath) as! GifCell
+            let item = gifItems[indexPath.item]
+            cell.accessibilityLabel = item.title.isEmpty ? "GIF" : item.title
+            cell.accessibilityIdentifier = "emoji:gif:\(indexPath.item)"
+            cell.loading = item.preview
+            let pixels = max(cell.bounds.width, cell.bounds.height, 100) * UIScreen.main.scale
+            GifLoader.shared.preview(item.preview, pixels: pixels) { [weak cell] image in
+                guard let cell, cell.loading == item.preview else { return }
+                cell.imageView.image = image
+            }
+            return cell
+        }
         if cv === emoticonGrid {
             let cell = cv.dequeueReusableCell(withReuseIdentifier: "t", for: indexPath) as! EmoticonCell
             let text = emoticonItems[indexPath.item]
@@ -696,6 +867,7 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
     func collectionView(_ cv: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         dismissTonePopup()
         if cv === emoticonGrid { typeEmoticon(emoticonItems[indexPath.item]); return }
+        if cv === gifGrid { sendGif(at: indexPath); return }
         pick(emoji(at: indexPath))
     }
 
@@ -703,6 +875,11 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
         // The emoji grid keeps the size its layout was given; emoticons go
         // three to a row, a thumb's height.
+        if cv === gifGrid {
+            // Three to a row, a little wider than tall, like most GIFs.
+            let w = floor((cv.bounds.width - 16 - 8) / 3)
+            return CGSize(width: max(w, 1), height: max(floor(w * 0.74), 1))
+        }
         guard cv === emoticonGrid else {
             return (layout as? UICollectionViewFlowLayout)?.itemSize ?? .zero
         }
@@ -743,6 +920,11 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView === collection, tonePopup != nil { dismissTonePopup() }
+        // Near the end of the GIFs: the next page.
+        if scrollView === gifGrid, let next = gifNext, !gifLoading,
+           scrollView.contentOffset.y + scrollView.bounds.height > scrollView.contentSize.height - 160 {
+            fetchGifs(page: next)
+        }
         guard !searchActive, scrollView === collection, mode == .emoji else { return }
         // The section under the left edge names the grid, as Apple's does.
         let probe = CGPoint(x: scrollView.contentOffset.x + 24, y: 20)
@@ -832,8 +1014,10 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
             suggestionBar.isHidden = isEmoji
             suggestionBar.frame = CGRect(x: 0, y: rowY + (rowH - 36) / 2, width: bounds.width, height: 36)
             for v in [sectionLabel, lettersButton, deleteButton, tabThumb, tabs,
-                      chipFade, modeBar, statusLabel] as [UIView] { v.isHidden = true }
+                      chipFade, modeBar, statusLabel, gifNote, attributionLabel] as [UIView] { v.isHidden = true }
             emoticonGrid.isHidden = true
+            gifGrid.isHidden = true
+            searchEditor.isHidden = false
             setGlyphSize(EmojiMetrics.searchGlyphFont)
             let size = CGSize(width: pitch, height: rowH)
             if isEmoji, flow?.itemSize != size {
@@ -848,7 +1032,7 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
         closeButton.isHidden = true
         suggestionBar.isHidden = true
         modeBar.isHidden = false
-        let modeW: CGFloat = 2 * 32 + 2
+        let modeW = CGFloat(modeButtons.count) * 34 - 2
         // Apple's field: 40pt tall, 9pt in from the edge (here it ends
         // before the mode glyphs). Every number is in EmojiMetrics.
         let fieldY = EmojiMetrics.fieldTop, fieldH = EmojiMetrics.fieldHeight
@@ -886,6 +1070,12 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
         collection.isHidden = !isEmoji
         chipFade.isHidden = isEmoji
         emoticonGrid.isHidden = mode != .emoticons
+        gifGrid.isHidden = mode != .gifs
+        gifNote.isHidden = mode != .gifs
+        attributionLabel.isHidden = mode != .gifs || !hasFullAccess
+        // No field on the GIF tab (the board covers the letters it would
+        // need): its name sits where the field was, the grid right under it.
+        searchEditor.isHidden = mode == .gifs
         statusLabel.isHidden = isEmoji || statusText == nil
 
         if isEmoji {
@@ -911,6 +1101,19 @@ final class EmojiBoard: UIView, UICollectionViewDataSource, UICollectionViewDele
             }
             emoticonGrid.frame = gridRect
             statusLabel.frame = gridRect.insetBy(dx: 28, dy: 10)
+            if mode == .gifs {
+                sectionLabel.frame = CGRect(x: labelX, y: fieldY + (fieldH - 16) / 2,
+                                            width: bounds.width - labelX - modeW - 24, height: 16)
+                let footY = barY - 18
+                let top = fieldY + fieldH + 4
+                let gifRect = CGRect(x: 0, y: top, width: bounds.width, height: max(0, footY - top - 2))
+                if gifGrid.frame.width != gifRect.width { gifGrid.collectionViewLayout.invalidateLayout() }
+                gifGrid.frame = gifRect
+                statusLabel.frame = gifRect.insetBy(dx: 28, dy: 10)
+                gifNote.frame = CGRect(x: labelX, y: footY, width: bounds.width * 0.62 - labelX, height: 16)
+                attributionLabel.frame = CGRect(x: bounds.width * 0.62, y: footY,
+                                                width: bounds.width * 0.38 - labelX, height: 16)
+            }
         }
     }
 }

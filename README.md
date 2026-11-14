@@ -4,7 +4,7 @@
 
 *Your AI. Your keys. Your rules.*
 
-AIRKEY is a phone keyboard with AI agents in it. You type "pay friend.near 0.5 for dinner" in any chat and an agent pays. Each agent has its own NEAR account, and the only thing its key can do is ask the **leash**, a NEAR contract that holds the money and enforces your rules: caps, an allowlist, a blocklist, a kill switch. An agent that gets fooled by a scam message still can't move money the leash doesn't allow.
+AIRKEY extends [Kall Markets](https://github.com/harshalbhangale/Kall-Markets), the trading keyboard built at ETHGlobal Mumbai, into a phone keyboard with AI agents in it. You type "pay friend.near 0.5 for dinner" in any chat and an agent pays. Each agent has its own NEAR account, and the only thing its key can do is ask the **leash**, a NEAR contract that holds the money and enforces your rules: caps, an allowlist, a blocklist, a kill switch. An agent that gets fooled by a scam message still can't move money the leash doesn't allow.
 
 Built at NEAR HACKATHON (1–14 Nov 2026) by Harshal Bhangale. Status: **in progress**. This README only claims what is in the repo; anything planned says *next*.
 
@@ -34,6 +34,30 @@ The last end-to-end run passed 9 of 9, every step a real transaction: **[docs/ev
 - A payment to a missing account rolled the spend back: [38S5npV7…](https://testnet.nearblocks.io/txns/38S5npV7jADFFio8jZUM19212EKphy6x9EAfPLTZuAEd).
 
 ## Try it
+
+### 0. Without a phone or keys
+
+**A dry run against the live leash.** It reads the words with the server's own rules, reads the leash's state on testnet with public view calls, and applies the contract's rules in the contract's order for the agent that would act (what you type: the trusted Pay Agent; `--pasted`: the untrusted Inbox Agent; swaps: the Trading Agent). No keys, nothing sent.
+
+```bash
+cd server && npm install
+npm run try -- "pay harshal 0.2 for dinner"
+npm run try -- "pay drain 5" --pasted
+npm run try -- "pay vendor 0.4 for the logo" --pasted
+npm run try -- "swap 0.3 near to usdc"
+```
+
+```
+You pasted    pay vendor 0.4 for the logo
+Agent         Inbox Agent (inbox.airkey-harshal.testnet), untrusted
+Leash         leash.airkey-harshal.testnet: 1.20 NEAR, Stop everything off
+Verdict       Would wait for the owner's Face ID: vendor.airkey-harshal.testnet is new and the Inbox Agent can only pay allowed accounts
+Why           within 0.5 NEAR per payment and 1.0 NEAR today (0.0 spent); the contract holds it until the owner approves
+
+Dry run: nothing was sent. The contract makes this decision on chain when the agent sends it; see the transactions in docs/DEMO.md.
+```
+
+**The leash, live, in a browser:** [13-126-207-245.sslip.io/leash](https://13-126-207-245.sslip.io/leash). The AIRKEY server serves this public read-only page at `GET /leash` (no token): the leash's NEAR, Stop everything, each agent's limits and today's spend, the blocked and allowed lists, anything waiting for the owner, and the last decisions as plain lines with their transactions. Run it locally with `cd server && npm run dev`, then open `http://localhost:8787/leash`. Screenshot: [docs/screens/leash-page.png](docs/screens/leash-page.png).
 
 ### 1. The leash's rules (no chain needed)
 
@@ -71,7 +95,7 @@ npm run e2e -- airkey-<yourname>.testnet     # 9 real transactions; writes docs/
 
 ```bash
 cd server && npm install
-npm test                       # 117 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
+npm test                       # 238 tests: parser, receiver checks, swaps on Rhea, quotes, prices, orders, copied calls, the AI bar, OutLayer signing, the full command flow
 npm start                      # http://localhost:8787, uses the agent keys from keys/
 ```
 
@@ -141,7 +165,7 @@ xcrun simctl launch booted tech.airkey.app
 - **Home** shows what the leash holds, any payment waiting for you (approve or reject right there), today's paid / waiting / blocked counts, and recent activity.
 - **The command bar** sits above the tabs on every screen. Tap it, say whose words they are ("I'm asking" is trusted, "Someone sent me this" is untrusted), and type or paste. It shows what the words would do before you send them, and the outcome after.
 - **Agents** shows each agent's account, whether it's trusted, today's spend against its daily cap, and its limits.
-- **Leash** is the control panel: stop everything, payments waiting for you, what the leash holds, and the allow and block lists, which you can add to and remove from. Every change there is **signed on the phone**: the server builds the transaction, Face ID unlocks this device's key, the phone signs, the server relays (`server/src/owner.ts`).
+- **Limits** is the control panel: stop everything, payments waiting for you, what the leash holds, and the allow and block lists, which you can add to and remove from. Every change there is **signed on the phone**: the server builds the transaction, Face ID unlocks this device's key, the phone signs, the server relays (`server/src/owner.ts`).
 - **Activity** lists every command by day; tap one for its receipt as a timeline: what was said, how it was read, which agent, the checks, and the leash's decision with its transaction.
 - **Settings** has the keyboard setup steps, the server address and this device's key. Enroll the key once: `cd scripts && npm run add-device -- <owner> <key>`.
 - **The keyboard** (turn it on in Settings › Apps › AIRKEY › Keyboards, then Allow Full Access) follows the light or dark look of the app you're typing in. As you type, the bar above the keys shows what your words would do ("Pay 0.2 NEAR to harshal") with a lime **Hold to pay** (or swap, buy, sell, place) button: press and hold until the band fills, so a stray tap in a chat never moves money. While you type, the bar offers three words and autocorrects on space ("teh" becomes "the"; one backspace puts it back and remembers it). It never touches what could be money or a name: contacts, NEAR accounts, token symbols, $tickers and numbers. After "pay" or "to" it offers the people in your contacts. **Check copied** sends what you copied to the Inbox Agent. The outcome shows as a lime, amber or red chip, and **Share** puts the receipt in the chat. The keyboard never holds a key.
@@ -180,17 +204,18 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 | Approval flow | **Built**: the leash holds the funds, so a pending payment is a real on-chain record that only the owner's full-access key can approve or reject; the app signs that with Face ID. |
 | A Trading Agent with its own identity and limits | **Built**: `trader.<you>` on testnet, function-call key only (pay, report, swap), its own caps (`npm run add-trader`) |
 | Total budget per agent | *Next* (today: per-payment and daily caps) |
-| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 117 tests, live on testnet (table above) |
+| Payment parsing, Allow / Warn / Block, receiver checks, receipts | **Built** in `server/`, 212 tests, live on testnet (table above) |
 | App screens (Home, Agents, Leash, Receipts, Settings) and the AIRKEY keyboard | **Built** in `ios/` with Liquid Glass; screens and keyboard checked on the simulator against testnet; not yet on a real phone or inside another app |
 | Approval with Face ID, signed on the phone | **Built**: device key in the Keychain, Face ID, the phone signs, the server only relays |
-| AI reading | **Built**: used only for wording the rules can't read. **NEAR AI Cloud** (private inference) answers by default and each reply's ECDSA signature is checked against the exact request and response bytes; the attestation report behind the signing key is *not* checked yet, and receipts say so. **OpenAI** is the fallback when NEAR AI has no key or doesn't answer; it isn't private or signed. Every receipt, and the keyboard chip, names the one that actually answered. |
-| Hold-space AI bar in the keyboard | **Built**: hold the space bar to rewrite, reply, translate or change the tone; nothing goes into the message until you tap Replace, Insert or Copy. NEAR AI Cloud answers first; OpenAI is the fallback and is labelled as such, and `AIRKEY_AI_FALLBACK=off` turns it off. Not yet run on NEAR AI Cloud: there's no key yet. |
+| AI reading | **Built**: used only for wording the rules can't read. **Private AI on NEAR AI Cloud** (runs in NEAR's TEE) answers by default. Every answer's ECDSA signature is verified against the exact request and response bytes, and its signer must be the address NEAR's hardware attests. Every 10 minutes the server checks the Intel TDX quote (Phala's verifier) and the NVIDIA GPU attestation (NVIDIA NRAS) against a fresh nonce, plus the compose hash and event log (`server/src/attest.ts`, `GET /v1/ai/attestation`). Receipts say verified, partial or failed. Limits: the TDX and GPU verdicts come from Phala and NVIDIA, not a local check; no Intel TCB policy and no TLS binding yet. **OpenAI** is the fallback when NEAR AI has no key or doesn't answer; it isn't private or signed. Every receipt, and the keyboard chip, names the one that actually answered. |
+| Assist panel in the keyboard | **Built**: hold the space bar and Fix starts on your draft; also Shorter, Warmer, Formal, Reply (three options), Translate, Ask and Search (web results and a one-line answer). Results stream word by word (first word in about 0.4 s, done in about 1–2 s); nothing goes into the message until Replace, Insert or Copy, and Replace can be undone for 5 seconds. A "Private · NEAR AI" badge opens the answer's receipt: model, signature verified, hardware attestation verified, time taken. Text that reads as a payment is never sent to the AI: the panel hands it to the agent instead. A "Fix this" chip appears when a draft looks rough (decided on the phone). Code: `ios/AirKeyKeyboard/Surfaces/Assist/`, `server/src/assist.ts`, `POST /v1/assist`. |
 | A copied crypto call becomes a trade chip | **Built and live on testnet**: Check copied, then a hold-to-confirm chip for the Trading Agent, token checked on NEAR Intents, inside its caps (see Swaps above) |
 | Agent keys held in OutLayer's TEE | **Built, off by default** (`AIRKEY_SIGNER=outlayer`): the agents' `pay` and `swap` are signed inside OutLayer and the leash still decides every payment; the signer works on testnet: a payment, a blocked scam and policy refusals ([evidence](docs/evidence/outlayer-testnet.md)). Each OutLayer-signed action took about 5.7 s (3.7 to 11.2 s) in a 10-run test ([runs](docs/evidence/outlayer-runs.md); that test overlapped a kill-switch test), so the demo signs with local function-call keys. OutLayer returned no attestation we verified. Not the production custody path. |
 | Price chips, buy and sell from the keyboard, sums and currency | **Built**: prices and token list from NEAR Intents; sums and splits on the phone |
 | Price-triggered orders | **Built**: typed orders, a 15-second watcher, cancel from Home; the triggered trade is a quote until swaps execute |
 | Swaps on NEAR | **Built and live on testnet**: the leash's `swap` wraps NEAR and swaps on Rhea, the token comes back to the leash; hold to swap from the keyboard or the app. NEAR Intents: token checks and quotes; mainnet execution waits for a funded mainnet leash. |
-| Mainnet | *Not done.* The leash runs on testnet only and has enforced no mainnet swap. |
+| Follow people on X | **Built and live on testnet**: follow an X handle (records and calls from [Kall](https://kallmarkets.vercel.app)), set rules per person (dollars per call and per day, buy only, sure calls only, stop after 3 misses in a row); a new call that passes them is traded by the Trading Agent inside its caps on the leash. Off unless `AIRKEY_AUTO_TRADE=on`. Kall sees the posts its users see, not every post on X. One live trade: @CryptoKaleo's ETH call → 0.295 NEAR for 0.6197 USDC ([5MyPgFPD…](https://testnet.nearblocks.io/txns/5MyPgFPDiaUwR8EttJ9U6eUUAsxQ6c2TeCnvqLV16QNj)). Code: `server/src/follows.ts`, `server/src/kall.ts`. |
+| Mainnet | *Not done.* The leash runs on testnet only and has enforced no mainnet swap. Mainnet is next. |
 
 ## Next (not built yet)
 
@@ -204,6 +229,7 @@ The full product plan is in [docs/PLAN.md](docs/PLAN.md). Where it stands:
 - **Pre-hackathon code (baseline).** Two earlier projects predate this hackathon and parts of them are in this repo:
   - **Glyf** (an AI keyboard): the keyboard's core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and its `en.glyd` dictionary, the toolbar, menu, clipboard, emoji and notes surfaces in `Surfaces/`, and `Resources/` fonts, sounds and textures), adapted to AIRKEY.
   - **Kall Markets** (a trading keyboard): the keyboard haptics, the hold-to-confirm pattern, and the app's visual design (masthead, cards, swap card), adapted to AIRKEY.
+  - Also adapted from Glyf during the hackathon: the letter-hold actions, the vault shorthand and the GIF tab. The keyboard's AI panel and its server were written from scratch for AIRKEY.
   - Built during the hackathon: the leash contract, the server and its agents, Rhea and NEAR Intents swaps, the AIRKEY agent strip in the keyboard (`ios/AirKeyKeyboard/Agent/`), the money-safe typing rules, the vault, and the app.
 - Built with an AI coding assistant (Claude Code). Harshal chose the product, the rules and every trade-off; the assistant wrote code and tests to those decisions.
 - Testnet only: the leash contract runs on NEAR testnet and has enforced no mainnet swap. Never commit keys: `keys/` and `server/.env` are gitignored.

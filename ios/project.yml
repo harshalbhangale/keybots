@@ -34,9 +34,10 @@ targets:
           UIColorName: LaunchInk
         UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        NSFaceIDUsageDescription: AIRKEY uses Face ID before your key signs an approval or flips the kill switch.
+        NSFaceIDUsageDescription: AIRKEY uses Face ID before you approve a payment or change your limits.
         NSLocalNetworkUsageDescription: AIRKEY talks to your AIRKEY server on this network to run your agents.
         AirkeyServer: $(AIRKEY_SERVER)
+        AirkeyToken: $(AIRKEY_TOKEN)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     dependencies:
@@ -62,6 +63,7 @@ targets:
         CFBundleDisplayName: AIRKEY
         NSPhotoLibraryUsageDescription: AIRKEY shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.
         AirkeyServer: $(AIRKEY_SERVER)
+        AirkeyToken: $(AIRKEY_TOKEN)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSExtension:

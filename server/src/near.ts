@@ -47,7 +47,46 @@ export interface Chain {
   pay(agent: string, args: { receiver: string; amount: string; memo?: string; ask_owner?: boolean }): Promise<{ decision: Decision; txHash: string; events: unknown[] }>;
   /** Ask the leash to swap NEAR at a venue (Rhea, or a NEAR Intents deposit address). `logs` has every log line, the venue's too. */
   swap(agent: string, args: { venue: string; amount: string; wrap: string; msg?: string; memo?: string }): Promise<{ decision: Decision; txHash: string; events: unknown[]; logs: string[] }>;
+  /**
+   * Ask the leash to sell a token it holds at a venue (Rhea). `valueNear` is what the
+   * trade is worth in yoctoNEAR, which the leash holds to the agent's caps; `amount` is
+   * in the token's smallest units. `unwrap` turns wNEAR that comes back into NEAR.
+   */
+  swapToken(agent: string, args: SellArgs): Promise<{ decision: Decision; txHash: string; events: unknown[]; logs: string[] }>;
+  /** The owner's rule for selling a token, or null: no rule, or a leash from before token sales. */
+  tokenCap(token: string): Promise<TokenCap | null>;
   txUrl(hash: string): string;
+}
+
+export interface SellArgs {
+  venue: string;
+  token: string;
+  amount: string;
+  valueNear: string;
+  wrap: string;
+  msg: string;
+  unwrap?: boolean;
+  memo?: string;
+}
+
+export interface TokenCap {
+  /** The most one trade may sell, in the token's smallest units. */
+  max_per_trade: string;
+  venue: string;
+  /** What a trade of `max_per_trade` counts for at least, in yoctoNEAR. */
+  min_value: string;
+}
+
+/** A token sale is the leash's `swap` with a `sell` part: `amount` is then the trade's value in NEAR. */
+export function sellArgs(a: SellArgs) {
+  return {
+    venue: a.venue,
+    amount: a.valueNear,
+    wrap: a.wrap,
+    msg: a.msg,
+    ...(a.memo ? { memo: a.memo } : {}),
+    sell: { token: a.token, amount: a.amount, unwrap: !!a.unwrap },
+  };
 }
 
 const EMPTY_CODE = "11111111111111111111111111111111";
@@ -138,6 +177,10 @@ export function nearChain(cfg: Config): Chain {
     // A swap wraps NEAR, sends it on and waits for the venue. 200 TGas keeps the
     // upfront reservation (~0.2 NEAR) inside the agent key's allowance.
     swap: (agent, args) => callLeash(agent, "swap", args, 200_000_000_000_000n),
+    // Selling a token is the same call with a `sell` part, so the agent's key (which
+    // names the methods it may call) needs no change. Same gas, same reason.
+    swapToken: (agent, args) => callLeash(agent, "swap", sellArgs(args), 200_000_000_000_000n),
+    tokenCap: async (token) => (await view<TokenCap | null>("get_token_cap", { token }).catch(() => null)) ?? null,
     txUrl: (hash) => `${cfg.explorer}/txns/${hash}`,
   };
 }

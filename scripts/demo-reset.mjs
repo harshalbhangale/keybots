@@ -8,7 +8,9 @@
 // The leash topped up to LEASH_TOPUP NEAR spendable (default 1.5).
 // Testnet only. Run it before each take.
 import { actions } from "near-api-js";
-import { NETWORK, names, near, newKey, saveKey, account, exists, txUrl, fmt, view, provider } from "./common.mjs";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { NETWORK, names, near, newKey, saveKey, account, exists, txUrl, fmt, view, provider, KEYS_DIR } from "./common.mjs";
 
 if (NETWORK !== "testnet") throw new Error("demo-reset is for testnet only");
 const owner = process.argv[2] ?? "airkey-harshal.testnet";
@@ -73,12 +75,20 @@ else {
   else console.log(`! ${owner} has no NEAR to spare; the leash has ${fmt(have)}. Get testnet NEAR from a faucet.`);
 }
 
-// 8. No price orders left watching (the AIRKEY server, if it's running).
-const server = process.env.AIRKEY_SERVER ?? "http://localhost:8787";
+// 8. No price orders left watching. The hosted server by default
+// (docs/HOSTING.md), with the token from keys/api-token; AIRKEY_SERVER for another.
+const server = process.env.AIRKEY_SERVER ?? "https://13-126-207-245.sslip.io";
+let token = process.env.AIRKEY_API_TOKEN ?? "";
 try {
-  const { orders } = await (await fetch(`${server}/v1/orders`, { signal: AbortSignal.timeout(5000) })).json();
+  token ||= readFileSync(join(KEYS_DIR, "api-token"), "utf8").trim();
+} catch {
+  /* no token: a local server without auth */
+}
+const auth = token ? { authorization: `Bearer ${token}` } : {};
+try {
+  const { orders } = await (await fetch(`${server}/v1/orders`, { headers: auth, signal: AbortSignal.timeout(5000) })).json();
   for (const x of orders.filter((x) => x.status === "watching")) {
-    await fetch(`${server}/v1/orders/${x.id}`, { method: "DELETE" });
+    await fetch(`${server}/v1/orders/${x.id}`, { method: "DELETE", headers: auth });
     ok(`cancelled the order "${x.command}" (when ${x.symbol} is ${x.direction} $${x.price})`);
   }
 } catch {

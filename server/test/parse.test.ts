@@ -77,3 +77,23 @@ describe("swaps in dollars", () => {
   });
 });
 
+describe("orders that name the token to watch", () => {
+  it("watches the token named in the condition when it's one of the two traded", () => {
+    expect(parse("swap 2 usdt to near if near drops below 1.8")).toEqual({
+      kind: "watch",
+      command: "swap 2 usdt to near",
+      trade: { amount: "2", from: "USDT", to: "NEAR" },
+      symbol: "NEAR",
+      direction: "below",
+      price: "1.8",
+    });
+    expect(parse("swap 1 near to usdc if near goes above 4")).toMatchObject({ kind: "watch", symbol: "NEAR", direction: "above", price: "4" });
+  });
+
+  it("an order paying in any dollar token watches what it buys; a name that isn't in the trade is ignored", () => {
+    expect(parse("swap 2 usdt to near if it drops below 1.8")).toMatchObject({ kind: "watch", symbol: "NEAR" });
+    expect(parse("sell 1 near if btc drops below 2")).toMatchObject({ kind: "watch", symbol: "NEAR" });
+    expect(parse("sell 1 near if it drops below 2")).toMatchObject({ kind: "watch", symbol: "NEAR", direction: "below", price: "2" });
+  });
+});
+
