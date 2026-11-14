@@ -13,6 +13,10 @@ struct Intent: Equatable {
     let detail: String?
     /// The word on the hold button: "Hold to pay", "Hold to buy".
     var verb = "pay"
+    /// A payment's parts, for the keyboard's pay screen.
+    var payTo: String? = nil
+    var payAmount: String? = nil
+    var payMemo: String? = nil
 
     var icon: String { kind == .pay ? "arrow.up.right" : "arrow.left.arrow.right" }
     var holdLabel: String { "Hold to \(verb)" }
@@ -59,7 +63,8 @@ struct Intent: Equatable {
     private static func pay(to receiver: String, amount: String, memo: String) -> Intent {
         let name = receiver.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ".,;:"))
         let note = memo.trimmingCharacters(in: CharacterSet(charactersIn: " .!?"))
-        return Intent(kind: .pay, title: "Pay \(amount) NEAR to \(name)", detail: note.isEmpty ? nil : "for \(note)")
+        return Intent(kind: .pay, title: "Pay \(amount) NEAR to \(name)", detail: note.isEmpty ? nil : "for \(note)",
+                      payTo: name, payAmount: amount, payMemo: note.isEmpty ? nil : note)
     }
 
     /// A receiver is a name, not a number and not one of the command's own words.
