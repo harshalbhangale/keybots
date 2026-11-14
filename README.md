@@ -1,6 +1,6 @@
-# Keybots
-
 <p align="center"><img src="docs/keybots-banner.gif" alt="Keybots: typing &quot;swap 0.1 near to usdc&quot; in the keyboard opens a swap sheet; hold, and it swaps 0.1 NEAR for 0.21 USDC on Rhea (NEAR testnet). Real screen recording." width="100%"></p>
+
+# Keybots
 
 ### Your keyboard is the AI. NEAR sets the limits.
 
