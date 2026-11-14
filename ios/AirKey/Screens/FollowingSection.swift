@@ -210,7 +210,7 @@ struct AppTradedRow: View {
 
     private var byLine: String {
         var parts = ["@\(trade.handle)"]
-        let time = Fmt.time(trade.date)
+        let time = trade.ago
         if !time.isEmpty { parts.append(time) }
         if trade.onRequest { parts.append("you asked") }
         return parts.joined(separator: " · ")
