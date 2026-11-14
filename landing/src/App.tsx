@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import Journey from "./Journey";
 import Networks from "./Networks";
-import { Private } from "./Story";
+import { Private } from "./Private";
 import { NearGlyph, NearTile } from "./Icons";
 import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
