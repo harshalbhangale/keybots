@@ -69,6 +69,34 @@ Money and AI are kept apart. Anything about money is read by fixed rules and che
 
 All three spend from the one Spend Limits balance and hold only enough NEAR for gas. Stop everything pauses all three at once. The full rule order is in [RULES.md](RULES.md).
 
+### Any agent can ask. Only you can say yes.
+
+Plug Keybots into **Claude Code**, or any agent that speaks MCP. It gets a wallet it can *ask*, never one it can drain.
+
+```bash
+claude mcp add keybots -e KEYBOTS_TOKEN=<your token> -- node tools/keybots-mcp/index.mjs
+```
+
+Then just tell your agent: *"pay vendor.testnet 0.3 for the logo"*.
+
+1. **The agent asks.** `keybots_pay` lands in the lane for things you didn't type, with that lane's small limits. `keybots_status` lets it read the lanes and what happened.
+2. **NEAR checks it.** Spend Limits runs the rules on chain: per-payment cap, daily cap, blocked list, allowed list. Over the cap is refused, whoever asked.
+3. **Your keyboard lights up.** Claude Code shows up live in the Keybots panel, with what it asked for and that it's waiting on you.
+4. **Face ID says yes.** Hold to approve in the app. Your phone signs it; the agent never holds a key.
+
+<table>
+  <tr>
+    <td><img src="docs/screens/agent-keyboard-crop.png" width="380" alt="Keybots keyboard panel: Claude Code, agent, waiting for you, asked to pay vendor.testnet 0.3 NEAR" /></td>
+    <td><img src="docs/screens/agent-approve-crop.png" width="380" alt="Keybots app: 0.3 NEAR to vendor.testnet, from Claude Code, an agent, hold to approve" /></td>
+  </tr>
+  <tr>
+    <td align="center">Live in your keyboard</td>
+    <td align="center">Yours to approve, with Face ID</td>
+  </tr>
+</table>
+
+A real testnet request from Claude Code, not a mock-up. The server is [tools/keybots-mcp](tools/keybots-mcp/index.mjs): about 80 lines, no dependencies.
+
 ---
 
 ## What NEAR does here
@@ -89,6 +117,7 @@ All three spend from the one Spend Limits balance and hold only enough NEAR for 
 ## Features
 
 **In the keyboard**
+- **Claude Code asks, you approve.** Any MCP agent can request a payment through Keybots. Spend Limits checks it on chain, the keyboard shows the agent live, and Face ID says yes.
 - **Pay by typing.** `pay harshal 0.2 for dinner` opens a Pay screen: who gets it (name and NEAR account), the amount in NEAR and dollars, the network fee, what's left of today's limit, then **Hold to pay** or tap twice.
 - **Swap by typing.** `swap 0.1 near to usdc` opens a swap screen with Rhea's real quote, the minimum after 1% slippage, and your limits.
 - **Trading calls from X and Telegram.** The Calls screen lists calls from people on X and from a Telegram group. Copy a signal like "ETH LONG 10x" from any channel and it's read as a spot buy, clearly labelled "no leverage", with its targets and stop. Nothing trades until you review and hold.

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Journey from "./Journey";
 import Networks from "./Networks";
 import { Private } from "./Private";
+import { Agents } from "./Agents";
 import { NearGlyph, NearTile } from "./Icons";
 import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
@@ -57,6 +58,7 @@ export default function App() {
         <span className="y-links">
           <a href="#how">How it works</a>
           <a href="#live">Live</a>
+          <a href="#agents">Agents</a>
           <a href="#private">Private</a>
           <a href="#proof">Proof</a>
         </span>
@@ -103,6 +105,12 @@ export default function App() {
         <section className="z-sec" id="live">
           <div className="y-wrap wide">
             <Networks />
+          </div>
+        </section>
+
+        <section className="z-sec" id="agents">
+          <div className="y-wrap wide">
+            <Agents />
           </div>
         </section>
 

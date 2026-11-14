@@ -187,7 +187,7 @@ enum Plain {
     /// Why a payment waits, split into the reason and where it came from:
     /// ("Not on your allowed list", "From a message you copied").
     static func pendingParts(_ p: LeashState.Pending) -> (reason: String, from: String?) {
-        let copied = "From a message you copied"
+        let copied = p.client == "claude-code" ? "From Claude Code, an agent" : p.client.map { "From \($0)" } ?? "From a message you copied"
         let fromInbox = p.agent.hasPrefix("inbox.")
         switch p.rule {
         case "R6": return ("Not on your allowed list", copied)

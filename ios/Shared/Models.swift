@@ -75,6 +75,8 @@ struct LeashState: Decodable {
         let reason: String
         /// When the agent asked, in nanoseconds (the contract's block time). Older servers leave it out.
         let created_at_ns: Double?
+        /// The app that asked for it (e.g. "claude-code"), from the server's receipt.
+        var client: String? = nil
 
         var createdAt: Date? { created_at_ns.map { Date(timeIntervalSince1970: $0 / 1e9) } }
     }

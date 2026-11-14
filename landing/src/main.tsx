@@ -10,6 +10,7 @@ import "./hero.css";
 import "./dl.css";
 import "./journey.css";
 import "./networks.css";
+import "./agents.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

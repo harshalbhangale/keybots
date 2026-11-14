@@ -1,0 +1,86 @@
+/* Agents, on a leash: Claude Code (or any MCP agent) asks, NEAR checks, you approve. */
+.mx-head { text-align: center; max-width: 760px; margin: 0 auto 44px; }
+.mx-head .pv-badge { margin: 0 auto 18px; }
+.mx-sub { color: var(--muted); font-size: 18px; line-height: 1.5; margin: 14px auto 0; max-width: 560px; }
+
+.mx-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+}
+
+.mx-term {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(20, 20, 22, 0.95), rgba(8, 8, 10, 0.95));
+  box-shadow: 0 30px 80px -30px rgba(0, 236, 151, 0.25);
+  overflow: hidden;
+}
+.mx-term-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mx-term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a3c; }
+.mx-term-bar span { margin-left: 10px; font: 500 12px var(--mono); color: var(--muted); }
+.mx-term pre {
+  margin: 0;
+  padding: 22px 20px 20px;
+  font: 13.5px/1.65 var(--mono);
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.mx-me { color: var(--text); font-weight: 600; }
+.mx-tool { color: var(--lime); }
+.mx-dim { color: var(--muted); }
+.mx-wait { color: var(--amber); font-weight: 600; }
+.mx-no { color: var(--red); font-weight: 600; }
+.mx-install {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mx-install span { font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+.mx-install code {
+  font: 12.5px var(--mono); color: var(--lime);
+  overflow-x: auto; white-space: nowrap; padding-bottom: 2px;
+}
+
+.mx-shots { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.mx-shots figure { margin: 0; }
+.mx-shots img {
+  display: block; width: 100%; height: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111;
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.9);
+}
+.mx-shots figcaption { margin-top: 10px; text-align: center; font-size: 13px; color: var(--muted); }
+
+.mx-steps {
+  list-style: none; padding: 0; margin: 40px 0 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;
+}
+.mx-steps li {
+  padding: 20px 18px 22px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+}
+.mx-n { display: block; font: 600 12px var(--mono); color: var(--lime); margin-bottom: 12px; }
+.mx-steps b { display: block; font-size: 16px; margin-bottom: 6px; }
+.mx-steps p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+.mx-foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 26px; }
+.mx-foot a { color: var(--lime); text-decoration: none; }
+
+@media (max-width: 900px) {
+  .mx-grid { grid-template-columns: 1fr; }
+  .mx-steps { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .mx-steps { grid-template-columns: 1fr; }
+  .mx-sub { font-size: 16px; }
+}
