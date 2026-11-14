@@ -3,9 +3,9 @@
 You follow people on X. When one of them posts a trade call, Keybots's Trading Agent buys or sells for you, within rules you set, and the contract still caps every trade.
 
 ## Where the calls come from
-- **Kall's API** (kallmarkets.vercel.app, our own): `GET /api/keyboard/feed` lists 25 tracked callers and their open calls and results. `GET /api/callers/{handle}` returns one caller's calls and record (hit or miss, return), stored on Arkiv. No X API key needed.
-- New posts are read by Kall's call reader (asset, buy or sell, confidence), the same reader as `server/src/calls.ts`.
-- Honest limit: Kall sees the posts its users and extension see. It is not every post on X. Bringing in your whole X following list needs the paid X API, which comes later.
+- **The X feed's API** (our own): `GET /api/keyboard/feed` lists 25 tracked callers and their open calls and results. `GET /api/callers/{handle}` returns one caller's calls and record (hit or miss, return), stored on Arkiv. No X API key needed.
+- New posts are read by the X feed's call reader (asset, buy or sell, confidence), the same reader as `server/src/calls.ts`.
+- Honest limit: the X feed sees the posts its users and extension see. It is not every post on X. Bringing in your whole X following list needs the paid X API, which comes later.
 
 ## What you set per KOL
 - Auto on or off
@@ -25,13 +25,13 @@ You follow people on X. When one of them posts a trade call, Keybots's Trading A
 What stays true: a message you copy still never trades. Only KOLs you followed, with rules you set, can trade, and the contract limits the damage if a KOL's account is hacked.
 
 ## Screens
-- **Keyboard › Calls › Following:** add an @handle, see their record from Kall (hits, misses, average return), tap for rules, and turn auto on or off. Auto-trades appear in the list with their receipt.
+- **Keyboard › Calls › Following:** add an @handle, see their record on X (hits, misses, average return), tap for rules, and turn auto on or off. Auto-trades appear in the list with their receipt.
 - **App › Wallet:** the same list, plus a "Traded for you" history.
 
 ## Build (about 2 hours, two builders in parallel)
 | Part | What | Time |
 |---|---|---|
-| Server | `follows.ts` (store, rules), a poller that reads Kall and runs the Trading Agent, `GET/POST/DELETE /v1/follows`, receipts with the KOL and post; tests with a fake Kall | 60–75 min |
+| Server | `follows.ts` (store, rules), a poller that reads the X feed and runs the Trading Agent, `GET/POST/DELETE /v1/follows`, receipts with the KOL and post; tests with a fake X feed | 60–75 min |
 | Keyboard + app | Following tab, rules sheet, auto toggle, "Traded for you" rows, haptics on a new auto-trade | 60–75 min |
 | Me | merge, tests, phone build, one live auto-trade on testnet (with your OK) | 30 min |
 
