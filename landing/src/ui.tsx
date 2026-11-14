@@ -1,4 +1,4 @@
-export const REPO = "https://github.com/harshalbhangale/near-hack";
+export const REPO = "https://github.com/harshalbhangale/keybots";
 export const LEASH = "https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet";
 export const E2E = `${REPO}/blob/main/docs/evidence/testnet-e2e.md`;
 // Placeholder until the Keybots Android build is uploaded: swap this one URL for the Keybots APK on S3.
@@ -57,35 +57,41 @@ export function Mark({ size = 28 }: { size?: number }) {
   return <img src="/logo.png" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
 }
 
-/** GitHub, App Store and Google Play (soon). */
+/** The Android preview APK, built from android/ (android/build.sh) and served by the site. */
+export const APK_URL = "/keybots.apk";
+
+/** Four even buttons in one row: Android download, GitHub, App Store and Google Play (soon). */
 export function Downloads() {
   return (
-    <div className="stores-wrap">
-      <div className="stores">
-        <a className="store primary" href={REPO} target="_blank" rel="noreferrer">
-          <GitHub />
-          <span className="store-lines">
-            <small>Open source, live on</small>
-            <b>GitHub</b>
-          </span>
-        </a>
-      </div>
-      <div className="stores soon-row" aria-label="Coming soon to the App Store and Google Play">
-        <span className="store soon" aria-disabled="true">
-          <Apple size={18} />
-          <span className="store-lines">
-            <small>Coming soon on</small>
-            <b>App Store</b>
-          </span>
+    <div className="dl">
+      <a className="dl-b primary" href={APK_URL} download="keybots.apk">
+        <Android size={22} />
+        <span>
+          <small>Android preview</small>
+          <b>Download APK</b>
         </span>
-        <span className="store soon" aria-disabled="true">
-          <Play size={18} />
-          <span className="store-lines">
-            <small>Coming soon on</small>
-            <b>Google Play</b>
-          </span>
+      </a>
+      <a className="dl-b" href={REPO} target="_blank" rel="noreferrer">
+        <GitHub size={22} />
+        <span>
+          <small>Open source on</small>
+          <b>GitHub</b>
         </span>
-      </div>
+      </a>
+      <span className="dl-b soon" aria-disabled="true">
+        <Apple size={20} />
+        <span>
+          <small>Coming soon</small>
+          <b>App Store</b>
+        </span>
+      </span>
+      <span className="dl-b soon" aria-disabled="true">
+        <Play size={20} />
+        <span>
+          <small>Coming soon</small>
+          <b>Google Play</b>
+        </span>
+      </span>
     </div>
   );
 }
