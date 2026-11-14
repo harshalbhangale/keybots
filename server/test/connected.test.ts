@@ -27,7 +27,7 @@ describe("/v1/connected", () => {
   it("checks each service live and says what it saw", async () => {
     const { services } = await get({ rhea, kall, intents });
     const by = Object.fromEntries(services.map((s) => [s.id, s]));
-    expect(by["spend-limits"]).toMatchObject({ status: "live", detail: "leash.x.testnet: 3 agents, running" });
+    expect(by["spend-limits"]).toMatchObject({ status: "live", detail: `leash.x.testnet: ${Object.keys(cfg.agents).length} agents, running` });
     expect(by.rhea).toMatchObject({ status: "live" });
     expect(by.rhea.detail).toMatch(/^1 NEAR → 2\.50 USDC/);
     expect(by["near-intents"]).toMatchObject({ status: "live", detail: "2 tokens listed" });
