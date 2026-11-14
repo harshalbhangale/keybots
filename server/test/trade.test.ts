@@ -7,7 +7,7 @@ import { fakeKall, type KallClient } from "../src/kall.js";
 import type { Chain, Decision } from "../src/near.js";
 import { memoryStore } from "../src/receipts.js";
 import { RHEA } from "../src/rhea.js";
-import { SAMPLE_NOTE } from "../src/trade.js";
+import { SAMPLE_NOTE, intentsLine } from "../src/trade.js";
 import { telegramSource, type TelegramSource } from "../src/telegram.js";
 import { TOKEN, fakeBotApi, group, privateGroup } from "./telegram-fake.js";
 
@@ -294,6 +294,9 @@ describe("POST /v1/trade/review", () => {
       standIn: "The post is about SOL. Testnet has no SOL, so this swaps NEAR to USDC instead.",
     });
     expect(r.mainnetQuote).toEqual({ label: "NEAR Intents quote (mainnet, dry: no funds move)", payAmount: "0.5", receiveAmount: "0.0125", symbol: "SOL" });
+    expect(r.intents.line).toMatch(/^NEAR Intents: SOL is a listed token/);
+    expect(r.intents.line).toMatch(/so \S+ is 0\.5 NEAR$/);
+    expect(r.intents.nearPrice).toBeGreaterThan(0);
     expect(r.limits).toEqual({
       agent: "trader.x.testnet",
       agentName: "Trading Agent",
@@ -472,5 +475,14 @@ describe("POST /v1/trade/confirm", () => {
     const sneaky = await app.inject({ method: "POST", url: "/v1/command", payload: { text: "swap 0.5 near to usdc", source: "reviewed-call" } });
     expect(sneaky.statusCode).toBe(400);
     expect(sent).toHaveLength(0);
+  });
+});
+
+describe("intentsLine", () => {
+  it("names the token, its price and how the trade was sized", () => {
+    expect(intentsLine("ETH", 3120.4, 2.1, 5, "2.381")).toBe("NEAR Intents: ETH is a listed token at $3,120 · NEAR $2.10, so $5.00 is 2.381 NEAR");
+  });
+  it("still says it's listed when Intents gave no price in time", () => {
+    expect(intentsLine("SOL", null, 2.1, 5, "2.381")).toBe("NEAR Intents: SOL is a listed token · NEAR $2.10, so $5.00 is 2.381 NEAR");
   });
 });
