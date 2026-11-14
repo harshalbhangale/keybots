@@ -23,7 +23,7 @@ function Video() {
     return VIDEO_URL.endsWith(".mp4") ? (
       <video className="y-media" src={VIDEO_URL} controls playsInline preload="metadata" />
     ) : (
-      <iframe className="y-media" src={VIDEO_URL} title="AIRKEY demo" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+      <iframe className="y-media" src={VIDEO_URL} title="Keybots demo" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
     );
   }
   return (
@@ -50,7 +50,7 @@ export default function App() {
     <>
       <nav className="y-nav">
         <a href="#top" className="brand">
-          <Mark size={30} /> AIRKEY
+          <Mark size={30} /> KEYBOTS
         </a>
         <span className="y-links">
           <a href="#what">Features</a>
@@ -156,7 +156,7 @@ export default function App() {
 
       <footer className="foot wrap">
         <span>
-          <Mark size={22} /> AIRKEY · built at NEAR HACKATHON 2026 by Harshal Bhangale
+          <Mark size={22} /> Keybots · built at NEAR HACKATHON 2026 by Harshal Bhangale
         </span>
         <a className="built-near" href="https://near.org" target="_blank" rel="noreferrer">
           <NearMark size={18} /> Built on NEAR

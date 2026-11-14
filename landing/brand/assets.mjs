@@ -1,4 +1,4 @@
-// Writes every AIRKEY brand asset from the one mascot drawing (core.mjs), in the mono theme.
+// Writes every Keybots brand asset from the one mascot drawing (core.mjs), in the mono theme.
 //   node landing/brand/assets.mjs
 // → landing/public/{logo,favicon}.svg, ios/AirKey/Assets.xcassets/AppIcon…, ios/Shared/Mascot.xcassets/…, out/*
 import { mkdirSync, writeFileSync } from "node:fs";

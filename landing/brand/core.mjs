@@ -1,4 +1,4 @@
-// The AIRKEY mascot drawing, shared by the asset script and the landing page.
+// The Keybots mascot drawing, shared by the asset script and the landing page.
 const INK = "#0B0C0A"; // outline
 const LIME = { top: "#E4FF8F", front: "#C6F25A", side: "#93BD2E", dish: "#D4FA70" };
 // Cap colour themes: the lime sticker, and a monochrome white cap with lime only on the stem.

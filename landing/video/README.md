@@ -1,17 +1,17 @@
-# AIRKEY demo video kit
+# Keybots demo video kit
 
 Recording day is just capture. This folder turns one screen recording into the final 2:00–2:30, 1080p video with an intro card, timed captions and an end card.
 
 ```bash
 cd landing/video
 npm install                       # once: the SVG renderer for the cards
-./make.sh ~/Desktop/recording.mov # writes airkey-demo.mp4
+./make.sh ~/Desktop/recording.mov # writes keybots-demo.mp4
 ```
 
 ## What it makes
 
-1. **Intro card** (2 s): the AIRKEY mark and "Your keyboard is the AI. NEAR is the leash."
-2. **Your recording** with a caption for each beat. A portrait iPhone recording sits on the dark AIRKEY background with the caption beside it; a landscape recording fills the frame with a lower-third caption. Your recording's audio (voice-over) is kept.
+1. **Intro card** (2 s): the Keybots mark and "Your keyboard is the AI. NEAR is the leash."
+2. **Your recording** with a caption for each beat. A portrait iPhone recording sits on the dark Keybots background with the caption beside it; a landscape recording fills the frame with a lower-third caption. Your recording's audio (voice-over) is kept.
 3. **End card** (4 s): the line, the repo URL and "Built at NEAR HACKATHON 2026".
 
 The script warns if the total isn't between 2:00 and 2:30.

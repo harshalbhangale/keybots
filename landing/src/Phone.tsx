@@ -237,14 +237,14 @@ export function Keys({ lit = "" }: { lit?: string }) {
       ))}
       <div className="krow r3">
         <span className="k fn w">123</span>
-        <span className={`k space ${lit === " " ? "lit" : ""}`}>AIRKEY</span>
+        <span className={`k space ${lit === " " ? "lit" : ""}`}>KEYBOTS</span>
         <span className="k fn w"><I n="ret" s={18} /></span>
       </div>
     </div>
   );
 }
 
-/** A chat with the AIRKEY keyboard. It plays a scenario; the visitor can tap or hold the lime button. */
+/** A chat with the Keybots keyboard. It plays a scenario; the visitor can tap or hold the lime button. */
 export default function Phone({
   scenario,
   onDone,

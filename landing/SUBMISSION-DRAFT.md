@@ -1,4 +1,4 @@
-# AIRKEY submission drafts
+# Keybots submission drafts
 
 Drafts for Harshal to edit and post himself. Nothing here has been posted. Every claim matches the README on main and a recorded testnet run.
 
@@ -16,7 +16,7 @@ Drafts for Harshal to edit and post himself. Nothing here has been posted. Every
 
 ## Submission description (20 to 2000 characters)
 
-AIRKEY is a phone keyboard with AI agents in it, and NEAR is the leash that holds them.
+Keybots is a phone keyboard with AI agents in it, and NEAR is the leash that holds them.
 
 You type "pay harshal 0.2 for dinner" in any chat and hold a button; an agent pays. Each agent is its own NEAR sub-account whose only key is a function-call key for one contract, the leash. The leash holds the money and decides every payment in a fixed order: kill switch, blocklist, per-payment cap, daily cap, an allowlist for untrusted agents, and owner approval. Every decision is an on-chain event.
 
@@ -36,4 +36,4 @@ Links: https://airkey-keyboard.vercel.app · https://github.com/harshalbhangale/
 
 - [ ] The repo is public.
 - [ ] The demo video is uploaded and linked.
-- [ ] The Android button on the site points at an AIRKEY build (it points at the Kall Markets APK as a placeholder right now).
+- [ ] The Android button on the site points at a Keybots build (it points at the Kall Markets APK as a placeholder right now).
