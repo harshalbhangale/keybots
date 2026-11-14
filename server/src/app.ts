@@ -12,6 +12,7 @@ import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
+import { cachedState, renderLeash } from "./leash-page.js";
 
 export type Deps = CommandDeps & {
   owner?: ReturnType<typeof ownerActions>;
@@ -63,11 +64,28 @@ export function buildApp(deps: Deps) {
     reply.header("access-control-allow-headers", "authorization, content-type");
     reply.header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
     if (req.method === "OPTIONS") return reply.code(204).send();
-    if (req.url === "/health" || !deps.cfg.apiToken) return;
+    // Public: /health, and /leash (only public chain data and plain receipt lines).
+    const path = req.url.split("?")[0];
+    if (path === "/health" || path === "/leash" || !deps.cfg.apiToken) return;
     if (req.headers.authorization !== `Bearer ${deps.cfg.apiToken}`) return reply.code(401).send({ error: "Missing or wrong token" });
   });
 
   app.get("/health", async () => ({ ok: true, network: deps.cfg.network, leash: deps.cfg.leash }));
+
+  /** The judge page: the leash live from chain (cached 15 s) and the last decisions, read-only. */
+  const leashState = cachedState(deps.chain);
+  app.get("/leash", async (_req, reply) => {
+    let state = null;
+    let readAt = Date.now();
+    let error: string | undefined;
+    try {
+      ({ state, at: readAt } = await leashState());
+    } catch (e) {
+      error = String((e as Error).message ?? e).slice(0, 120);
+    }
+    const html = renderLeash({ cfg: deps.cfg, state, readAt, receipts: deps.receipts.list(15), error });
+    return reply.header("content-type", "text/html; charset=utf-8").header("cache-control", "public, max-age=15").send(html);
+  });
 
   /** The leash as the chain sees it: agents, caps, today's spend, lists, pending, kill switch, and the tokens it holds. */
   app.get("/v1/state", async () => {

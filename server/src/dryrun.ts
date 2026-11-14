@@ -154,7 +154,7 @@ export async function dryRun(deps: DryRunDeps, text: string, opts: { pasted?: bo
 }
 
 /** What the contract counts as spent today: nothing when the stored day isn't today. */
-function spentToday(a: AgentView, now = Date.now()): bigint {
+export function spentToday(a: AgentView, now = Date.now()): bigint {
   return a.day === Math.floor(now / 86_400_000) ? BigInt(a.spent_today) : 0n;
 }
 
