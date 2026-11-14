@@ -137,7 +137,7 @@ struct JourneyView: View {
                 status("Reviewing…", spinning: true, p)
             case .review:
                 if let s = model.review?.standIn {
-                    Text(s).font(.caption).foregroundStyle(p.warn).lineLimit(2).minimumScaleFactor(0.85)
+                    Text(s).font(.caption).foregroundStyle(p.warn).lineLimit(3).fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let note = model.note {
@@ -168,8 +168,10 @@ struct JourneyView: View {
     }
 
     private var holdLabel: String {
-        let side = model.review?.call.direction == "sell" ? "sell" : "buy"
-        return "Hold to \(side) $\(model.usd) of \(model.review?.call.asset ?? "it")"
+        // Name the trade that really runs, not the post's coin: on testnet a
+        // "buy BTC" post swaps NEAR to USDC, and the button must say so.
+        guard let r = model.review else { return "Hold to confirm" }
+        return "Hold to swap \(r.pay.amount) \(r.pay.symbol) → \(r.receive.symbol)"
     }
 
     private func status(_ text: String, spinning: Bool, _ p: MoneyPalette) -> some View {
