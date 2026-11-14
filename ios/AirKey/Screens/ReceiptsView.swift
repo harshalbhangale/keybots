@@ -113,6 +113,9 @@ struct ReceiptDetail: View {
             if let amount = bigAmount {
                 // One big number: the status above it, the account under it.
                 VStack(alignment: .leading, spacing: 4) {
+                    if r.outcome == "swapped", let (from, to) = TokenPair.symbols(in: Plain.line(r)) {
+                        TokenPair(from: from, to: to, size: 30).padding(.bottom, 4)
+                    }
                     Label(Plain.title(r), systemImage: r.signal.icon)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(r.signal.text)

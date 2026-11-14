@@ -62,7 +62,7 @@ struct WalletView: View {
         HStack(spacing: 10) {
             BalanceCard(value: model.state.map { Fmt.near($0.available, unit: false) })
             ForEach(model.state?.holdings ?? []) { h in
-                Stat(label: h.symbol, value: Self.dollars(h), sub: "From your swaps")
+                Stat(label: h.symbol, value: Self.dollars(h), sub: "From your swaps", token: h.symbol)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
