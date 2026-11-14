@@ -20,13 +20,13 @@ struct LeashView: View {
             )
             if let state = model.state {
                 stopControl(state)
-                agents(state)
                 if !state.pending.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         SectionTitle("Waiting for you", trailing: "\(state.pending.count)")
                         ForEach(state.pending) { ApprovalCard(pending: $0) }
                     }
                 }
+                agents(state)
                 allowed(state)
                 blocked(state)
                 footer(state)
