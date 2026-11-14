@@ -15,19 +15,21 @@ struct WalletView: View {
     var body: some View {
         Screen(tint: model.mood) {
             Masthead(eyebrow: network, title: "Wallet") {
-                Button(action: openSettings) {
-                    Image(systemName: "gearshape").font(.system(size: 17, weight: .medium)).foregroundStyle(AK.bone)
-                        .frame(width: 44, height: 44)
+                Menu {
+                    Button("Settings", systemImage: "gearshape", action: openSettings)
+                    if let s = model.state, let url = URL(string: "\(s.explorer)/address/\(s.leash)") {
+                        Link(destination: url) { Label("See your account on NEAR", systemImage: "arrow.up.right") }
+                    }
+                } label: {
+                    Image(systemName: "gearshape")
                 }
-                .buttonStyle(.plain)
-                .glassEffect(.regular.interactive(), in: .circle)
                 .accessibilityLabel("Settings")
             }
             VStack(alignment: .leading, spacing: 12) {
                 balances
-                status
-                if let s = model.state, let url = URL(string: "\(s.explorer)/address/\(s.leash)") {
-                    AddressRow(address: s.leash, url: url)
+                if model.state?.pending.isEmpty ?? true { status }
+                if let s = model.state {
+                    AddressRow(label: "Your Spend Limits account", address: s.leash)
                 }
             }
             if let pending = model.state?.pending {
@@ -38,17 +40,22 @@ struct WalletView: View {
             FollowingSection()
             recent
         }
-        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 
     private var balances: some View {
         HStack(spacing: 10) {
-            Stat(label: "NEAR", value: model.state.map { Fmt.near($0.available, unit: false) }, sub: "In Spend Limits")
+            Stat(label: "NEAR", value: model.state.map { Fmt.near($0.available, unit: false) }, sub: "Available to agents")
             ForEach(model.state?.holdings ?? []) { h in
-                Stat(label: h.symbol, value: h.amount, sub: "From swaps")
+                Stat(label: h.symbol, value: Self.dollars(h), sub: "From your swaps")
             }
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// A dollar stablecoin as dollars: "$3.41".
+    static func dollars(_ h: LeashState.Holding) -> String {
+        guard ["USDC", "USDT"].contains(h.symbol.uppercased()), let v = Double(h.amount) else { return h.amount }
+        return String(format: "$%.2f", v)
     }
 
     @ViewBuilder private var status: some View {
@@ -56,15 +63,12 @@ struct WalletView: View {
             HStack(spacing: 8) {
                 Circle().fill(model.mood).frame(width: 8, height: 8)
                 Text(s.paused ? "Everything is stopped. No agent can pay."
-                    : s.pending.isEmpty ? "\(s.shownAgents.count) agents ready · \(model.paidToday) paid today"
-                    : "\(s.pending.count) waiting for you")
+                    : (["\(s.shownAgents.count) agents ready", "\(model.paidToday) paid today"]
+                        + (model.blockedToday > 0 ? ["\(model.blockedToday) blocked"] : [])).joined(separator: " · "))
                     .font(.subheadline)
                     .foregroundStyle(s.paused ? AK.redText : AK.muted)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
-                if model.blockedToday > 0 {
-                    Badge(text: "\(model.blockedToday) blocked", color: AK.redText)
-                }
             }
             .padding(.horizontal, 4)
             .accessibilityElement(children: .combine)
@@ -83,7 +87,7 @@ struct WalletView: View {
                     HStack(spacing: 12) {
                         SignalBadge(signal: .watch, size: 32)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(o.command.prefix(1).uppercased() + o.command.dropFirst()).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1)
+                            Text(Fmt.sentence(o.command)).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1)
                             Text(o.condition.prefix(1).uppercased() + o.condition.dropFirst()).font(.footnote).foregroundStyle(AK.muted).lineLimit(1)
                         }
                         Spacer(minLength: 8)

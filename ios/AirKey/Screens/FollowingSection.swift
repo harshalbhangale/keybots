@@ -55,7 +55,7 @@ struct FollowingSection: View {
         Card(padding: 16, spacing: 12) {
             HStack(spacing: 10) {
                 Text("@").font(.body).foregroundStyle(AK.muted)
-                TextField("", text: $handle, prompt: Text("handle on X").foregroundStyle(AK.faint))
+                TextField("", text: $handle, prompt: Text("Handle on X").foregroundStyle(AK.faint))
                     .font(.body).foregroundStyle(AK.bone)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .submitLabel(.done)
@@ -65,9 +65,10 @@ struct FollowingSection: View {
                     Group {
                         if model.saving != nil { ProgressView().tint(AK.ink) } else { Text("Follow") }
                     }
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(AK.ink)
-                    .padding(.horizontal, 12).frame(height: 30)
-                    .background(AK.accent.opacity(Follow.valid(Follow.clean(handle)) ? 1 : 0.4), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Follow.valid(Follow.clean(handle)) ? AK.ink : AK.faint)
+                    .padding(.horizontal, 14).frame(height: 32)
+                    .background(Follow.valid(Follow.clean(handle)) ? AK.accent : AK.fill, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .disabled(!Follow.valid(Follow.clean(handle)) || model.saving != nil)
@@ -82,7 +83,6 @@ struct FollowingSection: View {
                                 VStack(alignment: .leading, spacing: 1) {
                                     HStack(spacing: 5) {
                                         Text("@\(c.handle)").font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone)
-                                        Text("\(c.record.hits) hits").font(.footnote.weight(.medium).monospacedDigit()).foregroundStyle(AK.muted)
                                     }
                                     if let focus = c.focus {
                                         Text(focus).font(.footnote).foregroundStyle(AK.muted).lineLimit(1)
@@ -130,17 +130,19 @@ struct FollowingSection: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("@\(f.handle)").font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1)
                             if f.paused {
-                                Text(f.pausedReason ?? "").font(.footnote.weight(.semibold)).foregroundStyle(AK.amberText).lineLimit(2)
+                                Text(f.pausedReason ?? "").font(.footnote.weight(.semibold)).foregroundStyle(AK.amberText)
+                                    .fixedSize(horizontal: false, vertical: true)
                             } else {
-                                Text(f.recordLine).font(.footnote.monospacedDigit()).foregroundStyle(AK.muted).lineLimit(1)
-                                    .minimumScaleFactor(0.8)
+                                Text("\(f.usedLine) today").font(.footnote.monospacedDigit())
+                                    .foregroundStyle(f.spentTodayUsd >= f.perDayUsd ? AK.amberText : AK.muted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if let record = f.record?.line {
+                                    Text(record).font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                         }
                         Spacer(minLength: 6)
-                        if !f.paused {
-                            Text(f.usedLine).font(.footnote.weight(.medium).monospacedDigit())
-                                .foregroundStyle(f.spentTodayUsd >= f.perDayUsd ? AK.amberText : AK.muted).lineLimit(1)
-                        }
                     }
                     .contentShape(Rectangle())
                 }
@@ -262,7 +264,9 @@ struct AppFollowRules: View {
             VStack(alignment: .leading, spacing: 6) {
                 (Text("@\(f.handle)").foregroundColor(AK.bone) + Text(".").foregroundColor(AK.accent))
                     .font(.system(.title, design: .rounded, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.6)
-                Text(f.recordLine).font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
+                if let record = f.record?.line {
+                    Text(record).font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
+                }
                 Text("\(f.usedLine) today").font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
             }
             .padding(.top, 12)
