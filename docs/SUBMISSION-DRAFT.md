@@ -36,7 +36,7 @@ Other links (not API fields): landing page https://airkey-keyboard.vercel.app ·
 >
 > The keyboard's own AI (rewrite, reply, translate, Ask) is private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests. Every 10 minutes the server checks the Intel TDX quote (with Phala's verifier) and the NVIDIA GPU attestation (with NVIDIA NRAS) against a fresh nonce, plus the compose hash; receipts say verified, partial or failed.
 >
-> Everything runs on NEAR testnet: real transactions for every step, 38 contract tests, 251 server tests. The leash runs on testnet only; mainnet is next.
+> Everything runs on NEAR testnet: real transactions for every step, 38 contract tests, 238 server tests. The leash runs on testnet only; mainnet is next.
 
 ## 3. Tracks (proposed)
 
@@ -54,7 +54,7 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 | Do | See |
 |---|---|
 | `cd contracts/leash && cargo test` | 38 tests pass: one per rule, approvals, reports, the injection case, swaps and token sells |
-| `cd server && npm install && npm test` | 251 tests: parser, receiver checks, swaps, quotes, orders, copied calls, following, the AI bar, GIFs, OutLayer signing, the full command flow |
+| `cd server && npm install && npm test` | 238 tests: parser, receiver checks, swaps, quotes, orders, copied calls, following, the Assist panel, GIFs, OutLayer signing, the full command flow |
 | Read the last end-to-end run | [`docs/evidence/testnet-e2e.md`](evidence/testnet-e2e.md): 9 of 9 real testnet transactions |
 | Type `pay harshal 0.2` in the keyboard and hold | Paid: [8yfavh6V…](https://testnet.nearblocks.io/txns/8yfavh6Ve4Sbyq55XxHjT3ARiU7MGDwVyFpyHoWaviek) |
 | Copy a scam asking for 5 NEAR, tap the shield | Blocked by the contract on chain: [HkM96rGV…](https://testnet.nearblocks.io/txns/HkM96rGVBx51xEJyDxmdwsRVhE29W6XFtRZ7zZDEEHN4) |
@@ -94,7 +94,7 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 
 ## 7. Disclosures
 
-- **NOTE FOR HARSHAL, decide before sending:** Kall Markets is entered separately in this hackathon by someone else, and its license is "all rights reserved". Code from Kall Markets is in this repo (the keyboard core below, and parts ported in the window: the hold-space AI bar, letter-hold actions, vault shorthand, smart chips, the GIF tab). Either keep this disclosure exact, or replace that code before submitting.
+- **NOTE FOR HARSHAL, decide before sending:** Kall Markets is entered separately in this hackathon by someone else, and its license is "all rights reserved". Code from Kall Markets is in this repo (the keyboard core below, and parts adapted in the window: letter-hold actions, vault shorthand, the GIF tab; the AI panel was rewritten from scratch). Either keep this disclosure exact, or replace that code before submitting.
 - **Pre-hackathon code (baseline).** Two of Harshal's earlier projects predate this hackathon, and parts of them were adapted into this repo (README › Disclosures):
   - **Kall Markets** (an AI keyboard): the keyboard core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and dictionary, `Surfaces/`, `Resources/`).
   - **Kall Markets** (a trading keyboard): keyboard haptics, the hold-to-confirm pattern, and the app's visual design.
