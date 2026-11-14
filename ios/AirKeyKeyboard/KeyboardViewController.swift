@@ -202,7 +202,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     /// How much taller than the letters the Calls and Assist panels stand.
-    static let panelExtra: CGFloat = 96
+    static let panelExtra: CGFloat = 116
 
     private var totalHeight: CGFloat {
         let base = Glass.toolbarHeight + keysHeight
