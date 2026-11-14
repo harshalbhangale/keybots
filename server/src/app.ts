@@ -14,6 +14,7 @@ import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
 import { TradeError, tradeFlow } from "./trade.js";
+import { connected } from "./connected.js";
 import type { TelegramSource } from "./telegram.js";
 import { cachedState, renderLeash } from "./leash-page.js";
 
@@ -466,6 +467,9 @@ export function buildApp(deps: Deps) {
 
   /** Kall's and Telegram's newest spot calls together (up to 10), or three labelled samples when there are none. */
   app.get("/v1/kol/feed", async () => trade.feed());
+
+  /** What Keybots is connected to (Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, Kall, Telegram), each checked live. */
+  app.get("/v1/connected", async () => connected(deps, kall));
 
   /** Is the Telegram bot set up and seeing messages? The bot's name and which groups it has read; never the token or message text. */
   app.get("/v1/telegram/status", async () =>
