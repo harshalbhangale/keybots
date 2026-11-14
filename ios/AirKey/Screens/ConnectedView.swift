@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// What Keybots is connected to: Spend Limits, Rhea, NEAR Intents, NEAR AI
-/// Cloud, X (via Kall) and Telegram, each checked live by the server when the
+/// Cloud, X and Telegram, each checked live by the server when the
 /// page opens.
 struct ConnectedView: View {
     @Environment(AppModel.self) private var model
