@@ -455,12 +455,12 @@ struct LooseList<T: Decodable>: Decodable {
     private struct Skip: Decodable { init(from decoder: Swift.Decoder) throws {} }
 }
 
-/// A caller's record from Kall: calls that hit, missed, are still open, and the average return.
+/// A caller's record on X: calls that hit, missed, are still open, and the average return.
 struct CallerRecord: Decodable, Equatable, Sendable {
     var hits: Int
     var misses: Int
     var open: Int
-    /// nil when Kall has no return for them yet.
+    /// nil when Keybots has no return for them yet.
     var avgReturnBps: Double?
 
     enum CodingKeys: String, CodingKey { case hits, misses, open, avgReturnBps }
@@ -472,7 +472,7 @@ struct CallerRecord: Decodable, Equatable, Sendable {
         avgReturnBps = c.loose(.avgReturnBps, nil as Double?)
     }
 
-    /// "7 of 10 calls up · avg +1.2%" (no average when Kall has none)
+    /// "7 of 10 calls up · avg +1.2%" (no average when Keybots has none)
     var line: String {
         var parts = ["\(hits) of \(hits + misses) calls up"]
         if let bps = avgReturnBps {
@@ -538,7 +538,7 @@ struct Follow: Decodable, Identifiable, Equatable, Sendable {
         !handle.isEmpty && handle.count <= 15 && handle.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_") }
     }
 
-    /// The record line, or a quiet stand-in while Kall is slow.
+    /// The record line, or a quiet stand-in while the X feed is slow.
     var recordLine: String { record?.line ?? "Record loading" }
     /// Auto was turned off for them (three misses in a row, say).
     var paused: Bool { !(pausedReason ?? "").isEmpty }
@@ -653,7 +653,7 @@ struct FollowsList: Decodable {
     }
 }
 
-/// A caller Kall tracks, to suggest when you add someone.
+/// A caller Keybots tracks, to suggest when you add someone.
 struct Caller: Decodable, Identifiable, Equatable, Sendable {
     let handle: String
     let name: String?

@@ -13,7 +13,7 @@ final class FollowsModel {
     var follows: [Follow]?
     /// Newest first.
     var trades: [AutoTrade] = []
-    /// Callers Kall tracks, for "Add someone".
+    /// Callers Keybots tracks, for "Add someone".
     var callers: [Caller] = []
     var problem: String?
     /// One plain line about the last thing that happened.
