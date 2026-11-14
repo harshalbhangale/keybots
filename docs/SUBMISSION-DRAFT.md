@@ -34,9 +34,9 @@ Other links (not API fields): landing page https://airkey-keyboard.vercel.app ·
 >
 > Follow traders on X: when one posts a call, the Trading Agent trades it for you inside your rules ($1 a call, $3 a day, buy only) and inside its limits on the leash. The Trading Agent swaps on Rhea from the leash, and the tokens come back to it.
 >
-> The keyboard's own AI (rewrite, reply, translate, Ask) is private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet.
+> The keyboard's own AI (rewrite, reply, translate, Ask) is private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests. Every 10 minutes the server checks the Intel TDX quote (with Phala's verifier) and the NVIDIA GPU attestation (with NVIDIA NRAS) against a fresh nonce, plus the compose hash; receipts say verified, partial or failed.
 >
-> Everything runs on NEAR testnet: real transactions for every step, 38 contract tests, 220 server tests. The leash runs on testnet only; mainnet is next.
+> Everything runs on NEAR testnet: real transactions for every step, 38 contract tests, 251 server tests. The leash runs on testnet only; mainnet is next.
 
 ## 3. Tracks (proposed)
 
@@ -54,7 +54,7 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 | Do | See |
 |---|---|
 | `cd contracts/leash && cargo test` | 38 tests pass: one per rule, approvals, reports, the injection case, swaps and token sells |
-| `cd server && npm install && npm test` | 220 tests: parser, receiver checks, swaps, quotes, orders, copied calls, following, the AI bar, GIFs, OutLayer signing, the full command flow |
+| `cd server && npm install && npm test` | 251 tests: parser, receiver checks, swaps, quotes, orders, copied calls, following, the AI bar, GIFs, OutLayer signing, the full command flow |
 | Read the last end-to-end run | [`docs/evidence/testnet-e2e.md`](evidence/testnet-e2e.md): 9 of 9 real testnet transactions |
 | Type `pay harshal 0.2` in the keyboard and hold | Paid: [8yfavh6V…](https://testnet.nearblocks.io/txns/8yfavh6Ve4Sbyq55XxHjT3ARiU7MGDwVyFpyHoWaviek) |
 | Copy a scam asking for 5 NEAR, tap the shield | Blocked by the contract on chain: [HkM96rGV…](https://testnet.nearblocks.io/txns/HkM96rGVBx51xEJyDxmdwsRVhE29W6XFtRZ7zZDEEHN4) |
@@ -77,7 +77,7 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 | NEP-297 events | Every decision is readable on chain | `contracts/leash/src/lib.rs` |
 | Rhea (on NEAR) | Testnet swaps and sells: the leash wraps NEAR and swaps in one pool; the tokens come back to the leash | `server/src/rhea.ts` |
 | NEAR Intents / 1Click | Token list (230 assets), token checks for copied calls, live prices and quotes; the mainnet deposit path is in code | `server/src/intents.ts` |
-| NEAR AI Cloud | Private AI on NEAR AI Cloud (runs in NEAR's TEE), every answer's signature verified. The hardware attestation is not verified yet. Used for the keyboard's AI and for wording the rules can't read | `server/src/ai.ts`, `server/src/ai-stream.ts` |
+| NEAR AI Cloud | Private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests. Every 10 minutes the server checks the Intel TDX quote (with Phala's verifier) and the NVIDIA GPU attestation (with NVIDIA NRAS) against a fresh nonce, plus the compose hash; receipts say verified, partial or failed. Used for the keyboard's AI and for wording the rules can't read | `server/src/ai.ts`, `server/src/ai-stream.ts` |
 
 **The leash runs on testnet only.** It did not enforce any mainnet swap. Mainnet is next.
 
