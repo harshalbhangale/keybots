@@ -128,11 +128,26 @@ struct AgentStrip: View {
             .accessibilityElement(children: .combine)
             // Trade panel hook: a tap on a trade's chip opens the swap screen too.
             .contentShape(Rectangle())
-            .onTapGesture { if intent.kind == .swap, model.reviewReady() { Haptics.layer() } }
-            HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 28, font: .footnote.weight(.bold)) {
-                model.runReady()
+            .onTapGesture {
+                if intent.callText != nil, model.reviewCall() { Haptics.layer() }
+                else if intent.kind == .swap, model.reviewReady() { Haptics.layer() }
             }
-            .fixedSize()
+            if intent.callText != nil {
+                // A copied call: one path to a trade, through its review card.
+                Button { Haptics.layer(); model.reviewCall() } label: {
+                    Text("Review trade").font(.footnote.weight(.bold)).foregroundStyle(AK.ink)
+                        .padding(.horizontal, 12).frame(height: 28)
+                        .background(AK.accent, in: Capsule()).contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+                .accessibilityHint("Shows the trade first. Nothing trades yet.")
+            } else {
+                HoldToConfirm(label: intent.holdLabel, holding: nil, icon: nil, height: 28, font: .footnote.weight(.bold)) {
+                    model.runReady()
+                }
+                .fixedSize()
+            }
         }
         .padding(.leading, 6)
         .padding(.trailing, 5)
