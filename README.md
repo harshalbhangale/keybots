@@ -70,7 +70,7 @@ X posts (through the Keybots feed) and copied text go into the Keybots keyboard,
 
 ![Typed money words go through fixed rules, NEAR Intents and Spend Limits. Wording help goes to NEAR AI Cloud and comes back as a signed answer with a receipt.](docs/diagrams/keybots-2-inside-the-keyboard.png)
 
-Money words go through fixed rules, NEAR Intents (token check and quote) and the Spend Limits contract, while wording help goes to Qwen3-VL 30B on NEAR AI Cloud (NEAR's TEE) and comes back as a signed answer with a receipt, with OpenAI as the fallback.
+Money words go through fixed rules, NEAR Intents (token check and quote) and the Spend Limits contract, while wording help goes to Qwen3-VL 30B on NEAR AI Cloud (NEAR's TEE) and comes back as a signed answer with a receipt.
 
 ### How it works, one line each
 
@@ -79,7 +79,7 @@ Money words go through fixed rules, NEAR Intents (token check and quote) and the
 | **Keyboard** | An iOS keyboard that shows what your words would do (`Pay 0.2 NEAR to harshal`) and only acts when you hold the button, never on a tap, and it never holds a key. |
 | **Typing stays safe** | Autocorrect never touches money, names, accounts, tickers or numbers, and text that reads as a payment is never sent to the AI. |
 | **Typed vs pasted** | What you type goes to the trusted Pay Agent, and text from someone else goes to the Inbox Agent, which can't trade and can only pay people you allowed. |
-| **AI model** | Qwen3-VL 30B Instruct (`Qwen/Qwen3-VL-30B-A3B-Instruct`) on NEAR AI Cloud, with OpenAI `gpt-4.1-mini` as a fallback that is not private or signed, and the receipt says which one answered. |
+| **AI model** | Qwen3-VL 30B Instruct (`Qwen/Qwen3-VL-30B-A3B-Instruct`) on NEAR AI Cloud, and the receipt on the keyboard shows which model answered. |
 | **Private AI** | Private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests; the TDX and GPU verdicts come from Phala and NVIDIA's verifiers. |
 | **AI help** | Hold space for fix, rewrite, tone, reply, translate, ask or search, and nothing enters your message until you tap Replace, Insert or Copy. |
 | **Agents** | Pay, Inbox and Trading are separate NEAR accounts whose only key can call a few contract methods, so a fooled agent still can't move money on its own. |
@@ -89,6 +89,15 @@ Money words go through fixed rules, NEAR Intents (token check and quote) and the
 | **Calls** | A call from X (through the Keybots feed) or from copied text becomes one small trade chip that waits for your hold, and auto-trading is off unless you turn it on. |
 | **Receipts** | Every decision, paid or refused, is an on-chain event with a testnet explorer link, and Share puts the receipt in your chat. |
 | **Where it runs** | Everything on NEAR testnet today, and no mainnet swap has been enforced. |
+
+### Why this matters
+
+A keyboard sees what you write before anyone else does. When you ask the AI to improve "Mom, I'm coming late tonight, don't wait for dinner", to soften a message to your boss, to reply to your landlord about the rent, or to translate "I can't pay until Friday", you are handing it the most personal text on your phone. It is also where money gets typed, so the keyboard keeps the two apart:
+
+- **Money never goes to the AI.** Text that reads as a payment or trade is handled by fixed rules and the Spend Limits contract, never by a model.
+- **You stay in charge of the words.** Nothing enters your message until you tap Replace, Insert or Copy, and Replace can be undone for five seconds.
+- **Private by design.** Private AI on NEAR AI Cloud (runs in NEAR's TEE): every answer's signature is verified and its signer is the address NEAR's hardware attests; the TDX and GPU verdicts come from Phala and NVIDIA's verifiers.
+- **You can see who answered.** The receipt on the keyboard names the model and whether its signature verified. The limits of these checks are listed under [AI and privacy](#ai-and-privacy).
 
 **A payment's path:** the keyboard previews a typed command → the server selects the agent and checks the receiver → the agent's restricted key calls the leash → the contract pays, blocks or records an approval request → Keybots shows the outcome and transaction receipt.
 
