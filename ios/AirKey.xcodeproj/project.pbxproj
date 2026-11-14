@@ -42,6 +42,7 @@
 		3C9E2A8EE49EB85D65E89314 /* Mascot.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D82843735C6F9608FC144101 /* Mascot.xcassets */; };
 		3D89726AC2B2766329C5F4AF /* GlideTrail.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55EA3185F3C9A7AB599371C /* GlideTrail.swift */; };
 		40A4EF9A990F8FF7B01D4A64 /* frost.png in Resources */ = {isa = PBXBuildFile; fileRef = D2F1AEE34AF790598CCACCED /* frost.png */; };
+		42BF63AA02422B7AB47EF4A6 /* ConnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B8F535B137D42AB315EBF4 /* ConnectedView.swift */; };
 		42C16123A2B152BC84C30BB1 /* wood.png in Resources */ = {isa = PBXBuildFile; fileRef = 13B2ADBA4BC711D6FD639FCF /* wood.png */; };
 		42E11D5013352DB96632C633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 74B439ABE97E976F4FEB6ED4 /* Assets.xcassets */; };
 		43EED8D57DC8A7C03D13B7D6 /* AgentStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C2B7CC69B04D36EC417168 /* AgentStrip.swift */; };
@@ -316,6 +317,7 @@
 		A5B2568003C3CB91D9A04FB0 /* Ask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ask.swift; sourceTree = "<group>"; };
 		A717C160AAF5491983329521 /* JourneyAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyAPI.swift; sourceTree = "<group>"; };
 		A791BF76C4E67F6F86C158DF /* KeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyView.swift; sourceTree = "<group>"; };
+		A9B8F535B137D42AB315EBF4 /* ConnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedView.swift; sourceTree = "<group>"; };
 		A9BA37E9ACEFC91213BB0684 /* SecretScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretScanner.swift; sourceTree = "<group>"; };
 		AD85AFCDE8A01928A51D00C9 /* bricks.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bricks.png; sourceTree = "<group>"; };
 		AE30351773DFCF5713DBF24A /* DeviceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKey.swift; sourceTree = "<group>"; };
@@ -423,6 +425,13 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		0D67CEC6ECCD3EB698F5599E /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
+			sourceTree = "<group>";
+		};
 		189699E195BCCCA4A9E0B0FB /* AirKey */ = {
 			isa = PBXGroup;
 			children = (
@@ -433,10 +442,18 @@
 				AE30351773DFCF5713DBF24A /* DeviceKey.swift */,
 				38827B21096CE8DA8AB2FE61 /* Info.plist */,
 				AF41A04D107BDF975DB721DC /* RootView.swift */,
+				0D67CEC6ECCD3EB698F5599E /* .claude */,
 				09770E26BBCCB4EA757F7D26 /* Components */,
 				22AAAB9198B7E413FE4CC2D8 /* Screens */,
 			);
 			path = AirKey;
+			sourceTree = "<group>";
+		};
+		1955E37AC411BC4F0D5B799E /* .claude */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = .claude;
 			sourceTree = "<group>";
 		};
 		19CB54A95BEED60371AE5C68 /* Assist */ = {
@@ -455,6 +472,7 @@
 			children = (
 				235D82802F01F7286217056B /* AgentsView.swift */,
 				E1ED72AD170088D3999341D5 /* CommandSheet.swift */,
+				A9B8F535B137D42AB315EBF4 /* ConnectedView.swift */,
 				8570CD3FAA32EA8F37A0A539 /* FollowingSection.swift */,
 				1040A394F97F4F1DCC5DC053 /* KeyboardTab.swift */,
 				0C83B914356CC09E45DEEDA8 /* KeysView.swift */,
@@ -572,6 +590,7 @@
 				3AF49B41A807E6455291CD22 /* AirKeyKeyboard.entitlements */,
 				E1F81127BD0FC8E23110F7C6 /* Info.plist */,
 				41A268554547ABD1D29F4116 /* KeyboardViewController.swift */,
+				1955E37AC411BC4F0D5B799E /* .claude */,
 				07888C8DFF812A19F0FE10F3 /* Agent */,
 				C1E384945909F6681F522065 /* Design */,
 				B50FB382AF12A7C5EF088C9F /* Engine */,
@@ -968,6 +987,7 @@
 				0A0A135B774164E76FF284E1 /* BoundKeys.swift in Sources */,
 				C29B21BD623FA7120BE2C6E5 /* CommandSheet.swift in Sources */,
 				86522BDC05010DA5622CD4D3 /* Components.swift in Sources */,
+				42BF63AA02422B7AB47EF4A6 /* ConnectedView.swift in Sources */,
 				D3721F3752AF73DCDA54CB58 /* DeviceKey.swift in Sources */,
 				E7997DF2D9ADC66F8C076403 /* Following.swift in Sources */,
 				B6CF68EA11DCFF319FAC4B30 /* FollowingSection.swift in Sources */,
