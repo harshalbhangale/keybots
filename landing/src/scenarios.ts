@@ -211,7 +211,7 @@ export const SCENARIOS: Scenario[] = [
         },
       },
       { do: "act" },
-      { do: "panel", panel: { kind: "done", tone: "pending", title: "Waiting for you", sub: "New receiver (R7). Approve in AIRKEY with Face ID.", tx: "4Zckku5j…" } },
+      { do: "panel", panel: { kind: "done", tone: "pending", title: "Waiting for you", sub: "New receiver (R7). Approve in Keybots with Face ID.", tx: "4Zckku5j…" } },
       { do: "wait", ms: 1800 },
       { do: "keys" },
     ],
