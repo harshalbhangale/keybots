@@ -246,7 +246,7 @@ struct ReviewCard: View {
                 .padding(.top, 2)
             if let refuse = r.limits.willRefuse {
                 Label {
-                    Text(refuse + " You can still hold: the contract will refuse it on chain.")
+                    Text(refuse + " You can still hold, to see the refusal on chain.")
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
                     Image(systemName: "exclamationmark.triangle").font(.caption2.weight(.bold))
@@ -300,18 +300,10 @@ struct ReceiptCard: View {
                     .font(.footnote.weight(.medium)).foregroundStyle(r.blocked ? p.bad : p.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if let pay = r.pay { line("Paid", r.swapped ? pay.line : "Nothing (\(pay.line) stayed put)", p) }
-            line("Received", r.receive?.line ?? "Nothing received", p)
-            if r.status == "failed", r.receive == nil {
-                Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
-            }
-            if let venue = r.venue { line("Venue", venue, p) }
-            if let s = r.standIn {
-                Text(s).font(.caption).foregroundStyle(p.warn).fixedSize(horizontal: false, vertical: true)
-            }
-            line("Decided", r.byContract ? "Decided by the leash contract on NEAR testnet" : "Stopped by the AIRKEY server", p)
-            line("Agent", r.agent, p)
-            if let at = r.at { line("Time", at.formatted(date: .abbreviated, time: .standard), p) }
+            Label(r.byContract ? "Decided by the leash contract on NEAR testnet" : "Stopped by the AIRKEY server",
+                  systemImage: r.byContract ? "link" : "server.rack")
+                .font(.caption.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 6) {
                 if let tx = r.txURL, let url = URL(string: tx) {
                     link("View on nearblocks ↗", url, p)
@@ -321,6 +313,17 @@ struct ReceiptCard: View {
                 }
             }
             .padding(.top, 2)
+            if let pay = r.pay { line("Paid", r.swapped ? pay.line : "Nothing (\(pay.line) stayed put)", p) }
+            line("Received", r.receive?.line ?? "Nothing received", p)
+            if r.status == "failed", r.receive == nil {
+                Text("Nothing was swapped.").font(.caption).foregroundStyle(p.soft)
+            }
+            if let venue = r.venue { line("Venue", venue, p) }
+            if let s = r.standIn {
+                Text(s).font(.caption).foregroundStyle(p.warn).fixedSize(horizontal: false, vertical: true)
+            }
+            line("Agent", r.agent, p)
+            if let at = r.at { line("Time", at.formatted(date: .abbreviated, time: .standard), p) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
