@@ -180,7 +180,7 @@ describe("swaps", () => {
   it("blocks a swap worth more than the per-payment cap", async () => {
     const r = await runCommand({ cfg, chain: chainWithCaps(), receipts: memoryStore(), intents: fakeIntents("20.00") as never }, "swap 20 usdc to sol", "typed");
     expect(r.outcome).toBe("blocked");
-    expect(r.message).toBe("The leash would block this: it's worth about 5 NEAR, over the 0.5 NEAR per-trade cap.");
+    expect(r.message).toBe("Spend Limits would block this: it's worth about 5 NEAR, over the 0.5 NEAR per-trade cap.");
     expect(r.summary).toBe("Blocked: over your 0.5 NEAR per-trade limit");
   });
 
@@ -246,7 +246,7 @@ describe("swaps", () => {
     chain.state = caps.state;
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: fakeRhea as never }, "swap 0.1 near to usdt", "typed");
     expect(r.outcome).toBe("swapped");
-    expect(r.message).toBe("Swapped 0.1 NEAR for 0.1241 USDT on Rhea. It's in the leash.");
+    expect(r.message).toBe(`Swapped 0.1 NEAR for 0.1241 USDT on Rhea. It's in Spend Limits (${cfg.leash}).`);
     expect(r.summary).toBe("Swapped 0.1 NEAR for 0.1241 USDT");
     expect(calls[0].agent).toBe("trader.x.testnet");
     expect(calls[0].args.venue).toBe("ref-finance-101.testnet");
@@ -311,7 +311,7 @@ describe("swaps", () => {
     // The fake quote says $0.40; at $4 a NEAR that is 0.1 NEAR against the caps.
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
     expect(r.outcome).toBe("swapped");
-    expect(r.message).toBe("Swapped 0.5 USDC for 0.23 NEAR on Rhea. It's in the leash.");
+    expect(r.message).toBe(`Swapped 0.5 USDC for 0.23 NEAR on Rhea. It's in Spend Limits (${cfg.leash}).`);
     expect(calls).toHaveLength(1);
     expect(calls[0].agent).toBe("trader.x.testnet");
     expect(calls[0].args).toMatchObject({ venue: "ref-finance-101.testnet", token: "usdc.itachicara.testnet", amount: "500000000000000000000000", valueNear: "100000000000000000000000", wrap: "wrap.testnet", unwrap: true });
@@ -325,7 +325,7 @@ describe("swaps", () => {
     const { chain, calls } = seller();
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 1 usdt to usdc", "typed");
     expect(r.outcome).toBe("swapped");
-    expect(r.message).toBe("Swapped 1 USDT for 0.23 USDC on Rhea. It's in the leash.");
+    expect(r.message).toBe(`Swapped 1 USDT for 0.23 USDC on Rhea. It's in Spend Limits (${cfg.leash}).`);
     expect(calls[0].args).toMatchObject({ token: "usdt.itachicara.testnet", amount: "1000000000000000000000000", unwrap: false });
     expect(JSON.parse(String(calls[0].args.msg)).actions[0]).toMatchObject({ pool_id: 1126, token_in: "usdt.itachicara.testnet", token_out: "usdc.itachicara.testnet" });
   });
@@ -358,14 +358,14 @@ describe("swaps", () => {
     const { chain } = seller({ sellBlocked: { status: "blocked", rule: "R8", reason: "Over the per-trade cap of 5 units of usdc", pending_id: null } });
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
     expect(r.outcome).toBe("blocked");
-    expect(r.message).toMatch(/^Blocked by the leash \(R8\)/);
+    expect(r.message).toMatch(/^Blocked by Spend Limits \(R8\)/);
   });
 
   it("says the token stays in the leash when Rhea doesn't fill a sale", async () => {
     const { chain } = seller({ swapFails: true });
     const r = await runCommand({ cfg, chain, receipts: memoryStore(), intents: intentsWithNear() as never, rhea: sellRhea().rhea as never }, "swap 0.5 usdc to near", "typed");
     expect(r.outcome).toBe("not-sent");
-    expect(r.message).toBe("Rhea didn't fill 0.5 USDC → NEAR; the leash keeps the USDC. Nothing was lost.");
+    expect(r.message).toBe("Rhea didn't fill 0.5 USDC → NEAR; Spend Limits keeps the USDC. Nothing was lost.");
   });
 
   it("never sells a token from pasted text", async () => {
@@ -388,10 +388,11 @@ describe("swaps", () => {
     return { i, submitted };
   };
 
-  it("on mainnet, refuses anything over the dollar cap ($0.15 unless set)", async () => {
+  it("on mainnet, refuses anything over the dollar cap ($1 unless set)", async () => {
     const { chain, calls } = fakeChain();
     chain.state = chainWithTrader().state;
-    const capped = { ...mainnet, mainnetUsdCap: loadConfig({ AIRKEY_OWNER: "x.near", NEAR_NETWORK: "mainnet" }).mainnetUsdCap };
+    expect(loadConfig({ AIRKEY_OWNER: "x.near", NEAR_NETWORK: "mainnet" }).mainnetUsdCap).toBe(1);
+    const capped = { ...mainnet, mainnetUsdCap: loadConfig({ NEAR_NETWORK: "mainnet", AIRKEY_MAINNET_USD_CAP: "0.15" }).mainnetUsdCap };
     expect(capped.mainnetUsdCap).toBe(0.15);
     const r = await runCommand({ cfg: capped, chain, receipts: memoryStore(), intents: liveIntents("SUCCESS").i as never }, "swap 0.1 near to sol", "typed");
     expect(r.outcome).toBe("blocked");
@@ -405,18 +406,18 @@ describe("swaps", () => {
     const { i, submitted } = liveIntents("SUCCESS");
     const r = await runCommand({ cfg: mainnet, chain, receipts: memoryStore(), intents: i as never }, "swap 0.1 near to sol", "typed");
     expect(r.outcome).toBe("swapped");
-    expect(r.message).toBe("Swapped 0.1 NEAR for 0.0041 SOL on NEAR Intents.");
+    expect(r.message).toMatch(/^Swapped 0\.1 NEAR for 0\.0041 SOL on NEAR Intents\. It lands in x\.near's NEAR Intents balance/);
     expect(calls[0].args).toMatchObject({ venue: "deposit1", wrap: "wrap.near", amount: "100000000000000000000000" });
     expect(calls[0].args.msg).toBeUndefined();
     expect(submitted).toEqual(["SWAP"]);
   });
 
-  it("on mainnet, says so when NEAR Intents refunds the leash", async () => {
+  it("on mainnet, says so when NEAR Intents refunds Spend Limits", async () => {
     const { chain } = fakeChain();
     chain.state = chainWithTrader().state;
     const r = await runCommand({ cfg: mainnet, chain, receipts: memoryStore(), intents: liveIntents("REFUNDED").i as never }, "swap 0.1 near to sol", "typed");
     expect(r.outcome).toBe("not-sent");
-    expect(r.message).toMatch(/refunded to the leash/);
+    expect(r.message).toMatch(/refunded to Spend Limits/);
   });
 
   it("blocks tokens NEAR Intents doesn't list", async () => {

@@ -97,8 +97,8 @@ describe("dry run", () => {
     expect((await dryRun(deps(old), "pay harshal 0.2")).outcome).toBe("pay");
   });
 
-  it("blocks when the leash doesn't hold enough", async () => {
-    expect(verdict(await dryRun(deps(leash({ available: N(0.1) })), "pay harshal 0.2"))).toBe("Would be blocked: the leash doesn't hold enough NEAR");
+  it("blocks when Spend Limits doesn't hold enough", async () => {
+    expect(verdict(await dryRun(deps(leash({ available: N(0.1) })), "pay harshal 0.2"))).toBe("Would be blocked: Spend Limits doesn't hold enough NEAR");
   });
 
   it("checks a swap against the Trading Agent's caps and quotes it", async () => {
@@ -110,7 +110,7 @@ describe("dry run", () => {
     expect(r.outcome).toBe("swap");
     expect(verdict(r)).toBe("Would swap 0.3 NEAR to USDC");
     expect(why(r)).toBe("within 1.0 NEAR per trade and 2.0 NEAR today (0.295 spent)");
-    expect(r.lines).toContainEqual(["Rhea", "about 0.6302 USDC from pool 1103 (where the leash swaps on testnet)"]);
+    expect(r.lines).toContainEqual(["Rhea", "about 0.6302 USDC from pool 1103 (where Spend Limits swaps on testnet)"]);
     expect(r.lines).toContainEqual(["NEAR Intents", "about 1.003 USDC (~$1.00), live mainnet quote"]);
   });
 
