@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Glyf Keys: which letters run something when held in the keyboard, and
+/// Hold keys: which letters run something when held in the keyboard, and
 /// what. Saved to the App Group as it changes (BoundKeys); the keyboard
 /// reads it the next time it comes up.
 struct KeysView: View {
@@ -12,7 +12,7 @@ struct KeysView: View {
 
     var body: some View {
         Screen {
-            Masthead(eyebrow: "AIRKEY · GLYF KEYS", title: "KEYS")
+            Masthead(eyebrow: "AIRKEY · HOLD KEYS", title: "KEYS")
             Text("Hold a letter in any chat to run it. A small dot marks each one.")
                 .font(.subheadline)
                 .foregroundStyle(AK.muted)

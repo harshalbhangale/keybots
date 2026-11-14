@@ -1,6 +1,6 @@
 import Foundation
 
-/// Glyf Keys: hold a letter and it runs what it is bound to. P starts a
+/// Hold keys: hold a letter and it runs what it is bound to. P starts a
 /// payment, V opens the vault, C the clipboard, S a swap. Kept in the App
 /// Group so the app's Keys screen and the keyboard read the same map.
 enum BoundKeys {
