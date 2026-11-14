@@ -46,6 +46,20 @@ Screens are from the project demo; provider badges and results depend on the con
 - **Use AI while typing.** Hold space for rewrite, tone, reply, translate, Ask and Search. Review the result before inserting or replacing text. NEAR AI Cloud support includes response-signature and attestation checks; see the [privacy limits](#ai-and-privacy) below.
 - **Use it as a keyboard.** Autocorrect, suggestions, swipe typing, cursor movement, emoji, clipboard, themes and haptics are part of the everyday experience. The vault is for addresses, not private keys or seed phrases.
 
+## One assistant, three lanes
+
+You use one thing: the keyboard. Behind it, every money request goes down one of three lanes. The lane is picked by where the words came from, never by the AI.
+
+| Lane | When | What it may do |
+|---|---|---|
+| **Your words** | You type `pay harshal 0.2 for dinner` | Pay anyone, up to your caps. An account it doesn't know asks you first. |
+| **Messages you copy** | You copy an invoice or a message and check it | Pay only people on your allowed list. Anyone else waits for you. Never trades. |
+| **Trades** | `swap 0.1 near to usdc`, a price order, or a trader you follow | Swap within its own caps, kept apart from what payments may spend. |
+
+Each lane is its own NEAR account, and its only key can ask the Spend Limits contract for a payment or a swap. So a scam that fools the AI lands in the weakest lane, and even there it can't move more than the contract allows. In the code and on chain the lanes are called agents: the Pay Agent (`pay.<you>`), the Inbox Agent (`inbox.<you>`) and the Trading Agent (`trader.<you>`).
+
+A normal day: split dinner from a chat, check an invoice someone sent before paying it, set a sell order on NEAR, and open the app only to approve something new or to stop everything.
+
 ## Why NEAR?
 
 | NEAR building block | What Keybots uses it for |
