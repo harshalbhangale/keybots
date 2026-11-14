@@ -55,6 +55,12 @@
   color: #a1a1a6;
   animation: rise-in 0.9s 0.16s both;
 }
+.hx-sub b {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: #f5f5f7;
+}
 @media (max-width: 560px) {
   .hx {
     font-size: clamp(38px, 11.5vw, 52px);
