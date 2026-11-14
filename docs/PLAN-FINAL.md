@@ -111,3 +111,9 @@ Spend Limits Lite (`contracts/limits-lite`, 45 KB, no SDK) is live on NEAR mainn
 | `trader.hellbuddy.near` | Trading Agent, 0.05 / 0.1 (no swaps on Lite) | 0.03 |
 
 Transactions: deploy [8S5iA8F8](https://nearblocks.io/txns/8S5iA8F8QGT8aQ8JyY3aSrkwmXpH5B26JkiYyd5avMLp), agents [Hcfuu3U9](https://nearblocks.io/txns/Hcfuu3U9mW33hmvaauFg8BnvrhTYiHQVAxM4M8u9wtY5), [29wm62tY](https://nearblocks.io/txns/29wm62tYB1xLrfx1GbpGjHYVAzXfRyHBKeXGJp34R8rt), [26k4RY2S](https://nearblocks.io/txns/26k4RY2ScyZqrax1LH6AWQiekoL8j9GMecNPfv6zxPLr), register [7939UjhF](https://nearblocks.io/txns/7939UjhfgkRkb5DD21yQzraq2MRmup9r1oxeMFVbDH1b). Gas used for setup: 0.030 NEAR. Every account also has the owner's key, so it can be deleted and its NEAR returned. The same contract was tried first on testnet (`limits.airkey-harshal.testnet`): paid, R4, R3, R6, R1, and a refund of a failed transfer, all on chain.
+
+First mainnet payments through Spend Limits Lite (typed, Pay Agent, via the mainnet server):
+
+- Refused on chain by R7: hellbuddy.near was new and never paid, so the server asked for approval, which Lite doesn't have. [FDKxnt6F](https://nearblocks.io/txns/FDKxnt6FVY4scNL2e8npUjoDT7E566tyJhaadEBPPPDb)
+- The owner put hellbuddy.near on the allowed list. [Bo67g7Nx](https://nearblocks.io/txns/Bo67g7NxforWMHod3vWCL9jUoE4v2EzbJaBYd1U8a149)
+- Paid 0.01 NEAR to hellbuddy.near. [6WgtSxcy](https://nearblocks.io/txns/6WgtSxcybESMvn6ouJxCUnmdEPp7QtwCtBBHjFsHM3fm)
