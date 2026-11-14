@@ -59,7 +59,7 @@ struct WalletView: View {
 
     private var balances: some View {
         HStack(spacing: 10) {
-            Stat(label: "NEAR", value: model.state.map { Fmt.near($0.available, unit: false) }, sub: "Available to agents")
+            Stat(label: "NEAR", value: model.state.map { Fmt.near($0.available, unit: false) }, sub: "Available to spend")
             ForEach(model.state?.holdings ?? []) { h in
                 Stat(label: h.symbol, value: Self.dollars(h), sub: "From your swaps")
             }
@@ -77,8 +77,8 @@ struct WalletView: View {
         if let s = model.state {
             HStack(spacing: 8) {
                 Circle().fill(model.mood).frame(width: 8, height: 8)
-                Text(s.paused ? "Everything is stopped. No agent can pay."
-                    : (["\(s.shownAgents.count) agents ready", "\(model.paidToday) paid today"]
+                Text(s.paused ? "Everything is stopped. Nothing can be paid."
+                    : (["Ready", "\(model.paidToday) paid today"]
                         + (model.blockedToday > 0 ? ["\(model.blockedToday) blocked"] : [])).joined(separator: " · "))
                     .font(.subheadline)
                     .foregroundStyle(s.paused ? AK.redText : AK.muted)
