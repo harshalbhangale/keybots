@@ -28,6 +28,7 @@ struct KeyboardTab: View {
                 feature("wallet.bifold", "Your account", "Paste your NEAR account in one tap")
                 NavigationLink { KeysView() } label: { KeysLink() }.buttonStyle(.plain)
             }
+            ConnectAgentCard()
         }
     }
 
