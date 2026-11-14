@@ -10,7 +10,7 @@ Drafts for Harshal to edit and post himself. Nothing here has been posted. Every
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 >
-> [demo video] airkey-keyboard.vercel.app
+> [demo video] main.d35cbsqaz6y6pb.amplifyapp.com
 
 (Add the video when it exists; X counts each link as 23 characters.)
 
@@ -30,7 +30,7 @@ Proof on testnet: a 9-of-9 end-to-end run, every step a real transaction (paid, 
 
 Built at NEAR HACKATHON by Harshal Bhangale. Testnet only so far; mainnet comes after everything passes on testnet.
 
-Links: https://airkey-keyboard.vercel.app · https://github.com/harshalbhangale/near-hack · leash.airkey-harshal.testnet
+Links: https://main.d35cbsqaz6y6pb.amplifyapp.com · https://github.com/harshalbhangale/near-hack · leash.airkey-harshal.testnet
 
 ## Before posting, check
 
