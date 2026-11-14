@@ -113,11 +113,14 @@ struct PayView: View {
                 .buttonStyle(MoneyPress())
                 .accessibilityLabel("Close")
                 Spacer()
-                Text("Pay").font(.headline).foregroundStyle(p.text)
+                VStack(spacing: 0) {
+                    Text("Pay").font(.headline).foregroundStyle(p.text)
+                    Text(model.network).font(.caption2).foregroundStyle(model.network.contains("mainnet") ? p.warn : p.soft)
+                }
                 Spacer()
                 Color.clear.frame(width: 34, height: 34)
             }
-            .padding(.horizontal, MoneyPalette.inset).padding(.top, 10)
+            .padding(.horizontal, MoneyPalette.inset).padding(.top, 6)
 
             if let r = model.receipt { result(r, p) } else { review(p) }
         }
@@ -126,7 +129,7 @@ struct PayView: View {
     }
 
     private func review(_ p: MoneyPalette) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             // Who gets it.
             HStack(spacing: 12) {
                 Text(String(model.request.name.prefix(1)).uppercased())
@@ -136,6 +139,9 @@ struct PayView: View {
                     Text(model.request.name).font(.headline).foregroundStyle(p.text)
                     Text(model.account ?? (model.phase == .loading ? "Looking up…" : "Account checked when it's sent"))
                         .font(.caption.monospaced()).foregroundStyle(p.soft).lineLimit(1).minimumScaleFactor(0.7)
+                    if let memo = model.request.memo {
+                        Text("for \(memo)").font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                    }
                 }
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 0) {
@@ -145,22 +151,18 @@ struct PayView: View {
                     }
                 }
             }
-            .padding(12)
+            .padding(10)
             .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .accessibilityElement(children: .combine)
 
-            VStack(spacing: 5) {
-                if let memo = model.request.memo { InfoRow(label: "For", value: memo, palette: p) }
+            VStack(spacing: 4) {
                 InfoRow(label: "Paid by", value: "Pay Agent, from Spend Limits", palette: p)
                 InfoRow(label: "Network fee", value: "≈ 0.0005 NEAR", palette: p, note: "Pay Agent's gas")
                 if let left = model.leftToday, let daily = model.daily {
+                    let over = model.amount > left || model.amount > (model.perPayment ?? .infinity)
                     InfoRow(label: "Left today", value: "\(PayModel.near(left)) of \(PayModel.near(daily))", palette: p,
-                            tint: model.amount > left ? p.bad : nil)
+                            tint: over ? p.bad : nil, note: model.perPayment.map { "up to \(PayModel.near($0)) each" })
                 }
-                if let per = model.perPayment {
-                    InfoRow(label: "Per payment", value: "up to \(PayModel.near(per))", palette: p, tint: model.amount > per ? p.bad : nil)
-                }
-                InfoRow(label: "Network", value: model.network, palette: p)
             }
             if let refuse = model.willRefuse {
                 Label(refuse, systemImage: "hand.raised.fill").font(.caption.weight(.medium)).foregroundStyle(p.warn)
@@ -182,7 +184,7 @@ struct PayView: View {
                           confirmLabel: "Confirm payment")
             }
         }
-        .padding(.horizontal, MoneyPalette.inset).padding(.top, 10).padding(.bottom, 8)
+        .padding(.horizontal, MoneyPalette.inset).padding(.top, 8).padding(.bottom, 12)
     }
 
     private func result(_ r: Receipt, _ p: MoneyPalette) -> some View {
