@@ -14,6 +14,7 @@ import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
 import { TradeError, tradeFlow } from "./trade.js";
+import type { TelegramSource } from "./telegram.js";
 import { cachedState, renderLeash } from "./leash-page.js";
 
 export type Deps = CommandDeps & {
@@ -28,6 +29,8 @@ export type Deps = CommandDeps & {
   follows?: FollowStore;
   /** Kall Markets' API, where their calls come from. */
   kall?: KallClient;
+  /** Telegram calls (telegram.ts): a bot in a group, read-only. Absent or without a token, the feed is Kall's alone. */
+  telegram?: TelegramSource;
   /** The same poller index.ts runs every minute, so "check now" and the timer never trade one call twice. */
   followPoller?: FollowPoller;
   /** KLIPY's GIFs, through this server (the key stays here). Tests pass a client with a fake fetch. */
@@ -459,10 +462,15 @@ export function buildApp(deps: Deps) {
   });
 
   // --- A KOL's call: feed -> review -> confirm -> the leash decides -> receipt (trade.ts) ---
-  const trade = tradeFlow({ ...deps, kall, now: deps.now });
+  const trade = tradeFlow({ ...deps, kall, telegram: deps.telegram, now: deps.now });
 
-  /** Kall's newest spot calls (up to 10), or three labelled samples when Kall doesn't answer. */
+  /** Kall's and Telegram's newest spot calls together (up to 10), or three labelled samples when there are none. */
   app.get("/v1/kol/feed", async () => trade.feed());
+
+  /** Is the Telegram bot set up and seeing messages? The bot's name and which groups it has read; never the token or message text. */
+  app.get("/v1/telegram/status", async () =>
+    deps.telegram ? deps.telegram.status() : { configured: false, bot: null, groups: [], lastMessageAt: null, error: null },
+  );
 
   /** The exact trade a call would run, for 30 seconds. Sends nothing. */
   app.post<{ Body: { callId?: unknown; text?: unknown; usd?: unknown } }>("/v1/trade/review", async (req, reply) => {

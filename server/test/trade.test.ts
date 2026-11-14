@@ -8,6 +8,8 @@ import type { Chain, Decision } from "../src/near.js";
 import { memoryStore } from "../src/receipts.js";
 import { RHEA } from "../src/rhea.js";
 import { SAMPLE_NOTE } from "../src/trade.js";
+import { telegramSource, type TelegramSource } from "../src/telegram.js";
+import { TOKEN, fakeBotApi, group, privateGroup } from "./telegram-fake.js";
 
 const NOW = Date.UTC(2026, 10, 14, 8, 15);
 const DAY = Math.floor(NOW / 86_400_000);
@@ -94,12 +96,12 @@ const kall = () =>
   });
 const downKall: KallClient = { feed: async () => Promise.reject(new Error("down")), caller: async () => [] };
 
-function setup(opts: Parameters<typeof fakeLeash>[0] & { kall?: KallClient } = {}) {
+function setup(opts: Parameters<typeof fakeLeash>[0] & { kall?: KallClient; telegram?: TelegramSource } = {}) {
   const { chain, sent } = fakeLeash(opts);
   const clock = { t: NOW };
   const rhea = makeRhea();
   const receipts = memoryStore();
-  const app = buildApp({ cfg, chain, receipts, intents: intents as never, rhea: rhea as never, kall: opts.kall ?? kall(), now: () => clock.t });
+  const app = buildApp({ cfg, chain, receipts, intents: intents as never, rhea: rhea as never, kall: opts.kall ?? kall(), telegram: opts.telegram, now: () => clock.t });
   const review = async (body: object) => app.inject({ method: "POST", url: "/v1/trade/review", payload: body });
   const confirm = async (reviewId: string) => app.inject({ method: "POST", url: "/v1/trade/confirm", payload: { reviewId } });
   return { app, sent, clock, rhea, receipts, review, confirm };
@@ -114,6 +116,7 @@ describe("GET /v1/kol/feed", () => {
     expect(r.calls.map((c: { id: string }) => c.id)).toEqual(["kall-111", "kall-333"]);
     expect(r.calls[0]).toEqual({
       id: "kall-111",
+      source: "kall",
       author: { handle: "solcaller", name: null },
       postedAt: new Date(NOW - 600_000).toISOString(),
       url: "https://x.com/solcaller/status/111",
@@ -133,6 +136,141 @@ describe("GET /v1/kol/feed", () => {
       expect(r.calls).toHaveLength(3);
       expect(r.calls.every((c: { author: { name: string }; url: null }) => c.author.name === "Sample post" && c.url === null)).toBe(true);
     }
+  });
+});
+
+/** A Telegram source that has already read a few messages: two calls, a perp and some chat. */
+async function telegramWithCalls() {
+  const api = fakeBotApi();
+  const tg = telegramSource({ token: TOKEN, fetcher: api.fetcher });
+  const person = { id: 7, is_bot: false, username: "sol_sam" };
+  const at = (secondsAgo: number) => NOW / 1000 - secondsAgo;
+  api.queue.push(
+    api.msg(group, { message_id: 5, date: at(300), from: person, text: "$SOL looks ready, buying here" }),
+    api.msg(privateGroup, { message_id: 9, date: at(900), from: { id: 8, is_bot: false, first_name: "Mia" }, text: "Taking profits on $NEAR, selling here" }),
+    api.msg(group, { message_id: 6, date: at(100), from: person, text: "$ETH long 10x, send it" }),
+    api.msg(group, { message_id: 7, date: at(50), from: person, text: "lunch anyone?" }),
+  );
+  await tg.pollOnce();
+  return tg;
+}
+
+describe("GET /v1/kol/feed with Telegram", () => {
+  it("merges Kall and Telegram newest first, each call says where it's from, and the feed is mixed", async () => {
+    const r = (await setup({ telegram: await telegramWithCalls() }).app.inject("/v1/kol/feed")).json();
+    expect(r.source).toBe("mixed");
+    expect(r.calls.map((c: { id: string; source: string }) => `${c.id} ${c.source}`)).toEqual(["tg--100200-5 telegram", "kall-111 kall", "tg--100300-9 telegram", "kall-333 kall"]);
+    expect(r.calls[0]).toEqual({
+      id: "tg--100200-5",
+      source: "telegram",
+      author: { handle: "sol_sam", name: "Alpha Calls" },
+      postedAt: new Date(NOW - 300_000).toISOString(),
+      url: "https://t.me/alphacalls/5",
+      text: "$SOL looks ready, buying here",
+      asset: "SOL",
+      direction: "buy",
+      record: null,
+    });
+    // A private group has no link; a person without a username is shown by first name.
+    expect(r.calls[2]).toMatchObject({ author: { handle: "Mia", name: "Friends" }, url: null, direction: "sell", record: null });
+    expect(r.note).toContain("Not every post on X");
+    expect(r.note).toContain("Messages from the Telegram groups Alpha Calls, Friends where the Keybots bot is a member.");
+    expect(r.note).not.toMatch(/all of Telegram|every Telegram/i);
+  });
+
+  it("is telegram alone when Kall has nothing or is down, and kall alone when Telegram is empty", async () => {
+    for (const k of [downKall, fakeKall({})]) {
+      const r = (await setup({ kall: k, telegram: await telegramWithCalls() }).app.inject("/v1/kol/feed")).json();
+      expect(r.source).toBe("telegram");
+      expect(r.calls.every((c: { source: string }) => c.source === "telegram")).toBe(true);
+      expect(r.note).toBe("Messages from the Telegram groups Alpha Calls, Friends where the Keybots bot is a member.");
+    }
+    const empty = telegramSource({ token: TOKEN, fetcher: fakeBotApi().fetcher });
+    const r = (await setup({ telegram: empty }).app.inject("/v1/kol/feed")).json();
+    expect(r.source).toBe("kall");
+    expect(r.note).toBe("Calls Kall tracks from the people it follows. Not every post on X.");
+    expect(r.calls.every((c: { source: string }) => c.source === "kall")).toBe(true);
+  });
+
+  it("falls back to labelled samples, each with source sample, when there is nothing at all", async () => {
+    const empty = telegramSource({ token: TOKEN, fetcher: fakeBotApi().fetcher });
+    const r = (await setup({ kall: downKall, telegram: empty }).app.inject("/v1/kol/feed")).json();
+    expect(r.source).toBe("sample");
+    expect(r.calls.map((c: { source: string }) => c.source)).toEqual(["sample", "sample", "sample"]);
+  });
+
+  it("is never more than 10, newest first", async () => {
+    const api = fakeBotApi();
+    const tg = telegramSource({ token: TOKEN, fetcher: api.fetcher });
+    for (let i = 1; i <= 14; i++) api.queue.push(api.msg(group, { message_id: i, date: NOW / 1000 - 1000 + i, from: { id: 7, is_bot: false, username: "s" }, text: "$SOL buying here" }));
+    await tg.pollOnce();
+    const r = (await setup({ telegram: tg }).app.inject("/v1/kol/feed")).json();
+    expect(r.calls).toHaveLength(10);
+    const times = r.calls.map((c: { postedAt: string }) => Date.parse(c.postedAt));
+    expect(times).toEqual([...times].sort((a, b) => b - a));
+  });
+});
+
+describe("a Telegram call, reviewed and confirmed like a Kall one", () => {
+  it("review reads the stored call with the rules and names the group and link", async () => {
+    const { review, sent } = setup({ telegram: await telegramWithCalls() });
+    const r = (await review({ callId: "tg--100200-5" })).json();
+    expect(r.call).toEqual({ author: { handle: "sol_sam", name: "Alpha Calls" }, postedAt: new Date(NOW - 300_000).toISOString(), url: "https://t.me/alphacalls/5", text: "$SOL looks ready, buying here", asset: "SOL", direction: "buy" });
+    expect(r.reading.by).toBe("rules");
+    expect(r.trade.venue).toBe("Rhea, pool 1103");
+    expect(sent).toHaveLength(0);
+  });
+
+  it("works without the feed having been pulled, and a perp or chat message can't be reviewed", async () => {
+    const { review } = setup({ telegram: await telegramWithCalls() });
+    expect((await review({ callId: "tg--100200-6" })).statusCode).toBe(404); // the perp was never kept
+    expect((await review({ callId: "tg--100200-7" })).statusCode).toBe(404);
+    expect((await review({ callId: "tg--100200-404" })).statusCode).toBe(404);
+    expect((await setup().review({ callId: "tg--100200-5" })).statusCode).toBe(404); // no Telegram on this server
+  });
+
+  it("confirm sends once and the receipt names the group, with the link when there is one", async () => {
+    const { review, confirm, sent, receipts } = setup({ telegram: await telegramWithCalls() });
+    const withLink = (await confirm((await review({ callId: "tg--100200-5" })).json().reviewId)).json();
+    expect(withLink.status).toBe("swapped");
+    expect(withLink.receipt.post).toEqual({ url: "https://t.me/alphacalls/5", author: "Alpha Calls", source: "telegram" });
+    expect(receipts.list(1)[0]!.input).toMatchObject({ source: "reviewed-call", handle: "Alpha Calls", postUrl: "https://t.me/alphacalls/5" });
+
+    const noLink = (await confirm((await review({ callId: "tg--100300-9" })).json().reviewId)).json();
+    expect(noLink.status).toBe("swapped");
+    expect(noLink.receipt.post).toEqual({ url: null, author: "Friends", source: "telegram" });
+    expect(receipts.list(1)[0]!.input.postUrl).toBeUndefined();
+    expect(receipts.list(1)[0]!.input.handle).toBe("Friends");
+    expect(sent).toHaveLength(2);
+    // The message text never reaches the command the agent runs.
+    expect(receipts.list(1)[0]!.input.text).toMatch(/^swap [\d.]+ near to usdc$/);
+  });
+
+  it("over a limit the contract still decides, for a Telegram call too", async () => {
+    const { review, confirm } = setup({ telegram: await telegramWithCalls() });
+    const r = (await confirm((await review({ callId: "tg--100200-5", usd: 3 })).json().reviewId)).json();
+    expect(r).toMatchObject({ status: "blocked", receipt: { by: "contract", rule: "R4", post: { author: "Alpha Calls" } } });
+  });
+
+  it("a Kall receipt says where it came from too", async () => {
+    const { review, confirm } = setup();
+    const r = (await confirm((await review({ callId: "kall-111" })).json().reviewId)).json();
+    expect(r.receipt.post).toEqual({ url: "https://x.com/solcaller/status/111", author: "solcaller", source: "kall" });
+  });
+});
+
+describe("GET /v1/telegram/status", () => {
+  it("says it isn't set up when there's no source, and what it has read when there is", async () => {
+    expect((await setup().app.inject("/v1/telegram/status")).json()).toEqual({ configured: false, bot: null, groups: [], lastMessageAt: null, error: null });
+    const s = (await setup({ telegram: await telegramWithCalls() }).app.inject("/v1/telegram/status")).json();
+    expect(s).toMatchObject({ configured: true, bot: "@keybots_bot", groups: [{ title: "Alpha Calls", messages: 3 }, { title: "Friends", messages: 1 }] });
+    expect(JSON.stringify(s)).not.toContain(TOKEN);
+  });
+
+  it("needs the same token as the rest of the API", async () => {
+    const app = buildApp({ cfg: { ...cfg, apiToken: "secret" }, chain: fakeLeash().chain, receipts: memoryStore(), kall: kall() });
+    expect((await app.inject("/v1/telegram/status")).statusCode).toBe(401);
+    expect((await app.inject({ url: "/v1/telegram/status", headers: { authorization: "Bearer secret" } })).statusCode).toBe(200);
   });
 });
 

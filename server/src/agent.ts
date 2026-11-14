@@ -82,7 +82,8 @@ export function describe(action: Action): { kind: "pay" | "swap"; title: string;
 /** The KOL and post behind a "follow" command, for its receipt. */
 export interface FollowSource {
   handle: string;
-  postUrl: string;
+  /** Not every source has a link: a Telegram call from a private group has none. */
+  postUrl?: string;
 }
 
 /** How a reviewed trade runs (trade.ts): the owner saw the numbers and confirmed them. */
@@ -100,7 +101,7 @@ export interface SwapOptions {
 export async function runCommand(deps: Deps, text: string, source: Source, from?: FollowSource, opts: SwapOptions = {}): Promise<Receipt> {
   const { cfg, chain, receipts } = deps;
   const withPost = (source === "follow" || source === "reviewed-call") && from;
-  const input = { text: text.slice(0, 2000), source, ...(withPost ? { handle: from.handle, postUrl: from.postUrl } : {}) };
+  const input = { text: text.slice(0, 2000), source, ...(withPost ? { handle: from.handle, ...(from.postUrl ? { postUrl: from.postUrl } : {}) } : {}) };
   const base = { id: randomUUID(), at: new Date().toISOString(), input };
 
   // 1. Read it: rules first, an AI only for what the rules can't read.

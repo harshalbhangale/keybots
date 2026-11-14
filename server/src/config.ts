@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { cleanToken, parseChatIds } from "./telegram.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -30,6 +31,8 @@ export interface Config {
   mainnetUsdCap: number;
   /** Kall Markets' API, where the calls of the KOLs you follow come from. */
   kallApi: string;
+  /** Telegram's Bot API, read-only: a bot in a group, whose calls show next to Kall's. TELEGRAM_BOT_TOKEN or keys/telegram.token; no token means off. */
+  telegram: { token: string; chatIds: string[] };
   /** Trades for KOLs you follow only run when AIRKEY_AUTO_TRADE=on. Off, the server still says what it would have done. */
   autoTrade: boolean;
   port: number;
@@ -85,6 +88,10 @@ export function loadConfig(env = process.env): Config {
     serperKey: env.SERPER_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "serper.key")),
     mainnetUsdCap: mainnetCap(env.AIRKEY_MAINNET_USD_CAP),
     kallApi: env.KALL_API ?? "https://kallmarkets.vercel.app",
+    telegram: {
+      token: cleanToken(env.TELEGRAM_BOT_TOKEN ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "telegram.token"))),
+      chatIds: parseChatIds(env.TELEGRAM_CHAT_IDS),
+    },
     autoTrade: env.AIRKEY_AUTO_TRADE === "on",
     port: Number(env.PORT ?? 8787),
   };
