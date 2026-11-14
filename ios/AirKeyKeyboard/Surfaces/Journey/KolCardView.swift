@@ -17,6 +17,8 @@ struct KolCardView: View {
     /// The rules' reading; nil shows the plain line.
     let reading: String?
     let sample: Bool
+    /// "kall" (X, via Kall), "telegram" or "sample". For Telegram, `name` is the group.
+    var source: String = "kall"
     let palette: MoneyPalette
     let actions: MoneyActions
     /// nil hides the button (the card is the header of a review).
@@ -26,6 +28,7 @@ struct KolCardView: View {
 
     /// Sample posts come as author "sample"; their tag says so instead.
     private var isSampleAuthor: Bool { handle?.lowercased() == "sample" }
+    private var isTelegram: Bool { source == "telegram" }
 
     var body: some View {
         let p = palette
@@ -34,6 +37,9 @@ struct KolCardView: View {
                 if isSampleAuthor {
                     // The tag on the right already says "Sample post".
                     if !sample { Text(name ?? "Sample post").font(.footnote.weight(.bold)).lineLimit(1) }
+                } else if isTelegram {
+                    // A Telegram name has no @; the group is the line below.
+                    Text(handle ?? "Someone").font(.footnote.weight(.semibold)).lineLimit(1)
                 } else {
                     // The handle and the time; display names are often styled
                     // ("K A L E O") and read as a glitch, so they are left out.
@@ -41,6 +47,14 @@ struct KolCardView: View {
                 }
                 if let ago = J.ago(postedAt) {
                     Text("· \(ago)").font(.caption).foregroundStyle(p.soft).lineLimit(1).fixedSize()
+                }
+                if !sample, !isSampleAuthor, handle != nil {
+                    // Where it was posted, quietly.
+                    Text(isTelegram ? "Telegram" : "X · via Kall").font(.caption2.weight(.medium)).foregroundStyle(p.faint)
+                        .padding(.horizontal, 6).frame(height: 18)
+                        .background(p.fill.opacity(0.6), in: Capsule())
+                        .lineLimit(1).fixedSize()
+                        .accessibilityLabel(isTelegram ? "From Telegram" : "From X, through Kall")
                 }
                 Spacer(minLength: 4)
                 if sample {
@@ -58,8 +72,12 @@ struct KolCardView: View {
                             .background(p.fill, in: Capsule()).contentShape(Capsule())
                     }
                     .buttonStyle(MoneyPress())
-                    .accessibilityLabel("Open the post")
+                    .accessibilityLabel(isTelegram ? "Open the message in Telegram" : "Open the post")
                 }
+            }
+            if isTelegram, let group = name, !group.isEmpty {
+                Text(group).font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                    .accessibilityLabel("Group \(group)")
             }
             if let text, !text.isEmpty {
                 Text(text)
@@ -109,6 +127,6 @@ extension KolCardView {
     init(call: KolCall, sample: Bool, palette: MoneyPalette, actions: MoneyActions, review: @escaping () -> Void) {
         self.init(handle: call.handle, name: call.name, postedAt: call.postedAt, url: call.url, text: call.text,
                   asset: call.asset, direction: call.direction, hits: call.hits, misses: call.misses,
-                  reading: nil, sample: sample, palette: palette, actions: actions, review: review)
+                  reading: nil, sample: sample, source: call.source, palette: palette, actions: actions, review: review)
     }
 }

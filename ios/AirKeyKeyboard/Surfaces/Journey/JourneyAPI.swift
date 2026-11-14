@@ -17,12 +17,15 @@ struct KolCall: Identifiable, Equatable {
     let direction: String
     let hits: Int?
     let misses: Int?
+    /// "kall" (an X post, via Kall), "telegram" (a group the bot is in) or "sample". A server that doesn't say is Kall.
+    var source: String = "kall"
 
     var sell: Bool { direction == "sell" }
+    var telegram: Bool { source == "telegram" }
 }
 
 struct KolFeed: Equatable {
-    /// "kall" or "sample".
+    /// "kall", "telegram", "mixed" or "sample".
     let source: String
     let note: String?
     let calls: [KolCall]
@@ -100,6 +103,8 @@ struct TradeReceipt: Equatable {
     let txURL: String?
     let postURL: String?
     let postAuthor: String?
+    /// "kall" or "telegram"; for Telegram, `postAuthor` is the group.
+    var postSource: String? = nil
 
     var swapped: Bool { status == "swapped" }
     var blocked: Bool { status == "blocked" }
@@ -166,7 +171,8 @@ struct JourneyAPI {
             txHash: J.str(J.dict(r["tx"])["hash"]),
             txURL: J.str(J.dict(r["tx"])["url"]),
             postURL: J.str(J.dict(r["post"])["url"]),
-            postAuthor: J.str(J.dict(r["post"])["author"])))
+            postAuthor: J.str(J.dict(r["post"])["author"]),
+            postSource: J.str(J.dict(r["post"])["source"])))
     }
 
     // MARK: Reading
@@ -189,7 +195,8 @@ struct JourneyAPI {
         return KolCall(id: id, handle: (J.str(author["handle"]) ?? "unknown").replacingOccurrences(of: "@", with: ""),
                        name: J.str(author["name"]), postedAt: J.date(d["postedAt"]), url: J.str(d["url"]),
                        text: J.str(d["text"]), asset: asset, direction: J.str(d["direction"]) ?? "buy",
-                       hits: J.int(record["hits"]), misses: J.int(record["misses"]))
+                       hits: J.int(record["hits"]), misses: J.int(record["misses"]),
+                       source: ["kall", "telegram", "sample"].contains(J.str(d["source"]) ?? "") ? J.str(d["source"])! : "kall")
     }
 
     static func review(_ j: [String: Any]) -> TradeReview? {
