@@ -113,7 +113,7 @@ struct FollowingView: View {
                         Text("Paste a handle").font(.footnote.weight(.bold))
                     }
                     .foregroundStyle(AK.ink)
-                    .padding(.horizontal, 12).frame(height: 30)
+                    .padding(.horizontal, 12).frame(height: 36)
                     .background(AK.accent, in: Capsule()).contentShape(Capsule())
                 }
                 .buttonStyle(MoneyPress())
@@ -126,15 +126,22 @@ struct FollowingView: View {
                     } label: {
                         HStack(spacing: 5) {
                             Image(systemName: "plus").font(.system(size: 9, weight: .bold)).foregroundStyle(p.soft)
-                            Text("@\(c.handle)").font(.footnote.weight(.semibold))
-                            Text("\(c.record.hits) hits").font(.caption2.monospacedDigit()).foregroundStyle(p.soft)
+                            VStack(alignment: .leading, spacing: 0) {
+                                HStack(spacing: 4) {
+                                    Text("@\(c.handle)").font(.footnote.weight(.semibold))
+                                    Text("\(c.record.hits) hits").font(.caption2.monospacedDigit()).foregroundStyle(p.soft)
+                                }
+                                if let focus = c.focus {
+                                    Text(focus).font(.caption2).foregroundStyle(p.soft).lineLimit(1)
+                                }
+                            }
                         }
-                        .padding(.horizontal, 11).frame(height: 30)
+                        .padding(.horizontal, 11).frame(height: 36)
                         .background(p.fill, in: Capsule()).contentShape(Capsule())
                     }
                     .buttonStyle(MoneyPress())
                     .disabled(model.saving != nil)
-                    .accessibilityLabel("Follow @\(c.handle), \(c.record.line)")
+                    .accessibilityLabel("Follow @\(c.handle), \(c.record.line)\(c.focus.map { ", calls \($0)" } ?? "")")
                 }
             }
         }
@@ -183,13 +190,14 @@ private struct FollowRow: View {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("@\(follow.handle)").font(.subheadline.weight(.heavy)).lineLimit(1)
-                        Text(follow.record?.line ?? "No record yet").font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
+                        if follow.paused {
+                            Text(MoneyText.plain(follow.pausedReason ?? "")).font(.caption2.weight(.semibold)).foregroundStyle(p.warn).lineLimit(1)
+                        } else {
+                            Text(follow.recordLine).font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
+                        }
                     }
                     Spacer(minLength: 4)
-                    if let paused = follow.pausedReason, !paused.isEmpty {
-                        Text(MoneyText.plain(paused)).font(.caption2.weight(.semibold)).foregroundStyle(p.warn)
-                            .lineLimit(2).multilineTextAlignment(.trailing).frame(maxWidth: 130, alignment: .trailing)
-                    } else {
+                    if !follow.paused {
                         Text(follow.usedLine).font(.caption2.monospacedDigit()).foregroundStyle(follow.spentTodayUsd >= follow.perDayUsd ? p.warn : p.soft)
                             .lineLimit(1)
                     }
@@ -198,10 +206,14 @@ private struct FollowRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(MoneyPress())
-            .accessibilityLabel("@\(follow.handle). \(follow.record?.line ?? "No record yet"). \(follow.usedLine) today.")
+            .accessibilityLabel("@\(follow.handle). \(follow.paused ? follow.pausedReason ?? "" : follow.recordLine). \(follow.usedLine) today.")
             .accessibilityHint("Opens the rules for their calls")
-            MiniSwitch(on: follow.auto, palette: p, label: "Trade @\(follow.handle)'s calls for me") { on in
-                Task { await model.setAuto(follow.handle, on) }
+            if follow.paused {
+                ResumeButton(handle: follow.handle, model: model, palette: p)
+            } else {
+                MiniSwitch(on: follow.auto, palette: p, label: "Trade @\(follow.handle)'s calls for me") { on in
+                    Task { await model.setAuto(follow.handle, on) }
+                }
             }
         }
         .padding(.horizontal, 12).frame(height: 48)
@@ -219,14 +231,14 @@ struct TradedRow: View {
     var body: some View {
         let p = palette
         HStack(spacing: 9) {
-            Image(systemName: trade.signal.icon)
+            Image(systemName: trade.icon)
                 .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(trade.signal.plain ? p.text : AK.ink)
+                .foregroundStyle(trade.signal.plain ? p.soft : AK.ink)
                 .frame(width: 20, height: 20)
                 .background(trade.signal.plain ? p.fill : trade.signal.color, in: Circle())
             VStack(alignment: .leading, spacing: 1) {
                 Text(MoneyText.plain(trade.message)).font(.caption.weight(trade.traded ? .semibold : .regular))
-                    .foregroundStyle(trade.traded ? p.text : p.soft).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(trade.traded ? p.text : trade.failed ? p.warn : p.soft).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Text(byLine).font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
             }
             Spacer(minLength: 4)
@@ -288,7 +300,7 @@ private struct FollowRulesView: View {
                 .accessibilityLabel("Back to the people you follow")
                 VStack(alignment: .leading, spacing: 0) {
                     Text("@\(follow.handle)").font(.footnote.weight(.heavy)).lineLimit(1)
-                    Text(follow.record?.line ?? "No record yet").font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
+                    Text(follow.recordLine).font(.caption2.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
                 }
                 Spacer(minLength: 4)
                 Text(follow.auto ? "Auto on" : "Auto off").font(.caption.weight(.semibold)).foregroundStyle(follow.auto ? p.good : p.soft)
@@ -312,8 +324,13 @@ private struct FollowRulesView: View {
                     toggle("Stop after 3 misses in a row", detail: "Auto turns off by itself", on: follow.stopAfterMisses > 0, p) {
                         set(\.stopAfterMisses, $0 ? 3 : 0)
                     }
-                    if let paused = follow.pausedReason, !paused.isEmpty {
-                        Text(MoneyText.plain(paused)).font(.caption).foregroundStyle(p.warn).fixedSize(horizontal: false, vertical: true)
+                    if follow.paused {
+                        HStack(spacing: 8) {
+                            Text(MoneyText.plain(follow.pausedReason ?? "")).font(.caption).foregroundStyle(p.warn)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 4)
+                            ResumeButton(handle: follow.handle, model: model, palette: p)
+                        }
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         if model.checking == follow.handle {
@@ -445,5 +462,26 @@ struct MiniSwitch: View {
         .accessibilityLabel(label)
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
+    }
+}
+
+/// A paused follow's way back: auto on again, which clears the pause.
+private struct ResumeButton: View {
+    let handle: String
+    let model: FollowsModel
+    let palette: MoneyPalette
+
+    var body: some View {
+        Button {
+            Haptics.layer()
+            Task { await model.setAuto(handle, true) }
+        } label: {
+            Text("Turn back on").font(.caption.weight(.bold)).foregroundStyle(AK.ink)
+                .padding(.horizontal, 10).frame(height: 26)
+                .background(AK.accent, in: Capsule()).contentShape(Capsule())
+        }
+        .buttonStyle(MoneyPress())
+        .disabled(model.saving != nil)
+        .accessibilityLabel("Turn @\(handle)'s calls back on")
     }
 }

@@ -459,7 +459,8 @@ struct CallerRecord: Decodable, Equatable, Sendable {
     var hits: Int
     var misses: Int
     var open: Int
-    var avgReturnBps: Double
+    /// nil when Kall has no return for them yet.
+    var avgReturnBps: Double?
 
     enum CodingKeys: String, CodingKey { case hits, misses, open, avgReturnBps }
     init(from decoder: Swift.Decoder) throws {
@@ -467,14 +468,17 @@ struct CallerRecord: Decodable, Equatable, Sendable {
         hits = c.loose(.hits, 0)
         misses = c.loose(.misses, 0)
         open = c.loose(.open, 0)
-        avgReturnBps = c.loose(.avgReturnBps, 0)
+        avgReturnBps = c.loose(.avgReturnBps, nil as Double?)
     }
 
-    /// "7 hits · 3 misses · avg +1.2%"
+    /// "7 hits · 3 misses · avg +1.2%" (no average when Kall has none)
     var line: String {
-        let avg = avgReturnBps / 100
-        let flat = abs(avg) < 0.05
-        return "\(hits) hit\(hits == 1 ? "" : "s") · \(misses) miss\(misses == 1 ? "" : "es") · avg \(flat ? "0%" : String(format: "%+.1f%%", avg))"
+        var parts = ["\(hits) hit\(hits == 1 ? "" : "s")", "\(misses) miss\(misses == 1 ? "" : "es")"]
+        if let bps = avgReturnBps {
+            let avg = bps / 100
+            parts.append("avg " + (abs(avg) < 0.05 ? "0%" : String(format: "%+.1f%%", avg)))
+        }
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -493,11 +497,13 @@ struct Follow: Decodable, Identifiable, Equatable, Sendable {
     let lastCallAt: String?
     var pausedReason: String?
     let record: CallerRecord?
+    /// Misses since their last hit.
+    let missesInRow: Int
 
     var id: String { handle.lowercased() }
 
     enum CodingKeys: String, CodingKey {
-        case handle, auto, perCallUsd, perDayUsd, sides, highOnly, stopAfterMisses, addedAt, spentTodayUsd, lastCallAt, pausedReason, record
+        case handle, auto, perCallUsd, perDayUsd, sides, highOnly, stopAfterMisses, addedAt, spentTodayUsd, lastCallAt, pausedReason, record, missesInRow
     }
     init(from decoder: Swift.Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -512,6 +518,7 @@ struct Follow: Decodable, Identifiable, Equatable, Sendable {
         spentTodayUsd = c.loose(.spentTodayUsd, 0)
         lastCallAt = c.loose(.lastCallAt, nil as String?)
         pausedReason = c.loose(.pausedReason, nil as String?)
+        missesInRow = c.loose(.missesInRow, 0)
         record = c.loose(.record, nil as CallerRecord?)
     }
 
@@ -529,6 +536,11 @@ struct Follow: Decodable, Identifiable, Equatable, Sendable {
     static func valid(_ handle: String) -> Bool {
         !handle.isEmpty && handle.count <= 15 && handle.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_") }
     }
+
+    /// The record line, or a quiet stand-in while Kall is slow.
+    var recordLine: String { record?.line ?? "Record loading" }
+    /// Auto was turned off for them (three misses in a row, say).
+    var paused: Bool { !(pausedReason ?? "").isEmpty }
 
     /// "$1 of $3 used"
     var usedLine: String { "\(Dollars.text(spentTodayUsd)) of \(Dollars.text(perDayUsd)) used" }
@@ -604,10 +616,20 @@ struct AutoTrade: Decodable, Identifiable, Equatable, Sendable {
     }
 
     var traded: Bool { status == "traded" }
+    var failed: Bool { status == "failed" }
+    /// The mark a row gets: a check when it traded, a warning when it failed, a dash when skipped.
+    var icon: String {
+        switch status {
+        case "traded": "checkmark"
+        case "failed": "exclamationmark"
+        default: "minus"
+        }
+    }
+    /// traded: lime, failed: amber, skipped: quiet.
     var signal: Signal {
         switch status {
         case "traded": .allow
-        case "failed": .block
+        case "failed": .warn
         default: .neutral
         }
     }
@@ -629,14 +651,17 @@ struct FollowsList: Decodable {
 struct Caller: Decodable, Identifiable, Equatable, Sendable {
     let handle: String
     let name: String?
+    /// What they mostly call: "majors", "SOL memes". Missing for some.
+    let focus: String?
     let record: CallerRecord
     var id: String { handle.lowercased() }
 
-    enum CodingKeys: String, CodingKey { case handle, name }
+    enum CodingKeys: String, CodingKey { case handle, name, focus }
     init(from decoder: Swift.Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         handle = Follow.clean(try c.decode(String.self, forKey: .handle))
         name = c.loose(.name, nil as String?)
+        focus = c.loose(.focus, nil as String?).flatMap { $0.isEmpty ? nil : $0 }
         record = try CallerRecord(from: decoder)
     }
 }
