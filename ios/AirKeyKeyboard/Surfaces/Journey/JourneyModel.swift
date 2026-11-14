@@ -126,6 +126,9 @@ final class JourneyModel {
                     Haptics.warning()
                 case .busy(let msg):
                     note = msg
+                case .gone(let msg):
+                    withAnimation(.snappy(duration: 0.2)) { phase = .failed(msg) }
+                    Haptics.warning()
                 }
             } catch {
                 withAnimation(.snappy(duration: 0.2)) {
