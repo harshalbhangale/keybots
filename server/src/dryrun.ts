@@ -78,7 +78,7 @@ export async function dryRun(deps: DryRunDeps, text: string, opts: { pasted?: bo
   const agent = state.agents.find((a) => a.account === agentId)?.agent;
   const tier = agent?.tier ?? (opts.pasted ? "untrusted" : "trusted");
   lines.push(["Agent", `${agentName(cfg, agentId)} (${agentId}), ${tier}`]);
-  lines.push(["Leash", `${state.leash}: ${near(state.available, 2, 2)} NEAR, Stop everything ${state.paused ? "on" : "off"}`]);
+  lines.push(["Spend Limits", `${state.leash}: ${near(state.available, 2, 2)} NEAR, Stop everything ${state.paused ? "on" : "off"}`]);
 
   if (isSwap && opts.pasted) {
     return finish("blocked", "Would be blocked: trades only run from what you type, never from a copied message", "the server stops it before asking Spend Limits");
