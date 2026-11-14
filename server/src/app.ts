@@ -1,5 +1,6 @@
 import Fastify from "fastify";
-import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
+import { ACT_ACTIONS, ActMoney, ActUnavailable, act, type ActAction } from "./act.js";
+import { MONEY_REFUSAL, plainError, readAssistBody, runAssist } from "./assist.js";
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
 import { GifsUnavailable, gifClient, type GifClient } from "./gifs.js";
@@ -29,6 +30,8 @@ export type Deps = CommandDeps & {
   followPoller?: FollowPoller;
   /** KLIPY's GIFs, through this server (the key stays here). Tests pass a client with a fake fetch. */
   gifs?: GifClient;
+  /** The network the keyboard AI uses (NEAR AI Cloud, OpenAI, Serper). Tests pass a fake. */
+  aiFetch?: typeof fetch;
 };
 
 /**
@@ -248,11 +251,50 @@ export function buildApp(deps: Deps) {
     const tone = typeof req.body?.tone === "string" ? req.body.tone : undefined;
     const language = typeof req.body?.language === "string" ? req.body.language : undefined;
     try {
-      return await act({ text, action, tone, language }, aiReaders(deps.cfg));
+      return await act({ text, action, tone, language }, aiReaders(deps.cfg), deps.aiFetch);
     } catch (e) {
+      if (e instanceof ActMoney) return reply.code(409).send({ error: MONEY_REFUSAL, money: true });
       if (e instanceof ActUnavailable) return reply.code(503).send({ error: e.message });
       return reply.code(502).send({ error: `The AI didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}` });
     }
+  });
+
+  /**
+   * The keyboard's AI, streamed as server-sent events: fix, shorter, warmer,
+   * formal, reply, translate, ask or search on `text`. Events: chunk {t},
+   * option {id, label, text}, result {id, title, url, site, snippet}, then
+   * done {task, text, options?, results?, receipt, note?} or error {error}.
+   * Money is refused (409) before any AI sees it.
+   */
+  app.post("/v1/assist", async (req, reply) => {
+    const gate = readAssistBody(req.body);
+    if (!gate.ok) return reply.code(gate.status).send(gate.body);
+    const readers = aiReaders(deps.cfg);
+    if (readers.length === 0) return reply.code(503).send({ error: "AI isn't set up on this server." });
+    if (gate.req.task === "search" && !deps.cfg.serperKey) return reply.code(503).send({ error: "Search isn't set up on this server." });
+
+    reply.hijack();
+    const res = reply.raw;
+    res.writeHead(200, {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      "x-accel-buffering": "no",
+      "access-control-allow-origin": "*",
+    });
+    const stop = new AbortController();
+    res.on("close", () => {
+      if (!res.writableEnded) stop.abort();
+    });
+    const send = (event: string, data: object) => {
+      if (!res.writableEnded && !res.destroyed) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+    try {
+      send("done", await runAssist(gate.req, { readers, serperKey: deps.cfg.serperKey, fetchImpl: deps.aiFetch, signal: stop.signal }, send));
+    } catch (e) {
+      if (!stop.signal.aborted) console.log(`${new Date().toISOString()} assist ${gate.req.task} failed: ${String((e as Error).message ?? e).slice(0, 160)}`);
+      send("error", { error: plainError(e) });
+    }
+    res.end();
   });
 
   /**
