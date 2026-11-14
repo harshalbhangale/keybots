@@ -13,6 +13,7 @@
 		0999A71F4903F5845EC447A2 /* linen.png in Resources */ = {isa = PBXBuildFile; fileRef = 3999150A8EDD6C1DCC432E0E /* linen.png */; };
 		0A0A135B774164E76FF284E1 /* BoundKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2880647D989BB0F3AA77435 /* BoundKeys.swift */; };
 		0B1D340680832271168DACA0 /* KeyboardThemes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3439DE21FF3E7715A1813D8 /* KeyboardThemes.swift */; };
+		0B99F6FC76CD4E065DEA9B76 /* TokenMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1186EDAA132C2E3D7B3FF18 /* TokenMark.swift */; };
 		0CA42FB6B22E9D40D5037805 /* Exo2-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5CE5F1BC992FF0DE6714E081 /* Exo2-Regular.ttf */; };
 		0E2BA2708B079F16054185D0 /* Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E0846BE869104E6DBEA22D /* Decoder.swift */; };
 		101FBECEE63E631AA97C2EC6 /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B2568003C3CB91D9A04FB0 /* Ask.swift */; };
@@ -155,6 +156,7 @@
 		C9AD7F2B6E37F42B76D2380E /* JourneyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3A7DE97943637705F26DA8 /* JourneyModel.swift */; };
 		CA2130F8E526E86FD50A564D /* DMSerifDisplay-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 03D0F49CD87C6BCDCE0113D3 /* DMSerifDisplay-Regular.ttf */; };
 		CB271A99966259ACD5D6A3A0 /* AssistModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D46C95CC72FAF7DF48EC67 /* AssistModel.swift */; };
+		CCAA56FC81C590B7AD399BF7 /* TokenMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1186EDAA132C2E3D7B3FF18 /* TokenMark.swift */; };
 		CF12F7BC9D2F918CC62FB1DD /* Kit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */; };
 		CF383AE8E9C2FBFCC86CBEE6 /* Vault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372D9B19A11E10D4CD1002D /* Vault.swift */; };
 		D027EFF18D066406BEDD9BBB /* TradeHold.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F29F6778D5BEF050F44D8F2 /* TradeHold.swift */; };
@@ -380,6 +382,7 @@
 		ECD5E091EE2449E9439D0CB4 /* SpaceGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceGesture.swift; sourceTree = "<group>"; };
 		ED91FA12A9D4C002DFAC5665 /* Following.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Following.swift; sourceTree = "<group>"; };
 		EE45E828CAF886E1E5F12D73 /* JetBrainsMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "JetBrainsMono-OFL.txt"; sourceTree = "<group>"; };
+		F1186EDAA132C2E3D7B3FF18 /* TokenMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenMark.swift; sourceTree = "<group>"; };
 		F1CA757328C3BA9418ABAF06 /* Orbitron[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Orbitron[wght].ttf"; sourceTree = "<group>"; };
 		F281D96CC601377703F9456D /* NotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesStore.swift; sourceTree = "<group>"; };
 		F2DE9FE0CD7A2AD68B3D16AB /* Kit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kit.swift; sourceTree = "<group>"; };
@@ -694,6 +697,7 @@
 				602E65F915BF5CB7CA8F9B37 /* Models.swift */,
 				DAA2017DC655AFC04315691F /* Plain.swift */,
 				DF85E248A9A14144C071BC8E /* Theme.swift */,
+				F1186EDAA132C2E3D7B3FF18 /* TokenMark.swift */,
 				B372D9B19A11E10D4CD1002D /* Vault.swift */,
 			);
 			path = Shared;
@@ -974,6 +978,7 @@
 				EA7791A5120E89B43830B4DE /* StripPolicy.swift in Sources */,
 				F0B6532078ABE9F154F07A2C /* TextPDF.swift in Sources */,
 				C432680CE757B1F296C7A8AC /* Theme.swift in Sources */,
+				CCAA56FC81C590B7AD399BF7 /* TokenMark.swift in Sources */,
 				7608CAA377D4DAA2BB136395 /* Toolbar.swift in Sources */,
 				D027EFF18D066406BEDD9BBB /* TradeHold.swift in Sources */,
 				1DB5131D097B70F473069C55 /* TradeModel.swift in Sources */,
@@ -1023,6 +1028,7 @@
 				087EFF821ECA87156E7C140D /* SettingsView.swift in Sources */,
 				5597B89D3880E309D9E14D9D /* SwapCard.swift in Sources */,
 				202A662AC2A67C19FF48A88E /* Theme.swift in Sources */,
+				0B99F6FC76CD4E065DEA9B76 /* TokenMark.swift in Sources */,
 				CF383AE8E9C2FBFCC86CBEE6 /* Vault.swift in Sources */,
 				840436A47AA75E8CA508C4B6 /* WalletView.swift in Sources */,
 			);
