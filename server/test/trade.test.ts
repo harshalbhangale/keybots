@@ -275,6 +275,30 @@ describe("GET /v1/telegram/status", () => {
 });
 
 describe("POST /v1/trade/review", () => {
+  it("reads a pasted leveraged signal as a spot buy and says so, sending nothing", async () => {
+    const { review, sent } = setup();
+    const res = await review({ text: "SOL LONG 10x\nEnter - at market\nTarget - 190 - 200\nStop - 170" });
+    expect(res.statusCode).toBe(200);
+    const r = res.json();
+    expect(r.call).toMatchObject({ asset: "SOL", direction: "buy" });
+    expect(r.call.signal).toEqual({ leverage: "10x", targets: ["190", "200"], stop: "170", note: "Leveraged call (10x): Keybots buys spot, no leverage." });
+    expect(sent).toHaveLength(0);
+  });
+
+  it("a copied signal checks as a spot call with its note (POST /v1/call)", async () => {
+    const { app } = setup();
+    const r = (await app.inject({ method: "POST", url: "/v1/call", payload: { text: "SOL LONG 10x\nTarget - 190\nStop - 170" } })).json();
+    expect(r.call).toMatchObject({ isCall: true, asset: "SOL", direction: "bullish", instrument: "spot" });
+    expect(r.signal.note).toBe("Leveraged call (10x): Keybots buys spot, no leverage.");
+    expect(r.route.status).toBe("available");
+  });
+
+  it("still refuses a pasted perp that isn't in the signal shape", async () => {
+    const { review } = setup();
+    const res = await review({ text: "opening a 20x perp on $SOL here" });
+    expect(res.statusCode).toBe(422);
+  });
+
   it("shows Rhea's own numbers, the floor, the stand-in and the limits, and sends nothing", async () => {
     const { review, sent } = setup();
     const res = await review({ callId: "x-111" });
