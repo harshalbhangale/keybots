@@ -15,6 +15,8 @@ export type Panel =
   | { kind: "check"; copied: string; trace: [string, string, "pass" | "fire"][]; agent: string }
   | { kind: "caller"; handle: string; name: string; hits: number; calls: number; last: string; tiles: [string, string][]; button: string }
   | { kind: "vault"; items: [string, string][] }
+  | { kind: "ai"; before: string; after: string; proof: [string, string][]; button: string }
+  | { kind: "agents"; agents: [string, string, string][]; button: string }
   | { kind: "done"; tone: Tone; title: string; sub: string; tx?: string };
 
 export type Step =
@@ -37,6 +39,8 @@ export type Scenario = {
   preview: string;
   headline: [string, string];
   soon?: boolean;
+  /** Which chat app the phone draws. iMessage when unset. */
+  app?: "telegram" | "x";
   steps: Step[];
 };
 
@@ -44,6 +48,21 @@ export type ChainLine = [string, "ok" | "fail" | "info"];
 
 /** What happens on NEAR for each chat, shown next to the phone. */
 export const CHAIN: Record<string, ChainLine[]> = {
+  ai: [
+    ["your words → NEAR AI Cloud, inside secure hardware (TEE)", "info"],
+    ["the enclave signs its answer", "ok"],
+    ["signature checked against the request and reply hashes", "ok"],
+    ["hardware attestation checked", "ok"],
+    ["you pick: use it or don't. Nothing is sent for you", "info"],
+  ],
+  agents: [
+    ["pay · inbox · trader: one NEAR account each", "info"],
+    ["each key can only call Spend Limits, nothing else", "ok"],
+    ["own caps: 0.5 a payment · 1 NEAR a trade", "ok"],
+    ["pasted text goes to the inbox agent, never trusted", "ok"],
+    ["hold: kill switch on, signed by your owner key", "info"],
+    ["next payment blocked by R1 · tx Hmk7LcjQ…", "fail"],
+  ],
   pay: [
     ["pay.airkey-harshal.testnet → leash.pay(harshal.near, 0.2)", "info"],
     ["R1 kill switch off", "ok"],
@@ -250,13 +269,14 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "call",
-    who: "Alpha chat",
+    who: "NEAR Alpha",
     emoji: "📣",
     tag: "Copy a call",
     preview: "NEAR long here, target $4",
-    headline: ["A call in the group?", "Check it, then trade it."],
+    headline: ["A call on Telegram?", "Copy it. Trade it."],
+    app: "telegram",
     steps: [
-      { do: "them", text: "NEAR long here, target $4 🚀 get in" },
+      { do: "them", text: "Maya: NEAR long here, 3.40 → target $4 🚀" },
       { do: "copied", text: "NEAR long here, target $4" },
       { do: "strip", strip: { kind: "chip", title: "Trade NEAR?", sub: "A call: token checked on NEAR Intents", action: "Review" } },
       { do: "act" },
@@ -351,13 +371,14 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "follow",
-    who: "Alpha chat",
+    who: "NEAR Whale",
     emoji: "🐋",
     tag: "Follow a caller",
     preview: "@nearwhale: $NEAR long, target $4",
-    headline: ["Follow a trader.", "Their calls trade for you."],
+    headline: ["Follow a trader on X.", "Their calls trade for you."],
+    app: "x",
     steps: [
-      { do: "them", text: "@nearwhale: $NEAR long here, target $4 🚀" },
+      { do: "them", text: "$NEAR long here, 3.40 → target $4 🚀 not advice" },
       { do: "copied", text: "@nearwhale: $NEAR long, target $4" },
       { do: "strip", strip: { kind: "chip", title: "@nearwhale · 14 of 20 hit", sub: "Calls scored on chain", action: "Open" } },
       { do: "act" },
@@ -381,6 +402,69 @@ export const SCENARIOS: Scenario[] = [
       { do: "act" },
       { do: "panel", panel: { kind: "done", tone: "paid", title: "Following @nearwhale", sub: "Copies their calls, inside your caps" } },
       { do: "wait", ms: 1300 },
+      { do: "keys" },
+    ],
+  },
+  {
+    id: "ai",
+    who: "Alice (work)",
+    emoji: "💼",
+    tag: "Private AI",
+    preview: "can you send the deck tonight?",
+    headline: ["Private AI.", "Runs on NEAR, sees nothing."],
+    steps: [
+      { do: "them", text: "hey, can you send the deck by tonight? client call at 9" },
+      { do: "type", text: "ya will send l8r sry swamped" },
+      { do: "strip", strip: { kind: "chip", title: "Rewrite, privately", sub: "NEAR AI Cloud · secure hardware", action: "Fix" } },
+      { do: "act" },
+      {
+        do: "panel",
+        panel: {
+          kind: "ai",
+          before: "ya will send l8r sry swamped",
+          after: "Yes, I'll send it tonight. Sorry, swamped today!",
+          proof: [
+            ["Runs in", "TEE"],
+            ["Signature", "checked"],
+            ["Attestation", "checked"],
+          ],
+          button: "Use it",
+        },
+      },
+      { do: "act" },
+      { do: "keys" },
+      { do: "set", text: "Yes, I'll send it tonight. Sorry, swamped today!" },
+      { do: "send" },
+      { do: "them", text: "perfect, thanks 🙌" },
+    ],
+  },
+  {
+    id: "agents",
+    who: "Keybots",
+    emoji: "🤖",
+    tag: "Agents",
+    preview: "your agents",
+    headline: ["Three agents.", "One kill switch."],
+    steps: [
+      { do: "them", text: "Trading Agent: swapped 0.1 NEAR → USDC for you ✓" },
+      { do: "type", text: "agents" },
+      { do: "strip", strip: { kind: "chip", title: "3 agents on NEAR", sub: "All inside Spend Limits", action: "Open" } },
+      { do: "act" },
+      {
+        do: "panel",
+        panel: {
+          kind: "agents",
+          agents: [
+            ["Pay Agent", "0.5 a payment · 1 a day", "on"],
+            ["Inbox Agent", "pasted text · asks first", "on"],
+            ["Trading Agent", "1 NEAR a trade", "on"],
+          ],
+          button: "Hold to stop all",
+        },
+      },
+      { do: "act" },
+      { do: "panel", panel: { kind: "done", tone: "blocked", title: "Every agent stopped", sub: "Kill switch on, on chain. The next payment was refused.", tx: "Hmk7LcjQ…" } },
+      { do: "wait", ms: 1400 },
       { do: "keys" },
     ],
   },

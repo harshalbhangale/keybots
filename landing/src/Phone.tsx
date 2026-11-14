@@ -204,6 +204,43 @@ function PanelView({ panel, act }: { panel: Panel; act: React.ReactNode }) {
           {act}
         </div>
       );
+    case "ai":
+      return (
+        <div className="panel">
+          <div className="ph-row">
+            <span className="badge">PRIVATE AI</span>
+            <span className="muted-s">NEAR AI Cloud</span>
+          </div>
+          <div className="ai-card">
+            <s>{panel.before}</s>
+            <b>{panel.after}</b>
+          </div>
+          <Tiles tiles={panel.proof} />
+          {act}
+        </div>
+      );
+    case "agents":
+      return (
+        <div className="panel">
+          <div className="ph-row">
+            <span className="badge">AGENTS</span>
+            <span className="muted-s">Inside Spend Limits</span>
+          </div>
+          <div className="ag-list">
+            {panel.agents.map(([n, cap, st]) => (
+              <div className="ag" key={n}>
+                <span className="ag-dot" />
+                <span>
+                  <b>{n}</b>
+                  <small>{cap}</small>
+                </span>
+                <em>{st}</em>
+              </div>
+            ))}
+          </div>
+          {act}
+        </div>
+      );
     case "done":
       return (
         <div className={`panel done ${panel.tone}`}>
@@ -355,7 +392,7 @@ export default function Phone({
             break;
           case "act": {
             setWaiting(true);
-            const hold = !!cur && (cur.kind === "pay" || cur.kind === "trade" || cur.kind === "caller");
+            const hold = !!cur && (cur.kind === "pay" || cur.kind === "trade" || cur.kind === "caller" || cur.kind === "agents");
             await new Promise<void>((resolve) => {
               resolver.current = resolve;
               setTimeout(() => {
@@ -399,26 +436,51 @@ export default function Phone({
     chat.current?.scrollTo({ top: chat.current.scrollHeight, behavior: "smooth" });
   }, [msgs, copied]);
 
-  const holdKinds = ["pay", "trade", "caller"];
+  const holdKinds = ["pay", "trade", "caller", "agents"];
   const actBtn = !panel ? null : holdKinds.includes(panel.kind) && "button" in panel ? (
     <Big label={panel.button} hold fill={fill} hint={waiting} onTap={act} onDown={startHold} onUp={endHold} />
+  ) : panel.kind === "ai" ? (
+    <Big label={panel.button} hold={false} fill={0} hint={waiting} onTap={act} onDown={() => {}} onUp={() => {}} />
   ) : panel.kind === "vault" ? (
     <Big label="Insert address" hold={false} fill={0} hint={waiting} onTap={act} onDown={() => {}} onUp={() => {}} />
   ) : null;
   const active = tabFor(panel);
+  const tg = scenario.app === "telegram";
+  const x = scenario.app === "x";
 
   return (
-    <div className="phone">
+    <div className={`phone ${tg ? "tg" : ""} ${x ? "xa" : ""}`}>
       <div className="screen">
         <div className="island" />
         <div className="status">
           <b>9:41</b>
           <span className="sig"><i /><i /><i /><i /><em /></span>
         </div>
-        <div className="chat-head">
-          <span className="avatar">{scenario.emoji}</span>
-          <b>{scenario.who}</b>
-        </div>
+        {x ? (
+          <div className="chat-head tg-head x-head">
+            <span className="tg-back">←</span>
+            <span className="avatar">{scenario.emoji}</span>
+            <span className="tg-name">
+              <b>{scenario.who} <span className="x-tick">✓</span></b>
+              <small>@nearwhale</small>
+            </span>
+            <span className="x-logo">𝕏</span>
+          </div>
+        ) : tg ? (
+          <div className="chat-head tg-head">
+            <span className="tg-back">‹</span>
+            <span className="avatar">{scenario.emoji}</span>
+            <span className="tg-name">
+              <b>{scenario.who}</b>
+              <small>2,184 members</small>
+            </span>
+          </div>
+        ) : (
+          <div className="chat-head">
+            <span className="avatar">{scenario.emoji}</span>
+            <b>{scenario.who}</b>
+          </div>
+        )}
         <div className="chat" ref={chat}>
           {msgs.map((m) => (
             <div key={m.id} className={`msg ${m.me ? "me" : "them"}`}>
@@ -430,14 +492,14 @@ export default function Phone({
         <div className="composer">
           <span className="plus">+</span>
           <span className="input">
-            {field || <span className="ph">iMessage</span>}
+            {field || <span className="ph">{x ? "Start a message" : tg ? "Message" : "iMessage"}</span>}
             <span className="caret" />
           </span>
         </div>
 
         <div className="kb">
           <div className="tabs-row">
-            <span className="brandkey"><img src="/logo.svg" alt="" aria-hidden /></span>
+            <span className="brandkey"><img src="/mark.svg" alt="" aria-hidden /></span>
             <div className="ktabs">
               {TABS.map((t) => (
                 <span key={t} className={active === t ? "on" : ""}>{t}</span>
