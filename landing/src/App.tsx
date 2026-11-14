@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import Mascot from "./Mascot";
-import Keyboard3D from "./Keyboard3D";
-import Story, { Private } from "./Story";
+import Journey from "./Journey";
+import Networks from "./Networks";
+import { Private } from "./Story";
 import { NearGlyph, NearTile } from "./Icons";
 import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
@@ -56,6 +56,7 @@ export default function App() {
         </a>
         <span className="y-links">
           <a href="#how">How it works</a>
+          <a href="#live">Live</a>
           <a href="#private">Private</a>
           <a href="#proof">Proof</a>
         </span>
@@ -65,28 +66,27 @@ export default function App() {
       </nav>
 
       <main id="top">
-        <section className="z-hero">
-          <div className="y-glow" aria-hidden />
-          <div className="z-grid" aria-hidden />
-          <div className="y-wrap z-hero-in">
-            <a className="hx-badge" href="#proof">
-              <span className="y-live" /> Live on NEAR testnet
-            </a>
-            <h1 className="hx">
-              <span className="hx-l">Type it.</span>
-              <span className="hx-l">
-                <span className="hx-near">
-                  <NearGlyph />
-                  NEAR
-                </span>{" "}
-                does the rest.
-              </span>
-            </h1>
-            <p className="hx-sub">Your keyboard is the AI. NEAR sets the limits.</p>
-            <Keyboard3D />
-            <Downloads />
-          </div>
-        </section>
+        <Journey
+          hero={
+            <div className="jr-hero-in">
+              <a className="hx-badge" href="#live">
+                <span className="y-live" /> Live on NEAR mainnet and testnet
+              </a>
+              <h1 className="hx">
+                <span className="hx-l">Type it.</span>
+                <span className="hx-l">
+                  <span className="hx-near">
+                    <NearGlyph />
+                    NEAR
+                  </span>{" "}
+                  does the rest.
+                </span>
+              </h1>
+              <p className="hx-sub">Your keyboard is the AI. NEAR sets the limits.</p>
+              <Downloads />
+            </div>
+          }
+        />
 
         {VIDEO_URL && (
         <section className="y-video-sec" id="demo">
@@ -98,7 +98,11 @@ export default function App() {
           </section>
         )}
 
-        <Story />
+        <section className="z-sec" id="live">
+          <div className="y-wrap wide">
+            <Networks />
+          </div>
+        </section>
 
         <section className="z-sec" id="private">
           <div className="y-wrap wide">
@@ -137,7 +141,6 @@ export default function App() {
 
         <section className="z-final" id="get">
           <div className="y-wrap z-final-in">
-            <Mascot size={200} />
             <h2 className="z-h2" data-reveal>
               Your keys. <span className="grad">Your rules.</span>
             </h2>

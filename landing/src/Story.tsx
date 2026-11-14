@@ -106,7 +106,7 @@ export default function Story() {
 
 /** What stays private, and how NEAR keeps it that way. */
 const PRIV: { icon: string; title: string; text: string }[] = [
-  { icon: "chip", title: "Private AI, in an enclave", text: "Rewrites and replies run on NEAR AI Cloud, inside secure hardware. Every answer carries its signature and the hardware's attestation, and both are checked." },
+  { icon: "chip", title: "Private AI on NEAR AI Cloud", text: "Rewrites and replies run on NEAR AI Cloud, inside NEAR's TEE. Every answer's signature is verified. The hardware attestation is not verified yet." },
   { icon: "key", title: "Your key stays on your phone", text: "The owner key is made on the phone, kept in its Keychain and used only after Face ID. The server just passes on what the phone signed." },
   { icon: "lock", title: "Agents get small keys", text: "Each agent has its own NEAR account and a key that can only ask the Spend Limits contract to pay. It can't drain the wallet." },
   { icon: "eye-off", title: "Addresses, never secrets", text: "The vault keeps the addresses you paste often. Keys and seed phrases are never stored there." },
