@@ -206,31 +206,31 @@ struct CallsView: View {
     }
 
     private func book(_ p: MoneyPalette) -> some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 6) {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
                 MoneyTabs(tabs: [(.posts, "Posts"), (.open, count("Open", model.open.count)), (.done, count("Done", model.done.count)),
                                  (.following, "Following")],
-                          selection: $model.tab, palette: p)
-                Spacer(minLength: 4)
-                if model.tab == .open || model.tab == .done {
+                          selection: $model.tab, palette: p, fill: true)
+                // Always takes its place, so the tabs never shift between sections.
+                let canPaste = model.tab == .open || model.tab == .done
                 Button { model.paste() } label: {
-                    HStack(spacing: 5) {
+                    Group {
                         if model.checking {
                             ProgressView().controlSize(.mini).tint(AK.ink)
                         } else {
-                            Image(systemName: "doc.on.clipboard").font(.system(size: 11, weight: .bold))
+                            Image(systemName: "doc.on.clipboard").font(.system(size: 13, weight: .semibold))
                         }
-                        Text("Paste a call").font(.footnote.weight(.bold))
                     }
                     .foregroundStyle(AK.ink)
-                    .padding(.horizontal, 12).frame(height: 28)
-                    .background(AK.accent, in: Capsule()).contentShape(Capsule())
+                    .frame(width: 32, height: 32)
+                    .background(AK.accent, in: Circle()).contentShape(Circle())
                 }
                 .buttonStyle(MoneyPress())
-                .disabled(model.checking || !actions.fullAccess())
+                .disabled(!canPaste || model.checking || !actions.fullAccess())
+                .opacity(canPaste ? 1 : 0)
+                .accessibilityHidden(!canPaste)
+                .accessibilityLabel("Paste a call")
                 .accessibilityHint("Checks the post you copied. Nothing runs.")
-                .transition(.opacity)
-                }
             }
             if let notice = model.notice, model.tab != .following {
                 Button { withAnimation(.snappy(duration: 0.2)) { model.notice = nil } } label: {
@@ -358,7 +358,7 @@ private struct CallRow: View {
         let p = palette
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
-                Text("$\(call.asset ?? "?")").font(.subheadline.weight(.heavy))
+                Text("$\(call.asset ?? "?")").font(.subheadline.weight(.semibold))
                 HStack(spacing: 2) {
                     Image(systemName: call.bearish ? "arrow.down.right" : "arrow.up.right").font(.system(size: 9, weight: .heavy))
                     Text(call.direction?.capitalized ?? "No direction").font(.caption.weight(.bold))
@@ -383,8 +383,8 @@ private struct CallRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             footer(p)
         }
-        .padding(.horizontal, 12).padding(.vertical, 9)
-        .background(p.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .background(p.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     @ViewBuilder
