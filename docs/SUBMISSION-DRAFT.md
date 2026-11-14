@@ -94,7 +94,7 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 
 ## 7. Disclosures
 
-- **NOTE FOR HARSHAL, fix before sending:** Glyf is being entered separately in this hackathon (github.com/The-x-35/glyf). This section must say who owns Glyf, that its author agreed to the reuse, and which Glyf code came in during the window (the AI bar, GIFs, letter-hold actions and search were ported in the window, not before it).
+- **NOTE FOR HARSHAL, decide before sending:** Glyf is entered separately in this hackathon by someone else, and its license is "all rights reserved". Code from Glyf is in this repo (the keyboard core below, and parts ported in the window: the hold-space AI bar, letter-hold actions, vault shorthand, smart chips, the GIF tab). Either keep this disclosure exact, or replace that code before submitting.
 - **Pre-hackathon code (baseline).** Two of Harshal's earlier projects predate this hackathon, and parts of them were adapted into this repo (README › Disclosures):
   - **Glyf** (an AI keyboard): the keyboard core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and dictionary, `Surfaces/`, `Resources/`).
   - **Kall Markets** (a trading keyboard): keyboard haptics, the hold-to-confirm pattern, and the app's visual design.
