@@ -919,7 +919,7 @@ final class KeyboardViewController: UIInputViewController {
             // Entrances fade in inside the same spring; the growing height
             // provides the rise itself.
             for overlay in [self.shell, self.emoji, self.noteEdit,
-                            self.clipboardPanel, self.assist, self.money, self.trade] as [UIView?] {
+                            self.clipboardPanel, self.assist, self.money, self.trade, self.pay] as [UIView?] {
                 overlay?.alpha = 1
             }
             self.view.layoutIfNeeded()
