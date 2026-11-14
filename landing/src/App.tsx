@@ -81,13 +81,15 @@ export default function App() {
           </div>
         </section>
 
+        {VIDEO_URL && (
         <section className="y-video-sec" id="demo">
-          <div className="y-wrap wide">
-            <div className="y-frame" data-reveal>
-              <Video />
+            <div className="y-wrap wide">
+              <div className="y-frame" data-reveal>
+                <Video />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <Story />
 

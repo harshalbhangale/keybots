@@ -73,3 +73,17 @@
     display: none;
   }
 }
+
+/* scroll story: fit laptop heights (phone and copy stay inside the screen) */
+@media (min-width: 861px) {
+  .st-pin { padding-top: 56px; }
+  .st-phone .phone { height: 680px; min-height: 0; }
+  .st-phone { zoom: var(--fit, 1); }
+}
+@media (min-width: 861px) and (max-height: 860px) {
+  .st-rail { margin-bottom: 20px; }
+  .st-n { margin-bottom: 10px; }
+  .st-h { font-size: clamp(32px, 3.8vw, 48px); margin-bottom: 18px; }
+  .st-chain { gap: 6px; }
+  .st-chain li { font-size: 12.5px; }
+}
