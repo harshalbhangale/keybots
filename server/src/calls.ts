@@ -143,7 +143,7 @@ export async function routeCall(
   if (call.instrument === "perp" && deps.intents) {
     const known = await deps.intents.pick(call.asset, "to").catch(() => null);
     if (known && (!known.verified || !known.token)) {
-      return { status: "unavailable", reason: `Blocked: ${call.asset} isn't a token we could verify (${known.reason}).` };
+      return { status: "unavailable", reason: `Blocked: ${call.asset} isn't a token we could verify.` };
     }
   }
   if (call.instrument === "perp") {
@@ -156,7 +156,7 @@ export async function routeCall(
   if (!deps.intents) return { status: "unavailable", reason: "Token checks aren't set up on this server." };
 
   const check = await deps.intents.pick(call.asset, "to");
-  if (!check.verified || !check.token) return { status: "unavailable", reason: `Blocked: ${call.asset} isn't a token we could verify (${check.reason}).` };
+  if (!check.verified || !check.token) return { status: "unavailable", reason: `Blocked: ${call.asset} isn't a token we could verify.` };
 
   const asset = call.asset.toLowerCase();
   const size = deps.usd ?? CALL_SIZE_USD;
