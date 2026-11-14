@@ -218,7 +218,7 @@ struct ReceiptRow: View {
             SignalBadge(signal: r.signal, size: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(Plain.line(r)).font(.subheadline.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(2).multilineTextAlignment(.leading)
-                Text([r.input.source == "typed" ? "You typed it" : "From a message you copied", Fmt.time(r.date)].filter { !$0.isEmpty }.joined(separator: " · "))
+                Text([r.input.source == "typed" ? "Typed" : "Copied", Fmt.time(r.date)].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.footnote)
                     .foregroundStyle(AK.muted)
                     .lineLimit(1)

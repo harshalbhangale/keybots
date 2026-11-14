@@ -52,11 +52,11 @@ struct FollowingSection: View {
 
     /// Type a handle, or pick a caller Kall tracks.
     private var add: some View {
-        Card(padding: 12, spacing: 10) {
+        Card(padding: 16, spacing: 12) {
             HStack(spacing: 10) {
-                Text("@").font(AK.mono).foregroundStyle(AK.muted)
+                Text("@").font(.body).foregroundStyle(AK.muted)
                 TextField("", text: $handle, prompt: Text("handle on X").foregroundStyle(AK.faint))
-                    .font(AK.mono).foregroundStyle(AK.bone)
+                    .font(.body).foregroundStyle(AK.bone)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .submitLabel(.done)
                     .focused($typing)
@@ -123,7 +123,7 @@ struct FollowingSection: View {
     }
 
     private func row(_ f: Follow) -> some View {
-        Card(padding: 14, spacing: 0) {
+        Card(padding: 16, spacing: 0) {
             HStack(spacing: 12) {
                 Button { opened = Opened(id: f.id) } label: {
                     HStack(spacing: 8) {

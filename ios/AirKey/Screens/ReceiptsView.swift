@@ -144,8 +144,8 @@ struct ReceiptDetail: View {
             }
             if let ai = r.interpretation.ai {
                 KeyValue(key: "Model", value: ai.model, mono: true)
-                KeyValue(key: "Reply signature", value: r.interpretation.reader == "openai" ? "Not signed" : ai.signature.status, color: ai.signature.status == "verified" ? AK.accentText : AK.amberText)
-                KeyValue(key: "Attestation", value: ai.attestation, color: ai.attestation == "verified" ? AK.accentText : AK.amberText)
+                KeyValue(key: "Reply signature", value: r.interpretation.reader == "openai" ? "Not signed" : ai.signature.status.capitalized, color: ai.signature.status == "verified" ? AK.accentText : AK.amberText)
+                KeyValue(key: "Attestation", value: ai.attestation.capitalized, color: ai.attestation == "verified" ? AK.accentText : AK.amberText)
             }
         }
     }
