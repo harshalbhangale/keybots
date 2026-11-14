@@ -129,6 +129,8 @@ final class KeyboardViewController: UIInputViewController {
     private var surface: Surface = .none
     /// A copied call's text for the Calls panel to open on its review.
     private var pendingCallReview: String?
+    /// The tab Calls opens on, when something asked for one (Follow someone: Following).
+    private var pendingCallsTab: CallsModel.Tab?
 
     /// When set, key input routes into an inline editor (note editor, emoji search).
     private weak var inlineTarget: InlineEditor?
@@ -1013,8 +1015,10 @@ final class KeyboardViewController: UIInputViewController {
             n.activate(n.activeEditor)
         case .wallet, .calls: // WALLET/CALLS HOOK
             let m = MoneyPanel(kind: new == .wallet ? .wallet : .calls, actions: moneyActions, dark: Glass.chromeDark,
-                               review: new == .calls ? pendingCallReview : nil)
+                               review: new == .calls ? pendingCallReview : nil,
+                               callsTab: new == .calls ? pendingCallsTab : nil)
             pendingCallReview = nil
+            pendingCallsTab = nil
             m.onFull = { [weak self] _ in self?.applySurfaceLayout(animated: true) }
             content.addSubview(m)
             m.attach(to: self)
@@ -1052,7 +1056,12 @@ final class KeyboardViewController: UIInputViewController {
             let short = ["check": "Check"]
             let tools = MenuShell.tools.map { (id: $0.id, title: short[$0.id] ?? $0.title, icon: KeyToolbar.icons[$0.id] ?? "circle") }
             let h = HomeSurface(dark: Glass.chromeDark, tools: tools,
-                                open: { [weak self] id in Haptics.layer(); self?.setSurface(.none, animated: false); self?.openTool(id) },
+                                open: { [weak self] id in
+                                    guard let self else { return }
+                                    Haptics.layer()
+                                    self.setSurface(.none, animated: false)
+                                    if id == "calls-following" { self.pendingCallsTab = .following; self.setSurface(.calls) } else { self.openTool(id) }
+                                },
                                 customize: { [weak self] in Haptics.layer(); self?.setSurface(.shell) },
                                 close: { [weak self] in self?.setSurface(.none); self?.syncAutoShift() })
             h.attach(to: self)

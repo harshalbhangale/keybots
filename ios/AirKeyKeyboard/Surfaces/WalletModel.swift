@@ -280,7 +280,7 @@ final class MoneyPanel: UIView {
     var onFull: ((Bool) -> Void)?
 
     /// `review`: a copied call's text, opened straight on its review.
-    init(kind: Kind, actions: MoneyActions, dark: Bool, review: String? = nil) {
+    init(kind: Kind, actions: MoneyActions, dark: Bool, review: String? = nil, callsTab: CallsModel.Tab? = nil) {
         var calls: CallsModel?
         switch kind {
         case .wallet:
@@ -289,6 +289,7 @@ final class MoneyPanel: UIView {
             stop = { model.stop() }
         case .calls:
             let model = CallsModel()
+            if let callsTab { model.tab = callsTab }
             render = { AnyView(CallsView(model: model, actions: actions).environment(\.colorScheme, $0)) }
             stop = { model.stop(); model.journey?.stop() }
             calls = model
