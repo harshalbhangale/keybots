@@ -12,7 +12,7 @@ struct KeysView: View {
 
     var body: some View {
         Screen {
-            Masthead(eyebrow: "AIRKEY · HOLD KEYS", title: "KEYS")
+            Masthead(eyebrow: "Hold a letter to run what you saved on it", title: "Hold keys")
             Text("Hold a letter in any chat to run it. A small dot marks each one.")
                 .font(.subheadline)
                 .foregroundStyle(AK.muted)
@@ -40,7 +40,7 @@ struct KeysView: View {
                             }
                         }
                     } label: {
-                        Text("ADD A KEY")
+                        Text("Add a key")
                     }
                     .buttonStyle(.bigSecondary)
                 }
@@ -83,7 +83,7 @@ struct KeysView: View {
                 Button("Unbind \(letter.uppercased())", systemImage: "minus.circle", role: .destructive) { set(letter, nil) }
             } label: {
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(AK.muted)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -132,7 +132,7 @@ struct KeysLink: View {
                 Text(summary).font(.footnote).foregroundStyle(AK.muted).lineLimit(1).minimumScaleFactor(0.8)
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(AK.faint)
+            Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(AK.faint)
         }
         .contentShape(Rectangle())
         .onAppear { map = BoundKeys.current }
