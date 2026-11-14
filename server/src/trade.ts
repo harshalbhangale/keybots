@@ -55,6 +55,8 @@ export interface ReviewJson {
     standIn: string | null;
   };
   mainnetQuote: { label: string; payAmount: string; receiveAmount: string; symbol: string } | null;
+  /** What NEAR Intents checked for this call, in one line, and the prices it gave. */
+  intents: { line: string; assetPrice: number | null; nearPrice: number };
   limits: {
     agent: string;
     agentName: "Trading Agent";
@@ -101,6 +103,14 @@ export class TradeError extends Error {
   ) {
     super(message);
   }
+}
+
+const dollars = (n: number) => "$" + (n >= 100 ? Math.round(n).toLocaleString("en-US") : n >= 1 ? n.toFixed(2) : n.toPrecision(2));
+
+/** "NEAR Intents: ETH is a listed token at $3,120 · NEAR $2.10, so $5 is 2.38 NEAR". */
+export function intentsLine(asset: string, assetPrice: number | null, nearPrice: number, usd: number, amountNear: string): string {
+  const listed = assetPrice ? `${asset} is a listed token at ${dollars(assetPrice)}` : `${asset} is a listed token`;
+  return `NEAR Intents: ${listed} · NEAR ${dollars(nearPrice)}, so ${dollars(usd)} is ${amountNear} NEAR`;
 }
 
 export const REVIEW_TTL_MS = 30_000;
@@ -284,7 +294,7 @@ export function tradeFlow(deps: TradeDeps) {
     const amountIn = toYocto(amountNear);
 
     const target = route.side === "sell" ? "USDC" : asset;
-    const [expected, state, mainnetQuote] = await Promise.all([
+    const [expected, state, mainnetQuote, assetPrice] = await Promise.all([
       rhea.quote(pool, amountIn).catch((e: Error) => {
         throw new TradeError(502, `Rhea didn't answer: ${String(e.message ?? e).slice(0, 160)}`);
       }),
@@ -300,6 +310,13 @@ export function tradeFlow(deps: TradeDeps) {
             return { label: "NEAR Intents quote (mainnet, dry: no funds move)", payAmount: amountNear, receiveAmount: tidy(q.amountOutFormatted), symbol: target };
           })
           .catch(() => null), // No dry quote right now: the review shows without one.
+        new Promise<null>((r) => setTimeout(() => r(null), QUOTE_WAIT_MS)),
+      ]),
+      Promise.race([
+        intents!
+          .pick(asset, "to")
+          .then((c) => c.token?.price ?? null)
+          .catch(() => null),
         new Promise<null>((r) => setTimeout(() => r(null), QUOTE_WAIT_MS)),
       ]),
     ]);
@@ -347,6 +364,7 @@ export function tradeFlow(deps: TradeDeps) {
         standIn,
       },
       mainnetQuote,
+      intents: { line: intentsLine(asset, assetPrice, nearToken.price, usd, amountNear), assetPrice, nearPrice: nearToken.price },
       limits: {
         agent: agentAccount,
         agentName: "Trading Agent",
