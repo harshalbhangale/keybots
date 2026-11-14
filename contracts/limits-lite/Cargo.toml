@@ -1,0 +1,22 @@
+[package]
+name = "spend-limits-lite"
+version = "0.1.0"
+edition = "2021"
+description = "Spend Limits Lite: the core spending rules for Keybots' agents, small enough to deploy on NEAR mainnet for under 0.5 NEAR"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# No dependencies: no near-sdk and no serde, which are most of the full
+# contract's 215 KB. Storage on NEAR costs about 0.01 NEAR per KB.
+[dependencies]
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true
+strip = true
