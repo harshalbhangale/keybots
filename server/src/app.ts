@@ -3,6 +3,8 @@ import { ACT_ACTIONS, ActUnavailable, act, type ActAction } from "./act.js";
 import { aiRoutes, type AiRouteDeps } from "./ai-routes.js"; // GLYF AI HOOK
 import { aiReaders, describe, readCommand, runCommand, type Deps as CommandDeps } from "./agent.js";
 import { memoryCalls, readCall, routeCall, type CallStore } from "./calls.js";
+import { followJson, followPoller, memoryFollows, parseFollow, recordOf, type FollowPoller, type FollowStore, type KolRecord } from "./follows.js";
+import { kallClient, type KallClient } from "./kall.js";
 import { UserError, type OwnerMethod, type ownerActions } from "./owner.js";
 import type { RatesClient } from "./rates.js";
 import { toYocto } from "./parse.js";
@@ -10,7 +12,35 @@ import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
 
-export type Deps = CommandDeps & { owner?: ReturnType<typeof ownerActions>; rates?: RatesClient; calls?: CallStore; /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */ poolReturn?: PoolReturn; /** The vault the app saves and the keyboard reads. */ vault?: VaultStore } & AiRouteDeps;
+export type Deps = CommandDeps & {
+  owner?: ReturnType<typeof ownerActions>;
+  rates?: RatesClient;
+  calls?: CallStore;
+  /** Rhea's pool view, for the trade panel's quotes (tests pass a fake). */
+  poolReturn?: PoolReturn;
+  /** The vault the app saves and the keyboard reads. */
+  vault?: VaultStore;
+  /** The KOLs the owner follows, and what their calls led to. */
+  follows?: FollowStore;
+  /** Kall Markets' API, where their calls come from. */
+  kall?: KallClient;
+  /** The same poller index.ts runs every minute, so "check now" and the timer never trade one call twice. */
+  followPoller?: FollowPoller;
+} & AiRouteDeps;
+
+/**
+ * The follow poller for these deps: a followed KOL's call gets the copied
+ * call's route (sized to their rules) and runs as a "follow" command.
+ */
+export function followsFor(deps: Deps): FollowPoller {
+  return followPoller({
+    follows: deps.follows ?? memoryFollows(),
+    kall: deps.kall ?? kallClient(deps.cfg.kallApi),
+    autoTrade: deps.cfg.autoTrade,
+    route: (text, call, usd) => routeCall(text, call, { intents: deps.intents, chain: deps.chain, tradeAgent: deps.cfg.agents.trade, network: deps.cfg.network, rhea: deps.rhea, usd }),
+    run: (command, from) => runCommand(deps, command, "follow", from),
+  });
+}
 
 export function buildApp(deps: Deps) {
   // The calls book (calls.jsonl in the data dir when index.ts gives one; in memory otherwise).
@@ -284,6 +314,72 @@ export function buildApp(deps: Deps) {
       return { items };
     } catch (e) {
       return reply.code(400).send({ error: (e as Error).message });
+    }
+  });
+
+  // --- Following KOLs (follows.ts, kall.ts) ---
+  const follows = deps.follows ?? memoryFollows();
+  const kall = deps.kall ?? kallClient(deps.cfg.kallApi);
+  const poller = deps.followPoller ?? followsFor({ ...deps, follows, kall });
+  /** A caller's record from Kall, or null when Kall can't say right now (a slow answer doesn't hold the list up). */
+  const recordFor = (handle: string): Promise<KolRecord | null> =>
+    Promise.race([
+      kall.caller(handle).then(recordOf).catch(() => null),
+      new Promise<null>((r) => setTimeout(() => r(null), 1500)),
+    ]);
+  const kallDown = (e: unknown) => `Kall didn't answer: ${String((e as Error).message ?? e).slice(0, 200)}`;
+
+  /** Who the owner follows, with their rules and record, and the newest 50 trades their calls led to. */
+  app.get("/v1/follows", async () => {
+    const list = follows.list();
+    const records = await Promise.all(list.map((f) => recordFor(f.handle)));
+    return { follows: list.map((f, i) => followJson(f, records[i] ?? null)), trades: follows.trades(50) };
+  });
+
+  /** Follow a handle, or change the rules for one. Turning auto back on lifts a pause. */
+  app.post("/v1/follows", async (req, reply) => {
+    const parsed = parseFollow(req.body);
+    if ("error" in parsed) return reply.code(400).send({ error: parsed.error });
+    const f = follows.upsert(parsed.handle, parsed.rules);
+    return followJson(f, await recordFor(f.handle));
+  });
+
+  app.delete<{ Params: { handle: string } }>("/v1/follows/:handle", async (req, reply) => {
+    if (!follows.remove(req.params.handle)) return reply.code(404).send({ error: "You don't follow them" });
+    return { ok: true };
+  });
+
+  /** Kall's tracked callers and their records, to suggest who to follow. */
+  app.get("/v1/kols", async (_req, reply) => {
+    try {
+      const feed = await kall.feed();
+      return {
+        callers: feed.callers.map((c) => ({
+          handle: c.handle,
+          focus: c.focus,
+          hits: c.hits,
+          misses: Math.max(0, c.settled - c.hits),
+          open: c.open,
+          // Kall gives the median return; it stands in for the average here.
+          avgReturnBps: c.medianBps,
+        })),
+      };
+    } catch (e) {
+      return reply.code(502).send({ error: kallDown(e) });
+    }
+  });
+
+  /**
+   * Check a followed handle now. `latest: true` takes their newest call even
+   * if it's older than the follow (the owner asked for it); the same rules
+   * and the same auto-trading switch still apply.
+   */
+  app.post<{ Params: { handle: string }; Body: { latest?: unknown } }>("/v1/follows/:handle/check", async (req, reply) => {
+    if (!follows.get(req.params.handle)) return reply.code(404).send({ error: "You don't follow them" });
+    try {
+      return { trades: await poller.poll(req.params.handle, { latest: req.body?.latest === true }) };
+    } catch (e) {
+      return reply.code(502).send({ error: kallDown(e) });
     }
   });
 
