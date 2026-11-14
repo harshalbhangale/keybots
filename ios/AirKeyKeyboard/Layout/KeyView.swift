@@ -357,7 +357,8 @@ final class KeyView: UIControl {
     }
 
     private func updateBinding() {
-        accentDot.isHidden = !isBound
+        // Holds still work; the dots were noise on a clean board.
+        accentDot.isHidden = true
         accentDot.backgroundColor = Glass.boundDot.cgColor
         updateFill(pressed: false)
     }
