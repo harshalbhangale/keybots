@@ -466,6 +466,8 @@ struct ReviewCard: View {
             hero(r, p)
             if let refuse = r.limits.willRefuse {
                 Callout(icon: "hand.raised.fill", text: Plain.scrub(refuse), palette: p)
+            } else if let note = r.call.signalNote {
+                NoteLine(text: note, palette: p)
             } else if r.standIn != nil {
                 NoteLine(text: "Testnet has no \(r.call.asset), so this swaps \(r.pay.symbol) to \(r.receive.symbol).", palette: p)
             }
