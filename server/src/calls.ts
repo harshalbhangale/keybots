@@ -123,6 +123,8 @@ export async function routeCall(
     network: string;
     /** Tokens Rhea can swap NEAR into here (testnet: USDC, USDT). */
     rhea?: { route(symbol: string): unknown };
+    /** Dollars the trade spends: the copied-call chip's $1 unless a follow's rules say otherwise. */
+    usd?: number;
   },
 ): Promise<CallRoute> {
   if (!call.isCall || !call.asset) return { status: "unavailable", reason: "This isn't a trade call." };
@@ -142,7 +144,8 @@ export async function routeCall(
   if (!check.verified || !check.token) return { status: "unavailable", reason: `Token check failed: ${check.reason}.` };
 
   const asset = call.asset.toLowerCase();
-  const usd = `$${CALL_SIZE_USD}`;
+  const size = deps.usd ?? CALL_SIZE_USD;
+  const usd = `$${size}`;
   const side = call.direction === "bullish" ? "buy" : "sell";
   // Testnet has no SOL (or most tokens): the hold swaps NEAR to USDC on Rhea
   // instead, and the chip says so. The quote shown is NEAR Intents' real one.
@@ -156,7 +159,7 @@ export async function routeCall(
 
   // What it's worth in NEAR, at NEAR Intents' price.
   const nearToken = (await deps.intents.pick("NEAR", "from")).token;
-  const amountNear = nearToken?.price ? Number((CALL_SIZE_USD / nearToken.price).toFixed(4)) : null;
+  const amountNear = nearToken?.price ? Number((size / nearToken.price).toFixed(4)) : null;
 
   // The quote and the leash's caps at the same time: the chip should be up in well under 2 seconds.
   const intents = deps.intents;
