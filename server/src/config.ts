@@ -65,7 +65,7 @@ export function loadConfig(env = process.env): Config {
     apiToken: env.AIRKEY_API_TOKEN ?? "",
     nearAi: {
       apiKey: env.NEAR_AI_API_KEY ?? keyFile(join(env.AIRKEY_KEYS_DIR ?? join(ROOT, "keys"), "near-ai.key")),
-      model: env.NEAR_AI_MODEL ?? "zai-org/GLM-5.1-FP8",
+      model: env.NEAR_AI_MODEL ?? "deepseek/deepseek-v4.1-flash",
       base: env.NEAR_AI_BASE ?? "https://cloud-api.near.ai/v1",
     },
     openAi: {
