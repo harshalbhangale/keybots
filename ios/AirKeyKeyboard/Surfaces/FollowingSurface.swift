@@ -98,7 +98,7 @@ struct FollowingView: View {
         }
     }
 
-    /// Add someone: paste a handle you copied, or pick a caller Kall tracks.
+    /// Add someone: paste a handle you copied, or pick a caller Keybots tracks.
     /// (The panel sits over the keys, so a handle is pasted, not typed.)
     private func add(_ p: MoneyPalette) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
