@@ -103,6 +103,8 @@ struct Receipt: Decodable, Identifiable {
         /// The caller behind a reviewed or followed call, and its post when it has one.
         var handle: String? = nil
         var postUrl: String? = nil
+        /// Another app that sent it, e.g. "claude-code" (an agent using Keybots' MCP server).
+        var client: String? = nil
     }
     struct Interpretation: Decodable {
         let action: Action

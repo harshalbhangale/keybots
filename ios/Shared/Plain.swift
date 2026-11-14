@@ -39,6 +39,15 @@ enum Plain {
         return "\(r.message) (\(rule))"
     }
 
+    /// The app that asked for it, when it wasn't Keybots itself: "Claude Code".
+    static func app(_ r: Receipt) -> String? {
+        switch r.input.client {
+        case "claude-code": "Claude Code"
+        case let c?: c
+        case nil: nil
+        }
+    }
+
     /// The title over a receipt: what the outcome is called.
     static func title(_ r: Receipt) -> String {
         r.outcome == "swapped" ? "Swapped" : r.signal.title

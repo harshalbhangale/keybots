@@ -119,6 +119,9 @@ struct ReceiptDetail: View {
                     Label(Plain.title(r), systemImage: r.signal.icon)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(r.signal.text)
+                    if let app = Plain.app(r) {
+                        Text("From \(app)").font(.footnote.weight(.medium)).foregroundStyle(AK.muted)
+                    }
                     Text(amount)
                         .font(AK.number(40))
                         .foregroundStyle(AK.bone)
@@ -141,6 +144,9 @@ struct ReceiptDetail: View {
                             .fixedSize(horizontal: false, vertical: true)
                         Text(Plain.body(r)).font(.subheadline).foregroundStyle(AK.muted)
                             .fixedSize(horizontal: false, vertical: true)
+                        if let app = Plain.app(r) {
+                            Text("From \(app)").font(.footnote.weight(.medium)).foregroundStyle(AK.muted)
+                        }
                     }
                     Spacer(minLength: 0)
                 }

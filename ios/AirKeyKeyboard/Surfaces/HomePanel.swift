@@ -26,6 +26,8 @@ final class HomeModel {
     var tradedToday: [Receipt] = []
     /// Everything the bots did today that moved money or was stopped.
     var doneToday: [Receipt] = []
+    /// The newest thing Claude Code asked Keybots for (through the MCP server), if it was in the last 10 minutes.
+    var claude: Receipt?
     var stopped = false
     var network = ""
     var available: String?
@@ -41,6 +43,7 @@ final class HomeModel {
         choice = Settings.network
         bots = []
         recent = []
+        claude = nil
         available = nil
         stop()
         start()
@@ -80,6 +83,9 @@ final class HomeModel {
         }
         // Only what moved money or was stopped: no readings that found nothing to do.
         if let receipts {
+            claude = receipts.first { r in
+                r.input.client == "claude-code" && (r.date.map { Date().timeIntervalSince($0) < 600 } ?? false)
+            }
             let money = receipts.filter { ["paid", "swapped", "blocked", "approval"].contains($0.outcome) }
             recent = Array(money.prefix(4))
             let today = money.filter { r in r.date.map { Calendar.current.isDateInToday($0) } ?? false }
@@ -199,8 +205,52 @@ struct HomeView: View {
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .accessibilityElement(children: .combine)
             }
+            if let c = model.claude, !model.bots.isEmpty { agentRow(c, p) }
         }
         .background(p.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    /// An outside agent using Keybots (Claude Code, through the MCP server): what it asked
+    /// for last. It goes through the "Messages you copy" lane like anything pasted.
+    private func agentRow(_ r: Receipt, _ p: MoneyPalette) -> some View {
+        let waiting = r.outcome == "approval"
+        let tint = waiting ? p.warn : r.outcome == "blocked" ? p.bad : p.good
+        return VStack(spacing: 0) {
+            Rectangle().fill(p.line).frame(height: 0.5).padding(.leading, 30)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 10) {
+                    PulseDot(color: tint, live: true)
+                    Text("Claude Code").font(.footnote.weight(.semibold)).foregroundStyle(p.text).lineLimit(1)
+                    Text("agent").font(.caption2).foregroundStyle(p.soft)
+                    Spacer(minLength: 6)
+                    Text(waiting ? "Waiting for you" : r.outcome == "blocked" ? "Refused" : r.outcome == "paid" ? "Paid" : "Active")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .padding(.horizontal, 7).frame(height: 18)
+                        .background(tint.opacity(0.14), in: Capsule())
+                }
+                Text(Self.agentDetail(r))
+                    .font(.caption.monospacedDigit()).foregroundStyle(p.soft).lineLimit(1)
+                    .padding(.leading, 17)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    /// "Asked to pay vendor 0.3 NEAR · Waiting for you · 1m ago".
+    static func agentDetail(_ r: Receipt) -> String {
+        let a = r.interpretation.action
+        var parts: [String] = []
+        if a.kind == "pay", let amount = a.amountNear {
+            parts.append("Asked to pay \(r.receiver?.asked ?? a.to ?? "someone") \(amount) NEAR")
+        }
+        let line = Plain.line(r)
+        if r.outcome == "approval" { parts.append("Waiting for you") }
+        else if r.outcome == "blocked" { parts.append(line.hasPrefix("Blocked: ") ? "Refused: " + line.dropFirst(9) : line) }
+        else { parts.append(line) }
+        if let ago = J.ago(r.date) { parts.append(ago) }
+        return parts.joined(separator: " · ")
     }
 
     /// What the bots did today, in numbers: paid, swapped, refused, waiting.

@@ -243,7 +243,7 @@ struct ReceiptRow: View {
 
     var body: some View {
         let p = Plain.row(r)
-        let meta = [p.memo.map { "For \($0)" }, r.agent.map { Fmt.agentName(account: $0.account) }, r.input.source == "typed" ? "Typed" : "Copied", Fmt.when(r.date)]
+        let meta = [p.memo.map { "For \($0)" }, r.agent.map { Fmt.agentName(account: $0.account) }, Plain.app(r).map { "From \($0)" } ?? (r.input.source == "typed" ? "Typed" : "Copied"), Fmt.when(r.date)]
             .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
         HStack(alignment: .top, spacing: 12) {
             if r.outcome == "swapped", let (from, to) = TokenPair.symbols(in: p.title) {
