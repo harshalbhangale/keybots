@@ -35,8 +35,9 @@ struct KolCardView: View {
                     // The tag on the right already says "Sample post".
                     if !sample { Text(name ?? "Sample post").font(.footnote.weight(.bold)).lineLimit(1) }
                 } else {
-                    Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.bold)).lineLimit(1)
-                    if let name { Text(name).font(.caption).foregroundStyle(p.soft).lineLimit(1) }
+                    // The handle and the time; display names are often styled
+                    // ("K A L E O") and read as a glitch, so they are left out.
+                    Text(handle.map { "@\($0)" } ?? "Copied post").font(.footnote.weight(.semibold)).lineLimit(1)
                 }
                 if let ago = J.ago(postedAt) {
                     Text("· \(ago)").font(.caption).foregroundStyle(p.soft).lineLimit(1).fixedSize()
@@ -70,18 +71,21 @@ struct KolCardView: View {
                     .onTapGesture { withAnimation(.snappy(duration: 0.2)) { expanded.toggle() } }
                     .accessibilityHint(expanded ? "Tap to shorten" : "Tap to read it all")
             }
-            HStack(spacing: 6) {
-                Text("$\(asset)").font(.caption.weight(.semibold))
-                Text(direction == "sell" ? "Sell" : "Buy").font(.caption.weight(.bold))
-                    .foregroundStyle(direction == "sell" ? p.bad : p.good)
+            // The trade is the bold line; the record is quieter beside it.
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("$\(asset)").font(.subheadline.weight(.bold))
+                Text(direction == "sell" ? "Sell" : "Buy").font(.subheadline.weight(.bold))
+                    .foregroundStyle(direction == "sell" ? p.bad : p.gain)
+                Spacer(minLength: 4)
                 if let hits, let misses {
-                    Text("· Record \(hits) hit\(hits == 1 ? "" : "s"), \(misses) miss\(misses == 1 ? "" : "es")")
-                        .font(.caption).foregroundStyle(p.soft).lineLimit(1).minimumScaleFactor(0.85)
+                    Text("\(hits) hit\(hits == 1 ? "" : "s"), \(misses) miss\(misses == 1 ? "" : "es")")
+                        .font(.caption).foregroundStyle(p.soft).lineLimit(1)
+                        .accessibilityLabel("Record: \(hits) hits, \(misses) misses")
                 }
-                Spacer(minLength: 0)
             }
-            Text(reading.map { "Read by rules, not AI · \($0)" } ?? "Read by rules, not AI")
-                .font(.caption2).foregroundStyle(p.soft).lineLimit(2)
+            if let reading {
+                Text(reading).font(.caption2).foregroundStyle(p.faint).lineLimit(2)
+            }
             if let review {
                 Button {
                     Haptics.letter()
