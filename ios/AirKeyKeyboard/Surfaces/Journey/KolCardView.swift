@@ -17,8 +17,8 @@ struct KolCardView: View {
     /// The rules' reading; nil shows the plain line.
     let reading: String?
     let sample: Bool
-    /// "kall" (X, via Kall), "telegram" or "sample". For Telegram, `name` is the group.
-    var source: String = "kall"
+    /// "x" (X), "telegram" or "sample". For Telegram, `name` is the group.
+    var source: String = "x"
     let palette: MoneyPalette
     let actions: MoneyActions
     /// nil hides the button (the card is the header of a review).
@@ -50,11 +50,11 @@ struct KolCardView: View {
                 }
                 if !sample, !isSampleAuthor, handle != nil {
                     // Where it was posted, quietly.
-                    Text(isTelegram ? "Telegram" : "X · via Kall").font(.caption2.weight(.medium)).foregroundStyle(p.soft)
+                    Text(isTelegram ? "Telegram" : "X").font(.caption2.weight(.medium)).foregroundStyle(p.soft)
                         .padding(.horizontal, 6).frame(height: 18)
                         .background(p.fill.opacity(0.6), in: Capsule())
                         .lineLimit(1).fixedSize()
-                        .accessibilityLabel(isTelegram ? "From Telegram" : "From X, through Kall")
+                        .accessibilityLabel(isTelegram ? "From Telegram" : "From X")
                 }
                 Spacer(minLength: 4)
                 if sample {
