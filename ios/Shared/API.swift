@@ -244,4 +244,35 @@ extension API {
     }
 }
 
+// MARK: - GIFs
+
+/// One GIF from KLIPY, through our server (which keeps KLIPY's key).
+struct GifItem: Codable, Equatable, Sendable {
+    let id: String
+    let title: String
+    /// A small animated GIF for the grid.
+    let preview: String
+    let pw: Double?
+    let ph: Double?
+    /// The medium GIF that goes on the pasteboard.
+    let url: String
+    let w: Double?
+    let h: Double?
+}
+
+struct GifPage: Codable, Sendable {
+    let items: [GifItem]
+    let next: Int?
+    let attribution: String
+}
+
+extension API {
+    /// GIFs for the emoji board: trending when `q` is empty, a search otherwise.
+    func gifs(q: String, page: Int = 1) async throws -> GifPage {
+        var comps = URLComponents()
+        comps.queryItems = [URLQueryItem(name: "q", value: q), URLQueryItem(name: "page", value: String(page))]
+        return try await get("/v1/gifs\(comps.percentEncodedQuery.map { "?\($0)" } ?? "")")
+    }
+}
+
 struct VaultList: Codable { let items: [Vault.Item] }

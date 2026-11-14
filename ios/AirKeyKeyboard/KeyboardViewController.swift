@@ -937,6 +937,7 @@ final class KeyboardViewController: UIInputViewController {
         case .emoji:
             let e = EmojiBoard()
             e.delegate = self
+            e.hasFullAccess = hasFullAccess
             content.addSubview(e)
             prepareEntrance(e, animated: animated)
             emoji = e
