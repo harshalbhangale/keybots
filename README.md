@@ -42,7 +42,7 @@ Screens are from the project demo; provider badges and results depend on the con
 - **Type a payment.** Write `pay harshal 0.2 for dinner`, review the action and hold to send. Share the resulting receipt in the chat.
 - **Swap on NEAR.** Write `swap 0.1 near to usdc` and review the amount, rate, minimum received, route and limits before holding to confirm. The documented testnet execution uses Rhea; token checks and quotes use NEAR Intents.
 - **Check copied text.** Copy a payment request or market call and use the keyboard's check action. An untrusted payment goes through the Inbox Agent's stricter rules. A copied market call can become a trade chip that requires a hold to confirm.
-- **Follow trading calls.** The Calls interface uses records and calls from [Kall Markets](https://kallmarkets.vercel.app), not a complete feed of X or Telegram. Optional auto-trading is off unless explicitly enabled and uses per-person rules and the Trading Agent's contract limits. Auto-trading can place trades without a separate hold for each call.
+- **Follow trading calls.** The Calls interface uses records and calls from Keybots' X call tracker, not a complete feed of X or Telegram. Optional auto-trading is off unless explicitly enabled and uses per-person rules and the Trading Agent's contract limits. Auto-trading can place trades without a separate hold for each call.
 - **Use AI while typing.** Hold space for rewrite, tone, reply, translate, Ask and Search. Review the result before inserting or replacing text. NEAR AI Cloud support includes response-signature and attestation checks; see the [privacy limits](#ai-and-privacy) below.
 - **Use it as a keyboard.** Autocorrect, suggestions, swipe typing, cursor movement, emoji, clipboard, themes and haptics are part of the everyday experience. The vault is for addresses, not private keys or seed phrases.
 
@@ -186,7 +186,7 @@ Boot a matching simulator first, or adjust the destination to an available devic
 - The leash is on **testnet only**. Mainnet execution is not proven, and this prototype should not be used to safeguard real funds.
 - The swap flow has a mainnet NEAR Intents path in code, but no leash-enforced mainnet swap. Testnet pools and available tokens are limited; check the actual input and output before confirming.
 - Price-triggered orders use a server watcher and depend on it running. The documentation records a buy quote rather than verified execution for that path; bracket, trailing and TWAP orders are not built.
-- Followed calls come from Kall's available records, not a general X or Telegram scrape. Auto-trading is opt-in; a manually checked copied call and an enabled automated follow are different flows.
+- Followed calls come from the X feed's records, not a general X or Telegram scrape. Auto-trading is opt-in; a manually checked copied call and an enabled automated follow are different flows.
 - NEAR AI and hardware verification depend on configured credentials and live services. OpenAI fallback is a different provider; verification can be incomplete or unavailable.
 - The demo evidence includes simulator runs. Physical-device signing, app-group settings and network connectivity must be checked for the actual installation. No Android build is included.
 - This is an experimental system: network failures, third-party dependencies, stale quotes, slippage, compromised components and incorrect user/client input remain risks. See [demo run evidence](docs/evidence/demo-runs.md) and [mainnet steps](docs/MAINNET-STEPS.md).
@@ -210,7 +210,7 @@ More: [demo](docs/DEMO.md) · [rules](RULES.md) · [plan](docs/PLAN.md) · [subm
 ## Disclosures and attribution
 
 - **Pre-hackathon baseline:** the keyboard core in `ios/AirKeyKeyboard/`, including layout, design, typing engine and dictionary, toolbar, clipboard, emoji, notes and resources, was adapted from [Glyf](https://github.com/The-x-35/glyf). Letter-hold actions, vault shorthand and the GIF tab were also adapted from Glyf during the hackathon. The keyboard AI panel and its server were written for Keybots.
-- The haptics, hold-to-confirm pattern and parts of the app's visual design were adapted from [Kall Markets](https://github.com/harshalbhangale/Kall-Markets). The NEAR leash, agents, server, NEAR integrations and other Keybots-specific work were built during the hackathon, as detailed in the [submission draft](docs/SUBMISSION-DRAFT.md).
+- The haptics, hold-to-confirm pattern and parts of the app's visual design were adapted from the author's earlier trading keyboard, built before the hackathon. The NEAR leash, agents, server, NEAR integrations and other Keybots-specific work were built during the hackathon, as detailed in the [submission draft](docs/SUBMISSION-DRAFT.md).
 - Glyf's repository states that its code is [all rights reserved](https://github.com/The-x-35/glyf/blob/main/LICENSE). Confirm appropriate rights or replace the affected code before redistribution or submission; the MIT license in this repository does not itself grant rights to third-party code.
 - Built with an AI coding assistant (Claude Code); product choices and trade-offs were made by Harshal Bhangale.
 
