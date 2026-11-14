@@ -12,6 +12,7 @@ import { toYocto } from "./parse.js";
 import { fromUnits, minOut } from "./rhea.js";
 import { QuoteError, poolReturnFor, quoter, type OrderKind, type PoolReturn } from "./quote.js";
 import { memoryVault, parseVault, type VaultStore } from "./vault.js";
+import { TradeError, tradeFlow } from "./trade.js";
 import { cachedState, renderLeash } from "./leash-page.js";
 
 export type Deps = CommandDeps & {
@@ -32,6 +33,8 @@ export type Deps = CommandDeps & {
   gifs?: GifClient;
   /** The network the keyboard AI uses (NEAR AI Cloud, OpenAI, Serper). Tests pass a fake. */
   aiFetch?: typeof fetch;
+  /** The clock reviews expire by (tests move it). */
+  now?: () => number;
 };
 
 /**
@@ -443,6 +446,32 @@ export function buildApp(deps: Deps) {
     } catch (e) {
       return reply.code(502).send({ error: kallDown(e) });
     }
+  });
+
+  // --- A KOL's call: feed -> review -> confirm -> the leash decides -> receipt (trade.ts) ---
+  const trade = tradeFlow({ ...deps, kall, now: deps.now });
+
+  /** Kall's newest spot calls (up to 10), or three labelled samples when Kall doesn't answer. */
+  app.get("/v1/kol/feed", async () => trade.feed());
+
+  /** The exact trade a call would run, for 30 seconds. Sends nothing. */
+  app.post<{ Body: { callId?: unknown; text?: unknown; usd?: unknown } }>("/v1/trade/review", async (req, reply) => {
+    try {
+      return await trade.review(req.body ?? {});
+    } catch (e) {
+      if (e instanceof TradeError) return reply.code(e.status).send({ error: e.message, ...e.extra });
+      return reply.code(502).send({ error: `The review didn't come back: ${String((e as Error).message ?? e).slice(0, 200)}` });
+    }
+  });
+
+  /** Run a review once, through the Trading Agent. The leash decides; a repeat gets the same receipt. */
+  app.post<{ Body: { reviewId?: unknown } }>("/v1/trade/confirm", async (req, reply) => {
+    const { code, body } = await trade.confirm(req.body?.reviewId);
+    if (code === 200 && "status" in body) {
+      const client = String(req.headers["x-airkey-client"] ?? "unknown").slice(0, 20);
+      if (!("repeat" in body)) console.log(`${new Date().toISOString()} reviewed trade from ${client}: ${body.status}`);
+    }
+    return reply.code(code).send(body);
   });
 
   // --- GIFs (gifs.ts): KLIPY through this server, so its key never reaches the phone ---
