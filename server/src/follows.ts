@@ -392,7 +392,7 @@ export function followPoller(ctx: FollowCtx): FollowPoller {
     };
     const route = await ctx.route(text ?? `${side === "buy" ? "buying" : "selling"} $${call.asset}`, asCall, usd);
     if (route.status !== "available") {
-      const why = /Token check/.test(route.reason)
+      const why = /Token check|token we could verify/.test(route.reason)
         ? `${call.asset} isn't a token we could verify`
         : /short/.test(route.reason)
           ? `you hold no ${call.asset} to sell`

@@ -394,7 +394,7 @@ describe("POST /v1/trade/review", () => {
       [{ text: "good morning everyone" }, 422, /isn't a trade call/],
       [{ text: "$ETH long 10x, send it" }, 422, /perp call on ETH/],
       [{ text: "$SOL is weak, selling" }, 422, /doesn't short/],
-      [{ text: "$TOSHI2 to the moon, buying" }, 422, /Token check failed/],
+      [{ text: "$TOSHI2 to the moon, buying" }, 422, /isn.t a token we could verify/],
       [{ text: "$NEAR breakout, buying" }, 422, /buy NEAR/],
       [{ callId: "x-999" }, 404, /isn't in the feed/],
       [{ callId: "x-111", usd: 11 }, 400, /up to 10/],
