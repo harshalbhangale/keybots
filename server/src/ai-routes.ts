@@ -7,6 +7,7 @@ import type { FastifyInstance } from "fastify";
 import { ACT_ACTIONS, ACT_MAX, actPrompt, cleanAnswer, plainWords, type ActAction } from "./act.js";
 import { aiReaders, type Deps as CommandDeps } from "./agent.js";
 import type { AiConfig } from "./ai.js";
+import { attestations } from "./attest.js";
 import { AiUnavailable, answered, openEvents, streamChat } from "./ai-stream.js";
 import { rewriteVersions } from "./ai-rewrite.js";
 import { RecentAnswers, TRANSLATE_MAX, languageWord, translate, type TranslateResult } from "./ai-translate.js";
@@ -64,6 +65,27 @@ export function aiRoutes(app: FastifyInstance, deps: CommandDeps & AiRouteDeps):
     ai: readers().map((r) => r.provider),
     search: searchProvider(deps.searchEnv),
   }));
+
+  /**
+   * The last hardware attestation check of NEAR AI Cloud's model (attest.ts):
+   * which checks passed. Checked in the background; this never waits on one.
+   */
+  app.get("/v1/ai/attestation", async (_req, reply) => {
+    const near = readers().find((r) => r.provider === "near-ai-cloud");
+    if (!near) return reply.code(404).send({ error: "NEAR AI Cloud isn't set up on this server" });
+    attestations.refreshIfStale(near, net)?.catch(() => {});
+    return (
+      attestations.get(near.model) ?? {
+        status: "unavailable",
+        checkedAt: null,
+        model: near.model,
+        signingAddress: null,
+        gatewaySigningAddress: null,
+        checks: null,
+        detail: "Not checked yet: the first check is running",
+      }
+    );
+  });
 
   /**
    * The AI bar, streamed. Rewrite comes back as several versions, each sent

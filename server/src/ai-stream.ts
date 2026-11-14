@@ -7,6 +7,7 @@
 import { createHash } from "node:crypto";
 import type { FastifyReply } from "fastify";
 import { chatWithEvidence, checkSignature, type AiConfig, type AiEvidence, type ChatMessage } from "./ai.js";
+import { attestations } from "./attest.js";
 
 const sha256 = (b: Uint8Array | string) => createHash("sha256").update(b).digest("hex");
 
@@ -29,9 +30,10 @@ export interface Answered {
   provider: AiConfig["provider"];
   model: string;
   signature: AiEvidence["signature"]["status"];
+  attestation: AiEvidence["attestation"];
 }
 
-export const answered = (e: AiEvidence): Answered => ({ provider: e.provider, model: e.model, signature: e.signature.status });
+export const answered = (e: AiEvidence): Answered => ({ provider: e.provider, model: e.model, signature: e.signature.status, attestation: e.attestation });
 
 /** Lets the answer through and holds back a model's <think>…</think> working. */
 export class ThinkFilter {
@@ -138,6 +140,7 @@ export async function streamOne(messages: ChatMessage[], cfg: AiConfig, h: Strea
   };
   // Only NEAR AI Cloud signs its answers; OpenAI's stay "unavailable".
   if (near && chatId) evidence.signature = await checkSignature(chatId, cfg, sha256(body), hash.digest("hex"), fetchImpl);
+  if (near) Object.assign(evidence, attestations.evidenceFor(cfg.model, evidence.signature));
   return { content: content.trim(), evidence };
 }
 
