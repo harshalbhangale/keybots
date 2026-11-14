@@ -11,7 +11,9 @@
     "setup-swaps": "node setup-swaps.mjs",
     "setup-token-swaps": "node setup-token-swaps.mjs",
     "demo-reset": "node demo-reset.mjs",
-    "demo-runs": "node demo-runs.mjs"
+    "demo-runs": "node demo-runs.mjs",
+    "setup-mainnet": "node setup-mainnet.mjs",
+    "new-owner-key": "node new-owner-key.mjs"
   },
   "dependencies": {
     "near-api-js": "^7.5.3"
