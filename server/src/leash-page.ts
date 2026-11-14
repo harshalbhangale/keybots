@@ -58,6 +58,12 @@ export function publicLine(r: Receipt, cfg: Config): { at: string; agent: string
   };
 }
 
+/** The server's agents by name; an implicit (64-hex) account is one whose key OutLayer keeps. */
+function nameOf(cfg: Config, account: string): string {
+  const n = agentName(cfg, account);
+  return n === "Agent" && /^[0-9a-f]{64}$/.test(account) ? "OutLayer agent" : n;
+}
+
 function role(cfg: Config, account: string, tier: string): string {
   if (account === cfg.agents.trade) return "Swaps, from what the owner types";
   return tier === "untrusted" ? "Reads other people's messages" : "Acts on what the owner types";
@@ -90,13 +96,17 @@ export function renderLeash(opts: {
 
   let chain = `<p class="muted">Couldn't read the chain right now${opts.error ? `: ${esc(opts.error)}` : ""}. Try again in a moment.</p>`;
   if (state) {
-    const agents = state.agents
+    // The server's own agents first (Pay, Inbox, Trading), then the rest.
+    const order = [cfg.agents.trusted, cfg.agents.untrusted, cfg.agents.trade];
+    const rank = (a: string) => (order.includes(a) ? order.indexOf(a) : order.length);
+    const agents = [...state.agents]
+      .sort((a, b) => rank(a.account) - rank(b.account))
       .map(({ account, agent: a }) => {
         const spent = spentToday(a, now);
         const daily = BigInt(a.daily_cap);
         const pct = daily > 0n ? Number((spent * 100n) / daily) : 0;
         return `<tr>
-  <td><div class="name">${esc(agentName(cfg, account))}</div><div class="sub">${acct(account)}</div></td>
+  <td><div class="name">${esc(nameOf(cfg, account))}</div><div class="sub">${acct(account)}</div></td>
   <td>${esc(role(cfg, account, a.tier))}<div class="sub">${a.tier === "untrusted" ? "untrusted" : "trusted"}</div></td>
   <td class="num">${near(a.per_payment_cap)}</td>
   <td class="num">${near(spent)} <span class="muted">of</span> ${near(daily)}<div class="bar"><i style="width:${Math.min(100, pct)}%"></i></div></td>
@@ -115,8 +125,8 @@ export function renderLeash(opts: {
     chain = `
 <section class="status">
   <div><div class="k">Leash</div><div class="v">${acct(state.leash)}</div></div>
-  <div><div class="k">NEAR held</div><div class="v num">${near(state.available, 2, 2)}</div></div>
-  <div><div class="k">Stop everything</div><div class="v ${state.paused ? "on" : "off"}">${state.paused ? "On: every agent is stopped" : "Off"}</div></div>
+  <div><div class="k">NEAR held</div><div class="v big num">${near(state.available, 2, 2)}</div></div>
+  <div><div class="k">Stop everything</div><div class="v big ${state.paused ? "on" : "off"}">${state.paused ? "On: every agent is stopped" : "Off"}</div></div>
   <div><div class="k">Owner</div><div class="v">${acct(state.owner)}</div></div>
 </section>
 
@@ -172,10 +182,11 @@ export function renderLeash(opts: {
   .small { font-size:13px; }
   .sub { color:var(--muted); font-size:13px; margin-top:2px; overflow-wrap:anywhere; }
   .num { font-variant-numeric: tabular-nums; }
-  .status { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:32px; }
+  .status { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:32px; }
   .status > div { background:var(--card); padding:16px; }
   .k { font-size:12px; color:var(--muted); margin-bottom:4px; }
-  .v { font-size:17px; overflow-wrap:anywhere; }
+  .v { font-size:15px; overflow-wrap:anywhere; }
+  .v.big { font-size:22px; font-weight:600; }
   .v.off { color:var(--lime); }
   .v.on { color:var(--red); }
   table { width:100%; border-collapse:collapse; }
@@ -196,6 +207,7 @@ export function renderLeash(opts: {
   .rule { display:inline-block; width:34px; color:#5A5A57; font-size:12px; font-variant-numeric:tabular-nums; }
   .rules li { padding:8px 0; color:#C9C9C4; }
   footer { margin-top:48px; color:var(--muted); font-size:13px; }
+  @media (min-width:760px) { .status { grid-template-columns:1.7fr 1fr 1fr 1.5fr; } }
   @media (max-width:640px) {
     main { padding:32px 16px 48px; }
     .cols { grid-template-columns:1fr; gap:0; }
