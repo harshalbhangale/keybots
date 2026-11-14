@@ -23,6 +23,15 @@ export interface TgCall {
   url: string | null;
   asset: string;
   direction: "buy" | "sell";
+  /** A leveraged signal ("TAO LONG 10x") that Keybots reads as spot, with what it said. */
+  signal?: Signal;
+}
+
+/** What a leveraged signal said. Keybots never uses the leverage: it buys or sells spot. */
+export interface Signal {
+  leverage: string | null;
+  targets: string[];
+  stop: string | null;
 }
 
 export interface TelegramStatus {
@@ -75,11 +84,39 @@ export function tidyText(s: string): string {
  * Does this message read as a spot buy or sell call? Same fixed rules as the
  * the X feed: a ticker with a direction, not a perp, no contract address.
  */
-export function readAsCall(text: string): { asset: string; direction: "buy" | "sell" } | null {
-  const c = readCall(text);
-  if (!c.isCall || !c.asset || !c.direction || c.instrument !== "spot") return null;
+export function readAsCall(text: string): { asset: string; direction: "buy" | "sell"; signal?: Signal } | null {
   if (namesContract(text)) return null;
-  return { asset: c.asset, direction: c.direction === "bullish" ? "buy" : "sell" };
+  const c = readCall(text);
+  if (c.isCall && c.asset && c.direction && c.instrument === "spot") {
+    return { asset: c.asset, direction: c.direction === "bullish" ? "buy" : "sell" };
+  }
+  return readSignal(text);
+}
+
+const NOT_TICKERS = new Set(["LONG", "SHORT", "BUY", "SELL", "ENTER", "ENTRY", "TARGET", "TARGETS", "STOP", "SL", "TP", "USDT", "USD", "PERP", "CROSS", "ISOLATED", "MARKET", "LEVERAGE", "VIP", "SIGNAL", "NEW"]);
+const PRICE = /\d+(?:\.\d+)?/g;
+
+/**
+ * A signal-channel post: "TAO LONG 10x", "#BTC/USDT SHORT (20x)", "LONG $ETH".
+ * Read as spot: LONG is a buy, SHORT a sell, and the leverage, targets and stop
+ * are kept only to show. Fixed rules, never an AI.
+ */
+export function readSignal(text: string): { asset: string; direction: "buy" | "sell"; signal: Signal } | null {
+  const head = text.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 3).join(" ");
+  const tick = "[#$]?([A-Z][A-Z0-9]{1,9})(?:\\s*\\/\\s*USDT?|USDT|\\s*PERP)?";
+  const m =
+    new RegExp(`(?:^|\\s)${tick}\\s*[:\\-–]?\\s*\\b(LONG|SHORT)\\b`).exec(head) ??
+    new RegExp(`\\b(LONG|SHORT)\\b\\s*[:\\-–]?\\s*${tick}(?![a-z])`).exec(head);
+  if (!m) return null;
+  const [raw, side] = m[1] === "LONG" || m[1] === "SHORT" ? [m[2], m[1]] : [m[1], m[2]];
+  // "SOLUSDT" is SOL quoted in USDT.
+  const asset = raw && raw.length > 4 ? raw.replace(/(USDT|USDC|USD|PERP)$/, "") : raw;
+  if (!asset || NOT_TICKERS.has(asset)) return null;
+  const lev = /(?:^|[\s(\[x×])(\d{1,3})\s*[x×](?![a-z])/i.exec(head) ?? /[x×]\s*(\d{1,3})\b/i.exec(head);
+  const line = (word: RegExp) => text.split("\n").find((l) => word.test(l)) ?? "";
+  const targets = (line(/target|tp\b/i).match(PRICE) ?? []).slice(0, 6);
+  const stop = (line(/stop|\bsl\b/i).match(PRICE) ?? [])[0] ?? null;
+  return { asset, direction: side === "LONG" ? "buy" : "sell", signal: { leverage: lev ? `${lev[1]}x` : null, targets, stop } };
 }
 
 type Raw = Record<string, unknown>;
@@ -107,6 +144,7 @@ function fromJsonl(line: string): TgCall | null {
       url: typeof r.url === "string" && /^https:\/\/t\.me\//.test(r.url) ? r.url : null,
       asset,
       direction: dir,
+      ...(obj(r.signal) ? { signal: obj(r.signal) as unknown as Signal } : {}),
     };
   } catch {
     return null;
@@ -251,6 +289,7 @@ export function telegramSource(opts: {
       url: username && /^[A-Za-z0-9_]{4,}$/.test(username) ? `https://t.me/${username}/${m.message_id}` : null,
       asset: read.asset,
       direction: read.direction,
+      ...(read.signal ? { signal: read.signal } : {}),
     });
   }
 
