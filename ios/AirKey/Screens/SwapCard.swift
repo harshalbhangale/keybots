@@ -116,11 +116,11 @@ struct SwapCard: View {
     private func review(_ q: SwapQuote) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("\(q.amountIn) NEAR → \(q.amountOut) \(q.to)").font(.system(.title2, design: .rounded, weight: .semibold).monospacedDigit()).foregroundStyle(AK.bone)
-            line("You pay", "\(q.amountIn) NEAR from your AIRKEY balance")
+            line("You pay", "\(q.amountIn) NEAR from your Keybots balance")
             line("You get", "≈ \(q.amountOut) \(q.to)")
             line("At least", "\(q.minAmountOut) \(q.to), or it doesn't fill")
             line("Where", "Rhea pool #\(q.pool) · NEAR testnet")
-            line("Lands in", "your AIRKEY balance")
+            line("Lands in", "your Keybots balance")
             HStack(spacing: 8) {
                 Button { step = .idle } label: { Text("Back") }
                     .buttonStyle(BigButtonStyle(primary: false, height: 48))

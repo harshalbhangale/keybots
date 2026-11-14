@@ -158,7 +158,7 @@ struct API {
         do {
             (data, response) = try await URLSession.shared.data(for: r)
         } catch {
-            throw APIError(message: "Can't reach the AIRKEY server at \(base).")
+            throw APIError(message: "Can't reach the Keybots server at \(base).")
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
@@ -173,7 +173,7 @@ struct API {
         do {
             (data, response) = try await URLSession.shared.data(for: r)
         } catch {
-            throw APIError(message: "Can't reach the AIRKEY server at \(base).")
+            throw APIError(message: "Can't reach the Keybots server at \(base).")
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {

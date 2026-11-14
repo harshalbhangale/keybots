@@ -15,9 +15,9 @@ struct SettingsView: View {
             Form {
                 Section("Keyboard") {
                     VStack(alignment: .leading, spacing: 8) {
-                        step(1, "Open Settings › Apps › AIRKEY › Keyboards")
-                        step(2, "Turn on AIRKEY")
-                        step(3, "Turn on Allow Full Access, so AIRKEY can pay and swap for you")
+                        step(1, "Open Settings › Apps › Keybots › Keyboards")
+                        step(2, "Turn on Keybots")
+                        step(3, "Turn on Allow Full Access, so Keybots can pay and swap for you")
                     }
                     .padding(.vertical, 4)
                     Button("Open Settings") {
@@ -46,7 +46,7 @@ struct SettingsView: View {
                         SecureField("Optional", text: $token).font(AK.mono).multilineTextAlignment(.trailing)
                     }
                 } header: {
-                    Text("AIRKEY server")
+                    Text("Keybots server")
                 } footer: {
                     Text("The keyboard uses the same server.")
                 }
@@ -124,7 +124,7 @@ private struct VaultSection: View {
         } header: {
             Text("Vault")
         } footer: {
-            Text("In any chat, tap the wallet in the AIRKEY bar to put one of these in your message. Only add things that are safe to share; keys and recovery phrases are turned away.")
+            Text("In any chat, tap the wallet in the Keybots bar to put one of these in your message. Only add things that are safe to share; keys and recovery phrases are turned away.")
         }
         .alert("Add to the vault", isPresented: $adding) {
             TextField("Name, like ETH or UPI", text: $label)

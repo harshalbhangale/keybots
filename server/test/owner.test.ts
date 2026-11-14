@@ -18,11 +18,11 @@ function build(signer: string, receiver: string, method: string) {
 describe("owner relay", () => {
   it("refuses anything that isn't one owner call to the leash", async () => {
     const other = build("o.testnet", "someone-else.testnet", "approve");
-    await expect(owner.submit(other.tx, other.signature)).rejects.toThrow("isn't an AIRKEY owner action");
+    await expect(owner.submit(other.tx, other.signature)).rejects.toThrow("isn't an Keybots owner action");
     const notOwner = build("mallory.testnet", cfg.leash, "approve");
-    await expect(owner.submit(notOwner.tx, notOwner.signature)).rejects.toThrow("isn't an AIRKEY owner action");
+    await expect(owner.submit(notOwner.tx, notOwner.signature)).rejects.toThrow("isn't an Keybots owner action");
     const wrongMethod = build("o.testnet", cfg.leash, "withdraw");
-    await expect(owner.submit(wrongMethod.tx, wrongMethod.signature)).rejects.toThrow("isn't an AIRKEY owner action");
+    await expect(owner.submit(wrongMethod.tx, wrongMethod.signature)).rejects.toThrow("isn't an Keybots owner action");
   });
 
   it("refuses a signature that doesn't match the key in the transaction", async () => {

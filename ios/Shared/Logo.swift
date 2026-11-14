@@ -23,12 +23,12 @@ struct Wordmark: View {
     var body: some View {
         HStack(spacing: size * 0.45) {
             KeycapMark(size: size * 1.25)
-            Text("AIRKEY")
+            Text("KEYBOTS")
                 .font(.system(size: size, weight: .heavy).width(.expanded))
                 .tracking(size * 0.06)
                 .foregroundStyle(AK.bone)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("AIRKEY")
+        .accessibilityLabel("KEYBOTS")
     }
 }

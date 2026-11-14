@@ -157,7 +157,7 @@ final class KeyView: UIControl {
     }
 
     /// Grey keys on the web: shift, delete, 123, emoji, globe, return.
-    /// The space bar keeps the letter colour and wears the "AIRKEY" watermark.
+    /// The space bar keeps the letter colour and wears the "KEYBOTS" watermark.
     private var isFunctionKey: Bool {
         switch spec.kind {
         case .char, .space: return false

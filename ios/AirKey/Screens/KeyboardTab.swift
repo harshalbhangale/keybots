@@ -11,9 +11,9 @@ struct KeyboardTab: View {
             Masthead(eyebrow: "", title: "Keyboard")
             Card(spacing: 14) {
                 CardTitle(text: "Set up", icon: "keyboard")
-                NumberedStep(n: 1, text: "Turn on AIRKEY in Settings › Apps › AIRKEY › Keyboards.")
+                NumberedStep(n: 1, text: "Turn on Keybots in Settings › Apps › Keybots › Keyboards.")
                 NumberedStep(n: 2, text: "Turn on Allow Full Access, so it can pay and swap.")
-                NumberedStep(n: 3, text: "In any chat, hold the globe key and pick AIRKEY.")
+                NumberedStep(n: 3, text: "In any chat, hold the globe key and pick Keybots.")
                 Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 } label: {

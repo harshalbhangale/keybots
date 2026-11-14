@@ -310,11 +310,11 @@ export function quoter(deps: QuoteDeps) {
         const missing = net ? [from, to].filter((s) => !isNear(s) && !net.routes[s]) : [];
         reason =
           deps.cfg.network === "mainnet"
-            ? `AIRKEY swaps from NEAR. This is NEAR Intents' live quote for ${from}; nothing would be sent.`
+            ? `Keybots swaps from NEAR. This is NEAR Intents' live quote for ${from}; nothing would be sent.`
             : `Testnet has no ${missing.join(" or ") || to}. This is NEAR Intents' live mainnet quote; nothing would be sent.`;
       } else if (valueUsdN !== null && valueUsdN > deps.cfg.mainnetUsdCap) {
         executable = false;
-        reason = `On mainnet AIRKEY swaps at most $${deps.cfg.mainnetUsdCap}; this is about $${usd(valueUsdN)}.`;
+        reason = `On mainnet Keybots swaps at most $${deps.cfg.mainnetUsdCap}; this is about $${usd(valueUsdN)}.`;
       }
     }
 

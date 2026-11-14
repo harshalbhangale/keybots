@@ -653,7 +653,7 @@ struct ReceiptCard: View {
 
     private var subtitle: String {
         if receipt.unknown { return "We couldn't confirm this trade. It won't be sent again." }
-        return receipt.byContract ? "Checked by your Spend Limits" : "Stopped by the AIRKEY server"
+        return receipt.byContract ? "Checked by your Spend Limits" : "Stopped by the Keybots server"
     }
 
     private func link(_ title: String, _ url: URL, _ p: MoneyPalette) -> some View {

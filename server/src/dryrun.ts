@@ -201,7 +201,7 @@ async function swapValue(
       quotes.push(["NEAR Intents", `no quote right now (${(e as Error).message.slice(0, 80)})`]);
     }
   }
-  if (!route && !deps.intents) return { error: `AIRKEY can't swap NEAR into ${action.to} here` };
+  if (!route && !deps.intents) return { error: `Keybots can't swap NEAR into ${action.to} here` };
   return { value, venue, quotes };
 }
 

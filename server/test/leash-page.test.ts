@@ -47,7 +47,7 @@ describe("GET /leash", () => {
     // /limits is the new address for the same page.
     const limits = await app.inject({ method: "GET", url: "/limits" });
     expect(limits.statusCode).toBe(200);
-    expect(limits.body).toContain("<title>AIRKEY Spend Limits</title>");
+    expect(limits.body).toContain("<title>Keybots Spend Limits</title>");
     expect(page.headers["content-type"]).toMatch(/text\/html/);
     expect((await app.inject({ method: "GET", url: "/leash?x=1" })).statusCode).toBe(200);
     expect((await app.inject({ method: "GET", url: "/v1/state" })).statusCode).toBe(401);
@@ -58,7 +58,7 @@ describe("GET /leash", () => {
   it("shows the leash from chain and plain lines for the receipts, with nothing private", async () => {
     const { app } = setup();
     const html = (await app.inject({ method: "GET", url: "/leash" })).body;
-    expect(html).toContain("AIRKEY: AI agents in your keyboard.");
+    expect(html).toContain("Keybots: AI agents in your keyboard.");
     expect(html).toContain("github.com/harshalbhangale/near-hack");
     expect(html).toContain("1.20");
     expect(html).toContain("Pay Agent");

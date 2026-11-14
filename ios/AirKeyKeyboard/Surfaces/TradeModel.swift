@@ -155,7 +155,7 @@ final class TradeModel {
 
     /// The first sentence of a server message, to fit a button: "Testnet has no SOL".
     private static func short(_ message: String) -> String {
-        if message.hasPrefix("Can't reach") { return "Can't reach your AIRKEY server" }
+        if message.hasPrefix("Can't reach") { return "Can't reach your Keybots server" }
         let first = message.split(separator: ".", maxSplits: 1).first.map(String.init) ?? message
         let colon = first.split(separator: ":", maxSplits: 1).first.map(String.init) ?? first
         return String((first.count <= 34 ? first : colon).prefix(40))

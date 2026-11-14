@@ -110,7 +110,7 @@ struct WalletView: View {
                 SectionTitle("Recent")
                 Card {
                     Text(model.loading ? "Loading…" : "Nothing yet").font(.headline).foregroundStyle(AK.bone)
-                    Text("Use the AIRKEY keyboard in any chat, or tap the bar below to pay, swap, or check a message.")
+                    Text("Use the Keybots keyboard in any chat, or tap the bar below to pay, swap, or check a message.")
                         .font(.subheadline).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
                 }
             } else {

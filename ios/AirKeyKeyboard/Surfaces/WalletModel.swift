@@ -155,7 +155,7 @@ enum MoneyText {
         let message = plain(message)
         let word = signal.word.capitalized
         let says = signal == .allow || message.lowercased().hasPrefix(word.lowercased().trimmingCharacters(in: .punctuationCharacters))
-        var line = says ? "AIRKEY · \(message)" : "AIRKEY · \(word): \(message)"
+        var line = says ? "Keybots · \(message)" : "Keybots · \(word): \(message)"
         if let tx { line += " \(tx.url)" }
         return line
     }

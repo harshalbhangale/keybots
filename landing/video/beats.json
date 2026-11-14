@@ -1,7 +1,7 @@
 {
   "intro": {
     "seconds": 2,
-    "title": "AIRKEY",
+    "title": "Keybots",
     "line": "Your keyboard is the AI. NEAR is the leash."
   },
   "end": {
@@ -18,7 +18,7 @@
     { "id": "trade", "start": 54, "end": 80, "tone": "paid", "title": "A call becomes a trade", "sub": "Swapped on Rhea (testnet), priced by NEAR Intents, inside the trading limits." },
     { "id": "approve", "start": 80, "end": 104, "tone": "pending", "title": "Someone new? Approve.", "sub": "It waits on chain until Face ID says yes." },
     { "id": "rewrite", "start": 104, "end": 116, "tone": "paid", "title": "Private AI in the keyboard", "sub": "Hold space, Rewrite. Private AI on NEAR AI Cloud (NEAR's TEE): signature and hardware attestation verified." },
-    { "id": "follow", "start": 116, "end": 130, "tone": "paid", "title": "Follow a trader on X", "sub": "Their call comes in, AIRKEY trades $1 for you, inside your limits." },
+    { "id": "follow", "start": 116, "end": 130, "tone": "paid", "title": "Follow a trader on X", "sub": "Their call comes in, Keybots trades $1 for you, inside your limits." },
     { "id": "kill", "start": 130, "end": 148, "tone": "blocked", "title": "One kill switch", "sub": "Every agent stops. The contract enforces it." }
   ]
 }

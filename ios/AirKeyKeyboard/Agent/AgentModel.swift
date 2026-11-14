@@ -318,11 +318,11 @@ final class AgentModel {
 
     /// What's on the clipboard: someone else's words. Goes to the untrusted Inbox Agent.
     func runPasted() {
-        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY to check what you copied."; return }
+        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for Keybots to check what you copied."; return }
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             // A keyboard can't show iOS's "Allow Paste" prompt, so a refused read looks like an empty clipboard.
             notice = UIPasteboard.general.hasStrings
-                ? "To check copied text: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                ? "To check copied text: Settings › Apps › Keybots › Paste from Other Apps › Allow."
                 : "Copy a message first, then tap Check."
             return
         }
@@ -386,7 +386,7 @@ final class AgentModel {
     }
 
     private func send(_ text: String, source: String, clearing: String? = nil, callId: String? = nil) {
-        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for AIRKEY so it can pay and swap for you."; return }
+        guard host?.agentHasFullAccess == true else { notice = "Turn on Allow Full Access for Keybots so it can pay and swap for you."; return }
         notice = nil
         result = nil
         vaultOpen = false
@@ -410,7 +410,7 @@ final class AgentModel {
     func insertReceipt() {
         guard let r = result else { return }
         // The plain line says what happened ("Paid 0.2 NEAR to harshal", "Blocked: …").
-        var line = "AIRKEY · \(Plain.line(r))"
+        var line = "Keybots · \(Plain.line(r))"
         if let tx = r.tx { line += " \(tx.url)" }
         result = nil
         ownInsert = line
@@ -450,7 +450,7 @@ final class AgentModel {
             }
         }
         guard !vaultItems.isEmpty else {
-            notice = "Add addresses in the AIRKEY app, in Settings › Vault."
+            notice = "Add addresses in the Keybots app, in Settings › Vault."
             return
         }
         notice = nil

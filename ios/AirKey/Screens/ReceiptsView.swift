@@ -80,7 +80,7 @@ struct ReceiptDetail: View {
         switch r.outcome {
         case "quoted": return "A price only. Nothing was sent."
         case "watching": return "Waiting for the price. Nothing sent yet."
-        default: return "Stopped by the AIRKEY server. Nothing reached Spend Limits."
+        default: return "Stopped by the Keybots server. Nothing reached Spend Limits."
         }
     }
 
@@ -226,8 +226,8 @@ struct ReceiptDetail: View {
             if let x = sw.executed {
                 Hairline()
                 KeyValue(key: "Swapped on", value: x.venue)
-                KeyValue(key: "Paid", value: "\(x.amountIn) NEAR from your AIRKEY balance")
-                if let out = x.amountOut { KeyValue(key: "Got", value: "\(out) \(x.symbolOut), in your AIRKEY balance", color: AK.accentText) }
+                KeyValue(key: "Paid", value: "\(x.amountIn) NEAR from your Keybots balance")
+                if let out = x.amountOut { KeyValue(key: "Got", value: "\(out) \(x.symbolOut), in your Keybots balance", color: AK.accentText) }
                 KeyValue(key: "Result", value: x.ok ? "Done on NEAR" : "Not filled, nothing lost", color: x.ok ? AK.accentText : AK.amberText)
             } else if let q = sw.quote {
                 Hairline()

@@ -32,7 +32,7 @@ struct WalletView: View {
             .scrollEdgeEffectHidden(true, for: .all)
             Group {
                 if !actions.fullAccess() {
-                    MoneyEmpty(text: "Turn on Allow Full Access for AIRKEY so the wallet can reach your server.", palette: p)
+                    MoneyEmpty(text: "Turn on Allow Full Access for Keybots so the wallet can reach your server.", palette: p)
                 } else if let s = model.state {
                     switch tab {
                     case .balance: balance(s, p)
@@ -113,12 +113,12 @@ struct WalletView: View {
                     status(icon: s.paused ? "hand.raised.fill" : "checkmark.shield",
                            tint: s.paused ? p.bad : p.soft,
                            title: s.paused ? "All agents are stopped" : "Agents can spend within limits",
-                           detail: "Change in the AIRKEY app", p)
+                           detail: "Change in the Keybots app", p)
                     status(icon: s.pending.isEmpty ? "tray" : "hourglass",
                            tint: s.pending.isEmpty ? p.soft : p.warn,
                            title: s.pending.isEmpty ? "Nothing waiting for you"
                                : "\(s.pending.count) payment\(s.pending.count == 1 ? "" : "s") waiting for you",
-                           detail: s.pending.isEmpty ? nil : "Open the AIRKEY app to approve", p)
+                           detail: s.pending.isEmpty ? nil : "Open the Keybots app to approve", p)
                 }
             }
             .padding(.bottom, 8)
@@ -453,7 +453,7 @@ struct WalletView: View {
     private func addresses(_ p: MoneyPalette) -> some View {
         let items = Vault.all
         if items.isEmpty {
-            MoneyEmpty(text: "Add addresses in the AIRKEY app, in Settings › Vault.", palette: p)
+            MoneyEmpty(text: "Add addresses in the Keybots app, in Settings › Vault.", palette: p)
         } else {
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 0) {

@@ -468,7 +468,7 @@ describe("plain summary", () => {
     const blocked = (rule: string, reason: string) => plainSummary({ ...base, decision: { status: "blocked", rule, reason, pending_id: null } });
     expect(blocked("R1", "Kill switch is on")).toBe("Blocked: you turned on Stop everything");
     expect(blocked("R5", "Over the daily cap of 2 NEAR (1.9 NEAR spent today)")).toBe("Blocked: over your 2 NEAR daily limit");
-    expect(blocked("R0", "The leash doesn't hold enough NEAR")).toBe("Blocked: not enough NEAR in your AIRKEY balance");
+    expect(blocked("R0", "The leash doesn't hold enough NEAR")).toBe("Blocked: not enough NEAR in your Keybots balance");
   });
 
   it("says why a payment waits for you", async () => {

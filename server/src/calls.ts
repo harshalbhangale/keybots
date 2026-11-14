@@ -131,14 +131,14 @@ export async function routeCall(
 ): Promise<CallRoute> {
   if (!call.isCall || !call.asset) return { status: "unavailable", reason: "This isn't a trade call." };
   if (contract.test(text)) {
-    return { status: "unavailable", reason: "The post names a contract address. Check the token by hand; AIRKEY won't trade a ticker in its place." };
+    return { status: "unavailable", reason: "The post names a contract address. Check the token by hand; Keybots won't trade a ticker in its place." };
   }
   if (call.instrument === "perp") {
-    return { status: "unavailable", reason: `A ${call.leverage ? `${call.leverage}x ` : ""}perp call on ${call.asset}. AIRKEY trades spot through Spend Limits, so there's no stand-in.` };
+    return { status: "unavailable", reason: `A ${call.leverage ? `${call.leverage}x ` : ""}perp call on ${call.asset}. Keybots trades spot through Spend Limits, so there's no stand-in.` };
   }
   if (!call.direction) return { status: "unavailable", reason: `The post names ${call.asset} but doesn't say buy or sell.` };
   if (call.direction === "bearish" && call.asset !== "NEAR") {
-    return { status: "unavailable", reason: `Bearish on ${call.asset}. AIRKEY doesn't short, and Spend Limits holds no ${call.asset} to sell.` };
+    return { status: "unavailable", reason: `Bearish on ${call.asset}. Keybots doesn't short, and Spend Limits holds no ${call.asset} to sell.` };
   }
   if (!deps.intents) return { status: "unavailable", reason: "Token checks aren't set up on this server." };
 

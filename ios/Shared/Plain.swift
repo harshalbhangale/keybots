@@ -86,7 +86,7 @@ enum Plain {
             case "R5":
                 return near(in: r.decision?.reason).map { "Blocked: over your \($0) NEAR daily limit" } ?? "Blocked: over your daily limit"
             case "R6": return "Blocked: \(name) isn't on your allowed list"
-            case "R0": return "Blocked: not enough NEAR in your AIRKEY balance"
+            case "R0": return "Blocked: not enough NEAR in your Keybots balance"
             case .some: return nil
             case nil: break
             }
@@ -170,7 +170,7 @@ enum Plain {
     static func pending(_ p: LeashState.Pending) -> String {
         switch p.rule {
         case "R6": "It came from a message you copied, and \(name(p.receiver)) isn't on your allowed list."
-        case "R7": "AIRKEY doesn't know this account yet, so it asks you first."
+        case "R7": "Keybots doesn't know this account yet, so it asks you first."
         default: scrub(p.reason)
         }
     }
@@ -182,7 +182,7 @@ enum Plain {
         let fromInbox = p.agent.hasPrefix("inbox.")
         switch p.rule {
         case "R6": return ("Not on your allowed list", copied)
-        case "R7": return ("A new account, so AIRKEY asks you first", fromInbox ? copied : nil)
+        case "R7": return ("A new account, so Keybots asks you first", fromInbox ? copied : nil)
         default:
             var s = scrub(p.reason)
             var from: String? = fromInbox ? copied : nil
@@ -229,7 +229,7 @@ enum Plain {
     /// contract word reaches a person. Nil for an id this app doesn't know.
     static func rule(_ id: String?) -> String? {
         switch id {
-        case "R0": "Not enough NEAR in your AIRKEY balance"
+        case "R0": "Not enough NEAR in your Keybots balance"
         case "R1": "Stop everything was on"
         case "R3": "The receiver is on your blocked list"
         case "R4": "Over the limit for one payment"
@@ -282,10 +282,10 @@ enum Plain {
         (#"(The|the) leash contract"#, "Spend Limits"),
         (#"(The|the) leash"#, "Spend Limits"),
         (#"(your|Your) leash"#, "Spend Limits"),
-        (#"(The|the) (Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
-        (#"(Inbox|Trading|Payment|Copy) Agent"#, "AIRKEY"),
-        (#"The agent asked you to approve this one"#, "AIRKEY asks you first for this one"),
-        (#"reported by [a-z0-9_-]+(\.[a-z0-9_-]+)+"#, "reported by AIRKEY"),
+        (#"(The|the) (Inbox|Trading|Payment|Copy) Agent"#, "KEYBOTS"),
+        (#"(Inbox|Trading|Payment|Copy) Agent"#, "KEYBOTS"),
+        (#"The agent asked you to approve this one"#, "Keybots asks you first for this one"),
+        (#"reported by [a-z0-9_-]+(\.[a-z0-9_-]+)+"#, "reported by Keybots"),
         (#"allowlist"#, "allowed list"),
         (#"blocklist"#, "blocked list"),
         (#"\bcaps\b"#, "limits"),

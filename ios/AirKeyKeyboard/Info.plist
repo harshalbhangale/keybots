@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>AIRKEY</string>
+	<string>Keybots</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -48,6 +48,6 @@
 		<string>$(PRODUCT_MODULE_NAME).KeyboardViewController</string>
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>AIRKEY shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.</string>
+	<string>Keybots shows your screenshots from the last two days in the keyboard's clipboard so you can paste them. They stay on your phone.</string>
 </dict>
 </plist>

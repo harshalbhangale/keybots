@@ -217,7 +217,7 @@ describe("a quote for the trade panel", () => {
     }).quote({ from: "NEAR", to: "SOL", amount: "0.05" });
     expect(small).toMatchObject({ route: { venue: "NEAR Intents" }, executable: true, minReceived: "0.00099" });
     const big = await make({ network: "mainnet" }).quote({ from: "NEAR", to: "SOL", amount: "0.5" });
-    expect(big).toMatchObject({ executable: false, reason: "On mainnet AIRKEY swaps at most $0.15; this is about $1.00." });
+    expect(big).toMatchObject({ executable: false, reason: "On mainnet Keybots swaps at most $0.15; this is about $1.00." });
   });
 
   it("names the network and says where the token lands", async () => {

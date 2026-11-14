@@ -129,7 +129,7 @@ struct AssistClient {
                     continuation.finish(throwing: Failure(message: "The AI took too long. Try again."))
                 } catch let e as URLError {
                     _ = e
-                    continuation.finish(throwing: Failure(message: "Can't reach the AIRKEY server."))
+                    continuation.finish(throwing: Failure(message: "Can't reach the Keybots server."))
                 } catch {
                     continuation.finish(throwing: error)
                 }

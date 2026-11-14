@@ -144,7 +144,7 @@ describe("POST /v1/trade/review", () => {
     const r = res.json();
     expect(r.expiresAt).toBe(new Date(NOW + 30_000).toISOString());
     expect(r.call).toEqual({ author: { handle: "solcaller", name: null }, postedAt: new Date(NOW - 600_000).toISOString(), url: "https://x.com/solcaller/status/111", text: "$SOL looks strong, buying here", asset: "SOL", direction: "buy" });
-    expect(r.reading).toEqual({ by: "rules", detail: "Read on the AIRKEY server by fixed rules, not by AI" });
+    expect(r.reading).toEqual({ by: "rules", detail: "Read on the Keybots server by fixed rules, not by AI" });
     expect(r.trade).toEqual({
       network: "NEAR testnet",
       venue: "Rhea, pool 1103",
@@ -181,7 +181,7 @@ describe("POST /v1/trade/review", () => {
   it("says when the contract will refuse it", async () => {
     expect((await setup().review({ callId: "kall-111", usd: 3 })).json().limits).toMatchObject({ within: false, willRefuse: "Over the 1 NEAR per-trade limit: the contract will refuse it." });
     expect((await setup({ spent: 1800n * 10n ** 21n }).review({ callId: "kall-111" })).json().limits.willRefuse).toBe("Over the 2 NEAR daily limit (1.8 NEAR spent today): the contract will refuse it.");
-    expect((await setup({ paused: true }).review({ callId: "kall-111" })).json().limits).toMatchObject({ stopped: true, willRefuse: "Stop everything is on: AIRKEY won't send it.", refusedBy: "server" });
+    expect((await setup({ paused: true }).review({ callId: "kall-111" })).json().limits).toMatchObject({ stopped: true, willRefuse: "Stop everything is on: Keybots won't send it.", refusedBy: "server" });
     expect((await setup().review({ callId: "kall-111", usd: 3 })).json().limits.refusedBy).toBe("contract");
   });
 

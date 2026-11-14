@@ -165,8 +165,8 @@ export function renderLeash(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AIRKEY Spend Limits</title>
-<meta name="description" content="AIRKEY Spend Limits on NEAR ${esc(cfg.network)}, live from chain.">
+<title>Keybots Spend Limits</title>
+<meta name="description" content="Keybots Spend Limits on NEAR ${esc(cfg.network)}, live from chain.">
 <style>
   :root { --bg:#0B0B0C; --fg:#EDEDE8; --muted:#8A8A85; --line:#1F1F21; --card:#121214; --lime:#C6F45B; --red:#FF6B5E; --amber:#F2C14E; }
   * { box-sizing: border-box; }
@@ -217,7 +217,7 @@ export function renderLeash(opts: {
 </head>
 <body>
 <main>
-<h1>AIRKEY: AI agents in your keyboard. <em>NEAR holds the limits.</em></h1>
+<h1>Keybots: AI agents in your keyboard. <em>NEAR holds the limits.</em></h1>
 <p class="lede">Agents that move money from your keyboard can only do it through a NEAR contract that holds the money and checks every payment against the owner's rules: limits, a blocked list, an allowed list, and the owner's approval for anything new.</p>
 <p class="small muted">Live from NEAR ${esc(cfg.network)} · <a href="${esc(cfg.explorer)}/address/${esc(cfg.leash)}">${esc(cfg.leash)} on nearblocks</a> · <a href="${REPO}">Code on GitHub</a></p>
 ${chain}

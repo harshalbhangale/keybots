@@ -151,7 +151,7 @@ struct FollowingView: View {
     private func paste() {
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             model.notice = UIPasteboard.general.hasStrings
-                ? "To paste: Settings › Apps › AIRKEY › Paste from Other Apps › Allow."
+                ? "To paste: Settings › Apps › Keybots › Paste from Other Apps › Allow."
                 : "Copy someone's @handle or profile link first, or pick one here."
             Haptics.warning()
             return
