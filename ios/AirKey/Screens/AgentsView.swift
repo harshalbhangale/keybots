@@ -15,6 +15,8 @@ struct AgentCard: View {
     private var limits: String { "Up to \(Fmt.near(a.per_payment_cap)) \(unit)" }
     private var used: String { "\(Fmt.near(a.spent_today, unit: false)) of \(Fmt.near(a.daily_cap))" }
     private var trusted: Bool { a.tier == "trusted" }
+    /// What its key may call on Spend Limits: the Trading Agent also swaps.
+    private var mayCall: String { name == Plain.trades ? "pay and swap" : "pay" }
 
     static func mark(_ outcome: String) -> String {
         switch outcome {
@@ -58,6 +60,9 @@ struct AgentCard: View {
                 Text(entry.account).monospaced().lineLimit(1).truncationMode(.middle)
             }
             .font(.footnote.monospacedDigit()).foregroundStyle(AK.muted)
+            Label("Its key can only call \(mayCall) on Spend Limits. It holds no money, only gas for its calls.", systemImage: "key")
+                .font(.caption).foregroundStyle(AK.faint)
+                .fixedSize(horizontal: false, vertical: true)
             if let last {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Image(systemName: Self.mark(last.outcome)).font(.caption.weight(.semibold))
