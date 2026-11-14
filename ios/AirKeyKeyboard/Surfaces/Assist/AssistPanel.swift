@@ -200,6 +200,7 @@ struct AssistView: View {
                     }
                 }
             }
+            .scrollEdgeEffectHidden(true)
             .onChange(of: model.task) { _, t in
                 withAnimation(Glass.reduceMotion ? nil : .snappy(duration: 0.2)) { proxy.scrollTo(t, anchor: .center) }
             }
@@ -225,6 +226,7 @@ struct AssistView: View {
                 }
             }
         }
+        .scrollEdgeEffectHidden(true)
         .frame(height: 24)
         .animation(Glass.reduceMotion ? nil : .snappy(duration: 0.2), value: model.languages)
     }
@@ -261,10 +263,15 @@ struct AssistView: View {
                         case .search: search(p)
                         default: writing(p, size: 17)
                         }
+                        if model.phase == .finished, let note = model.note, !note.isEmpty {
+                            Text(note).font(.caption).foregroundStyle(p.soft)
+                        }
                         Color.clear.frame(height: 1).id("end")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
                 }
+                .scrollEdgeEffectHidden(true)
                 .onChange(of: model.shown) { _, _ in
                     guard model.task != .search else { return }
                     proxy.scrollTo("end", anchor: .bottom)
@@ -358,7 +365,13 @@ struct AssistView: View {
 
     private func search(_ p: AssistPalette) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !model.shown.isEmpty || model.writing { writing(p, size: 15) }
+            if model.phase == .working, model.shown.isEmpty, model.links.isEmpty {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small).tint(p.soft)
+                    Text("Searching the web").font(.subheadline).foregroundStyle(p.soft)
+                }
+                .padding(.top, 2)
+            } else if !model.shown.isEmpty || model.writing { writing(p, size: 15) }
             ForEach(model.links) { l in
                 HStack(alignment: .top, spacing: 8) {
                     VStack(alignment: .leading, spacing: 1) {
