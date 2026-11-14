@@ -11,22 +11,26 @@ struct AgentCard: View {
     private var name: String { Fmt.agentName(account: entry.account) }
     private var unit: String { name == Plain.trades ? "a trade" : "a payment" }
     private var limits: String {
-        "Up to \(Fmt.near(a.per_payment_cap)) \(unit), \(Fmt.near(a.daily_cap, unit: false)) a day"
+        "Up to \(Fmt.near(a.per_payment_cap)) \(unit), \(Fmt.near(a.daily_cap, unit: false)) a day" + (trusted ? "" : ". Asks you first for anyone not allowed.")
     }
     private var trusted: Bool { a.tier == "trusted" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(name).font(.body.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1)
+                Text(name).font(.body.weight(.semibold)).foregroundStyle(AK.bone).lineLimit(1).minimumScaleFactor(0.85)
                 if paused {
                     Pill(text: "Stopped", color: AK.redText)
-                } else if !trusted {
-                    Pill(text: "Asks you first", color: AK.amberText)
                 }
-                Spacer(minLength: 0)
+                Spacer(minLength: 8)
+                Text("\(Fmt.near(a.spent_today, unit: false)) spent today")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(AK.bone)
+                    .lineLimit(1)
+                    .layoutPriority(1)
             }
-            Text("\(limits) · \(Fmt.near(a.spent_today, unit: false)) spent today").font(.subheadline.monospacedDigit()).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+            Text(limits).font(.subheadline.monospacedDigit()).foregroundStyle(AK.muted).fixedSize(horizontal: false, vertical: true)
+                .padding(.top, -4)
             SpendBar(share: Fmt.share(a.spent_today, of: a.daily_cap), color: paused ? AK.faint : AK.accent)
         }
         .padding(16)
