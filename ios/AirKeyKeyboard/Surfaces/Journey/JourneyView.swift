@@ -571,7 +571,7 @@ struct ReceiptCard: View {
     }
 
     private var decidedBy: String {
-        if receipt.unknown { return "NEAR didn't answer in time" }
+        if receipt.unknown { return "It will never be sent twice" }
         return receipt.byContract ? "Decided by Spend Limits on NEAR" : "Stopped by the AIRKEY server"
     }
 
