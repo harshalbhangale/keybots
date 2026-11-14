@@ -165,7 +165,7 @@ final class JourneyModel {
                     note = nil
                     withAnimation(.snappy(duration: 0.2)) { phase = .expired }
                 case .gone:
-                    note = "The server no longer has this trade. Check Wallet or nearblocks before trading again."
+                    note = "The server no longer has this trade. Check Wallet or the NEAR explorer before trading again."
                 }
             } catch {
                 note = "Still can't reach the AIRKEY server."
