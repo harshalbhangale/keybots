@@ -36,4 +36,4 @@ Links: https://main.d35cbsqaz6y6pb.amplifyapp.com · https://github.com/harshalb
 
 - [ ] The repo is public.
 - [ ] The demo video is uploaded and linked.
-- [ ] The Android button on the site points at a Keybots build (it points at the Kall Markets APK as a placeholder right now).
+- [ ] The Android button on the site points at a Keybots build (the button was removed: there is no Android build yet).

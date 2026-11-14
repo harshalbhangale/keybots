@@ -164,7 +164,7 @@ struct JourneyView: View {
                            asset: r.call.asset, direction: r.call.direction,
                            hits: post?.hits, misses: post?.misses,
                            reading: r.reading.isEmpty ? nil : r.reading, sample: false,
-                           source: post?.source ?? "kall", palette: p, actions: actions, review: nil)
+                           source: post?.source ?? "x", palette: p, actions: actions, review: nil)
             .transition(.opacity)
     }
 

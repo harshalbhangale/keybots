@@ -4,7 +4,7 @@
 
 **Tagline:** Your AI. Your keys. Your rules.
 
-> This is the team's product plan: the full vision. What is built today, with proof, is in the [README](../README.md). Keybots builds on pre-hackathon code from Glyf (the keyboard core) and Kall Markets (haptics, hold to confirm, app design); the README lists exactly what came from each.
+> This is the team's product plan: the full vision. What is built today, with proof, is in the [README](../README.md). Keybots builds on pre-hackathon code from Glyf (the keyboard core) and the author's earlier trading keyboard (haptics, hold to confirm, app design); the README lists exactly what came from each.
 
 ## 1. The vision
 
@@ -52,7 +52,7 @@ The old repository or internal code identifiers can remain unchanged temporarily
 
 - Background: deep ink black.
 - Primary text: warm bone white.
-- Accent: lime (`#C6F25A`), the Kall Markets colour. (First built in mint green; changed on 12 Nov.)
+- Accent: lime (`#C6F25A`), Keybots' colour. (First built in mint green; changed on 12 Nov.)
 - Warning: amber.
 - Blocked: red.
 - Typography: modern, clean and confident.
@@ -412,13 +412,13 @@ Redesign:
 
 The keyboard should be the most polished part of the entire product.
 
-## 9. Kall Markets as a reference
+## 9. The earlier trading keyboard as a reference
 
-Use patterns from Kall Markets, the project built at ETHGlobal Mumbai.
+Use patterns from the author's earlier trading keyboard, built at ETHGlobal Mumbai.
 
 Do not copy the product. Reuse useful design and interaction principles.
 
-| Kall Markets | Keybots |
+| Earlier keyboard | Keybots |
 |---|---|
 | Token verification | Payee and token verification |
 | Copy a call and trade | Copy a message and execute safely |
@@ -426,7 +426,7 @@ Do not copy the product. Reuse useful design and interaction principles.
 | On-chain proof | NEAR explorer proof |
 | Mobile-first experience | Keyboard-first experience |
 
-The strongest lesson from Kall Markets is that the product should demonstrate actual transactions and verifiable outcomes, not just a polished interface.
+The strongest lesson from the earlier keyboard is that the product should demonstrate actual transactions and verifiable outcomes, not just a polished interface.
 
 ## 10. The two-minute demo
 

@@ -50,7 +50,7 @@ struct FollowingSection: View {
         }
     }
 
-    /// Type a handle, or pick a caller Kall tracks.
+    /// Type a handle, or pick a caller Keybots tracks.
     private var add: some View {
         Card(padding: 16, spacing: 12) {
             HStack(spacing: 10) {

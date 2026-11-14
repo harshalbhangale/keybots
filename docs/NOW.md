@@ -9,7 +9,7 @@ Updated 14 Nov 2026, 05:35 UTC. Checked on the simulator against the hosted serv
 - [x] Swap NEAR → USDC/USDT, and sell USDC/USDT back, on testnet (live contract upgraded; 38 contract tests)
 - [x] Orders: limit, stop-loss, take-profit
 - [x] A copied crypto call becomes a trade chip: "Buy $1 of SOL", real token, live price, within your limits (0.7–0.9 s); it goes away when you start typing
-- [x] Wallet like Kall, and a Calls section, in the keyboard
+- [x] Wallet, and a Calls section, in the keyboard
 - [x] Hold space for AI, all of Glyf's: rewrite (five versions), reply, translate, tone, Ask, live translate, search, My glyfs. Private on NEAR AI Cloud (Qwen3-VL 30B in NEAR's TEE, signature checked): rewrite in 1–2 s
 - [x] Copied money text never goes to an AI action
 - [x] Paste warning: a pasted address that isn't yours or a contact's gets "Check every character" (checked on screen)
@@ -17,7 +17,7 @@ Updated 14 Nov 2026, 05:35 UTC. Checked on the simulator against the hosted serv
 - [x] Plain words on every screen ("Blocked: drain.near is on your blocked list"; the tab is Limits)
 - [x] Haptic scheme (needs your feel-check on the phone)
 - [x] Server hosted with HTTPS (docs/HOSTING.md): the phone works on any network
-- [x] Follow people on X: Following in the keyboard's Calls and the app's Wallet, records from Kall, rules per person (dollars per call and per day, buy only, sure calls only, stop after 3 misses), hold to trade their latest call, Traded for you. One live auto-trade on testnet: @CryptoKaleo's ETH call → 0.295 NEAR for 0.6197 USDC (5MyPgFPD…). Auto-trading is off on the server until you turn it on
+- [x] Follow people on X: Following in the keyboard's Calls and the app's Wallet, records on X, rules per person (dollars per call and per day, buy only, sure calls only, stop after 3 misses), hold to trade their latest call, Traded for you. One live auto-trade on testnet: @CryptoKaleo's ETH call → 0.295 NEAR for 0.6197 USDC (5MyPgFPD…). Auto-trading is off on the server until you turn it on
 - [x] 212 server tests, 38 contract tests
 
 ## Not done

@@ -14,7 +14,7 @@ git clone https://github.com/harshalbhangale/near-hack && cd near-hack/server &&
 
 | Do | See |
 |---|---|
-| `npm run try -- --call` | The newest call from Kall's feed, reviewed as the keyboard shows it: author, link, the post, what you'd pay and get on Rhea (testnet), the minimum after 1% slippage, where the funds sit, the stand-in if the post names a coin testnet doesn't have, and the Trading Agent's limits read live from the contract. **Dry: nothing is sent.** |
+| `npm run try -- --call` | The newest call from the X feed, reviewed as the keyboard shows it: author, link, the post, what you'd pay and get on Rhea (testnet), the minimum after 1% slippage, where the funds sit, the stand-in if the post names a coin testnet doesn't have, and the Trading Agent's limits read live from the contract. **Dry: nothing is sent.** |
 | `npm run try -- "pay harshal 0.2 for dinner"` | Would pay: within the Pay Agent's 0.5 NEAR per-payment limit, read from chain. |
 | `npm run try -- "pay drain 5" --pasted` | Would be blocked: drain is on the contract's blocked list. |
 | `npm run try -- "pay vendor 0.4 for the logo" --pasted` | Would wait for the owner's Face ID: the untrusted Inbox Agent can only pay allowed accounts. |
@@ -26,7 +26,7 @@ git clone https://github.com/harshalbhangale/near-hack && cd near-hack/server &&
 
 | Part | Real | Simulated or limited |
 |---|---|---|
-| KOL calls | Kall's feed (calls Kall tracks from the people it follows) | Not every post on X. If Kall doesn't answer, three posts labelled **Sample post** are shown instead. |
+| KOL calls | The X feed (calls Keybots tracks from people on X) | Not every post on X. If the X feed doesn't answer, three posts labelled **Sample post** are shown instead. |
 | Reading the call | Fixed rules on the server | No AI reads the call. |
 | The trade | A real Rhea swap on NEAR testnet, from the leash, through the Trading Agent | Testnet has no SOL/BTC/ETH: the trade swaps NEAR to USDC, and the review and receipt say so before and after. |
 | NEAR Intents | Token checks and prices | No testnet. Any Intents quote is labelled a dry mainnet quote: no funds move. |

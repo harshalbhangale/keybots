@@ -269,7 +269,7 @@ struct CallsView: View {
                         if feed.sample {
                             HStack(alignment: .top, spacing: 6) {
                                 Text("Sample posts").font(.caption.weight(.bold)).foregroundStyle(p.warn)
-                                Text(feed.note ?? "Kall's feed isn't reachable, so these are examples.")
+                                Text(feed.note ?? "The X feed isn't reachable, so these are examples.")
                                     .font(.caption).foregroundStyle(p.soft).fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                             }

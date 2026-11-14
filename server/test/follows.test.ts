@@ -6,7 +6,7 @@ import { buildApp, followsFor, type Deps } from "../src/app.js";
 import { runCommand } from "../src/agent.js";
 import { loadConfig } from "../src/config.js";
 import { fileFollows, memoryFollows, missesInRow, parseFollow, type FollowStore } from "../src/follows.js";
-import { fakeKall, kallClient, type KallCall } from "../src/kall.js";
+import { fakeXFeed, xFeedClient, type XCall } from "../src/xfeed.js";
 import type { Chain, Decision } from "../src/near.js";
 import { memoryStore } from "../src/receipts.js";
 import { RHEA } from "../src/rhea.js";
@@ -15,8 +15,8 @@ const NOW = Date.now();
 const sec = (ms: number) => Math.floor(ms / 1000);
 const HOUR = 3_600_000;
 
-/** A call Kall recorded, `ago` ms before now; open for a day. */
-const call = (postId: string, ago: number, more: Partial<KallCall> = {}): KallCall => ({
+/** A call the X feed recorded, `ago` ms before now; open for a day. */
+const call = (postId: string, ago: number, more: Partial<XCall> = {}): XCall => ({
   postId,
   asset: "ETH",
   direction: "up",
@@ -65,17 +65,17 @@ function fakeChain(perTrade = "1000000000000000000000000") {
 
 const baseCfg = { ...loadConfig({ AIRKEY_OWNER: "x.testnet" }), nearAi: { apiKey: "", model: "m", base: "b" }, aiFallback: "off" as const };
 
-/** A follow of @CryptoKaleo added an hour ago, Kall with `calls` for them, and the poller with the auto-trading switch set. */
-function setup(opts: { calls?: KallCall[]; autoTrade?: boolean; perTrade?: string; follows?: FollowStore } = {}) {
+/** A follow of @CryptoKaleo added an hour ago, the X feed with `calls` for them, and the poller with the auto-trading switch set. */
+function setup(opts: { calls?: XCall[]; autoTrade?: boolean; perTrade?: string; follows?: FollowStore } = {}) {
   const follows = opts.follows ?? memoryFollows();
-  const kall = fakeKall({
+  const xfeed = fakeXFeed({
     callers: [{ handle: "cryptokaleo", focus: "BTC and high-conviction alts", tracked: true, open: 1, settled: 4, hits: 1, medianBps: -120 }],
     calls: { cryptokaleo: opts.calls ?? [] },
   });
   const { chain, swaps } = fakeChain(opts.perTrade);
   const receipts = memoryStore();
-  const deps: Deps = { cfg: { ...baseCfg, autoTrade: opts.autoTrade ?? true }, chain, receipts, intents: intents as never, rhea: rhea as never, follows, kall };
-  return { deps, follows, kall, swaps, receipts, poller: followsFor(deps) };
+  const deps: Deps = { cfg: { ...baseCfg, autoTrade: opts.autoTrade ?? true }, chain, receipts, intents: intents as never, rhea: rhea as never, follows, xfeed };
+  return { deps, follows, xfeed, swaps, receipts, poller: followsFor(deps) };
 }
 const follow = (follows: FollowStore, rules = {}) => follows.upsert("@CryptoKaleo", rules, NOW - HOUR);
 
@@ -263,14 +263,14 @@ describe("/v1/follows and /v1/kols", () => {
     expect((await app.inject({ method: "POST", url: "/v1/follows/nobody/check", payload: {} })).statusCode).toBe(404);
   });
 
-  it("suggests Kall's tracked callers with their records", async () => {
+  it("suggests the X feed's tracked callers with their records", async () => {
     const s = setup();
     const r = (await buildApp(s.deps).inject({ method: "GET", url: "/v1/kols" })).json();
     expect(r).toEqual({ callers: [{ handle: "cryptokaleo", focus: "BTC and high-conviction alts", hits: 1, misses: 3, open: 1, avgReturnBps: -120 }] });
   });
 });
 
-describe("the follows store and the Kall client", () => {
+describe("the follows store and the the X feed client", () => {
   it("keeps follows and their trades on disk, and checks a follow body", () => {
     const dir = mkdtempSync(join(tmpdir(), "airkey-follows-"));
     try {
@@ -283,7 +283,7 @@ describe("the follows store and the Kall client", () => {
     expect(parseFollow({ handle: "sixteen_chars_xx" })).toHaveProperty("error");
   });
 
-  it("reads Kall's shapes, one call per post, and caches a minute", async () => {
+  it("reads the X feed's shapes, one call per post, and caches a minute", async () => {
     let asked = 0;
     const body = {
       calls: [
@@ -297,16 +297,16 @@ describe("the follows store and the Kall client", () => {
     };
     const fetcher = (async (url: string) => {
       asked++;
-      expect(url).toBe("https://kall.test/api/callers/cryptokaleo");
+      expect(url).toBe("https://xfeed.test/api/callers/cryptokaleo");
       return new Response(JSON.stringify(body));
     }) as unknown as typeof fetch;
-    const kall = kallClient("https://kall.test/", fetcher);
-    const calls = await kall.caller("CryptoKaleo");
+    const xfeed = xFeedClient("https://xfeed.test/", fetcher);
+    const calls = await xfeed.caller("CryptoKaleo");
     expect(calls).toEqual([
       { postId: "9", asset: "ETH", direction: "up", status: "miss", returnBps: -207, postedAt: 100, expiresAt: 200, text: null },
       { postId: "8", asset: "BTC", direction: "up", status: "hit", returnBps: 12, postedAt: 90, expiresAt: 190, text: null },
     ]);
-    await kall.caller("cryptokaleo");
+    await xfeed.caller("cryptokaleo");
     expect(asked).toBe(1);
   });
 });

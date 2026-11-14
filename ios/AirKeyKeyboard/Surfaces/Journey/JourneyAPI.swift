@@ -17,15 +17,15 @@ struct KolCall: Identifiable, Equatable {
     let direction: String
     let hits: Int?
     let misses: Int?
-    /// "kall" (an X post, via Kall), "telegram" (a group the bot is in) or "sample". A server that doesn't say is Kall.
-    var source: String = "kall"
+    /// "x" (an X post), "telegram" (a group the bot is in) or "sample". A server that doesn't say is X.
+    var source: String = "x"
 
     var sell: Bool { direction == "sell" }
     var telegram: Bool { source == "telegram" }
 }
 
 struct KolFeed: Equatable {
-    /// "kall", "telegram", "mixed" or "sample".
+    /// "x", "telegram", "mixed" or "sample".
     let source: String
     let note: String?
     let calls: [KolCall]
@@ -106,7 +106,7 @@ struct TradeReceipt: Equatable {
     let txURL: String?
     let postURL: String?
     let postAuthor: String?
-    /// "kall" or "telegram"; for Telegram, `postAuthor` is the group.
+    /// "x" or "telegram"; for Telegram, `postAuthor` is the group.
     var postSource: String? = nil
 
     var swapped: Bool { status == "swapped" }
@@ -132,7 +132,7 @@ struct JourneyAPI {
 
     func feed() async throws -> KolFeed {
         let j = try await send("GET", "/v1/kol/feed", nil).json
-        return KolFeed(source: J.str(j["source"]) ?? "kall", note: J.str(j["note"]),
+        return KolFeed(source: J.str(j["source"]) ?? "x", note: J.str(j["note"]),
                        calls: J.arr(j["calls"]).compactMap(Self.kolCall))
     }
 
@@ -199,7 +199,7 @@ struct JourneyAPI {
                        name: J.str(author["name"]), postedAt: J.date(d["postedAt"]), url: J.str(d["url"]),
                        text: J.str(d["text"]), asset: asset, direction: J.str(d["direction"]) ?? "buy",
                        hits: J.int(record["hits"]), misses: J.int(record["misses"]),
-                       source: ["kall", "telegram", "sample"].contains(J.str(d["source"]) ?? "") ? J.str(d["source"])! : "kall")
+                       source: ["x", "telegram", "sample"].contains(J.str(d["source"]) ?? "") ? J.str(d["source"])! : "x")
     }
 
     static func review(_ j: [String: Any]) -> TradeReview? {

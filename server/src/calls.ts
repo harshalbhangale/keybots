@@ -1,5 +1,5 @@
 // A crypto call someone else posted ("$NEAR breakout, loading up 🚀"),
-// copied into the keyboard. Read with fixed rules, no model (Kall Markets'
+// copied into the keyboard. Read with fixed rules, no model (Keybots'
 // heuristic classifier, ported for NEAR), then turned into one small trade
 // the owner can hold to run: never run by itself, token checked on NEAR
 // Intents, and sized under the Trading Agent's caps as the leash has them.

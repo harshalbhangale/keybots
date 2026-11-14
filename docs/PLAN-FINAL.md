@@ -42,13 +42,13 @@ A phone keyboard where AI agents can pay and trade for you, but only inside limi
 ## 4. Features today
 
 - **Keyboard:** normal typing, swipe, autocorrect, emoji, clipboard, GIFs; hold P/S/C/V for actions; hold space for the AI panel; the agent strip (pay, warnings on pasted addresses).
-- **Calls:** posts from X (via Kall) and Telegram (your bot's group) → Review trade → hold → receipt.
+- **Calls:** posts from X and Telegram (your bot's group) → Review trade → hold → receipt.
 - **App:** Wallet, Spend Limits (agents, limits, Stop everything, approvals, lists), Activity, Following.
 - **Public:** the live contract page `/limits`, a keyless `npm run try`.
 
 ## 5. What Glyf does better (from its screenshots; ideas only, no code or assets copied)
 
-1. **One clear "connected" page**: partners as big cards with On/Live. → We should show NEAR Intents, Rhea, NEAR AI Cloud, Kall (X), Telegram the same way.
+1. **One clear "connected" page**: partners as big cards with On/Live. → We should show NEAR Intents, Rhea, NEAR AI Cloud, X, Telegram the same way.
 2. **One big number**: "You pay 25 / You get 0.011214", token + chain pills. → Our review card is close; make the numbers bigger.
 3. **One chip in the strip** for what you typed ("DCA $20 of ETH monthly · Set"). → Ours exists; keep it to one chip, no extra lines.
 4. **A confirmation in the Dynamic Island** ("Placed"). → Nice, but not before the freeze.
@@ -57,7 +57,7 @@ A phone keyboard where AI agents can pay and trade for you, but only inside limi
 ## 6. X and Telegram: the architecture
 
 ```
- X (people Kall tracks) ──Kall API──┐
+ X (people Keybots tracks) ──X feed──┐
                                     ├──▶ server: read by fixed rules (spot buy/sell only;
  Telegram group ──your bot──────────┘       no perps, no contract addresses) ──▶ /v1/kol/feed
                                                                                      │
@@ -78,12 +78,12 @@ Status as of 14 Nov, ~12:50 UTC.
 | 2 | **App: agent cards**: what each acts on, limits, NEAR account, today's spend, last action | **Done**, on the phone |
 | 3 | **App: Connected page**: Spend Limits, Rhea, NEAR Intents, NEAR AI Cloud, X, Telegram, each checked live (`/v1/connected`) | **Done**, deployed, all 6 live |
 | 4 | **NEAR Intents on the review**: "Checked by NEAR Intents" row; server line like "BTC is a listed token at $67,147 · NEAR $3.33, so $1.00 is 0.3003 NEAR" | **Done**, deployed |
-| 4b | **No Kall anywhere people see**: cards, server notes, Connected, README, docs, landing say X / Keybots | To do |
+| 4b | **One name everywhere**: cards, server notes, Connected, README, docs and landing say X and Keybots | **Done** |
 | 4c | **Mainnet**: Spend Limits Lite deployed (section 8); Testnet / Mainnet switch in the app | Contract **live on mainnet**; server and app switch to do |
 | 5 | **Telegram live check**: add @kbgdbgjd_bot to a group, post "$NEAR buying here", the card appears | Needs you |
 | 6 | **Short clips for the README** (5–10 s each) | To do |
 | 7 | **Screenshots**, app and keyboard, light and dark | To do |
-| 8 | **README rewrite** (main's version still says "leash" and Kall) | To do |
+| 8 | **README rewrite** (main's version still says "leash") | To do |
 | 9 | **Video**: Social agent replaces the fake Telegram scene | To do |
 | 10 | **Push to GitHub** | **Ongoing**: main and ux-glass pushed after every task |
 | 11 | **Mainnet swap** (needs your yes) | Waiting |

@@ -1,6 +1,6 @@
 import { buildApp, followsFor } from "./app.js";
 import { fileFollows } from "./follows.js";
-import { kallClient } from "./kall.js";
+import { xFeedClient } from "./xfeed.js";
 import { loadConfig } from "./config.js";
 import { nearChain } from "./near.js";
 import { outlayerChain } from "./outlayer.js";
@@ -35,7 +35,7 @@ const deps = {
   calls: fileCalls(cfg.dataDir), // the calls book: calls.jsonl
   vault: fileVault(cfg.dataDir), // vault.json: what the app saves for the keyboard
   follows: fileFollows(cfg.dataDir), // follows.json and follow-trades.jsonl
-  kall: kallClient(cfg.kallApi),
+  xfeed: xFeedClient(cfg.xFeedApi),
 };
 // Telegram: only with a bot token (TELEGRAM_BOT_TOKEN or keys/telegram.token). Read-only.
 const telegram = telegramSource({ token: cfg.telegram.token, chatIds: cfg.telegram.chatIds, dataDir: cfg.dataDir });
@@ -62,7 +62,7 @@ setInterval(async () => {
     looking = false;
   }
 }, WATCH_MS).unref();
-// The KOLs the owner follows: their new calls on Kall, every minute. Only
+// The KOLs the owner follows: their new calls on the X feed, every minute. Only
 // trades with AIRKEY_AUTO_TRADE=on; off, it records what it would have done.
 const FOLLOW_MS = Number(process.env.AIRKEY_FOLLOW_MS ?? 60_000);
 let following = false;

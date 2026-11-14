@@ -2,7 +2,6 @@ export const REPO = "https://github.com/harshalbhangale/near-hack";
 export const LEASH = "https://testnet.nearblocks.io/address/leash.airkey-harshal.testnet";
 export const E2E = `${REPO}/blob/main/docs/evidence/testnet-e2e.md`;
 // Placeholder until the Keybots Android build is uploaded: swap this one URL for the Keybots APK on S3.
-export const APK_URL = "https://kall-markets-downloads-308324916322.s3.ap-south-1.amazonaws.com/apps/kall-keyboard.apk";
 
 export function GitHub({ size = 22 }: { size?: number }) {
   return (
@@ -39,7 +38,7 @@ export function Play({ size = 22 }: { size?: number }) {
   );
 }
 
-/** The Keybots logo: a lime keycap with the NEAR mark as its legend (public/logo.svg). */
+/** The Keybots logo: a lime keycap with the NEAR mark as its legend (public/logo.png). */
 /** The Keybots lockup: the mono key on a dark tile, then the wordmark with a lime LED. */
 export function Lockup({ small = false }: { small?: boolean }) {
   return (
@@ -55,22 +54,15 @@ export function Lockup({ small = false }: { small?: boolean }) {
 }
 
 export function Mark({ size = 28 }: { size?: number }) {
-  return <img src="/logo.svg" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
+  return <img src="/logo.png" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
 }
 
-/** Android download, App Store and Google Play (soon), GitHub. */
+/** GitHub, App Store and Google Play (soon). */
 export function Downloads() {
   return (
     <div className="stores-wrap">
       <div className="stores">
-        <a className="store primary" href={APK_URL} download>
-          <Android />
-          <span className="store-lines">
-            <small>Download today</small>
-            <b>Android APK</b>
-          </span>
-        </a>
-        <a className="store" href={REPO} target="_blank" rel="noreferrer">
+        <a className="store primary" href={REPO} target="_blank" rel="noreferrer">
           <GitHub />
           <span className="store-lines">
             <small>Open source, live on</small>
