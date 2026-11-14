@@ -164,7 +164,7 @@ struct JourneyView: View {
                            asset: r.call.asset, direction: r.call.direction,
                            hits: post?.hits, misses: post?.misses,
                            reading: r.reading.isEmpty ? nil : r.reading, sample: false,
-                           palette: p, actions: actions, review: nil)
+                           source: post?.source ?? "kall", palette: p, actions: actions, review: nil)
             .transition(.opacity)
     }
 
@@ -177,7 +177,9 @@ struct JourneyView: View {
             withAnimation(.snappy(duration: 0.22)) { sourceOpen.toggle() }
         } label: {
             HStack(spacing: 5) {
-                Text(handle.map { "@\($0)" } ?? "Copied post").fontWeight(.semibold).foregroundStyle(p.text).lineLimit(1)
+                // A Telegram call says which group it came from; an X call, the handle.
+                Text(post?.telegram == true ? (post?.name ?? handle ?? "Telegram") : (handle.map { "@\($0)" } ?? "Copied post"))
+                    .fontWeight(.semibold).foregroundStyle(p.text).lineLimit(1)
                 if let ago = J.ago(post?.postedAt ?? r.call.postedAt) {
                     Text("· \(ago)").lineLimit(1).fixedSize()
                 }
@@ -195,7 +197,7 @@ struct JourneyView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("From \(handle.map { "@\($0)" } ?? "a copied post"), \(r.call.direction) \(r.call.asset)")
+        .accessibilityLabel("From \(post?.telegram == true ? (post?.name ?? "Telegram") : (handle.map { "@\($0)" } ?? "a copied post")), \(r.call.direction) \(r.call.asset)")
         .accessibilityHint(sourceOpen ? "Hides the post" : "Shows the post")
     }
 
@@ -583,7 +585,28 @@ struct ReceiptCard: View {
             if r.swapped, let pay = r.pay {
                 InfoRow(label: "Paid", value: pay.line, palette: p)
             }
-            if let post = r.postURL, let url = URL(string: post) {
+            if r.postSource == "telegram", let group = r.postAuthor {
+                // A Telegram call: the group, and its t.me link when the group is public.
+                if let post = r.postURL, let url = URL(string: post) {
+                    Button {
+                        Haptics.letter()
+                        actions.open(url) { ok in if !ok { UIPasteboard.general.string = url.absoluteString } }
+                    } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("From").foregroundStyle(p.soft)
+                            Spacer(minLength: 8)
+                            Text(group).fontWeight(.medium).foregroundStyle(p.text).lineLimit(1)
+                            Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(p.soft)
+                        }
+                        .font(.footnote)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Open the message from \(group) in Telegram")
+                } else {
+                    InfoRow(label: "From", value: group, palette: p)
+                }
+            } else if let post = r.postURL, let url = URL(string: post) {
                 Button {
                     Haptics.letter()
                     actions.open(url) { ok in if !ok { UIPasteboard.general.string = url.absoluteString } }
