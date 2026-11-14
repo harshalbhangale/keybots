@@ -86,20 +86,3 @@ xcodebuild -project AirKey.xcodeproj -scheme AirKey -sdk iphonesimulator \
 ```
 
 Testnet setup, hosting and the demo: [scripts/](scripts), [docs/HOSTING.md](docs/HOSTING.md), [docs/DEMO.md](docs/DEMO.md). Never commit keys or `.env` files.
-
-## Limits
-
-- The full contract runs on testnet; mainnet has only Spend Limits Lite, without swaps. Don't use this to protect real money.
-- The server picks the lane from whether the text was typed or pasted; the contract can't prove where text came from.
-- NEAR AI Cloud's checks depend on live services; if it's unavailable the server can fall back to OpenAI, which isn't private or signed. Every receipt names the provider that answered.
-- Checked mostly on the simulator against testnet. No Android build.
-
-## Credits
-
-- The keyboard's typing core in `ios/AirKeyKeyboard/` (layout, design, typing engine and dictionary, and some panels) is adapted from [Glyf](https://github.com/The-x-35/glyf), which is not covered by this repository's MIT license.
-- Haptics, hold-to-confirm and parts of the visual design come from Kall Markets.
-- Built with Claude Code; product decisions by Harshal Bhangale.
-
-## License
-
-[MIT](LICENSE), except third-party code noted under Credits.

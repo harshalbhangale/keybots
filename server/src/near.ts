@@ -97,7 +97,9 @@ const EMPTY_CODE = "11111111111111111111111111111111";
  * Limits Lite on mainnet: 0.06 NEAR an agent) sets AIRKEY_PAY_TGAS=20. A Lite
  * payment really uses about 4.4 TGas.
  */
-const PAY_GAS = BigInt(Number(process.env.AIRKEY_PAY_TGAS ?? 50) || 50) * 1_000_000_000_000n;
+// Mainnet runs Spend Limits Lite, whose agents hold little gas: 20 there unless set.
+const PAY_TGAS_DEFAULT = process.env.NEAR_NETWORK === "mainnet" ? 20 : 50;
+const PAY_GAS = BigInt(Number(process.env.AIRKEY_PAY_TGAS ?? PAY_TGAS_DEFAULT) || PAY_TGAS_DEFAULT) * 1_000_000_000_000n;
 
 function readKey(cfg: Config, accountId: string): string {
   const envName = `AIRKEY_KEY_${accountId.split(".")[0].toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
