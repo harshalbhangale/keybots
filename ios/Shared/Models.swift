@@ -634,6 +634,11 @@ struct AutoTrade: Decodable, Identifiable, Equatable, Sendable {
         }
     }
     var date: Date? { ISO8601DateFormatter.withFraction.date(from: at) ?? ISO8601DateFormatter().date(from: at) }
+    /// "just now" for the last minute (or a server clock a little ahead), else "4 min. ago".
+    var ago: String {
+        guard let date else { return "" }
+        return date.timeIntervalSinceNow > -60 ? "just now" : Fmt.time(date)
+    }
 }
 
 struct FollowsList: Decodable {
