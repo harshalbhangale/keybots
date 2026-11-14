@@ -85,7 +85,7 @@ One line each. `[x]` done, `[ ]` to do, `[~]` in progress. Deadline: 14 Nov 2026
 
 ## Ship
 - [x] Sole owner Harshal; history rewritten, no other names
-- [x] README lists the pre-hackathon code from Kall Markets and the author's earlier keyboard as baseline
+- [x] README lists the pre-hackathon Kall Markets code as the baseline
 - [x] README with live transactions and test counts
 - [ ] README as "do X, see Y" with real tx links for the demo path
 - [ ] Fresh clone of main builds, tests green

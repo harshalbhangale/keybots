@@ -90,14 +90,13 @@ The repo's first commit is `d8f0da1` on 2026-11-12, inside the hackathon window 
 | Android build | None. The landing page's Android button was removed: there is no Keybots Android build |
 | Repo public | Harshal, before 2026-11-14T23:59Z |
 | Demo video and the X post | Harshal records (`docs/DEMO.md`, about 2:28) and posts; the post must say it was built at NEAR HACKATHON and tag @NEARProtocol and #NEARHackathon |
-| Disclosure of Kall Markets code (section 7) | Harshal confirms the facts before sending; see the note there |
+| Disclosure of the Kall Markets baseline (section 7) | Harshal confirms the facts before sending; see the note there |
 
 ## 7. Disclosures
 
-- **NOTE FOR HARSHAL, decide before sending:** Kall Markets is entered separately in this hackathon by someone else, and its license is "all rights reserved". Code from Kall Markets is in this repo (the keyboard core below, and parts adapted in the window: letter-hold actions, vault shorthand, the GIF tab; the AI panel was rewritten from scratch). Either keep this disclosure exact, or replace that code before submitting.
-- **Pre-hackathon code (baseline).** Two of Harshal's earlier projects predate this hackathon, and parts of them were adapted into this repo (README › Disclosures):
-  - **Kall Markets** (an AI keyboard): the keyboard core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and dictionary, `Surfaces/`, `Resources/`).
-  - **The author's earlier trading keyboard**, built before the hackathon: keyboard haptics, the hold-to-confirm pattern, and the app's visual design.
+- **NOTE FOR HARSHAL, decide before sending:** The keyboard core in this repo comes from Kall Markets, Harshal's project from ETHGlobal Mumbai (https://github.com/harshalbhangale/Kall-Markets). Parts adapted in the window: letter-hold actions, vault shorthand, the GIF tab. The AI panel was rewritten from scratch. Confirm this before sending.
+- **Pre-hackathon code (baseline).** Kall Markets predates this hackathon, and parts of it were adapted into this repo (README › How we got here):
+  - **Kall Markets** (a trading keyboard): the keyboard core in `ios/AirKeyKeyboard/` (`Layout/`, `Design/`, `Engine/` with the typing engine and dictionary, `Surfaces/`, `Resources/`), plus keyboard haptics, the hold-to-confirm pattern, and the app's visual design.
 
   Everything NEAR-specific was built in the window: the Spend Limits contract, the agents and their keys, the server, Rhea and NEAR Intents swaps, the keyboard's agent strip (`ios/AirKeyKeyboard/Agent/`), the money-safe typing rules, the vault, and the app.
 - No `pre-hackathon` / `hackathon-submission` tags exist: the repo itself started in the window, so all commits are window work, and the baseline above is code that was copied in and named in the README.

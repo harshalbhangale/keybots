@@ -4,7 +4,7 @@
 
 **Tagline:** Your AI. Your keys. Your rules.
 
-> This is the team's product plan: the full vision. What is built today, with proof, is in the [README](../README.md). Keybots builds on pre-hackathon code from Kall Markets (the keyboard core) and the author's earlier trading keyboard (haptics, hold to confirm, app design); the README lists exactly what came from each.
+> This is the team's product plan: the full vision. What is built today, with proof, is in the [README](../README.md). Keybots builds on pre-hackathon code from Kall Markets (the keyboard core, plus haptics, hold to confirm, and the app design); the README says what came from it.
 
 ## 1. The vision
 

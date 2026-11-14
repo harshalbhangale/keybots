@@ -10,7 +10,7 @@ Updated 14 Nov 2026, 05:35 UTC. Checked on the simulator against the hosted serv
 - [x] Orders: limit, stop-loss, take-profit
 - [x] A copied crypto call becomes a trade chip: "Buy $1 of SOL", real token, live price, within your limits (0.7–0.9 s); it goes away when you start typing
 - [x] Wallet, and a Calls section, in the keyboard
-- [x] Hold space for AI, all of Kall Markets': rewrite (five versions), reply, translate, tone, Ask, live translate, search, saved assistants. Private on NEAR AI Cloud (Qwen3-VL 30B in NEAR's TEE, signature checked): rewrite in 1–2 s
+- [x] Hold space for AI, the Kall Markets set: rewrite (five versions), reply, translate, tone, Ask, live translate, search, saved assistants. Private on NEAR AI Cloud (Qwen3-VL 30B in NEAR's TEE, signature checked): rewrite in 1–2 s
 - [x] Copied money text never goes to an AI action
 - [x] Paste warning: a pasted address that isn't yours or a contact's gets "Check every character" (checked on screen)
 - [x] Letter hold: hold P types "pay " and shows your contacts (checked on screen)
@@ -22,7 +22,7 @@ Updated 14 Nov 2026, 05:35 UTC. Checked on the simulator against the hosted serv
 
 ## Not done
 - [ ] Bracket, trailing and TWAP orders
-- [ ] Pay screen like Kall Markets'; GIFs, voice, calendar, temp mail, first-run tour
+- [ ] Pay screen like the one in Kall Markets; GIFs, voice, calendar, temp mail, first-run tour
 - [ ] Free Apple signing: the install expires in 7 days; contacts added in the app don't reach the keyboard (vault does, through the server)
 - [ ] Mainnet: written for you to do by hand (docs/MAINNET-STEPS.md); the leash runs on testnet only
 
