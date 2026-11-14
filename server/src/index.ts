@@ -13,6 +13,7 @@ import { checkOrders, fileOrders } from "./orders.js";
 import { runCommand } from "./agent.js";
 import { fileCalls } from "./calls.js";
 import { fileVault } from "./vault.js";
+import { attestations } from "./attest.js";
 
 // server/.env (gitignored) for keys and switches, when it's there.
 try {
@@ -74,9 +75,14 @@ setInterval(async () => {
 }, FOLLOW_MS).unref();
 // Keep the slow lookups warm so the keyboard's chips come up fast: NEAR
 // Intents' token list (refetched before it goes stale) and the leash's state.
+// NEAR AI Cloud's hardware attestation, checked again once ten minutes old.
 const warm = () => {
   deps.intents.tokens(4 * 60_000).catch(() => {});
   deps.chain.state().catch(() => {});
+  attestations
+    .refreshIfStale(cfg.nearAi)
+    ?.then((r) => console.log(`NEAR AI attestation for ${r.model}: ${r.status} · ${r.detail}`))
+    .catch(() => {});
 };
 warm();
 setInterval(warm, 60_000).unref();
