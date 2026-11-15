@@ -73,6 +73,8 @@ All three spend from the one Spend Limits balance and hold only enough NEAR for 
 
 Plug Keybots into **Claude Code**, or any agent that speaks MCP. It gets a wallet it can *ask*, never one it can drain.
 
+<img src="docs/diagrams/keybots-3-any-agent.png" alt="Any agent, on a leash: Claude Code calls the Keybots MCP server, the Keybots server tags it and sends it through the copied-messages lane, the Inbox Agent asks Spend Limits, which pays, refuses, or holds it for you; you approve from the keyboard panel, the app opens, Face ID signs approve(), and Spend Limits pays on chain" />
+
 ```bash
 claude mcp add keybots -e KEYBOTS_TOKEN=<your token> -- node tools/keybots-mcp/index.mjs
 ```

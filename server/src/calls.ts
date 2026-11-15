@@ -58,7 +58,13 @@ const bearish =
 // "go long", "short ETH", perps, futures, leverage or "10x" mean a perp position;
 // "long term" / "short-term" / "long run" describe a horizon, not a position.
 const perpCue =
-  /\b(long|short|longs|shorts|longing|shorting)\b(?![\s-]*(?:term|run)\b)|\b(perps?|perpetuals?|futures|leverage[d]?)\b|\b([1-9][0-9]{0,2})\s?x\b/i;
+  /\b(long|short|longs|shorts|longing|shorting)\b(?![\s-]*(?:term|run)\b)|\b(perps?|perpetuals?|futures|leverage[d]?)\b/i;
+/**
+ * "10x" as leverage, not as a price target: "100x incoming", "a 10x", "will 50x",
+ * "10x gem" are hype about the price, not a position size.
+ */
+const leverageX =
+  /(?<!\b(?:a|an|another|will|could|can|easy|easily|next|potential|to)\s)\b([1-9][0-9]{0,2})\s?x\b(?!\s*(?:incoming|coming|gains?|soon|potential|play|gem|from here|easy|minimum|at least|or more|\+|!))/i;
 const tradeCue = /\b(trade|trading|entry|target|tp|sl|stop loss)\b/i;
 // A contract address in the post: the ticker can't be trusted to mean that token.
 const contract = /\b0x[a-fA-F0-9]{40}\b|\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/;
@@ -88,8 +94,8 @@ export function readCall(text: string): Call {
   const up = bullish.test(directional);
   const down = bearish.test(directional);
   const direction = up && !down ? "bullish" : down && !up ? "bearish" : null;
-  const perp = perpCue.test(text);
-  const lev = text.match(/\b([1-9][0-9]{0,2})\s?x\b/i);
+  const lev = text.match(leverageX);
+  const perp = perpCue.test(text) || Boolean(lev);
   const isCall = Boolean(asset && (direction || tradeCue.test(text)));
   const explicitVerb = /\b(buy(?:ing)?|bought|sell(?:ing)?|sold|long(?:ing)?|short(?:ing)?)\b/i.test(text);
   const confidence: Call["confidence"] = !isCall ? "low" : up && down ? "low" : explicitVerb && /\$[A-Za-z]/.test(text) ? "high" : "medium";
@@ -133,6 +139,13 @@ export async function routeCall(
   if (contract.test(text)) {
     return { status: "unavailable", reason: "The post names a contract address. Check the token by hand; Keybots won't trade a ticker in its place." };
   }
+  // An unknown token says so first, whatever the post claims about leverage.
+  if (call.instrument === "perp" && deps.intents) {
+    const known = await deps.intents.pick(call.asset, "to").catch(() => null);
+    if (known && (!known.verified || !known.token)) {
+      return { status: "unavailable", reason: `Blocked: ${call.asset} isn't a token we could verify.` };
+    }
+  }
   if (call.instrument === "perp") {
     return { status: "unavailable", reason: `A ${call.leverage ? `${call.leverage}x ` : ""}perp call on ${call.asset}. Keybots trades spot through Spend Limits, so there's no stand-in.` };
   }
@@ -143,7 +156,7 @@ export async function routeCall(
   if (!deps.intents) return { status: "unavailable", reason: "Token checks aren't set up on this server." };
 
   const check = await deps.intents.pick(call.asset, "to");
-  if (!check.verified || !check.token) return { status: "unavailable", reason: `Token check failed: ${check.reason}.` };
+  if (!check.verified || !check.token) return { status: "unavailable", reason: `Blocked: ${call.asset} isn't a token we could verify.` };
 
   const asset = call.asset.toLowerCase();
   const size = deps.usd ?? CALL_SIZE_USD;

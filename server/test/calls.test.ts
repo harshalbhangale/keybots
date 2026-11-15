@@ -39,6 +39,10 @@ describe("reading a copied call", () => {
 
   it("knows a perp call and a horizon apart", () => {
     expect(readCall("long $NEAR 10x")).toMatchObject({ instrument: "perp", leverage: 10 });
+    // A price target isn't leverage.
+    expect(readCall("🚀 $NEARMOON just launched on NEAR, 100x incoming!! Aping in now")).toMatchObject({ instrument: "spot", leverage: null });
+    expect(readCall("$SOL could be a 10x from here, buying")).toMatchObject({ instrument: "spot" });
+    expect(readCall("$ETH 20x long")).toMatchObject({ instrument: "perp", leverage: 20 });
     expect(readCall("$NEAR is bullish long term")).toMatchObject({ instrument: "spot", direction: "bullish" });
   });
 });
@@ -95,7 +99,7 @@ describe("routing a call", () => {
   it("gives no route rather than a stand-in", async () => {
     const cases: [string, RegExp][] = [
       ["long $NEAR 10x", /perp call/],
-      ["$FAKECOIN to the moon 🚀", /Token check failed/],
+      ["$FAKECOIN to the moon 🚀", /isn.t a token we could verify/],
       ["$AURORA is weak, dumping", /doesn't short/],
       ["$NEAR entry here", /doesn't say buy or sell/],
       ["$NEAR 🚀 0x1234567890abcdef1234567890abcdef12345678", /contract address/],
