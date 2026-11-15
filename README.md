@@ -23,7 +23,7 @@ The agents never hold your money. It sits in **Spend Limits**, a NEAR contract, 
 
 ## Why we built it
 
-Illia Polosukhin keeps making the same point: once AI stops answering questions and starts acting for you, private inference is no longer a nice-to-have. It's a requirement. ([NEAR AI on private inference](https://near.ai/blog/introducing-near-ai-cloud-private-chat))
+On 13 Nov, Illia Polosukhin posted ["VPN for AI agents is here"](https://x.com/ilblackdragon/status/2121048598985228372): switch to private AI with one click, inside the tools you already use. His point is that once AI stops answering questions and starts acting for you, private inference is no longer a nice-to-have. It's a requirement. ([NEAR AI on private inference](https://near.ai/blog/introducing-near-ai-cloud-private-chat))
 
 We asked where that matters most on a phone, and the answer is the keyboard. It sees every message, password, address and amount you type, in every app. Today, keyboard AI sends all of that to a server you can't see into.
 
