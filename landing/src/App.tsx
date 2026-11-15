@@ -8,7 +8,7 @@ import { Ticker, WORKS } from "./Z";
 import { Downloads, E2E, GitHub, LEASH, Lockup, REPO, X_HANDLE, X_URL, XLogo } from "./ui";
 
 /** Set to the demo video (an .mp4, or a YouTube embed URL) once it exists; until then the poster shows. */
-const VIDEO_URL: string = "";
+const VIDEO_URL: string = "/keybots-demo.mp4";
 
 function useReveal() {
   useEffect(() => {
@@ -24,7 +24,7 @@ function useReveal() {
 function Video() {
   if (VIDEO_URL) {
     return VIDEO_URL.endsWith(".mp4") ? (
-      <video className="y-media" src={VIDEO_URL} controls playsInline preload="metadata" />
+      <video className="y-media" src={VIDEO_URL} poster="/demo-poster.jpg" controls playsInline preload="metadata" />
     ) : (
       <iframe className="y-media" src={VIDEO_URL} title="Keybots demo" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
     );
@@ -56,6 +56,7 @@ export default function App() {
           <Lockup />
         </a>
         <span className="y-links">
+          <a href="#demo">Demo</a>
           <a href="#how">How it works</a>
           <a href="#live">Live</a>
           <a href="#agents">Agents</a>
@@ -100,6 +101,9 @@ export default function App() {
         {VIDEO_URL && (
         <section className="y-video-sec" id="demo">
             <div className="y-wrap wide">
+              <h2 className="z-h2 center" data-reveal>
+                Watch it work. <span className="grad">Four minutes.</span>
+              </h2>
               <div className="y-frame" data-reveal>
                 <Video />
               </div>
