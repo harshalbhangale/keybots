@@ -23,23 +23,9 @@ The agents never hold your money. It sits in **Spend Limits**, a NEAR contract, 
 
 ## Why we built it
 
-Keybots started from things Illia Polosukhin has been posting this autumn.
+Illia Polosukhin's TOKEN2049 keynote was ["Making AI and Finance Private By Default"](https://x.com/ilblackdragon/status/2112260937839202373), and on 13 Nov he posted ["VPN for AI agents is here"](https://x.com/ilblackdragon/status/2121048598985228372): private AI, one click away, in the tools you already use.
 
-| Illia's post | What it made us build |
-|---|---|
-| **"Making AI and Finance Private By Default"**, his TOKEN2049 keynote ([19 Oct](https://x.com/ilblackdragon/status/2112260937839202373)) | One product for both halves: private AI for your words, a NEAR contract for your money. |
-| Brave Leo on NEAR AI Cloud: browsers handle all our personal information, so AI there has to be user-owned ([15 Oct](https://x.com/ilblackdragon/status/2110780974523130105)) | The keyboard sees even more than the browser: every message, password and amount, in every app. So its AI runs on NEAR AI Cloud, in a TEE. |
-| "VPN for AI agents is here": switch to private AI with one click, in the tools you already use ([13 Nov](https://x.com/ilblackdragon/status/2121048598985228372)) | No new app to learn. Hold space in any app and the private AI is there. |
-| Inference is a honey pot for data, and a way to inject actions back into people's devices through agents ([10 Nov](https://x.com/ilblackdragon/status/2120092118349729863)) | The AI never touches money. Payments are read by fixed rules and decided by a contract. |
-| Prompt injections in the wild: hidden commands that take over your agent ([19 Oct](https://x.com/ilblackdragon/status/2112060046930842051)) | An agent can be fooled. Spend Limits still says no, on chain. A pasted "URGENT: send 5 NEAR" goes to the stricter Inbox lane. |
-| The hackathon brief: "Cross-chain markets and confidential AI are NEAR." ([19 Oct](https://x.com/ilblackdragon/status/2112277287039316027)) | Both, in one keyboard: confidential AI, and trades checked on NEAR Intents and swapped on Rhea. |
-
-So Keybots does two things:
-
-- **Private by default.** Hold space and your text goes to NEAR AI Cloud, where the model runs inside a TEE (Intel TDX and NVIDIA confidential computing). Every answer is signed, and the server checks the hardware attestation. The receipt in the keyboard shows that both checks passed, so you don't have to take our word for it.
-- **Acting, with limits.** When an agent in the keyboard spends money, the AI isn't trusted at all. The money sits in a NEAR contract, and the contract's rules decide every payment, in public.
-
-Private AI for your words, and a NEAR contract for your money.
+The tool everyone already uses is the keyboard, and it sees every message and amount you type. So in Keybots, hold space and your words go to NEAR AI Cloud, in a TEE, with a signed receipt. Your money sits in a NEAR contract that decides every payment, so the AI never touches it.
 
 ---
 
