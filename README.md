@@ -119,6 +119,7 @@ A real testnet request from Claude Code, not a mock-up. The server is [tools/key
 ## Features
 
 **In the keyboard**
+- **Android too.** The Android keyboard ([download the APK](https://github.com/harshalbhangale/keybots/releases/latest/download/keybots.apk)) pays and swaps through the same server and Spend Limits once you paste your key in its app.
 - **Claude Code asks, you approve.** Any MCP agent can request a payment through Keybots. Spend Limits checks it on chain, the keyboard shows the agent live, and Face ID says yes.
 - **Pay by typing.** `pay harshal 0.2 for dinner` opens a Pay screen: who gets it (name and NEAR account), the amount in NEAR and dollars, the network fee, what's left of today's limit, then **Hold to pay** or tap twice.
 - **Swap by typing.** `swap 0.1 near to usdc` opens a swap screen with Rhea's real quote, the minimum after 1% slippage, and your limits.

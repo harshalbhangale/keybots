@@ -22,8 +22,10 @@ import java.util.regex.Pattern;
  * The Keybots keyboard for Android (preview). It types like a normal keyboard.
  * When the line you are typing reads like a command ("pay alex 0.4", "swap 1 near"),
  * the strip above the keys turns into a card; hold its button and the keyboard
- * checks it against the same limits as the iOS app (0.5 NEAR a payment, 1 NEAR a trade).
- * This preview does not sign or send anything: payments run in the iOS app on NEAR testnet.
+ * sends it to your Keybots server: the agent asks the Spend Limits contract on NEAR,
+ * which pays, refuses, or holds it for your Face ID in the Keybots app. Tap the
+ * mascot key to see your bots and balance. Not connected yet: it checks the limits
+ * on the phone only and says so.
  */
 public class KeybotsIME extends InputMethodService {
     private static final String[] ROWS = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
@@ -57,6 +59,7 @@ public class KeybotsIME extends InputMethodService {
         logo.setBackground(UI.round(c, UI.PANEL, 10));
         int lp = UI.dp(c, 4);
         logo.setPadding(lp, lp, lp, lp);
+        logo.setOnClickListener(v -> status());
         top.addView(logo, new LinearLayout.LayoutParams(UI.dp(c, 44), UI.dp(c, 36)));
         LinearLayout tabs = new LinearLayout(c);
         tabs.setBackground(UI.round(c, UI.PANEL, 10));
@@ -94,6 +97,15 @@ public class KeybotsIME extends InputMethodService {
     public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
         refresh();
+    }
+
+    /** Text that arrives another way (paste, autofill) is read too. */
+    @Override
+    public void onUpdateSelection(int oldStart, int oldEnd, int newStart, int newEnd, int candStart, int candEnd) {
+        super.onUpdateSelection(oldStart, oldEnd, newStart, newEnd, candStart, candEnd);
+        if (strip != null && strip.getChildCount() > 0 && !(strip.getChildAt(0) instanceof TextView)) refresh();
+        else if (strip != null && strip.getChildCount() == 0) refresh();
+        else if (strip != null && command == null) refresh();
     }
 
     private void buildKeys() {
@@ -240,7 +252,8 @@ public class KeybotsIME extends InputMethodService {
         TextView hold = UI.text(c, "HOLD", 11, UI.GREEN_INK, true);
         hold.setBackground(UI.round(c, UI.GREEN, 9));
         hold.setPadding(UI.dp(c, 14), 0, UI.dp(c, 14), 0);
-        final Runnable done = () -> result(title);
+        final String line = currentLine();
+        final Runnable done = () -> send(title, line);
         hold.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
                 v.setAlpha(0.7f);
@@ -256,7 +269,76 @@ public class KeybotsIME extends InputMethodService {
         return card;
     }
 
-    /** What holding does in this preview: checks the limits and says what would happen. */
+    private String currentLine() {
+        InputConnection ic = getCurrentInputConnection();
+        CharSequence before = ic == null ? "" : ic.getTextBeforeCursor(200, 0);
+        String line = before == null ? "" : before.toString();
+        int nl = line.lastIndexOf('\n');
+        return (nl >= 0 ? line.substring(nl + 1) : line).trim();
+    }
+
+    /** One line on the strip, for a few seconds. */
+    private void say(String msg, int color, long ms) {
+        strip.removeAllViews();
+        TextView t = UI.text(this, msg, 13, color, true);
+        t.setSingleLine(false);
+        t.setMaxLines(2);
+        t.setPadding(UI.dp(this, 10), 0, UI.dp(this, 10), 0);
+        t.setBackground(UI.outline(this, 0x14FFFFFF, color, 12));
+        strip.addView(t, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        main.removeCallbacksAndMessages(null);
+        if (ms > 0) main.postDelayed(this::refresh, ms);
+    }
+
+    /** The mascot key: your bots and what Spend Limits holds, from the server. */
+    private void status() {
+        if (!Keybots.connected(this)) { say("Open the Keybots app and paste your key to connect.", UI.MUTED, 3500); return; }
+        say("Checking your bots…", UI.MUTED, 0);
+        new Thread(() -> {
+            String msg; int color;
+            try { msg = Keybots.network(this).toUpperCase(Locale.US) + " · " + Keybots.summary(Keybots.state(this)); color = UI.GREEN; }
+            catch (Exception e) { msg = e.getMessage(); color = UI.RED; }
+            final String m = msg; final int col = color;
+            main.post(() -> say(m, col, 4500));
+        }).start();
+    }
+
+    /** Hold: the command goes to Keybots, and Spend Limits on NEAR decides. */
+    private void send(String title, String line) {
+        if (command == null) return;
+        if (!Keybots.connected(this)) { result(title); return; }
+        final String source = command.equals("scam") ? "pasted" : "typed";
+        say(source.equals("pasted") ? "Checking this message…" : (command.startsWith("swap") ? "Swapping…" : "Paying…"), UI.MUTED, 0);
+        new Thread(() -> {
+            String msg; int color;
+            try {
+                org.json.JSONObject r = Keybots.command(this, line, source);
+                String outcome = r.optString("outcome");
+                String what = r.optString("summary", r.optString("message", outcome));
+                if (what.isEmpty()) what = r.optString("message", outcome);
+                org.json.JSONObject tx = r.optJSONObject("tx");
+                if (tx != null && !tx.optString("hash").isEmpty()) what += " · tx " + tx.optString("hash").substring(0, 8) + "…";
+                msg = what;
+                color = outcome.equals("paid") || outcome.equals("swapped") ? UI.GREEN
+                        : outcome.equals("approval") ? 0xFFF5B841 : outcome.equals("blocked") ? UI.RED : UI.MUTED;
+            } catch (Exception e) { msg = e.getMessage(); color = UI.RED; }
+            final String m = msg; final int col = color;
+            main.post(() -> {
+                if (col == UI.GREEN || col == 0xFFF5B841) clearLine(line);
+                say(m, col, 6000);
+            });
+        }).start();
+    }
+
+    /** A command that ran is taken out of the message, as on iOS. */
+    private void clearLine(String line) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null || line.isEmpty()) return;
+        CharSequence before = ic.getTextBeforeCursor(line.length() + 2, 0);
+        if (before != null && before.toString().trim().endsWith(line)) ic.deleteSurroundingText(before.toString().length() - before.toString().lastIndexOf(line), 0);
+    }
+
+    /** Not connected: checks the limits on the phone and says what would happen. */
     private void result(String title) {
         String msg;
         int color;
@@ -271,7 +353,7 @@ public class KeybotsIME extends InputMethodService {
                 msg = n + " NEAR is over your 0.5 limit. Blocked.";
                 color = UI.RED;
             } else {
-                msg = "Inside your limits. Confirm in the Keybots iOS app.";
+                msg = "Inside your limits. Connect Keybots in the app to send it.";
                 color = UI.GREEN;
             }
         } else {
@@ -280,7 +362,7 @@ public class KeybotsIME extends InputMethodService {
                 msg = "Over your 1 NEAR trade cap. Blocked.";
                 color = UI.RED;
             } else {
-                msg = "Inside your trade cap. Confirm in the iOS app.";
+                msg = "Inside your trade cap. Connect Keybots in the app to send it.";
                 color = UI.GREEN;
             }
         }

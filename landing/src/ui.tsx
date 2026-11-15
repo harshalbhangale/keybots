@@ -70,8 +70,8 @@ export function Mark({ size = 28 }: { size?: number }) {
   return <img src="/logo.png" width={size} height={size} alt="" aria-hidden style={{ display: "block" }} />;
 }
 
-/** The Android preview APK, built from android/ (android/build.sh) and served by the site. */
-export const APK_URL = "/keybots.apk";
+/** The Android keyboard APK: the latest GitHub release (built from android/ with android/build.sh). */
+export const APK_URL = "https://github.com/harshalbhangale/keybots/releases/latest/download/keybots.apk";
 
 /** Four even buttons in one row: Android download, GitHub, App Store and Google Play (soon). */
 export function Downloads() {
