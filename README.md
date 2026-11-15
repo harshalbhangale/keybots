@@ -10,7 +10,29 @@ The agents never hold your money. It sits in **Spend Limits**, a NEAR contract, 
 
 **NEAR Hackathon 2026 · iOS keyboard + app · Live on NEAR testnet, and Spend Limits Lite on NEAR mainnet**
 
-[See it work](#see-it-work) · [How it works](#how-it-works) · [What NEAR does](#what-near-does-here) · [Proof on chain](#proof-on-chain) · [Our journey](#our-journey) · [Try it](#try-it-without-a-phone)
+[Why](#why-we-built-it) · [See it work](#see-it-work) · [How it works](#how-it-works) · [What NEAR does](#what-near-does-here) · [Proof on chain](#proof-on-chain) · [Our journey](#our-journey) · [Try it](#try-it-without-a-phone)
+
+### Check it in two minutes
+
+1. **A scam, refused on mainnet.** A payment the rules didn't allow, stopped by the contract: [FDKxnt6F…](https://nearblocks.io/txns/FDKxnt6FVY4scNL2e8npUjoDT7E566tyJhaadEBPPPDb)
+2. **A real payment, typed in the keyboard.** 0.01 NEAR on mainnet: [6WgtSxcy…](https://nearblocks.io/txns/6WgtSxcybESMvn6ouJxCUnmdEPp7QtwCtBBHjFsHM3fm)
+3. **The rules, without a phone.** `cd server && npm install && npm run try -- "pay drain 5" --pasted` reads the live contract and shows which rule says no.
+4. **The private AI receipt.** [The screenshot](docs/screens/kb-assist-receipt-dark.png) shows the signed answer and the hardware check.
+
+---
+
+## Why we built it
+
+Illia Polosukhin keeps making the same point: once AI stops answering questions and starts acting for you, private inference is no longer a nice-to-have. It's a requirement. ([NEAR AI on private inference](https://near.ai/blog/introducing-near-ai-cloud-private-chat))
+
+We asked where that matters most on a phone, and the answer is the keyboard. It sees every message, password, address and amount you type, in every app. Today, keyboard AI sends all of that to a server you can't see into.
+
+So Keybots does both halves of what Illia describes:
+
+- **Private by default.** Hold space and your text goes to NEAR AI Cloud, where the model runs inside a TEE (Intel TDX and NVIDIA confidential computing). Every answer is signed, and the server checks the hardware attestation. The receipt in the keyboard shows that both checks passed, so you don't have to take our word for it.
+- **Acting, with limits.** When an agent in the keyboard spends money, the AI isn't trusted at all. The money sits in a NEAR contract, and the contract's rules decide every payment, in public.
+
+Private AI for your words, and a NEAR contract for your money.
 
 ---
 
@@ -260,4 +282,6 @@ Testnet setup, hosting and the demo: [scripts/](scripts), [docs/HOSTING.md](docs
 - The app, code and some screenshots still say AIRKEY, the project's earlier name.
 
 ## Credits
+
+- The keyboard's typing core in `ios/AirKeyKeyboard/` (layout, design, typing engine and dictionary, and some panels) is adapted from [Glyf](https://github.com/The-x-35/glyf), which is not covered by this repository's MIT license.
 - Built with Claude Code. Product and design decisions by Harshal Bhangale.
