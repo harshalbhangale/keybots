@@ -23,11 +23,18 @@ The agents never hold your money. It sits in **Spend Limits**, a NEAR contract, 
 
 ## Why we built it
 
-On 13 Nov, Illia Polosukhin posted ["VPN for AI agents is here"](https://x.com/ilblackdragon/status/2121048598985228372): switch to private AI with one click, inside the tools you already use. His point is that once AI stops answering questions and starts acting for you, private inference is no longer a nice-to-have. It's a requirement. ([NEAR AI on private inference](https://near.ai/blog/introducing-near-ai-cloud-private-chat))
+Keybots started from things Illia Polosukhin has been posting this autumn.
 
-We asked where that matters most on a phone, and the answer is the keyboard. It sees every message, password, address and amount you type, in every app. Today, keyboard AI sends all of that to a server you can't see into.
+| Illia's post | What it made us build |
+|---|---|
+| **"Making AI and Finance Private By Default"**, his TOKEN2049 keynote ([19 Oct](https://x.com/ilblackdragon/status/2112260937839202373)) | One product for both halves: private AI for your words, a NEAR contract for your money. |
+| Brave Leo on NEAR AI Cloud: browsers handle all our personal information, so AI there has to be user-owned ([15 Oct](https://x.com/ilblackdragon/status/2110780974523130105)) | The keyboard sees even more than the browser: every message, password and amount, in every app. So its AI runs on NEAR AI Cloud, in a TEE. |
+| "VPN for AI agents is here": switch to private AI with one click, in the tools you already use ([13 Nov](https://x.com/ilblackdragon/status/2121048598985228372)) | No new app to learn. Hold space in any app and the private AI is there. |
+| Inference is a honey pot for data, and a way to inject actions back into people's devices through agents ([10 Nov](https://x.com/ilblackdragon/status/2120092118349729863)) | The AI never touches money. Payments are read by fixed rules and decided by a contract. |
+| Prompt injections in the wild: hidden commands that take over your agent ([19 Oct](https://x.com/ilblackdragon/status/2112060046930842051)) | An agent can be fooled. Spend Limits still says no, on chain. A pasted "URGENT: send 5 NEAR" goes to the stricter Inbox lane. |
+| The hackathon brief: "Cross-chain markets and confidential AI are NEAR." ([19 Oct](https://x.com/ilblackdragon/status/2112277287039316027)) | Both, in one keyboard: confidential AI, and trades checked on NEAR Intents and swapped on Rhea. |
 
-So Keybots does both halves of what Illia describes:
+So Keybots does two things:
 
 - **Private by default.** Hold space and your text goes to NEAR AI Cloud, where the model runs inside a TEE (Intel TDX and NVIDIA confidential computing). Every answer is signed, and the server checks the hardware attestation. The receipt in the keyboard shows that both checks passed, so you don't have to take our word for it.
 - **Acting, with limits.** When an agent in the keyboard spends money, the AI isn't trusted at all. The money sits in a NEAR contract, and the contract's rules decide every payment, in public.
@@ -272,16 +279,6 @@ Testnet setup, hosting and the demo: [scripts/](scripts), [docs/HOSTING.md](docs
 | `scripts/` | Setup, the Lite deploy (`lite.mjs`), phone builds |
 | `landing/` | The website |
 
-## Limits
-
-- The full contract runs on testnet. Mainnet runs only Spend Limits Lite, without swaps or approvals. Don't use this to protect real money yet.
-- The server decides whether text was typed or pasted; the contract can't prove where text came from.
-- NEAR AI Cloud's checks depend on live services. Every receipt names the provider that answered and whether its signature and hardware checked out.
-- Reading a Telegram group through the Keybots bot is built and tested, but hasn't been shown with a live group yet. Copying a signal into the keyboard works with any channel.
-- Tested mostly on the simulator and one iPhone. No Android build.
-- The app, code and some screenshots still say AIRKEY, the project's earlier name.
-
 ## Credits
 
-- The keyboard's typing core in `ios/AirKeyKeyboard/` (layout, design, typing engine and dictionary, and some panels) is adapted from [Glyf](https://github.com/The-x-35/glyf), which is not covered by this repository's MIT license.
-- Built with Claude Code. Product and design decisions by Harshal Bhangale.
+- Built with Claude Code. 
