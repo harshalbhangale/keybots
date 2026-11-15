@@ -3,6 +3,19 @@ export const LEASH = "https://testnet.nearblocks.io/address/leash.airkey-harshal
 export const E2E = `${REPO}/blob/main/docs/evidence/testnet-e2e.md`;
 // Placeholder until the Keybots Android build is uploaded: swap this one URL for the Keybots APK on S3.
 
+/** Keybots on X. */
+export const X_HANDLE = "@getkeybots";
+export const X_URL = "https://x.com/getkeybots";
+
+/** The X logo. */
+export function XLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.78L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43Z" />
+    </svg>
+  );
+}
+
 export function GitHub({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden>

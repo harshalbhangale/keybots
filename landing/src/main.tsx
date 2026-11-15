@@ -11,6 +11,7 @@ import "./dl.css";
 import "./journey.css";
 import "./networks.css";
 import "./agents.css";
+import "./x.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

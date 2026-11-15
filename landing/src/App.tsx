@@ -5,7 +5,7 @@ import { Private } from "./Private";
 import { Agents } from "./Agents";
 import { NearGlyph, NearTile } from "./Icons";
 import { Ticker, WORKS } from "./Z";
-import { Downloads, E2E, GitHub, LEASH, Lockup, REPO } from "./ui";
+import { Downloads, E2E, GitHub, LEASH, Lockup, REPO, X_HANDLE, X_URL, XLogo } from "./ui";
 
 /** Set to the demo video (an .mp4, or a YouTube embed URL) once it exists; until then the poster shows. */
 const VIDEO_URL: string = "";
@@ -62,9 +62,14 @@ export default function App() {
           <a href="#private">Private</a>
           <a href="#proof">Proof</a>
         </span>
-        <a className="y-gh" href={REPO} target="_blank" rel="noreferrer">
-          <GitHub size={16} /> GitHub
-        </a>
+        <span className="nav-end">
+          <a className="nav-x" href={X_URL} target="_blank" rel="noreferrer" aria-label={`Follow ${X_HANDLE} on X`}>
+            <XLogo size={14} /> <span>{X_HANDLE}</span>
+          </a>
+          <a className="y-gh" href={REPO} target="_blank" rel="noreferrer">
+            <GitHub size={16} /> GitHub
+          </a>
+        </span>
       </nav>
 
       <main id="top">
@@ -157,6 +162,12 @@ export default function App() {
             <div data-reveal>
               <Downloads />
             </div>
+            <a className="final-x" href={X_URL} target="_blank" rel="noreferrer">
+              <XLogo size={15} />
+              <span>
+                Follow <b>{X_HANDLE}</b> on X for what ships next
+              </span>
+            </a>
           </div>
         </section>
       </main>
@@ -165,9 +176,17 @@ export default function App() {
         <span>
           <Lockup small /> <span className="foot-note">built at NEAR HACKATHON 2026 by Harshal Bhangale</span>
         </span>
-        <a className="built-near" href="https://near.org" target="_blank" rel="noreferrer">
-          <NearTile size={20} /> Built on NEAR
-        </a>
+        <span className="foot-end">
+          <a className="built-near" href={X_URL} target="_blank" rel="noreferrer">
+            <span className="foot-x">
+              <XLogo size={12} />
+            </span>
+            Follow {X_HANDLE} on X
+          </a>
+          <a className="built-near" href="https://near.org" target="_blank" rel="noreferrer">
+            <NearTile size={20} /> Built on NEAR
+          </a>
+        </span>
       </footer>
     </>
   );
