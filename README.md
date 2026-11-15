@@ -23,9 +23,13 @@ The agents never hold your money. It sits in **Spend Limits**, a NEAR contract, 
 
 ## Why we built it
 
-Illia Polosukhin's TOKEN2049 keynote was ["Making AI and Finance Private By Default"](https://x.com/ilblackdragon/status/2112260937839202373), and on 13 Nov he posted ["VPN for AI agents is here"](https://x.com/ilblackdragon/status/2121048598985228372): private AI, one click away, in the tools you already use.
+Midway through the hackathon, I was scrolling X late at night, reading what other builders were shipping. Then this showed up from Illia:
 
-The tool everyone already uses is the keyboard, and it sees every message and amount you type. So in Keybots, hold space and your words go to NEAR AI Cloud, in a TEE, with a signed receipt. Your money sits in a NEAR contract that decides every payment, so the AI never touches it.
+> **"VPN for AI agents is here."** Private AI, one click away, inside the tools you already use. ([the post](https://x.com/ilblackdragon/status/2121048598985228372))
+
+I looked down at my phone and realised the one tool I use more than any other is the keyboard. It sees every message, every password and every amount I type, in every app, and nobody had made it private. Illia had been saying the same thing for weeks; his TOKEN2049 keynote was literally called ["Making AI and Finance Private By Default"](https://x.com/ilblackdragon/status/2112260937839202373).
+
+So that's what Keybots became. Hold space and your words go to NEAR AI Cloud, inside a TEE, with a signed receipt. Your money sits in a NEAR contract that decides every payment, so the AI never touches it. A VPN for your keyboard, with a wallet that can't be talked into anything.
 
 ---
 
